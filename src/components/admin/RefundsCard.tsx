@@ -66,13 +66,13 @@ export function RefundsCard() {
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
-          {/* Desktop tile */}
-          <div className="hidden md:flex flex-col h-full min-h-[190px] bg-black hover:bg-[#0a0a0a] transition-colors duration-300 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ReceiptRefundIcon className="w-4 h-4 text-white/50" />
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 truncate">Refunds</h3>
+          {/* Square at-a-glance widget, matching the rest of the grid. */}
+          <div className="bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300 aspect-square w-full flex flex-col p-3 md:p-4 overflow-hidden">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 shrink-0">
+              <ReceiptRefundIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/50" />
+              <h3 className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/80 truncate">Refunds</h3>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden space-y-4 pt-2">
+            <div className="flex-1 min-h-0 overflow-hidden [zoom:0.72] md:[zoom:1]">
               <AdminBentoRow
                 label="Last 30 Days"
                 valueClassName={last30dCents > 0 ? 'text-amber-400 font-bold' : ''}
@@ -81,14 +81,6 @@ export function RefundsCard() {
               <AdminBentoRow label="All Time" value={`$${(totalRefundedCents / 100).toLocaleString()}`} />
               <AdminBentoRow label="Count" value={refunds.length} />
             </div>
-          </div>
-
-          {/* Mobile tile */}
-          <div className="flex md:hidden flex-col items-center justify-center p-2.5 bg-white/5 aspect-square w-full active:scale-95 transition-all duration-200">
-            <div className="p-2 bg-white/10 rounded-full mb-1">
-              <ReceiptRefundIcon className="w-4 h-4 text-white/40" />
-            </div>
-            <span className="text-[8px] font-black uppercase tracking-[0.05em] text-center leading-tight text-white/60 px-1">Refunds</span>
           </div>
         </ExpandableScreenTrigger>
 

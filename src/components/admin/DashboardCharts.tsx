@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/components/ui/utils';
 
 interface DashboardChartsProps {
@@ -26,7 +27,18 @@ interface DashboardChartsProps {
   };
 }
 
-type TimeRange = '1H' | '24H' | '7D' | '30D' | '1Y';
+type TimeRange = '1H' | '24H' | '7D' | '30D' | '60D' | '90D' | '1Y';
+
+/** Length of each range, used for period-over-period comparison. */
+const RANGE_MS: Record<TimeRange, number> = {
+  '1H': 60 * 60 * 1000,
+  '24H': 24 * 60 * 60 * 1000,
+  '7D': 7 * 24 * 60 * 60 * 1000,
+  '30D': 30 * 24 * 60 * 60 * 1000,
+  '60D': 60 * 24 * 60 * 60 * 1000,
+  '90D': 90 * 24 * 60 * 60 * 1000,
+  '1Y': 365 * 24 * 60 * 60 * 1000,
+};
 type MetricType = 'revenue' | 'newsletter' | 'affiliates' | 'bookings';
 
 export function DashboardCharts({ stats, history }: DashboardChartsProps) {
@@ -45,7 +57,9 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       const points = timeRange === '1H' ? 60 :
         timeRange === '24H' ? 24 :
           timeRange === '7D' ? 7 :
-            timeRange === '30D' ? 30 : 12;
+            timeRange === '30D' ? 30 :
+              timeRange === '60D' ? 60 :
+                timeRange === '90D' ? 90 : 12;
 
       const baseValue = metric === 'revenue' ? (stats?.revenue || 0) :
         metric === 'newsletter' ? (stats?.newsletter || 0) :
@@ -117,6 +131,16 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
         break;
       case '30D':
         startTime = now - 30 * 24 * 60 * 60 * 1000;
+        interval = 24 * 60 * 60 * 1000; // 1 day
+        formatLabel = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        break;
+      case '60D':
+        startTime = now - 60 * 24 * 60 * 60 * 1000;
+        interval = 24 * 60 * 60 * 1000; // 1 day
+        formatLabel = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        break;
+      case '90D':
+        startTime = now - 90 * 24 * 60 * 60 * 1000;
         interval = 24 * 60 * 60 * 1000; // 1 day
         formatLabel = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
         break;
@@ -194,15 +218,64 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     bookings: { color: '#f59e0b', label: 'Bookings', prefix: '$' },
   };
 
+  // Period-over-period change for the headline, matching the hero tracker:
+  // this window against the one immediately before it, same length. Cumulative
+  // count metrics compare running totals; per-bucket $ metrics compare sums.
+  const periodChange = useMemo(() => {
+    const metricHistory = history?.[metric];
+    if (!metricHistory || metricHistory.length === 0) return null;
+
+    const span = RANGE_MS[timeRange];
+    const now = Date.now();
+    const isCount = metric === 'newsletter' || metric === 'affiliates';
+
+    const points = metricHistory.map(item =>
+      typeof item === 'string'
+        ? { time: new Date(item).getTime(), amount: isCount ? 1 : 0 }
+        : { time: new Date(item.date).getTime(), amount: item.amount },
+    );
+
+    const sumBefore = (t: number) =>
+      points.filter(p => p.time <= t).reduce((s, p) => s + p.amount, 0);
+    const sumBetween = (a: number, b: number) =>
+      points.filter(p => p.time >= a && p.time < b).reduce((s, p) => s + p.amount, 0);
+
+    const current = isCount ? sumBefore(now) : sumBetween(now - span, now);
+    const previous = isCount ? sumBefore(now - span) : sumBetween(now - 2 * span, now - span);
+
+    if (previous === 0) {
+      if (current === 0) return null;
+      // No baseline to divide by — report the gain itself, as the hero does.
+      return { pct: current, up: true };
+    }
+    const pct = ((current - previous) / previous) * 100;
+    return { pct, up: pct >= 0 };
+  }, [history, metric, timeRange]);
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Current Value Display */}
       <div className="flex items-center justify-center gap-4 mb-4">
-        <div className="text-center">
+        <div className="flex items-center justify-center gap-2 text-center">
           <span className="text-2xl font-bold font-mono" style={{ color: config[metric].color }}>
             {config[metric].prefix}{headlineValue.toFixed(0)}
           </span>
-          <span className="text-xs text-white/40 ml-2 uppercase">{config[metric].label}</span>
+          <span className="text-xs text-white/40 uppercase">{config[metric].label}</span>
+          {periodChange && (
+            <span
+              className={`flex items-center gap-0.5 text-xs font-bold font-mono ${
+                periodChange.up ? 'text-green-400' : 'text-red-400'
+              }`}
+              title={`vs previous ${timeRange}`}
+            >
+              {periodChange.up ? (
+                <ArrowTrendingUpIcon className="w-3.5 h-3.5" />
+              ) : (
+                <ArrowTrendingDownIcon className="w-3.5 h-3.5" />
+              )}
+              {periodChange.up ? '+' : ''}{periodChange.pct.toFixed(0)}%
+            </span>
+          )}
         </div>
       </div>
 
@@ -260,7 +333,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       <div className="flex flex-col gap-3">
         {/* Time Range Toggle - Full Width */}
         <div className="flex w-full bg-white/5">
-          {(['1H', '24H', '7D', '30D', '1Y'] as TimeRange[]).map((t) => (
+          {(['1H', '24H', '7D', '30D', '60D', '90D', '1Y'] as TimeRange[]).map((t) => (
             <button
               key={t}
               onClick={() => setTimeRange(t)}

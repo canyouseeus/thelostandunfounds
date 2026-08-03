@@ -389,7 +389,7 @@ export default function NewsletterManagement() {
       </div>
     ` : '';
 
-    const bannerUrl = "https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png";
+    const bannerUrl = "https://www.thelostandunfounds.com/brand/banner.png";
 
     return `
       <!DOCTYPE html>

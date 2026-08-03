@@ -996,3 +996,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     opacity: 0;
   }
 }
+/* Verse ticker marquee — used by the admin header slot when the full-size
+   clock and calendar widgets are on screen. */
+@keyframes verse-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  /* -50% lands exactly on the start of the duplicated second copy, so the
+     loop is seamless and text is never off screen. */
+  100% {
+    transform: translateX(-50%);
+  }
+}

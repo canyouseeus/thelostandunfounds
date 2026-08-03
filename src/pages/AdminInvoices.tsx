@@ -15,6 +15,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
 import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
+import { NewInvoiceForm } from '../components/admin/NewInvoiceForm';
 
 interface Client {
   id: string;
@@ -93,6 +94,9 @@ export default function AdminInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Record<string, InvoicePayment[]>>({});
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  // Inline PDF viewer is opt-in per invoice — opening a row shouldn't fetch a PDF.
+  const [showPdf, setShowPdf] = useState(false);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -202,7 +206,7 @@ export default function AdminInvoices() {
           <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Revenue Summary</p>
           <button
             className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
-            onClick={() => alert('Invoice creation coming soon.')}
+            onClick={() => setCreatingInvoice(true)}
           >
             <PlusCircleIcon className="w-3.5 h-3.5" />
             New Invoice
@@ -240,7 +244,7 @@ export default function AdminInvoices() {
                     'flex items-center justify-between px-4 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors',
                     selectedInvoice?.id === inv.id && 'bg-white/[0.04]'
                   )}
-                  onClick={() => setSelectedInvoice(selectedInvoice?.id === inv.id ? null : inv)}
+                  onClick={() => { setShowPdf(false); setSelectedInvoice(selectedInvoice?.id === inv.id ? null : inv); }}
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <DocumentTextIcon className="w-5 h-5 text-white/20 shrink-0" />
@@ -250,7 +254,7 @@ export default function AdminInvoices() {
                         <StatusBadge status={inv.status} />
                       </div>
                       <p className="text-[10px] text-white/40 mt-0.5 truncate">
-                        {(inv.clients as any)?.name || 'Unknown Client'} &nbsp;·&nbsp; {fmt(inv.date)}
+                        <span className="uppercase">{(inv.clients as any)?.name || 'Unknown Client'}</span> &nbsp;·&nbsp; {fmt(inv.date)}
                         {inv.event_date && <> &nbsp;·&nbsp; Event: {fmt(inv.event_date)}</>}
                       </p>
                     </div>
@@ -303,23 +307,44 @@ export default function AdminInvoices() {
               <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
                 {selectedInvoice && (
                   <div className="space-y-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
-                        <h2 className="text-xl font-black font-mono tracking-tighter">
-                          {selectedInvoice.invoice_number}
-                        </h2>
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-xl font-black font-mono tracking-tighter">
+                            {selectedInvoice.invoice_number}
+                          </h2>
+                          <StatusBadge status={selectedInvoice.status} />
+                        </div>
                         <p className="text-[10px] text-white/30 mt-1 uppercase tracking-widest">
                           {selectedInvoice.description}
                         </p>
                       </div>
-                      <StatusBadge status={selectedInvoice.status} />
+                      {selectedInvoice.pdf_token && (
+                        <div className="flex items-center gap-3 shrink-0">
+                          <button
+                            onClick={() => setShowPdf(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 transition-colors"
+                          >
+                            <DocumentTextIcon className="w-3 h-3" />
+                            View Invoice
+                          </button>
+                          <a
+                            href={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}`}
+                            download={`${selectedInvoice.invoice_number}.pdf`}
+                            className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white/5 hover:bg-white text-white hover:text-black transition-colors"
+                          >
+                            <DocumentArrowDownIcon className="w-3 h-3" />
+                            Download
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
                       {[
                         { label: 'Invoice Date', value: fmt(selectedInvoice.date) },
                         { label: 'Event Date',   value: selectedInvoice.event_date ? fmt(selectedInvoice.event_date) : '—' },
-                        { label: 'Client',       value: (selectedInvoice.clients as any)?.name || '—' },
+                        { label: 'Client',       value: ((selectedInvoice.clients as any)?.name || '—').toUpperCase() },
                         { label: 'Paid On',      value: selectedInvoice.paid_at ? fmt(selectedInvoice.paid_at) : '—' },
                       ].map(({ label, value }) => (
                         <div key={label} className="bg-white/5 p-3">
@@ -370,10 +395,60 @@ export default function AdminInvoices() {
                         Accepted: {selectedInvoice.payment_method}
                       </p>
                     )}
+
                   </div>
                 )}
               </div>
             </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
+
+        {/* New invoice — full-screen creation form */}
+        <ExpandableScreen isOpen={creatingInvoice} onOpenChange={(open) => { if (!open) setCreatingInvoice(false); }}>
+          <ExpandableScreenContent className="overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              {creatingInvoice && (
+                <NewInvoiceForm
+                  clients={clients}
+                  onCreated={() => { setCreatingInvoice(false); load(); }}
+                  onCancel={() => setCreatingInvoice(false)}
+                />
+              )}
+            </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
+
+        {/* Invoice document — its own full-screen card. The PDF endpoint sends
+            Content-Disposition: inline, so it renders here rather than downloading.
+            Fills the viewport so the document never has to be scrolled to. */}
+        <ExpandableScreen isOpen={showPdf} onOpenChange={(open) => { if (!open) setShowPdf(false); }}>
+          <ExpandableScreenContent className="overflow-hidden">
+            {selectedInvoice?.pdf_token && (
+              <div className="flex flex-col h-full min-h-0">
+                <div className="shrink-0 flex items-center justify-between gap-4 pt-6 pb-4 pr-16 px-4 sm:px-8">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <h2 className="text-lg font-black font-mono tracking-tighter truncate">
+                      {selectedInvoice.invoice_number}
+                    </h2>
+                    <StatusBadge status={selectedInvoice.status} />
+                  </div>
+                  <a
+                    href={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}`}
+                    download={`${selectedInvoice.invoice_number}.pdf`}
+                    className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white/5 hover:bg-white text-white hover:text-black transition-colors shrink-0"
+                  >
+                    <DocumentArrowDownIcon className="w-3 h-3" />
+                    Download
+                  </a>
+                </div>
+                <iframe
+                  key={selectedInvoice.id}
+                  title={`Invoice ${selectedInvoice.invoice_number}`}
+                  src={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}#view=FitH`}
+                  className="flex-1 min-h-0 w-full border-0 bg-white/[0.02]"
+                />
+              </div>
+            )}
           </ExpandableScreenContent>
         </ExpandableScreen>
 
@@ -401,7 +476,7 @@ export default function AdminInvoices() {
                           ? <ChevronDownIcon className="w-4 h-4 text-white/30" />
                           : <ChevronRightIcon className="w-4 h-4 text-white/30" />}
                         <div>
-                          <p className="text-sm font-bold">{client.name}</p>
+                          <p className="text-sm font-bold uppercase">{client.name}</p>
                           <p className="text-[10px] text-white/30 mt-0.5">
                             {client.business && <>{client.business} &nbsp;·&nbsp;</>}
                             {cInvoices.length} invoice{cInvoices.length !== 1 && 's'}

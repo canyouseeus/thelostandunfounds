@@ -5,7 +5,7 @@
  * The contract data is presented in a white card below the banner for legibility.
  */
 
-const BRAND_BANNER = 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png'
+const BRAND_BANNER = 'https://www.thelostandunfounds.com/brand/banner.png'
 const WEBSITE = 'https://www.thelostandunfounds.com'
 const PHOTOGRAPHER_NAME = 'THE LOST+UNFOUNDS'
 const PHOTOGRAPHER_EMAIL = 'media@thelostandunfounds.com'

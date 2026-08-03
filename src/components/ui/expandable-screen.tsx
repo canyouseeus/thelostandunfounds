@@ -13,6 +13,35 @@ interface ExpandableScreenContextValue {
 
 const ExpandableScreenContext = createContext<ExpandableScreenContextValue | null>(null);
 
+/**
+ * Reference-counted body scroll lock, shared across every open screen.
+ *
+ * Only the first locker records the page's real overflow values, and only the
+ * last release restores them — so nested or overlapping screens can never
+ * restore each other's 'hidden' and strand the page unscrollable.
+ */
+let scrollLockCount = 0;
+let prevBodyOverflow = '';
+let prevHtmlOverflow = '';
+
+function acquireScrollLock() {
+  if (scrollLockCount === 0) {
+    prevBodyOverflow = document.body.style.overflow;
+    prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+  }
+  scrollLockCount += 1;
+}
+
+function releaseScrollLock() {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) {
+    document.body.style.overflow = prevBodyOverflow;
+    document.documentElement.style.overflow = prevHtmlOverflow;
+  }
+}
+
 function useExpandableScreen() {
   const context = useContext(ExpandableScreenContext);
   if (!context) {
@@ -65,21 +94,24 @@ export function ExpandableScreen({
       return () => document.removeEventListener('keydown', handleEscape);
     }
 
-    // Save existing overflow so callers (e.g. Admin) can independently lock scroll.
-    // documentElement (<html>) is the actual scrolling root in standards mode —
-    // locking body alone leaves it scrollable, which on mobile Safari lets touches
-    // land on background content behind this fixed-position overlay (taps appear
-    // to do nothing because they hit whatever scrolled into that screen position).
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    // Lock scroll while open. documentElement (<html>) is the actual scrolling
+    // root in standards mode — locking body alone leaves it scrollable, which on
+    // mobile Safari lets touches land on background content behind this
+    // fixed-position overlay (taps appear to do nothing because they hit
+    // whatever scrolled into that screen position).
+    //
+    // Screens can nest (an invoice detail opening a PDF viewer, the CRM list
+    // opening a client editor). Each instance saving and restoring the overflow
+    // it happened to observe would let an inner screen capture the outer
+    // screen's 'hidden' and restore it on close, leaving the page permanently
+    // unscrollable. So the original value is captured once by the first locker
+    // and only restored when the last one releases.
+    acquireScrollLock();
     document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
+      releaseScrollLock();
     };
   }, [isOpen]);
 

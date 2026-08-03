@@ -17,6 +17,8 @@ import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
 import Footer from './Footer'
+import { ClockWidget } from './ui/clock-widget'
+import { VerseTicker } from './ui/verse-ticker'
 import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
 import AffiliateBanner from './affiliate/AffiliateBanner'
@@ -24,6 +26,49 @@ import { useGallery } from '../contexts/GalleryContext'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
+  // Header widgets (clock + date) are admin-only.
+  const isAdminRoute = location.pathname.startsWith('/admin')
+  const [headerNow, setHeaderNow] = useState(new Date())
+  useEffect(() => {
+    if (!isAdminRoute) return
+    const t = setInterval(() => setHeaderNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [isAdminRoute])
+
+  // The header clock is a stand-in for the full-size one in the dashboard's
+  // widget row, so it fades out once that row scrolls into view. Measured on
+  // scroll rather than with IntersectionObserver, which never fires in the
+  // embedded preview browser.
+  const [bigWidgetsVisible, setBigWidgetsVisible] = useState(false)
+  useEffect(() => {
+    if (!isAdminRoute) return
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      const el = document.getElementById('dashboard-widgets')
+      if (!el) return setBigWidgetsVisible(false)
+      const r = el.getBoundingClientRect()
+      // Swap only once the widget row has actually scrolled up to the header —
+      // merely being on screen isn't enough, since the row sits high on the
+      // page and would keep the clock permanently hidden.
+      const HEADER_BAND = 140
+      setBigWidgetsVisible(r.top <= HEADER_BAND && r.bottom >= 0)
+    }
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(measure) }
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    // Interval fallback: covers both the dashboard mounting after Layout and
+    // environments that don't deliver scroll events (the embedded preview
+    // browser is one). A rect read every 250ms is negligible.
+    const poll = setInterval(measure, 250)
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      clearInterval(poll)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [isAdminRoute])
   const isTikTokDownloader = location.pathname === '/tools/tiktok-downloader'
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -275,6 +320,33 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 </button>
               )}
 
+              {/* Admin header widgets — absolutely centered to the page, so they
+                  sit mid-header regardless of the logo and menu on either side.
+                  ClockWidget draws its face with `absolute inset-0`, so it needs
+                  an explicit width or it collapses to nothing. They fade out once
+                  the full-size widget grid scrolls into view. */}
+              {isAdminRoute && (
+                <div className="flex items-center justify-center gap-2 h-[46px] leading-none absolute left-1/2 -translate-x-1/2 top-3 z-10 max-w-[55vw]">
+                  {/* The header widgets always persist. Once the full-size clock
+                      and calendar are on screen the mini versions would be
+                      redundant, so the slot shows the daily verse instead. */}
+                  {bigWidgetsVisible ? (
+                    <VerseTicker className="animate-in fade-in duration-300" />
+                  ) : (
+                    <div className="flex items-center gap-2 animate-in fade-in duration-300">
+                      <ClockWidget size="lg" hideLabel lockMode className="w-[64px] !min-h-[46px]" />
+                      <Link
+                        to="/admin?panel=calendar"
+                        title="Open master calendar"
+                        className="flex items-center h-[46px] font-mono text-[13px] tracking-widest text-white hover:text-white/70 transition-colors"
+                      >
+                        {`${headerNow.getMonth() + 1}.${headerNow.getDate()}.${headerNow.getFullYear()}`}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Logo — centered for visitors, left-aligned when the menu shows */}
               <Link
                 to="/"
@@ -291,6 +363,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
               </Link>
               {showHeaderMenu && (
                 <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
+                  {/* Admin-only header widgets: clock at roughly logo height with
+                      the date beneath it. ClockWidget draws its face with
+                      `absolute inset-0`, so it needs an explicit width or it
+                      collapses to nothing. Label hidden to keep the bar sleek —
+                      tapping the face still cycles clock → stopwatch → timer. */}
                   <div className="header-nav" ref={menuRef}>
                     <button
                       type="button"

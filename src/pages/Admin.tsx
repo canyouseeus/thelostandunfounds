@@ -16,6 +16,7 @@ import { isAdmin, isAdminUser } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import {
   UsersIcon,
+  UserGroupIcon,
   ShieldCheckIcon,
   ChartBarIcon,
   Cog6ToothIcon,
@@ -74,6 +75,9 @@ import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { SiteAnalyticsCard } from '../components/admin/SiteAnalyticsCard';
+import { CrmCard } from '../components/admin/CrmCard';
+import { CalculatorCard } from '../components/admin/CalculatorCard';
+import { CrmDirectory } from '../components/admin/CrmDirectory';
 import { ProfitTrendCard } from '../components/admin/ProfitTrendCard';
 import { RefundsCard } from '../components/admin/RefundsCard';
 import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
@@ -244,6 +248,12 @@ export default function Admin() {
 
   // Which console panel is open (null = none)
   const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
+  // ?panel=<id> opens a panel directly — used by the header date to jump
+  // straight to the master calendar from anywhere in the admin.
+  useEffect(() => {
+    const panel = new URLSearchParams(window.location.search).get('panel');
+    if (panel) setActivePanelSection(panel);
+  }, []);
   const [searchParams] = useSearchParams();
 
   const openPanel = (id: string) => {
@@ -589,7 +599,7 @@ export default function Admin() {
       } = { revenue: [], newsletter: [], affiliates: [], bookings: [] };
 
       try {
-        const [newsHist, affHist, commissionsHist, ordersHist, invoicesHist] = await Promise.all([
+        const [newsHist, affHist, commissionsHist, ordersHist, invoicesHist, paymentsHist] = await Promise.all([
           supabase.from('newsletter_subscribers')
             .select('created_at')
             .eq('verified', true)
@@ -609,10 +619,12 @@ export default function Admin() {
             .gte('created_at', PLATFORM_LAUNCH_DATE)
             .order('created_at', { ascending: true }),
           supabase.from('invoices')
-            .select('paid_at, total')
+            .select('id, paid_at, total, contractor_payout, status')
             .eq('status', 'paid')
             .not('paid_at', 'is', null)
             .order('paid_at', { ascending: true }),
+          supabase.from('invoice_payments')
+            .select('invoice_id, amount'),
         ]);
 
         // Filter and process revenue history
@@ -633,13 +645,31 @@ export default function Admin() {
           amount: (o.total_amount_cents || 0) / 100
         }));
 
-        const bookingHistory = (invoicesHist.data || []).map((inv: any) => ({
-          date: inv.paid_at,
-          amount: Number(inv.total || 0),
-        }));
+        // Booking history must use the same net-of-payout figure as the revenue
+        // tiles: what the site actually keeps, capped by what was collected.
+        // Invoices predating invoice_payments have no rows, so fall back to the
+        // full total when status is 'paid' (mirrors the bookingRevenue logic).
+        const collectedByInvoice = new Map<string, number>();
+        for (const p of paymentsHist.data || []) {
+          const prior = collectedByInvoice.get(p.invoice_id) || 0;
+          collectedByInvoice.set(p.invoice_id, prior + Number(p.amount || 0));
+        }
+
+        const bookingHistory = (invoicesHist.data || []).map((inv: any) => {
+          const siteShare = Number(inv.total || 0) - Number(inv.contractor_payout || 0);
+          const recorded = collectedByInvoice.get(inv.id);
+          const collected =
+            recorded != null ? recorded : inv.status === 'paid' ? Number(inv.total || 0) : 0;
+          return {
+            date: inv.paid_at,
+            amount: Math.max(0, Math.min(collected, siteShare)),
+          };
+        });
 
         historyData = {
-          revenue: [...commissions, ...orders],
+          // Bookings are part of total revenue, so the revenue series must
+          // include them or the chart contradicts the Total Revenue tile.
+          revenue: [...commissions, ...orders, ...bookingHistory],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
           affiliates: affHist.data?.map((r: any) => r.created_at) || [],
           bookings: bookingHistory,
@@ -1549,6 +1579,7 @@ export default function Admin() {
           </div>
         </div>
         <p className="text-white/70 text-sm hidden sm:block mt-1">Manage your platform and users</p>
+
       </div>
 
 
@@ -1571,14 +1602,18 @@ export default function Admin() {
               }}
             />
           </div>
-          <div className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
-            <ClockWidget size="lg" className="md:flex-1" />
-            <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
-          </div>
         </div>
 
-        {/* Row 2: Category Grid (3x3 on Mobile, 4-col on Desktop) */}
-        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+        {/* Row 2: Category Grid (3x3). Clock, calendar and calculator sit in
+            this grid alongside the other widgets. */}
+        <div id="dashboard-widgets" className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+          {/* Square 1×1 cells so the widget row reads as a uniform grid.
+              !min-h-0 overrides each widget's own min-height, which would
+              otherwise stretch the cell taller than its width. */}
+          <ClockWidget size="lg" className="aspect-square !min-h-0 w-full" />
+          <CalendarWidget className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
+          <CalculatorCard className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
+
           {dashboardCategories.map((category) => (
             <DashboardCategoryCard
               key={category.id}
@@ -1591,6 +1626,9 @@ export default function Admin() {
 
           {/* Site Analytics — fullscreen ExpandableScreen pattern */}
           <SiteAnalyticsCard />
+
+          {/* CRM — client directory + billing rollup */}
+          <CrmCard />
 
           {/* Profit Trend — wires ProfitGraph into the dashboard */}
           <ProfitTrendCard
@@ -1618,6 +1656,7 @@ export default function Admin() {
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
+                { id: 'crm', icon: UserGroupIcon, title: 'CRM' },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
@@ -1671,7 +1710,8 @@ export default function Admin() {
                   events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
-                  invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" /> },
+                  crm:         { title: 'CRM',                      icon: <UserGroupIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
+                  invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('crm')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">← CRM</button> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
@@ -1724,6 +1764,13 @@ export default function Admin() {
                     stats={stats}
                     onNavigateToSection={(section) => setActivePanelSection(section)}
                   />
+                )}
+                {activePanelSection === 'crm' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading CRM</div>}>
+                    <div className="px-1 pt-2">
+                      <CrmDirectory />
+                    </div>
+                  </ErrorBoundary>
                 )}
                 {activePanelSection === 'affiliates' && (
                   /* @ts-ignore */

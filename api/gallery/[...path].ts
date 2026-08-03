@@ -12,7 +12,7 @@ import { getZohoAuthContext, sendZohoEmail, ensureBannerHtml } from '../../lib/a
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
     name: 'THE LOST+UNFOUNDS',
-    logo: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png',
+    logo: 'https://www.thelostandunfounds.com/brand/banner.png',
     website: 'https://www.thelostandunfounds.com',
     colors: {
         background: '#000000',

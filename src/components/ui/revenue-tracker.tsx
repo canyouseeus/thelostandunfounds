@@ -8,13 +8,26 @@ import {
     ChevronDownIcon,
     ChevronRightIcon,
     ArrowTrendingUpIcon,
+    ArrowTrendingDownIcon,
     CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { AnimatedNumber } from './animated-number';
 import { DashboardCharts } from '../admin/DashboardCharts';
 import { cn } from './utils';
 
-type TimePeriod = 'all' | 'yearly' | 'monthly' | 'weekly' | 'daily';
+type TimePeriod = 'all' | 'yearly' | 'ninetyDay' | 'sixtyDay' | 'monthly' | 'weekly' | 'daily';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Length of each bounded period. 'all' is excluded — it has no fixed span. */
+const PERIOD_MS: Record<Exclude<TimePeriod, 'all'>, number> = {
+    daily: DAY_MS,
+    weekly: 7 * DAY_MS,
+    monthly: 30 * DAY_MS,
+    sixtyDay: 60 * DAY_MS,
+    ninetyDay: 90 * DAY_MS,
+    yearly: 365 * DAY_MS,
+};
 
 interface RevenueTrackerProps {
     affiliateRevenue: number;
@@ -52,54 +65,60 @@ export function RevenueTracker({
 
     const totalRevenue = affiliateRevenue + galleryRevenue + subscriberRevenue + bookingRevenue;
 
-    // Use actual history data to calculate values for specific time periods
-    const getDisplayRevenue = () => {
-        if (timePeriod === 'all') return totalRevenue;
-
-        // If no history, use placeholders as a fallback (should be rare now)
-        if (!history || !history.revenue || history.revenue.length === 0) {
-            switch (timePeriod) {
-                case 'daily': return 0;
-                case 'weekly': return 0;
-                case 'monthly': return 0;
-                case 'yearly': return 0;
-                default: return totalRevenue;
-            }
-        }
-
-        const now = Date.now();
-        let startTime = 0;
-
-        switch (timePeriod) {
-            case 'daily':
-                startTime = now - 24 * 60 * 60 * 1000;
-                break;
-            case 'weekly':
-                startTime = now - 7 * 24 * 60 * 60 * 1000;
-                break;
-            case 'monthly':
-                startTime = now - 30 * 24 * 60 * 60 * 1000;
-                break;
-            case 'yearly':
-                startTime = now - 365 * 24 * 60 * 60 * 1000;
-                break;
-        }
-
-        // Sum up revenue from items within the time period
+    const sumBetween = (startTime: number, endTime: number) => {
+        if (!history?.revenue) return 0;
         return history.revenue
-            .map(item => {
-                if (typeof item === 'string') {
-                    return { time: new Date(item).getTime(), amount: 0 };
-                }
-                return { time: new Date(item.date).getTime(), amount: item.amount };
-            })
-            .filter(item => item.time >= startTime)
+            .map(item =>
+                typeof item === 'string'
+                    ? { time: new Date(item).getTime(), amount: 0 }
+                    : { time: new Date(item.date).getTime(), amount: item.amount },
+            )
+            .filter(item => item.time >= startTime && item.time < endTime)
             .reduce((sum, item) => sum + item.amount, 0);
     };
+
+    // Revenue inside the selected window. ALL TIME uses the live totals rather
+    // than history, so it stays correct even if history is empty.
+    const getDisplayRevenue = () => {
+        if (timePeriod === 'all') return totalRevenue;
+        if (!history || !history.revenue || history.revenue.length === 0) return 0;
+        const now = Date.now();
+        return sumBetween(now - PERIOD_MS[timePeriod], now);
+    };
+
+    /**
+     * Period-over-period change: this window vs the immediately preceding
+     * window of equal length.
+     *
+     * Growing from a zero baseline has no defined percentage, so the gain
+     * itself is reported as the percentage: $0 last week to $270 this week
+     * reads +270%. Only two cases render nothing: ALL TIME (no prior period
+     * exists) and zero-to-zero (nothing happened either side).
+     */
+    const getPeriodChange = (): { pct: number; up: boolean } | null => {
+        if (timePeriod === 'all') return null;
+
+        const span = PERIOD_MS[timePeriod];
+        const now = Date.now();
+        const current = sumBetween(now - span, now);
+        const previous = sumBetween(now - 2 * span, now - span);
+
+        if (previous === 0) {
+            if (current === 0) return null;
+            return { pct: current, up: true };
+        }
+
+        const pct = ((current - previous) / previous) * 100;
+        return { pct, up: pct >= 0 };
+    };
+
+    const periodChange = getPeriodChange();
 
     const periods: { key: TimePeriod; label: string }[] = [
         { key: 'all', label: 'ALL TIME' },
         { key: 'yearly', label: 'YTD' },
+        { key: 'ninetyDay', label: '90D' },
+        { key: 'sixtyDay', label: '60D' },
         { key: 'monthly', label: 'MTD' },
         { key: 'weekly', label: '7D' },
         { key: 'daily', label: '24H' },
@@ -154,10 +173,19 @@ export function RevenueTracker({
                             <span className="text-5xl sm:text-6xl md:text-8xl font-black text-white font-mono tracking-tighter">
                                 <AnimatedNumber value={getDisplayRevenue()} />
                             </span>
-                            {totalRevenue > 0 && (
-                                <div className="flex items-center gap-1 text-green-400 ml-2">
-                                    <ArrowTrendingUpIcon className="w-4 h-4 md:w-5 md:h-5" />
-                                    <span className="text-sm md:text-lg font-bold font-mono">+{((getDisplayRevenue() / totalRevenue) * 100).toFixed(0)}%</span>
+                            {periodChange && (
+                                <div
+                                    className={`flex items-center gap-1 ml-2 ${periodChange.up ? 'text-green-400' : 'text-red-400'}`}
+                                    title={`vs previous ${periods.find(p => p.key === timePeriod)?.label ?? 'period'}`}
+                                >
+                                    {periodChange.up ? (
+                                        <ArrowTrendingUpIcon className="w-4 h-4 md:w-5 md:h-5" />
+                                    ) : (
+                                        <ArrowTrendingDownIcon className="w-4 h-4 md:w-5 md:h-5" />
+                                    )}
+                                    <span className="text-sm md:text-lg font-bold font-mono">
+                                        {periodChange.up ? '+' : ''}{periodChange.pct.toFixed(0)}%
+                                    </span>
                                 </div>
                             )}
                         </div>

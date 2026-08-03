@@ -282,7 +282,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   labelStyle().text('BILL TO', LEFT, y, { characterSpacing: 1.5 })
   labelStyle().text('EVENT', LEFT + 280, y, { characterSpacing: 1.5 })
   y += 14
-  valueStyle().font('Helvetica-Bold').text(data.clientName, LEFT, y, { width: 260 })
+  valueStyle().font('Helvetica-Bold').text((data.clientName || '').toUpperCase(), LEFT, y, { width: 260 })
   const eventLineY = y
   valueStyle().text(fmtDateWithWeekday(data.eventDate), LEFT + 280, eventLineY, { width: 220 })
   y += 16

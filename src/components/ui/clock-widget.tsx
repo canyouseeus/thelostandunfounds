@@ -9,9 +9,14 @@ type TimerState = 'set' | 'countdown' | 'running';
 interface ClockWidgetProps {
     className?: string;
     size?: 'sm' | 'md' | 'lg';
+    /** Hide the CLOCK/STOPWATCH/TIMER caption for tight placements. */
+    hideLabel?: boolean;
+    /** Pin to clock mode — no stopwatch/timer cycling. For small, display-only
+     *  placements like the site header where the extra controls don't fit. */
+    lockMode?: boolean;
 }
 
-export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
+export function ClockWidget({ className, size = 'md', hideLabel = false, lockMode = false }: ClockWidgetProps) {
     // "lg" renders compact on mobile and full-size at md+, so it fits narrow
     // dashboard columns; other sizes keep the original fixed full-size layout.
     const responsive = size === 'lg';
@@ -141,6 +146,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
     }, [isDigital, is24Hour]);
 
     const cycleMode = () => {
+        if (lockMode) return;
         if (mode === 'clock') setMode('stopwatch');
         else if (mode === 'stopwatch') setMode('timer');
         else setMode('clock');
@@ -378,13 +384,17 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
             {/* Top Label - Mode Switcher - Large Tap Area */}
             <div
-                className={cn("absolute top-0 left-0 right-0 z-20 cursor-pointer flex items-start justify-center select-none", responsive ? "h-6 md:h-12 pt-1.5 md:pt-4" : "h-12 pt-4")}
+                className={cn("absolute top-0 left-0 right-0 z-20 flex items-start justify-center select-none", responsive ? "h-6 md:h-12 pt-1.5 md:pt-4" : "h-12 pt-4", lockMode ? "pointer-events-none" : "cursor-pointer")}
                 onClick={cycleMode}
             >
                 <div className={cn("bg-transparent", responsive ? "px-4 py-1 md:px-8 md:py-4" : "px-8 py-4")}>
-                    <span className={cn("tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors", responsive ? "text-[8px] md:text-[10px]" : "text-[10px]")}>
-                        {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
-                    </span>
+                    {/* Label hidden in compact placements (e.g. the header) — the
+                        tap area above still cycles clock → stopwatch → timer. */}
+                    {!hideLabel && (
+                        <span className={cn("tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors", responsive ? "text-[8px] md:text-[10px]" : "text-[10px]")}>
+                            {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>

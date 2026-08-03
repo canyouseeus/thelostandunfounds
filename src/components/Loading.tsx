@@ -41,7 +41,7 @@ export function LoadingOverlay({ message }: { message?: string }) {
         {/* Logo - Full opacity */}
         <div className="w-full flex justify-center">
           <img
-            src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/toulouse.png"
+            src="/assets/toulouse.png"
             alt="Logo"
             className="w-full h-auto object-contain"
             onLoad={() => setImageLoaded(true)}

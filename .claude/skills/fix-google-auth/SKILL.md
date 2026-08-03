@@ -12,7 +12,7 @@ description: Diagnose and resolve Google OAuth failures. Use when Google login f
 Use the Supabase MCP:
 ```
 mcp__e1627760-fb4d-4619-8413-df82f44de129__get_logs
-  project_id: nonaqhllakrckbtbawrb
+  project_id: cxpyqjxhbvuygnxyukli
   service: auth
 ```
 
@@ -24,14 +24,14 @@ Look for the actual error message. Common ones and their fixes:
 **Fix:**
 1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
 2. Find the OAuth 2.0 Client ID → copy the current **Client Secret**
-3. Go to [Supabase Dashboard → Auth → Providers → Google](https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb/auth/providers)
+3. Go to [Supabase Dashboard → Auth → Providers → Google](https://supabase.com/dashboard/project/cxpyqjxhbvuygnxyukli/auth/providers)
 4. Paste the secret → Save
 5. Done. No code changes needed.
 
 ### "redirect_uri_mismatch"
 **Root cause:** The Supabase callback URL isn't registered in Google Cloud Console.
 
-**Fix:** In Google Cloud Console, add `https://nonaqhllakrckbtbawrb.supabase.co/auth/v1/callback` to the list of **Authorized redirect URIs** for the OAuth client.
+**Fix:** In Google Cloud Console, add `https://cxpyqjxhbvuygnxyukli.supabase.co/auth/v1/callback` to the list of **Authorized redirect URIs** for the OAuth client.
 
 ### "invalid_grant" / code expired
 **Root cause:** The OAuth code expired before Supabase could exchange it (usually >60s delay).

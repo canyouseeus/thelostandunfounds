@@ -144,7 +144,7 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
               <a href="https://www.thelostandunfounds.com" target="_blank">
-                <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
               </a>
             </td>
           </tr>

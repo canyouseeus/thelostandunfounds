@@ -17,28 +17,21 @@ export function DashboardCategoryCard({ icon, title, footer, content }: Dashboar
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
-          {/* Desktop tile */}
-          <div className="hidden md:flex flex-col h-full min-h-[190px] bg-black hover:bg-[#0a0a0a] transition-colors duration-300 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-white/50 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 truncate">{title}</h3>
+          {/* Square at-a-glance widget — same shape and rhythm as the clock,
+              calendar and calculator, showing live figures at every breakpoint
+              instead of an icon-only tile. Still opens full screen on click.
+              Content is scaled down on mobile so the numbers fit the cell. */}
+          <div className="bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300 aspect-square w-full flex flex-col p-3 md:p-4 overflow-hidden">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 shrink-0">
+              <span className="text-white/50 [&>svg]:w-3.5 [&>svg]:h-3.5 md:[&>svg]:w-4 md:[&>svg]:h-4">{icon}</span>
+              <h3 className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/80 truncate">
+                {titleWords[0]}
+                {titleWords.length > 1 && (
+                  <span className="text-white/40"> {titleWords.slice(1).join(' ')}</span>
+                )}
+              </h3>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">{content}</div>
-          </div>
-
-          {/* Mobile tile */}
-          <div className="flex md:hidden flex-col items-center justify-center p-2.5 bg-white/5 aspect-square w-full active:scale-95 transition-all duration-200">
-            <div className="p-2 bg-white/10 rounded-full mb-1">
-              <span className="text-white/40 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
-            </div>
-            <span className="text-[8px] font-black uppercase tracking-[0.05em] text-center leading-tight text-white/60 px-1">
-              {titleWords[0]}
-            </span>
-            {titleWords.length > 1 && (
-              <span className="text-[6px] font-bold uppercase tracking-[0.05em] text-center leading-none text-white/30">
-                {titleWords.slice(1).join(' ')}
-              </span>
-            )}
+            <div className="flex-1 min-h-0 overflow-hidden [zoom:0.72] md:[zoom:1]">{content}</div>
           </div>
         </ExpandableScreenTrigger>
 
