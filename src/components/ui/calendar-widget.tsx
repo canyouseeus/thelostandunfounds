@@ -12,10 +12,13 @@ interface CalendarWidgetProps {
     onMonthChange?: (d: Date) => void;
     dotsByDate?: Map<string, { bookings: number; events: number; photos: number; blocked: boolean }>;
     /**
-     * 'default' (≈240px column, used in date pickers and sidebars) or
-     * 'large' (scales up at md/lg breakpoints, for full-width admin master calendar).
+     * 'default' (≈240px column, used in date pickers and sidebars),
+     * 'large' (scales up at md/lg breakpoints, for full-width admin master calendar), or
+     * 'fill' (fixed metrics tuned to fill a 440px square — the dashboard tile,
+     * which renders inside a FitBox and is scaled to the cell afterwards, so
+     * absolute px here are a design size rather than a screen size).
      */
-    size?: 'default' | 'large';
+    size?: 'default' | 'large' | 'fill';
 }
 
 export function CalendarWidget({
@@ -30,6 +33,7 @@ export function CalendarWidget({
     size = 'default',
 }: CalendarWidgetProps) {
     const isLarge = size === 'large';
+    const isFill = size === 'fill';
     const today = new Date();
     const [internalViewDate, setInternalViewDate] = useState(startDate || today);
     const viewDate = controlledViewDate ?? internalViewDate;
@@ -79,11 +83,12 @@ export function CalendarWidget({
 
     return (
         <div className={cn(
-            "bg-black p-6 flex flex-col items-center justify-center",
-            isLarge ? "min-h-[280px] md:min-h-[520px] lg:min-h-[640px]" : "min-h-[280px]",
+            "bg-black flex flex-col items-center justify-center",
+            isFill ? "p-3" : "p-6",
+            isLarge ? "min-h-[280px] md:min-h-[520px] lg:min-h-[640px]" : isFill ? "min-h-0" : "min-h-[280px]",
             className,
         )}>
-            <div className={cn("w-full", isLarge ? "max-w-[240px] md:max-w-[680px] lg:max-w-[920px]" : "max-w-[240px]")}>
+            <div className={cn("w-full", isLarge ? "max-w-[240px] md:max-w-[680px] lg:max-w-[920px]" : isFill ? "max-w-none" : "max-w-[240px]")}>
                 {/* Header */}
                 <div className={cn("flex items-baseline justify-between pb-2 relative", isLarge ? "mb-6 md:mb-8" : "mb-6")}>
                     {interactive && (
@@ -92,8 +97,8 @@ export function CalendarWidget({
                         </button>
                     )}
                     <div className={cn("flex-1 flex items-baseline justify-center", isLarge ? "gap-2 md:gap-3" : "gap-2")}>
-                        <span className={cn("font-bold text-white tracking-tight", isLarge ? "text-xl md:text-3xl lg:text-4xl" : "text-xl")}>{currentMonth}</span>
-                        <span className={cn("text-white/40 font-mono", isLarge ? "text-sm md:text-lg" : "text-sm")}>{currentYear}</span>
+                        <span className={cn("font-bold text-white tracking-tight", isLarge ? "text-xl md:text-3xl lg:text-4xl" : isFill ? "text-3xl" : "text-xl")}>{currentMonth}</span>
+                        <span className={cn("text-white/40 font-mono", isLarge ? "text-sm md:text-lg" : isFill ? "text-lg" : "text-sm")}>{currentYear}</span>
                     </div>
                     {interactive && (
                         <button onClick={handleNext} className="p-1 hover:text-white text-white/40 transition-colors absolute -right-2">
@@ -105,13 +110,13 @@ export function CalendarWidget({
                 {/* Grid */}
                 <div className="grid grid-cols-7 text-center">
                     {weekDays.map((d, i) => (
-                        <div key={`${d}-${i}`} className={cn("text-white/30 font-medium flex items-center justify-center", isLarge ? "text-[10px] md:text-xs lg:text-sm h-8 md:h-10" : "text-[10px] h-8")}>
+                        <div key={`${d}-${i}`} className={cn("text-white/30 font-medium flex items-center justify-center", isLarge ? "text-[10px] md:text-xs lg:text-sm h-8 md:h-10" : isFill ? "text-sm h-10" : "text-[10px] h-8")}>
                             {d}
                         </div>
                     ))}
 
                     {blanks.map(i => (
-                        <div key={`blank-${i}`} className={cn(isLarge ? "h-10 md:h-16 lg:h-20" : "h-10")} />
+                        <div key={`blank-${i}`} className={cn(isLarge ? "h-10 md:h-16 lg:h-20" : isFill ? "h-[58px]" : "h-10")} />
                     ))}
 
                     {days.map(d => {
@@ -127,7 +132,7 @@ export function CalendarWidget({
                         const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked);
 
                         return (
-                            <div key={d} className={cn("relative flex flex-col items-center justify-start", isLarge ? "h-10 md:h-16 lg:h-20 pt-[3px] md:pt-2" : "h-10 pt-[3px]")}>
+                            <div key={d} className={cn("relative flex flex-col items-center justify-start", isLarge ? "h-10 md:h-16 lg:h-20 pt-[3px] md:pt-2" : isFill ? "h-[58px] pt-1" : "h-10 pt-[3px]")}>
                                 {/* Range fill */}
                                 {hasRange && (dayIsStart || dayIsEnd || dayInRange) && (
                                     <div
@@ -151,7 +156,7 @@ export function CalendarWidget({
                                     }}
                                     className={cn(
                                         "relative z-10 flex items-center justify-center font-mono transition-all rounded-full",
-                                        isLarge ? "w-7 h-7 md:w-11 md:h-11 lg:w-14 lg:h-14 text-xs md:text-base lg:text-lg" : "w-7 h-7 text-xs",
+                                        isLarge ? "w-7 h-7 md:w-11 md:h-11 lg:w-14 lg:h-14 text-xs md:text-base lg:text-lg" : isFill ? "w-11 h-11 text-lg" : "w-7 h-7 text-xs",
                                         !interactive && "cursor-default",
                                         selected
                                             ? "bg-white text-black font-bold"

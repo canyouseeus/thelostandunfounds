@@ -33,13 +33,13 @@ export function DashboardTile({ icon, title, children, footer, className }: Dash
   return (
     <div
       className={cn(
-        'bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300',
-        'w-full h-full flex flex-col p-4 min-h-[172px]',
+        'bg-white/5 hover:bg-white/10 active:scale-95 transition-all duration-300',
+        'w-full h-full flex flex-col p-5 min-h-[172px]',
         className,
       )}
       style={{ borderRadius: 0 }}
     >
-      <div className="flex items-center gap-2 mb-2 shrink-0">
+      <div className="flex items-center gap-2 mb-4 shrink-0">
         <span className="text-white/50 [&>svg]:w-4 [&>svg]:h-4 shrink-0">{icon}</span>
         <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 leading-tight text-left">
           {first}

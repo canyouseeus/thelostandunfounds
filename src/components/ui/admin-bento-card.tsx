@@ -146,7 +146,7 @@ export function AdminBentoRow({ label, value, className, valueClassName, onClick
       onClick={onClick}
     >
       <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1">{label}</span>
-      <span className={cn('text-sm font-medium text-white/90 text-left', valueClassName)}>{value}</span>
+      <span className={cn('text-2xl font-black tracking-tight text-white tabular-nums text-left leading-none', valueClassName)}>{value}</span>
     </div>
   );
 }

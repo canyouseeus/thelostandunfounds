@@ -74,20 +74,26 @@ export function SiteAnalyticsCard() {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className="w-full text-left cursor-pointer">
           <DashboardTile
             icon={<ChartBarIcon className="w-4 h-4" />}
             title="Site Analytics"
             footer={
-              <div className="flex gap-1 h-6 md:h-8 items-end justify-between mt-2">
-                {(trend.length ? trend : Array.from({ length: 14 }, () => ({ count: 0 }))).map((t, i) => (
-                  <div
-                    key={i}
-                    className="bg-white/10 w-full hover:bg-white/30 transition-colors"
-                    style={{ height: `${Math.max(4, (t.count / maxTrend) * 100)}%` }}
-                  />
-                ))}
-              </div>
+              // Only draw the sparkline when there is something to draw. With no
+              // traffic every bar sat at its 4% floor, which rendered as a row of
+              // dashes across the tile — it read as a broken divider rule, not a
+              // chart.
+              trend.some((t) => t.count > 0) ? (
+                <div className="flex gap-[3px] h-10 items-end justify-between mt-4">
+                  {trend.map((t, i) => (
+                    <div
+                      key={i}
+                      className="bg-white/20 w-full hover:bg-white transition-colors"
+                      style={{ height: `${Math.max(6, (t.count / maxTrend) * 100)}%` }}
+                    />
+                  ))}
+                </div>
+              ) : null
             }
           >
               <AdminBentoRow label="Total Views" value={stats ? stats.totalViews.toLocaleString() : loading ? '…' : '0'} />

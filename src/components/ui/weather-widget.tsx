@@ -405,11 +405,13 @@ export function WeatherWidget({ className }: { className?: string }) {
         aria-label="Weather — open detailed forecast"
         className={cn(
           'bg-black p-6 flex flex-col select-none cursor-pointer touch-manipulation min-h-[120px] md:min-h-[200px]',
+          // Rendered inside FitBox's 440px square, so these sizes are a design
+          // size and get scaled to the cell — big enough to fill the tile.
           className,
         )}
         style={{ borderRadius: 0 }}
       >
-        <span className="text-[10px] font-black uppercase tracking-widest text-white/40 text-left">Weather</span>
+        <span className="text-sm font-black uppercase tracking-widest text-white/40 text-left">Weather</span>
 
         {error ? (
           <div className="flex-1 flex items-center">
@@ -421,19 +423,19 @@ export function WeatherWidget({ className }: { className?: string }) {
           </div>
         ) : (
           <div className="flex-1 flex flex-col justify-center text-left">
-            <div className={cn('text-5xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</div>
-            <div className="mt-3 text-5xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</div>
-            <div className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/70 truncate">{data.place.name}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 truncate">
+            <div className={cn('text-7xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</div>
+            <div className="mt-4 text-8xl font-black leading-none text-white tabular-nums tracking-tight">{round(data.current.temperature)}°</div>
+            <div className="mt-5 text-lg font-black uppercase tracking-widest text-white truncate">{data.place.name}</div>
+            <div className="mt-2 text-sm uppercase tracking-widest text-white/50 truncate">
               {conditionLabel(data.current.code)}
             </div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
+            <div className="mt-1 text-sm uppercase tracking-widest text-white/50 tabular-nums">
               H {round(data.today.max)}° L {round(data.today.min)}°
             </div>
           </div>
         )}
 
-        <span className="text-[9px] uppercase tracking-widest text-white/20 text-left">Hold for detail</span>
+        <span className="text-xs uppercase tracking-widest text-white/25 text-left">Hold for detail</span>
       </div>
 
       {open && (

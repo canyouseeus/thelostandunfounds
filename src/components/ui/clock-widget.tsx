@@ -276,8 +276,30 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                                     toggleClockType();
                                 }}
                             >
-                                {/* Clock Face Border */}
-                                <div className="absolute inset-2 rounded-full" />
+                                {/* Hour marks. Without a dial the face read as an
+                                    empty square with two lines in it — the ticks
+                                    give the hands something to be read against
+                                    and let the clock fill its cell. Quarters sit
+                                    brighter and longer than the rest. */}
+                                <div className="absolute inset-0">
+                                    {Array.from({ length: 12 }, (_, i) => {
+                                        const quarter = i % 3 === 0;
+                                        return (
+                                            <div
+                                                key={i}
+                                                className="absolute left-1/2 top-0 h-1/2 origin-bottom"
+                                                style={{ transform: `translateX(-50%) rotate(${i * 30}deg)` }}
+                                            >
+                                                <div
+                                                    className={cn(
+                                                        'mx-auto',
+                                                        quarter ? 'w-[2px] h-[9%] bg-white/70' : 'w-[1px] h-[5%] bg-white/25',
+                                                    )}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
 
                                 {/* Hands - Flat Design, No Shadows */}
                                 <div className="relative w-full h-full">

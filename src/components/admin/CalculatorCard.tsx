@@ -70,13 +70,16 @@ export function CalculatorCard({ className, wide = false }: { className?: string
     <button
       onClick={onClick}
       className={cn(
-        'font-bold font-mono transition-colors active:scale-95',
+        'font-mono transition-colors active:scale-95 bg-black',
         // Wide mode gets the room of a full-width row, so the keys grow to a
         // real touch target instead of the 32px a 1/3-width cell allowed.
-        wide ? 'h-14 sm:h-16 text-base sm:text-lg' : 'h-8 text-[11px]',
-        variant === 'accent' ? 'bg-white/90 text-black hover:bg-white'
-          : variant === 'op' ? 'bg-white/10 text-white hover:bg-white/20'
-          : 'bg-white/5 text-white hover:bg-white/10',
+        wide ? 'h-14 sm:h-16 text-xl sm:text-2xl' : 'h-8 text-[11px]',
+        // No key plates. The keypad is type on black — weight and tone carry
+        // the hierarchy (operators bright, digits plain, utilities dim) and
+        // hover inverts a key rather than tinting a surface.
+        variant === 'accent' ? 'font-black text-white hover:bg-white hover:text-black'
+          : variant === 'op' ? 'font-bold text-white/50 hover:bg-white hover:text-black'
+          : 'font-bold text-white/90 hover:bg-white hover:text-black',
       )}
     >
       {label}
@@ -85,7 +88,11 @@ export function CalculatorCard({ className, wide = false }: { className?: string
 
   return (
     <div className={cn(
-      'bg-black p-6 flex flex-col items-center justify-center min-h-[280px]',
+      'bg-black flex flex-col items-center justify-center',
+      // The 280px floor was sized for the old third-width cell. In a full-width
+      // row the keypad is already taller than that, so the floor only added a
+      // band of empty black above the display.
+      wide ? 'p-4 min-h-0' : 'p-6 min-h-[280px]',
       className,
     )}>
       <div className={cn('w-full', wide ? 'max-w-[640px]' : 'max-w-[240px]')}>
@@ -99,7 +106,7 @@ export function CalculatorCard({ className, wide = false }: { className?: string
           </div>
         </div>
 
-        <div className={cn('grid grid-cols-4', wide ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
+        <div className={cn('grid grid-cols-4', wide ? 'gap-1' : 'gap-1.5')}>
           <Key label="AC" onClick={clear} variant="op" />
           <Key label="±" onClick={() => setDisplay(d => (d.startsWith('-') ? d.slice(1) : d === '0' ? d : '-' + d))} variant="op" />
           <Key label="%" onClick={() => { setDisplay(d => fmt(parseFloat(d) / 100)); setFresh(true); }} variant="op" />

@@ -1428,7 +1428,6 @@ export default function Admin() {
     {
       id: 'network-status',
       title: 'Network Status',
-      wide: true,
       icon: <CpuChipIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System health</span>,
       content: (
@@ -1473,7 +1472,6 @@ export default function Admin() {
     {
       id: 'notifications',
       title: 'Notifications',
-      wide: true,
       icon: <BellIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
       content: (
@@ -1612,8 +1610,11 @@ export default function Admin() {
             this grid alongside the other widgets. */}
         {/* Bento, not a uniform 3×3: two columns on a phone so a tile has the
             width to show its figures in full, three from md. Tiles size to
-            their content and some take both columns — see DashboardTile. */}
-        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+            their content, and three of them span two columns. Six single tiles
+            plus three doubles is twelve cells, which divides evenly by both 2
+            and 3 — so neither layout ends on a half-empty row. `dense` backfills
+            any hole if that count ever changes. */}
+        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 [grid-auto-flow:dense]">
           {/* Square 1×1 cells so the widget row reads as a uniform grid.
               !min-h-0 overrides each widget's own min-height, which would
               otherwise stretch the cell taller than its width.
@@ -1625,15 +1626,31 @@ export default function Admin() {
               only painted smaller afterwards. FitBox lays these out at a full
               440px square and scales the painted result to the cell, so they
               keep their proportions at every width. */}
-          <div className="col-span-2 md:col-span-3 grid grid-cols-3 gap-3 sm:gap-6">
-            <FitBox>
-              <ClockWidget size="lg" className="w-full h-full !min-h-0" />
+          <div className="col-span-2 md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+            {/* Two across on a phone, three from md. Three squares across a
+                390px screen is 120px each — the calendar's day grid ends up
+                rendering at about 4px, which is a picture of a calendar rather
+                than a calendar. The clock and weather pair up, and the calendar
+                takes the full width below them, where it's actually readable.
+
+                The clock is drawn in percentages, so it fills a square on its
+                own — no FitBox needed. The calendar and weather lay out in fixed
+                px, so they're designed against FitBox's square and scaled to the
+                cell: `size="fill"` and the larger type exist to use that square
+                rather than float in the middle of it. */}
+            <ClockWidget size="lg" className="aspect-square !min-h-0 w-full bg-white/5" />
+            <FitBox className="md:order-3">
+              <WeatherWidget className="w-full h-full !min-h-0 bg-white/5" />
             </FitBox>
-            <FitBox>
-              <CalendarWidget className="w-full h-full !min-h-0" />
-            </FitBox>
-            <FitBox>
-              <WeatherWidget className="w-full h-full !min-h-0" />
+            {/* 500, not the default 440: the fill variant lays out at roughly
+                480px tall, and a base shorter than the content clips the last
+                week of the month.
+
+                Ordered last so the clock and weather pair on the first row and
+                the calendar takes the full width beneath them; at md all three
+                sit in one row and `order` puts the calendar back in the middle. */}
+            <FitBox base={500} className="col-span-2 md:col-span-1 md:order-2">
+              <CalendarWidget size="fill" className="w-full h-full bg-white/5" />
             </FitBox>
           </div>
 
@@ -1641,13 +1658,25 @@ export default function Admin() {
               cell its keys scaled down to well under a fingertip; across the
               whole row they're a real touch target. */}
           <CalculatorCard wide className="col-span-2 md:col-span-3 w-full" />
+        </div>
 
+        {/* Tiles are masonry, not grid rows.
+            A CSS grid gives every cell in a row the height of the tallest tile
+            in it, so a three-stat tile beside a five-stat one sits in a box with
+            a band of empty space under it — the dead space beside Registry.
+            Columns pack each tile at its own height with nothing left over, and
+            the uneven heights are what make it read as a bento rather than a
+            spreadsheet. `break-inside-avoid` keeps a tile from being split
+            across the column boundary.
+            The selector reaches grandchildren because each card wraps itself in
+            a `display: contents` div — that wrapper is skipped for layout, so
+            its children are what actually flow in the columns. */}
+        <div className="mt-3 sm:mt-6 columns-2 md:columns-3 gap-3 sm:gap-6 [&>*>*]:break-inside-avoid [&>*>*]:mb-3 sm:[&>*>*]:mb-6">
           {dashboardCategories.map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
-              wide={category.wide}
               footer={category.footer}
               content={category.content}
             />
