@@ -122,7 +122,12 @@ export default async function handler(
         // Create the Checkout Session.
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
-            payment_method_types: ['card'],
+            // payment_method_types is deliberately omitted so Checkout uses the
+            // account's Dashboard payment method configuration. Hardcoding
+            // ['card'] overrides it and drops Link, Cash App, Klarna and Amazon
+            // Pay — all enabled on this account and offered by its payment
+            // links, but never by the site. (Apple/Google Pay ride along with
+            // card either way.)
             line_items: [
                 {
                     quantity: 1,

@@ -159,7 +159,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    payment_method_types: ['card'],
+    // Omitted so Checkout uses the Dashboard payment method configuration
+    // (adds Link, Cash App, Klarna, Amazon Pay). See _payments-stripe-handler.
     customer_email: email,
     line_items: [
       {
