@@ -59,6 +59,7 @@ import {
   BanknotesIcon,
   PrinterIcon,
   EllipsisHorizontalIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -82,7 +83,8 @@ import { CrmDirectory } from '../components/admin/CrmDirectory';
 import { RefundsLedger } from '../components/admin/RefundsCard';
 import ProfitGraph from '../components/admin/ProfitGraph';
 import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
-import { TILE_SQUARE, TILE_WIDE, TILE_LARGE } from '../components/admin/DashboardTile';
+import { EditableTile } from '../components/admin/EditableTile';
+import { useDashboardLayout } from '../components/admin/useDashboardLayout';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
@@ -265,6 +267,8 @@ export default function Admin() {
   // Long press on the dashboard calendar opens the master calendar panel —
   // the same one the header date links to.
   const calendarPress = useLongPress(() => openPanel('calendar'));
+  // Widget shapes and order, editable and saved to this browser.
+  const layout = useDashboardLayout();
 
   const openPanel = (id: string) => {
     setActivePanelSection(prev => (prev === id ? null : id));
@@ -1387,7 +1391,6 @@ export default function Admin() {
   const dashboardCategories = [
     {
       id: 'operational-load',
-      span: TILE_SQUARE,
       title: 'Operational Load',
       icon: <ChartBarIcon className="w-4 h-4" />,
       primary: <AnimatedNumber value={stats?.totalUsers || 0} />,
@@ -1435,7 +1438,6 @@ export default function Admin() {
     },
     {
       id: 'revenue-performance',
-      span: TILE_WIDE,
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
       primary: <span className="text-green-400">${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}</span>,
@@ -1468,7 +1470,6 @@ export default function Admin() {
     },
     {
       id: 'network-status',
-      span: TILE_WIDE,
       title: 'Network Status',
       icon: <CpuChipIcon className="w-4 h-4" />,
       primary: `${[healthMetrics.db, healthMetrics.api, healthMetrics.auth, healthMetrics.storage].filter(Boolean).length}/4`,
@@ -1507,7 +1508,6 @@ export default function Admin() {
     },
     {
       id: 'registry',
-      span: TILE_SQUARE,
       title: 'Registry',
       icon: <ShieldCheckIcon className="w-4 h-4" />,
       primary: (stats?.galleryPhotoCount || 0).toLocaleString(),
@@ -1529,7 +1529,6 @@ export default function Admin() {
     },
     {
       id: 'notifications',
-      span: TILE_WIDE,
       title: 'Notifications',
       icon: <BellIcon className="w-4 h-4" />,
       primary: alerts.length,
@@ -1679,75 +1678,100 @@ export default function Admin() {
             plus three doubles is twelve cells, which divides evenly by both 2
             and 3 — so neither layout ends on a half-empty row. `dense` backfills
             any hole if that count ever changes. */}
-        {/* One lattice for the whole dashboard.
-            The clock, calendar, calculator and weather used to sit in a grid of
-            their own above the data tiles, so nothing could pack against them
-            and the odd shapes left holes beside their neighbours. Everything is
-            now on the same grid in the same four shapes.
-
-            Areas: six squares (6) + three wides (6) + two larges (8) = 20 units,
-            which divides by both 2 and 4 — so neither the phone nor the desktop
-            layout ends on a half-empty row. `dense` backfills anything left. */}
-        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 [grid-auto-flow:dense]">
-          <ClockWidget size="lg" className={cn(TILE_SQUARE, '!min-h-0 w-full')} />
-
-          <FitBox baseWidth={220} baseHeight={220} className={TILE_SQUARE}>
-            <WeatherWidget className="w-full h-full !min-h-0" />
-          </FitBox>
-
-          {/* Long press (or click with a mouse) opens the master calendar — the
-              same panel the header date links to. Selection is suppressed on the
-              way in: a long press landing on text otherwise starts an iOS
-              selection instead of opening anything. */}
-          <div
-            {...calendarPress}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
-            aria-label="Calendar — open master calendar"
-            className={cn(TILE_LARGE, 'cursor-pointer touch-manipulation select-none')}
-            style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <FitBox base={500} className="h-full">
-              <CalendarWidget size="fill" className="w-full h-full" />
-            </FitBox>
+        {/* One lattice for the whole dashboard, and it's yours to rearrange.
+            Every widget is a cell here — clock and weather included — so they
+            all pack against each other with nothing left over. Shapes and order
+            come from the saved layout; the editor below writes to it. */}
+        <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+            {layout.editing ? `${layout.units} units — ${layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'}, ${layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}` : ''}
+          </span>
+          <div className="flex items-center gap-2">
+            {layout.editing && (
+              <button
+                onClick={layout.reset}
+                className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+                style={{ borderRadius: 0 }}
+              >
+                Reset
+              </button>
+            )}
+            <button
+              onClick={() => layout.setEditing(!layout.editing)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors',
+                layout.editing ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white hover:text-black',
+              )}
+              style={{ borderRadius: 0 }}
+            >
+              <Squares2X2Icon className="w-3 h-3" />
+              {layout.editing ? 'Done' : 'Edit layout'}
+            </button>
           </div>
+        </div>
 
-          {dashboardCategories.filter(c => c.id !== 'notifications').map((category) => (
-            <DashboardCategoryCard
-              key={category.id}
-              icon={category.icon}
-              title={category.title}
-              span={category.span}
-              primary={category.primary}
-              caption={category.caption}
-              aside={category.aside}
-              footer={category.footer}
-              content={category.content}
-            />
-          ))}
+        <div id="dashboard-widgets" className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]">
+          {layout.order.map(id => {
+            const cell = (node: React.ReactNode) => (
+              <EditableTile
+                key={id}
+                id={id}
+                className={layout.classOf(id)}
+                editing={layout.editing}
+                shape={layout.shapes[id] ?? '2x2'}
+                onSetShape={layout.setShape}
+                onDropBefore={layout.moveBefore}
+              >
+                {node}
+              </EditableTile>
+            );
 
-          {/* Site Analytics — fullscreen ExpandableScreen pattern */}
-          <SiteAnalyticsCard span={TILE_SQUARE} />
+            if (id === 'clock') return cell(<ClockWidget size="lg" className="!min-h-0 w-full h-full" />);
 
-          {/* CRM — client directory + billing rollup */}
-          <CrmCard span={TILE_SQUARE} />
+            if (id === 'weather') return cell(
+              <FitBox baseWidth={220} baseHeight={220} className="h-full">
+                <WeatherWidget className="w-full h-full !min-h-0" />
+              </FitBox>
+            );
 
-          <CalculatorCard wide className={cn(TILE_LARGE, 'w-full')} />
+            if (id === 'calendar') return cell(
+              // Long press (or a click with a mouse) opens the master calendar —
+              // the same panel the header date links to. Selection is suppressed
+              // on the way in: a long press landing on text otherwise starts an
+              // iOS selection instead of opening anything.
+              <div
+                {...calendarPress}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
+                aria-label="Calendar — open master calendar"
+                className="w-full h-full cursor-pointer touch-manipulation select-none"
+                style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <FitBox base={500} className="h-full">
+                  <CalendarWidget size="fill" className="w-full h-full" />
+                </FitBox>
+              </div>
+            );
 
-          {dashboardCategories.filter(c => c.id === 'notifications').map((category) => (
-            <DashboardCategoryCard
-              key={category.id}
-              icon={category.icon}
-              title={category.title}
-              span={TILE_WIDE}
-              primary={category.primary}
-              caption={category.caption}
-              aside={category.aside}
-              footer={category.footer}
-              content={category.content}
-            />
-          ))}
+            if (id === 'calculator') return cell(<CalculatorCard wide className="w-full h-full" />);
+            if (id === 'site-analytics') return cell(<SiteAnalyticsCard />);
+            if (id === 'crm') return cell(<CrmCard />);
+
+            const category = dashboardCategories.find(c => c.id === id);
+            if (!category) return null;
+            return cell(
+              <DashboardCategoryCard
+                icon={category.icon}
+                title={category.title}
+                primary={category.primary}
+                caption={category.caption}
+                aside={category.aside}
+                footer={category.footer}
+                content={category.content}
+              />
+            );
+          })}
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}

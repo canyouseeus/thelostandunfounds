@@ -2,39 +2,31 @@ import { ReactNode } from 'react';
 import { cn } from '../ui/utils';
 
 /**
- * Grid shape for a tile.
+ * Widget shapes, named the way a phone's widget picker names them.
  *
- * The shapes a phone's widget grid uses, on a grid of two columns on a phone
- * and four on desktop. The square carries `aspect-square` and so sets the row
- * height; everything else spans whole columns and rows of that unit, which is
- * what keeps every tile aligned to the same lattice and every row level.
+ * The grid is four columns on a phone and eight on desktop, so one column is
+ * one unit and the smallest widget — 1x2 — is half a column wide. Every shape
+ * states its own height as a ratio rather than borrowing it from whatever else
+ * lands in its row: leaning on a row companion held up until a tile ended up
+ * alone in a row, where it collapsed to the height of its text.
  *
- *   square  1x1   a small widget
- *   wide    2x1   a medium widget
- *   large   2x2   a large widget
- *   tall    1x2   a column
- *
- * The areas have to add up to a whole number of rows at both column counts or
- * the grid ends on a half-empty row.
+ * The ratios fold in the gutters, so they are not simply cols/rows. A phone
+ * column is ~80px against a 12px gap and a desktop column ~135px against 24px,
+ * which puts the two breakpoints within a percent of each other — close enough
+ * that one ratio serves both to within half a pixel.
  */
-// Every shape states its own height as a ratio, rather than borrowing it from
-// whatever else lands in its row. Leaning on a row companion worked until a wide
-// tile ended up alone in a row, where it collapsed to the height of its text.
-//
-// The ratios include the gutter: two columns plus one gap over one column is
-// 2.07 on a phone and 2.08 on desktop, so 2.075 is within half a pixel at both.
-export const TILE_SQUARE = 'col-span-1 aspect-square';
-// Two columns across and two rows down — square, since two columns plus a gap
-// is the same as two rows plus a gap.
-export const TILE_LARGE = 'col-span-2 row-span-2 aspect-square';
-// One column across, two rows down.
-export const TILE_TALL = 'col-span-1 row-span-2 aspect-[1/2.075]';
-// On desktop a wide tile shares its row with two squares, so it takes their
-// height — pinning its own ratio there made it taller than they were and left a
-// band of empty grid under them. On a phone it spans the whole row with no
-// square to measure against, so it needs the ratio spelled out or it collapses
-// to the height of its text.
-export const TILE_WIDE = 'col-span-2 aspect-[2.075/1]';
+export const TILE_1X2 = 'col-span-1 row-span-2 aspect-[0.462/1]';
+export const TILE_1X4 = 'col-span-1 row-span-4 aspect-[0.223/1]';
+export const TILE_2X2 = 'col-span-2 row-span-2 aspect-square';
+export const TILE_2X4 = 'col-span-2 row-span-4 aspect-[0.4815/1]';
+export const TILE_4X2 = 'col-span-4 row-span-2 aspect-[2.075/1]';
+export const TILE_4X4 = 'col-span-4 row-span-4 aspect-square';
+
+/** Older names, kept so existing call sites keep meaning what they meant. */
+export const TILE_SQUARE = TILE_2X2;
+export const TILE_WIDE = TILE_4X2;
+export const TILE_LARGE = TILE_4X4;
+export const TILE_TALL = TILE_2X4;
 
 export interface TileShape {
   span?: string;
