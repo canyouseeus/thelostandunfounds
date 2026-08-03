@@ -105,6 +105,16 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | `/cleanup` | Monthly maintenance | `.agent/workflows/cleanup.md` |
 | `/send-email` | Sending emails | `.agent/workflows/send-email.md` |
 
+## MODEL SELECTION RULE
+
+Match the model to the task's difficulty. Use the cheapest model that can do the job.
+
+- **Haiku**: mechanical work with a known path — git operations, file moves/renames, running an existing script, status checks, applying a known migration, sending an already-drafted email. Also all scheduled monitor tasks.
+- **Sonnet**: the default for ordinary coding — bug fixes, UI changes, copy updates, component work.
+- **Opus**: reserved for genuinely hard problems — system architecture, multi-service builds, or debugging that already defeated a cheaper model.
+
+Escalate to a stronger model only after a cheaper one demonstrably fails.
+
 ## SEVEN CRITICAL INVARIANTS
 
 These rules are **non-negotiable**. Violating them will break production.
