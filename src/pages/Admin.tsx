@@ -99,6 +99,7 @@ import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
+import { FitBox } from '../components/ui/fit-box';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import { installGlobalListeners } from '../lib/adminErrorLog';
@@ -1609,10 +1610,24 @@ export default function Admin() {
         <div id="dashboard-widgets" className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
           {/* Square 1×1 cells so the widget row reads as a uniform grid.
               !min-h-0 overrides each widget's own min-height, which would
-              otherwise stretch the cell taller than its width. */}
-          <ClockWidget size="lg" className="aspect-square !min-h-0 w-full" />
-          <CalendarWidget className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
-          <CalculatorCard className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
+              otherwise stretch the cell taller than its width.
+
+              The calendar and calculator size their internals in fixed px (a
+              240px column of 40px day rows), so a narrow cell squeezed the day
+              grid until the digits overlapped and the month spilled out the
+              bottom. `zoom` didn't help — the widget still laid out at the
+              cell's width and only painted smaller afterwards. FitBox lays them
+              out at a full 440px square and scales the painted result to the
+              cell, so they keep their proportions at every width. */}
+          <FitBox>
+            <ClockWidget size="lg" className="w-full h-full !min-h-0" />
+          </FitBox>
+          <FitBox>
+            <CalendarWidget className="w-full h-full !min-h-0" />
+          </FitBox>
+          <FitBox>
+            <CalculatorCard className="w-full h-full !min-h-0" />
+          </FitBox>
 
           {dashboardCategories.map((category) => (
             <DashboardCategoryCard
