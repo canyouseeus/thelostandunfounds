@@ -418,35 +418,115 @@ export default function AdminInvoices() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        {/* Invoice document — its own full-screen card. The PDF endpoint sends
-            Content-Disposition: inline, so it renders here rather than downloading.
-            Fills the viewport so the document never has to be scrolled to. */}
+        {/* Invoice document — rendered as HTML from the invoice record rather
+            than embedding the PDF. An <iframe> to the PDF endpoint relies on a
+            browser PDF plugin, which isn't always present (it renders blank in
+            embedded/webview browsers). Drawing it ourselves always displays;
+            Download still serves the real PDF. */}
         <ExpandableScreen isOpen={showPdf} onOpenChange={(open) => { if (!open) setShowPdf(false); }}>
-          <ExpandableScreenContent className="overflow-hidden">
-            {selectedInvoice?.pdf_token && (
-              <div className="flex flex-col h-full min-h-0">
-                <div className="shrink-0 flex items-center justify-between gap-4 pt-6 pb-4 pr-16 px-4 sm:px-8">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <h2 className="text-lg font-black font-mono tracking-tighter truncate">
-                      {selectedInvoice.invoice_number}
-                    </h2>
-                    <StatusBadge status={selectedInvoice.status} />
+          <ExpandableScreenContent className="overflow-x-hidden">
+            {selectedInvoice && (
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                  <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <h2 className="text-lg font-black font-mono tracking-tighter truncate">
+                        {selectedInvoice.invoice_number}
+                      </h2>
+                      <StatusBadge status={selectedInvoice.status} />
+                    </div>
+                    {selectedInvoice.pdf_token && (
+                      <a
+                        href={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}`}
+                        download={`${selectedInvoice.invoice_number}.pdf`}
+                        className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white/5 hover:bg-white text-white hover:text-black transition-colors shrink-0"
+                      >
+                        <DocumentArrowDownIcon className="w-3 h-3" />
+                        Download PDF
+                      </a>
+                    )}
                   </div>
-                  <a
-                    href={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}`}
-                    download={`${selectedInvoice.invoice_number}.pdf`}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white/5 hover:bg-white text-white hover:text-black transition-colors shrink-0"
-                  >
-                    <DocumentArrowDownIcon className="w-3 h-3" />
-                    Download
-                  </a>
+
+                  {/* Paper */}
+                  <div className="bg-white text-black p-8 sm:p-12">
+                    <div className="flex items-start justify-between gap-6 flex-wrap mb-10">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.25em] text-black/40 mb-1">From</p>
+                        <p className="text-sm font-black uppercase">THE LOST+UNFOUNDS</p>
+                        <p className="text-xs text-black/60">media@thelostandunfounds.com</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] uppercase tracking-[0.25em] text-black/40 mb-1">Invoice</p>
+                        <p className="text-sm font-black font-mono">{selectedInvoice.invoice_number}</p>
+                        <p className="text-xs text-black/60">{fmt(selectedInvoice.date)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-6 flex-wrap mb-10">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.25em] text-black/40 mb-1">Bill To</p>
+                        <p className="text-sm font-bold uppercase">
+                          {(selectedInvoice.clients as any)?.name || 'Client'}
+                        </p>
+                        {(selectedInvoice.clients as any)?.email && (
+                          <p className="text-xs text-black/60">{(selectedInvoice.clients as any).email}</p>
+                        )}
+                      </div>
+                      {selectedInvoice.event_date && (
+                        <div className="text-right">
+                          <p className="text-[9px] uppercase tracking-[0.25em] text-black/40 mb-1">Event</p>
+                          <p className="text-xs text-black/70">{fmt(selectedInvoice.event_date)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedInvoice.description && (
+                      <p className="text-xs text-black/70 mb-6">{selectedInvoice.description}</p>
+                    )}
+
+                    <table className="w-full text-sm mb-8">
+                      <thead>
+                        <tr className="border-b border-black/10">
+                          <th className="text-left py-2 text-[9px] uppercase tracking-[0.25em] text-black/40 font-normal">Description</th>
+                          <th className="text-right py-2 text-[9px] uppercase tracking-[0.25em] text-black/40 font-normal">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedInvoice.line_items.map((item, i) => (
+                          <tr key={i} className="border-b border-black/5">
+                            <td className="py-3 pr-4">{item.description}</td>
+                            <td className="py-3 text-right font-mono whitespace-nowrap">{fmtUSD(item.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-end">
+                      <div className="w-full max-w-[240px]">
+                        <div className="flex justify-between py-2 border-t-2 border-black">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Total</span>
+                          <span className="font-mono font-black">{fmtUSD(selectedInvoice.total)}</span>
+                        </div>
+                        {payments[selectedInvoice.id]?.length > 0 && (
+                          <>
+                            {payments[selectedInvoice.id].map(p => (
+                              <div key={p.id} className="flex justify-between py-1 text-xs text-black/60">
+                                <span>{p.method || 'Payment'} · {fmt(p.paid_at)}</span>
+                                <span className="font-mono">−{fmtUSD(p.amount)}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between py-2 border-t border-black/10 text-sm">
+                              <span className="text-[10px] font-black uppercase tracking-widest">Balance</span>
+                              <span className="font-mono font-black">
+                                {fmtUSD(Math.max(0, selectedInvoice.total - payments[selectedInvoice.id].reduce((s, p) => s + Number(p.amount || 0), 0)))}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <iframe
-                  key={selectedInvoice.id}
-                  title={`Invoice ${selectedInvoice.invoice_number}`}
-                  src={`/api/invoices/pdf?id=${selectedInvoice.id}&token=${selectedInvoice.pdf_token}#view=FitH`}
-                  className="flex-1 min-h-0 w-full border-0 bg-white/[0.02]"
-                />
               </div>
             )}
           </ExpandableScreenContent>
