@@ -269,6 +269,27 @@ export default function Admin() {
   const calendarPress = useLongPress(() => openPanel('calendar'));
   // Widget shapes and order, editable and saved to this browser.
   const layout = useDashboardLayout();
+  // The grid's rows are set to exactly one column width, measured, so a tile
+  // spanning N columns and N rows is square and every tile of a shape is the
+  // same size. Without this the row height comes from whatever content lands in
+  // a row, and two tiles both marked 2x2 render differently.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [rowUnit, setRowUnit] = useState(0);
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const measure = () => {
+      const cols = window.matchMedia('(min-width: 768px)').matches ? 8 : 4;
+      const gap = window.matchMedia('(min-width: 640px)').matches ? 24 : 12;
+      const width = el.getBoundingClientRect().width;
+      if (width > 0) setRowUnit((width - (cols - 1) * gap) / cols);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+  }, []);
   // Ticks once a minute — enough for a date face.
   const [today, setToday] = useState(new Date());
   useEffect(() => {
@@ -1723,7 +1744,12 @@ export default function Admin() {
           </div>
         </div>
 
-        <div id="dashboard-widgets" className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]">
+        <div
+          id="dashboard-widgets"
+          ref={gridRef}
+          className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]"
+          style={rowUnit ? { gridAutoRows: `${rowUnit}px` } : undefined}
+        >
           {layout.order.map(id => {
             const light = layout.isLight(id);
             const size = layout.shapes[id] ?? '2x2';

@@ -18,6 +18,10 @@ interface EditableTileProps {
 /**
  * Wraps a dashboard widget so it can be resized and reordered in edit mode.
  *
+ * The controls are deliberately two small marks rather than a panel: a tap
+ * anywhere on the widget steps it to its next size, so the size only needs
+ * showing, not a row of buttons to pick from.
+ *
  * Out of edit mode this is just the grid cell — no handlers, no chrome, so the
  * widget behaves exactly as it did (the calculator's keys still take taps, the
  * calendar still opens on a long press). In edit mode the widget stops
@@ -60,28 +64,26 @@ export function EditableTile({
         if (dragged && dragged !== id) onDropBefore(dragged, id);
       }}
     >
-      {/* The widget itself, dimmed and inert — in edit mode a tap resizes. */}
-      <div className="w-full h-full pointer-events-none opacity-30">{children}</div>
+      {/* The widget stays legible — you are arranging these, so you need to
+          see which is which. It just stops responding to its own taps. */}
+      <div className="w-full h-full pointer-events-none opacity-60">{children}</div>
 
-      {/* Just the current size and the next one along, so a tap is predictable.
-          The old panel listed every size as its own button, which crowded a
-          small tile to the point of illegibility. */}
-      <div className={cn('absolute inset-0 flex flex-col items-center justify-center gap-1 p-1 text-center', light && 'text-black')}>
-        <span className="text-2xl font-black tabular-nums leading-none">{SHAPE_LABEL[shape]}</span>
-        {options.length > 1 && (
-          <span className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none">
-            tap → {SHAPE_LABEL[options[(options.indexOf(shape) + 1) % options.length]]}
-          </span>
-        )}
-      </div>
+      {/* Two marks, both out of the way: the size in one corner, the background
+          swatch in the other. The previous version put a size label and a hint
+          across the middle of every tile, which buried the widget under its own
+          controls. */}
+      <span className={cn(
+        'absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-black tabular-nums leading-none',
+        light ? 'bg-black text-white' : 'bg-white text-black',
+      )}>
+        {SHAPE_LABEL[shape]}
+      </span>
 
-      {/* Background toggle, out of the way in the corner so it can't be hit by
-          accident while resizing. */}
       <button
         onClick={e => { e.stopPropagation(); onToggleBackground(id); }}
         aria-label={light ? 'Use a black background' : 'Use a white background'}
         title={light ? 'White background' : 'Black background'}
-        className={cn('absolute top-1 right-1 w-5 h-5', light ? 'bg-black' : 'bg-white')}
+        className={cn('absolute top-1 right-1 w-4 h-4', light ? 'bg-black' : 'bg-white')}
         style={{ borderRadius: 0 }}
       />
     </div>

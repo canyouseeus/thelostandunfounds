@@ -2,26 +2,26 @@ import { ReactNode } from 'react';
 import { cn } from '../ui/utils';
 
 /**
- * Widget shapes, named the way a phone's widget picker names them.
+ * Widget shapes, as pure grid spans.
  *
- * The grid is four columns on a phone and eight on desktop, so one column is
- * one unit and the smallest widget — 1x2 — is half a column wide. Every shape
- * states its own height as a ratio rather than borrowing it from whatever else
- * lands in its row: leaning on a row companion held up until a tile ended up
- * alone in a row, where it collapsed to the height of its text.
+ * The grid is four columns on a phone and eight on desktop, and its rows are
+ * set to exactly one column width (see the dashboard's grid-auto-rows), so a
+ * span of N columns by N rows is square and every tile of a given shape is the
+ * same size as every other.
  *
- * The ratios fold in the gutters, so they are not simply cols/rows. A phone
- * column is ~80px against a 12px gap and a desktop column ~135px against 24px,
- * which puts the two breakpoints within a percent of each other — close enough
- * that one ratio serves both to within half a pixel.
+ * These used to carry an `aspect-*` class as well, which is what made two tiles
+ * both marked 2x2 come out different sizes: the aspect ratio derives height
+ * from width while the row span derives it from the rows the tile lands in, and
+ * whichever won depended on what its neighbours were doing. The row unit is
+ * explicit now, so the span alone decides the size.
  */
-export const TILE_1X1 = 'col-span-1 row-span-1 aspect-square';
-export const TILE_1X2 = 'col-span-1 row-span-2 aspect-[0.462/1]';
-export const TILE_1X4 = 'col-span-1 row-span-4 aspect-[0.223/1]';
-export const TILE_2X2 = 'col-span-2 row-span-2 aspect-square';
-export const TILE_2X4 = 'col-span-2 row-span-4 aspect-[0.4815/1]';
-export const TILE_4X2 = 'col-span-4 row-span-2 aspect-[2.075/1]';
-export const TILE_4X4 = 'col-span-4 row-span-4 aspect-square';
+export const TILE_1X1 = 'col-span-1 row-span-1';
+export const TILE_1X2 = 'col-span-1 row-span-2';
+export const TILE_1X4 = 'col-span-1 row-span-4';
+export const TILE_2X2 = 'col-span-2 row-span-2';
+export const TILE_2X4 = 'col-span-2 row-span-4';
+export const TILE_4X2 = 'col-span-4 row-span-2';
+export const TILE_4X4 = 'col-span-4 row-span-4';
 
 /** Older names, kept so existing call sites keep meaning what they meant. */
 export const TILE_SQUARE = TILE_2X2;
