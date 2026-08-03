@@ -8,7 +8,7 @@ import { RingGauge } from '../ui/viz';
 
 const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
-export function CrmCard({ span }: TileShape = {}) {
+export function CrmCard({ span, light, size }: TileShape = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const { totals, loading } = useCrmClients();
 
@@ -19,6 +19,8 @@ export function CrmCard({ span }: TileShape = {}) {
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile
+            light={light}
+            size={size}
             icon={<UserGroupIcon className="w-4 h-4" />}
             primary={loading ? '…' : totals.clients}
             caption="CRM clients"

@@ -4,6 +4,8 @@ import type { ShapeName } from './useDashboardLayout';
 export interface StoredLayout {
   shapes: Record<string, ShapeName>;
   order: string[];
+  /** Widget id -> 'white' for a white tile. Absent means black. */
+  backgrounds: Record<string, 'black' | 'white'>;
 }
 
 /**
@@ -44,12 +46,12 @@ export async function readRemote(userId: string): Promise<Partial<StoredLayout> 
   try {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('shapes, tile_order')
+      .select('shapes, tile_order, backgrounds')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error || !data) return null;
-    return { shapes: data.shapes ?? undefined, order: data.tile_order ?? undefined };
+    return { shapes: data.shapes ?? undefined, order: data.tile_order ?? undefined, backgrounds: data.backgrounds ?? undefined };
   } catch {
     return null;
   }
@@ -61,7 +63,13 @@ export async function writeRemote(userId: string, layout: StoredLayout): Promise
     const { error } = await supabase
       .from(TABLE)
       .upsert(
-        { user_id: userId, shapes: layout.shapes, tile_order: layout.order, updated_at: new Date().toISOString() },
+        {
+          user_id: userId,
+          shapes: layout.shapes,
+          tile_order: layout.order,
+          backgrounds: layout.backgrounds,
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: 'user_id' },
       );
     return !error;

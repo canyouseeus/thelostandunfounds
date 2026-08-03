@@ -206,14 +206,22 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
         leftDisplay = dh;
         rightDisplay = dm;
         extraRight = (
-            <div className="absolute left-full bottom-0 ml-1 flex flex-col items-start leading-none">
+            // Inline, so the parent's `items-baseline` puts the seconds on the
+            // same baseline as the hours and minutes. Absolutely positioning
+            // this block against the bottom of the box aligned it to the
+            // descender space under the digits instead, which left the seconds
+            // sitting low. AM/PM rides above the seconds off the same box.
+            <span className={cn(
+                "relative ml-1 font-mono text-white/40 tabular-nums leading-none",
+                responsive ? "text-sm md:text-xl" : "text-xl",
+            )}>
+                :{ds}
                 <span className={cn(
-                    "font-bold text-white/30 mb-[2px]",
+                    "absolute bottom-full left-0 mb-[2px] font-bold text-white/30 leading-none",
                     responsive ? "text-[8px] md:text-[10px]" : "text-[10px]",
                     is24Hour ? "opacity-0" : "opacity-100"
                 )}>{ampm}</span>
-                <span className={cn("font-mono text-white/40 tabular-nums", responsive ? "text-sm md:text-xl" : "text-xl")}>:{ds}</span>
-            </div>
+            </span>
         );
     } else if (mode === 'stopwatch') {
         const { left, right } = formatStopwatch(swElapsed);

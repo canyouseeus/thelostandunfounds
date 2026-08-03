@@ -15,6 +15,7 @@ import { cn } from '../ui/utils';
  * which puts the two breakpoints within a percent of each other — close enough
  * that one ratio serves both to within half a pixel.
  */
+export const TILE_1X1 = 'col-span-1 row-span-1 aspect-square';
 export const TILE_1X2 = 'col-span-1 row-span-2 aspect-[0.462/1]';
 export const TILE_1X4 = 'col-span-1 row-span-4 aspect-[0.223/1]';
 export const TILE_2X2 = 'col-span-2 row-span-2 aspect-square';
@@ -30,6 +31,8 @@ export const TILE_TALL = TILE_2X4;
 
 export interface TileShape {
   span?: string;
+  light?: boolean;
+  size?: string;
 }
 
 interface DashboardTileProps {
@@ -41,6 +44,10 @@ interface DashboardTileProps {
   caption: string;
   /** Optional supporting rows, sitting above the figure. */
   children?: ReactNode;
+  /** White tile, black type. Chosen per widget in the layout editor. */
+  light?: boolean;
+  /** Current shape, e.g. '2x2'. Decides how much of the tile's content fits. */
+  size?: string;
   className?: string;
 }
 
@@ -57,12 +64,24 @@ interface DashboardTileProps {
  * a heading. Supporting numbers sit above it in small type. What a tile shows
  * should be obvious without reading a title first.
  */
-export function DashboardTile({ icon, primary, caption, children, className }: DashboardTileProps) {
+export function DashboardTile({ icon, primary, caption, children, light, size = '2x2', className }: DashboardTileProps) {
+  // A tile shows as much as its size can carry, rather than the same content
+  // scaled down until it's unreadable. The smallest sizes are the figure alone;
+  // the instrument needs real width, so it waits for a tile at least two
+  // columns across.
+  const cols = Number(size.split('x')[0]) || 2;
+  const rows = Number(size.split('x')[1]) || 2;
+  const showCaption = rows >= 2 && !(cols === 1 && rows === 1);
+  const showIcon = cols >= 2 || rows >= 2;
+  const showInstrument = cols >= 2 && rows >= 2;
+  const figureSize = cols >= 4 ? 'text-5xl sm:text-6xl' : cols === 1 ? 'text-xl' : 'text-4xl sm:text-5xl';
   return (
     <div
       className={cn(
-        'bg-black hover:bg-[#0a0a0a] transition-colors duration-300',
-        'w-full h-full flex flex-col justify-between p-4 sm:p-5 overflow-hidden text-left',
+        light ? 'bg-white text-black' : 'bg-black text-white hover:bg-[#0a0a0a]',
+        'transition-colors duration-300',
+        'w-full h-full flex flex-col justify-between overflow-hidden text-left',
+        cols === 1 ? 'p-2' : 'p-4 sm:p-5',
         className,
       )}
       style={{ borderRadius: 0 }}
@@ -74,10 +93,10 @@ export function DashboardTile({ icon, primary, caption, children, className }: D
       {children && <div className="flex-1 min-h-0 w-full py-3 flex flex-col justify-center">{children}</div>}
 
       <div className="min-w-0">
-        <div className="text-4xl sm:text-5xl font-black tracking-tight text-white tabular-nums leading-none truncate">
+        <div className="text-4xl sm:text-5xl font-black tracking-tight tabular-nums leading-none truncate">
           {primary}
         </div>
-        <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 truncate">
+        <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 truncate">
           {caption}
         </div>
       </div>

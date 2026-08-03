@@ -53,7 +53,7 @@ function StatList({ rows, keyField, labelField }: { rows: { count: number; [key:
   );
 }
 
-export function SiteAnalyticsCard({ span }: TileShape = {}) {
+export function SiteAnalyticsCard({ span, light, size }: TileShape = {}) {
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -76,6 +76,8 @@ export function SiteAnalyticsCard({ span }: TileShape = {}) {
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile
+            light={light}
+            size={size}
             icon={<ChartBarIcon className="w-4 h-4" />}
             primary={stats ? stats.totalViews.toLocaleString() : loading ? '…' : '0'}
             caption="Site views"

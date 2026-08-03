@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { cn } from '../ui/utils';
-import { SHAPES, SHAPE_LABEL, ShapeName } from './useDashboardLayout';
+import { SHAPE_LABEL, ShapeName, shapeOptions } from './useDashboardLayout';
 
 interface EditableTileProps {
   id: string;
@@ -10,6 +10,8 @@ interface EditableTileProps {
   shape: ShapeName;
   onSetShape: (id: string, shape: ShapeName) => void;
   onDropBefore: (dragged: string, target: string) => void;
+  light: boolean;
+  onToggleBackground: (id: string) => void;
   children: ReactNode;
 }
 
@@ -29,15 +31,21 @@ export function EditableTile({
   shape,
   onSetShape,
   onDropBefore,
+  light,
+  onToggleBackground,
   children,
 }: EditableTileProps) {
   const [over, setOver] = useState(false);
 
   if (!editing) return <div className={className}>{children}</div>;
 
+  const options = shapeOptions(id);
+  const next = () => onSetShape(id, options[(options.indexOf(shape) + 1) % options.length]);
+
   return (
     <div
-      className={cn(className, 'relative', over && 'opacity-60')}
+      className={cn(className, 'relative cursor-pointer', over && 'opacity-60')}
+      onClick={next}
       draggable
       onDragStart={e => {
         e.dataTransfer.setData('text/plain', id);
@@ -52,31 +60,30 @@ export function EditableTile({
         if (dragged && dragged !== id) onDropBefore(dragged, id);
       }}
     >
-      {/* The widget itself, dimmed and inert — in edit mode a tap is for
-          resizing, not for whatever the widget normally does. */}
-      <div className="w-full h-full pointer-events-none opacity-40">{children}</div>
+      {/* The widget itself, dimmed and inert — in edit mode a tap resizes. */}
+      <div className="w-full h-full pointer-events-none opacity-30">{children}</div>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 truncate max-w-full">
-          {id.replace(/-/g, ' ')}
-        </span>
-        <div className="flex flex-wrap items-center justify-center gap-1">
-          {SHAPES.map(s => (
-            <button
-              key={s}
-              onClick={() => onSetShape(id, s)}
-              className={cn(
-                'px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-colors',
-                s === shape ? 'bg-white text-black' : 'bg-white/10 text-white/70 hover:bg-white hover:text-black',
-              )}
-              style={{ borderRadius: 0 }}
-            >
-              {SHAPE_LABEL[s]}
-            </button>
-          ))}
-        </div>
-        <span className="text-[9px] uppercase tracking-widest text-white/25">Drag to move</span>
+      {/* Just the current size and the next one along, so a tap is predictable.
+          The old panel listed every size as its own button, which crowded a
+          small tile to the point of illegibility. */}
+      <div className={cn('absolute inset-0 flex flex-col items-center justify-center gap-1 p-1 text-center', light && 'text-black')}>
+        <span className="text-2xl font-black tabular-nums leading-none">{SHAPE_LABEL[shape]}</span>
+        {options.length > 1 && (
+          <span className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none">
+            tap → {SHAPE_LABEL[options[(options.indexOf(shape) + 1) % options.length]]}
+          </span>
+        )}
       </div>
+
+      {/* Background toggle, out of the way in the corner so it can't be hit by
+          accident while resizing. */}
+      <button
+        onClick={e => { e.stopPropagation(); onToggleBackground(id); }}
+        aria-label={light ? 'Use a black background' : 'Use a white background'}
+        title={light ? 'White background' : 'Black background'}
+        className={cn('absolute top-1 right-1 w-5 h-5', light ? 'bg-black' : 'bg-white')}
+        style={{ borderRadius: 0 }}
+      />
     </div>
   );
 }

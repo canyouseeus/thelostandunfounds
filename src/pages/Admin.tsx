@@ -1719,6 +1719,15 @@ export default function Admin() {
 
         <div id="dashboard-widgets" className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]">
           {layout.order.map(id => {
+            const light = layout.isLight(id);
+            const size = layout.shapes[id] ?? '2x2';
+            // The clock, calendar, calculator and weather are drawn strictly in
+            // white on black, so inverting the whole widget turns them black on
+            // white correctly. The data tiles can't be inverted — their green
+            // and amber accents would come out magenta and blue — so those take
+            // a `light` prop and restyle properly.
+            const invertIfLight = (node: React.ReactNode) =>
+              light ? <div className="w-full h-full invert bg-white">{node}</div> : node;
             const cell = (node: React.ReactNode) => (
               <EditableTile
                 key={id}
@@ -1728,20 +1737,25 @@ export default function Admin() {
                 shape={layout.shapes[id] ?? '2x2'}
                 onSetShape={layout.setShape}
                 onDropBefore={layout.moveBefore}
+                light={layout.isLight(id)}
+                onToggleBackground={layout.toggleBackground}
               >
                 {node}
               </EditableTile>
             );
 
-            if (id === 'clock') return cell(<ClockWidget size="lg" className="!min-h-0 w-full h-full" />);
+            if (id === 'clock') return cell(invertIfLight(<ClockWidget size="lg" className="!min-h-0 w-full h-full" />));
 
-            if (id === 'weather') return cell(
-              <FitBox baseWidth={220} baseHeight={220} className="h-full">
+            if (id === 'weather') return cell(invertIfLight(
+              // 440, not 220: the widget's type is sized against a 440px design
+              // box, so a 220 box cropped "hold for detail" off the bottom.
+              // FitBox scales whatever it is given down to the cell.
+              <FitBox base={440} className="h-full">
                 <WeatherWidget className="w-full h-full !min-h-0" />
               </FitBox>
-            );
+            ));
 
-            if (id === 'calendar') return cell(
+            if (id === 'calendar') return cell(invertIfLight(
               // Long press (or a click with a mouse) opens the master calendar —
               // the same panel the header date links to. Selection is suppressed
               // on the way in: a long press landing on text otherwise starts an
@@ -1759,16 +1773,18 @@ export default function Admin() {
                   <CalendarWidget size="fill" className="w-full h-full" />
                 </FitBox>
               </div>
-            );
+            ));
 
-            if (id === 'calculator') return cell(<CalculatorCard wide className="w-full h-full" />);
-            if (id === 'site-analytics') return cell(<SiteAnalyticsCard />);
-            if (id === 'crm') return cell(<CrmCard />);
+            if (id === 'calculator') return cell(invertIfLight(<CalculatorCard wide className="w-full h-full" />));
+            if (id === 'site-analytics') return cell(<SiteAnalyticsCard light={light} size={size} />);
+            if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
 
             const category = dashboardCategories.find(c => c.id === id);
             if (!category) return null;
             return cell(
               <DashboardCategoryCard
+                light={light}
+                size={size}
                 icon={category.icon}
                 title={category.title}
                 primary={category.primary}

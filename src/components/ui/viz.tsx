@@ -9,7 +9,8 @@ import { cn } from './utils';
  * glance. These are the drawn equivalents: an arc, a trace, a set of bars, a
  * row of state marks.
  *
- * All of them are white on black at varying opacity — no borders, no shadows,
+ * All of them draw in `currentColor` at varying opacity, so a tile decides
+ * whether they come out white on black or black on white — no borders, no shadows,
  * no gradients, and square corners, per no-border-design and noir-design. The
  * one exception to squareness is the ring, which is a circle because it is a
  * dial, the same way the clock face is.
@@ -34,19 +35,19 @@ export function RingGauge({
   return (
     <div className={cn('relative', className)}>
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="8" />
         <circle
           cx="50"
           cy="50"
           r={r}
           fill="none"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="8"
           strokeDasharray={`${pct * circumference} ${circumference}`}
         />
       </svg>
       {label && (
-        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-black uppercase tracking-widest text-white tabular-nums">
+        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-black uppercase tracking-widest tabular-nums">
           {label}
         </span>
       )}
@@ -75,8 +76,8 @@ export function Sparkline({
 
   return (
     <svg viewBox="0 0 100 32" preserveAspectRatio="none" className={cn('w-full', className)}>
-      <polygon points={`0,32 ${line} 100,32`} fill="rgba(255,255,255,0.10)" />
-      <polyline points={line} fill="none" stroke="white" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      <polygon points={`0,32 ${line} 100,32`} fill="currentColor" fillOpacity="0.12" />
+      <polyline points={line} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -95,7 +96,7 @@ export function MiniBars({
       {values.map(v => (
         <div key={v.label} className="flex-1 flex flex-col justify-end h-full" title={`${v.label}: ${v.value}`}>
           <div
-            className="w-full bg-white/70"
+            className="w-full bg-current opacity-70"
             style={{ height: `${Math.max(3, (v.value / max) * 100)}%` }}
           />
         </div>
@@ -123,7 +124,7 @@ export function StatusMarks({
       {items.map(i => (
         <div key={i.label} className="flex items-center gap-2">
           <span className={cn('w-2 h-2 shrink-0', i.ok ? 'bg-green-400' : 'bg-red-500')} />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 truncate">{i.label}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest opacity-50 truncate">{i.label}</span>
         </div>
       ))}
     </div>
@@ -147,7 +148,7 @@ export function DotMatrix({
   return (
     <div className={cn('flex flex-wrap gap-1', className)}>
       {Array.from({ length: shown }, (_, i) => (
-        <span key={i} className={cn('w-1.5 h-1.5', i < lit ? 'bg-white' : 'bg-white/20')} />
+        <span key={i} className={cn('w-1.5 h-1.5 bg-current', i < lit ? '' : 'opacity-20')} />
       ))}
     </div>
   );
