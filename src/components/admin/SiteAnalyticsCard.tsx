@@ -12,6 +12,7 @@ import {
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import { LoadingSpinner } from '../Loading';
+import { DashboardTile } from './DashboardTile';
 
 interface SiteStats {
   totalViews: number;
@@ -74,29 +75,25 @@ export function SiteAnalyticsCard() {
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
-          {/* Square at-a-glance widget, matching the rest of the grid. */}
-          <div className="bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300 aspect-square w-full flex flex-col p-3 md:p-4 overflow-hidden">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 shrink-0">
-              <ChartBarIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/50" />
-              <h3 className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/80 truncate">
-                Site <span className="text-white/40">Analytics</span>
-              </h3>
-            </div>
-            <div className="flex-1 min-h-0 overflow-hidden [zoom:0.72] md:[zoom:1]">
+          <DashboardTile
+            icon={<ChartBarIcon className="w-4 h-4" />}
+            title="Site Analytics"
+            footer={
+              <div className="flex gap-1 h-6 md:h-8 items-end justify-between mt-2">
+                {(trend.length ? trend : Array.from({ length: 14 }, () => ({ count: 0 }))).map((t, i) => (
+                  <div
+                    key={i}
+                    className="bg-white/10 w-full hover:bg-white/30 transition-colors"
+                    style={{ height: `${Math.max(4, (t.count / maxTrend) * 100)}%` }}
+                  />
+                ))}
+              </div>
+            }
+          >
               <AdminBentoRow label="Total Views" value={stats ? stats.totalViews.toLocaleString() : loading ? '…' : '0'} />
               <AdminBentoRow label="Unique Visitors" value={stats ? stats.uniqueVisitors.toLocaleString() : loading ? '…' : '0'} />
               <AdminBentoRow label="Bounce Rate" value={stats ? `${stats.bounceRate.toFixed(1)}%` : loading ? '…' : '—'} />
-            </div>
-            <div className="flex gap-1 h-6 md:h-8 items-end justify-between mt-2 shrink-0">
-              {(trend.length ? trend : Array.from({ length: 14 }, () => ({ count: 0 }))).map((t, i) => (
-                <div
-                  key={i}
-                  className="bg-white/10 w-full hover:bg-white/30 transition-colors"
-                  style={{ height: `${Math.max(4, (t.count / maxTrend) * 100)}%` }}
-                />
-              ))}
-            </div>
-          </div>
+          </DashboardTile>
         </ExpandableScreenTrigger>
 
         <ExpandableScreenContent className="overflow-x-hidden">
