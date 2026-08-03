@@ -19,6 +19,60 @@ const fmt = (n: number) => {
 };
 
 /**
+ * A single key.
+ *
+ * Defined at module scope, not inside CalculatorCard. As a nested component it
+ * was a new component type on every render, so React unmounted and remounted
+ * all twenty buttons whenever any state changed — the click landed on a node
+ * that had already been replaced, and the keypad visibly re-rendered under the
+ * finger. Hoisting it makes the buttons stable elements that simply re-render.
+ */
+function Key({ label, onClick, variant = 'default', wide, pressed, onPressStart, onPressEnd }: {
+  label: string;
+  onClick: () => void;
+  variant?: 'default' | 'op' | 'accent';
+  wide: boolean;
+  pressed: boolean;
+  onPressStart: () => void;
+  onPressEnd: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      onPointerDown={onPressStart}
+      onPointerUp={onPressEnd}
+      onPointerLeave={onPressEnd}
+      onPointerCancel={onPressEnd}
+      // The grey flash iOS paints over a tapped element, on top of our own
+      // press state.
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+      className={cn(
+        'font-mono bg-black select-none',
+        // Wide mode gets the room of a full-width row, so the keys grow to a
+        // real touch target instead of the 32px a 1/3-width cell allowed.
+        wide ? 'h-14 sm:h-16 text-xl sm:text-2xl' : 'h-8 text-[11px]',
+        // No key plates. The keypad is type on black — weight and tone carry
+        // the hierarchy: operators bright, digits plain, utilities dim.
+        variant === 'accent' ? 'font-black text-white'
+          : variant === 'op' ? 'font-bold text-white/50'
+          : 'font-bold text-white/90',
+        // Hover is gated behind a hover-capable pointer. A plain `hover:` sticks
+        // after a tap on iOS, leaving a pressed key inverted until you touched
+        // something else — the key that "kept blinking with no touches".
+        '[@media(hover:hover)]:hover:bg-white [@media(hover:hover)]:hover:text-black',
+        // The press state is on while the key is held and off the moment it is
+        // released. No transition, so it snaps rather than fading in and out.
+        // `:active` can't do this: it fires for a mouse but not for touch, so on
+        // a phone the keys had no press feedback at all.
+        pressed && '!bg-white !text-black',
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+/**
  * Inline calculator widget — same shape and rhythm as ClockWidget and
  * CalendarWidget so the three read as one row: black card, centered content,
  * live and usable in place rather than behind a modal.
@@ -29,6 +83,10 @@ export function CalculatorCard({ className, wide = false }: { className?: string
   const [op, setOp] = useState<Op | null>(null);
   // After = or an operator, the next digit starts a fresh entry.
   const [fresh, setFresh] = useState(true);
+  // Which key is under a finger or a held mouse button. `:active` can't do this
+  // job: it fires for a mouse but not for touch, so on a phone the keys had no
+  // press feedback at all. Pointer events behave the same for both.
+  const [pressed, setPressed] = useState<string | null>(null);
 
   const digit = (d: string) => {
     setDisplay(prev => {
@@ -64,37 +122,18 @@ export function CalculatorCard({ className, wide = false }: { className?: string
 
   const clear = () => { setDisplay('0'); setAcc(null); setOp(null); setFresh(true); };
 
-  const Key = ({ label, onClick, variant = 'default' }: {
-    label: string; onClick: () => void; variant?: 'default' | 'op' | 'accent';
-  }) => (
-    <button
+  // Local wrapper so the twenty call sites below stay readable.
+  const key = (label: string, onClick: () => void, variant?: 'default' | 'op' | 'accent') => (
+    <Key
+      key={label}
+      label={label}
       onClick={onClick}
-      // The grey flash iOS paints over a tapped element, on top of our own
-      // press state.
-      style={{ WebkitTapHighlightColor: 'transparent' }}
-      className={cn(
-        'font-mono bg-black select-none',
-        // Press feedback is :active only — it ends when the finger lifts.
-        // transition-colors made the release fade out, which read as a blink.
-        'active:bg-white active:text-black',
-        // Wide mode gets the room of a full-width row, so the keys grow to a
-        // real touch target instead of the 32px a 1/3-width cell allowed.
-        wide ? 'h-14 sm:h-16 text-xl sm:text-2xl' : 'h-8 text-[11px]',
-        // No key plates. The keypad is type on black — weight and tone carry
-        // the hierarchy (operators bright, digits plain, utilities dim).
-        //
-        // Hover is gated behind a real hover-capable pointer. A plain `hover:`
-        // sticks after a tap on iOS, so a key you pressed stayed inverted until
-        // you touched something else — the key that "kept blinking with no
-        // touches". Touch gets `active:` above instead, which ends on release.
-        variant === 'accent' ? 'font-black text-white'
-          : variant === 'op' ? 'font-bold text-white/50'
-          : 'font-bold text-white/90',
-        '[@media(hover:hover)]:hover:bg-white [@media(hover:hover)]:hover:text-black',
-      )}
-    >
-      {label}
-    </button>
+      variant={variant}
+      wide={wide}
+      pressed={pressed === label}
+      onPressStart={() => setPressed(label)}
+      onPressEnd={() => setPressed(null)}
+    />
   );
 
   return (
@@ -118,24 +157,24 @@ export function CalculatorCard({ className, wide = false }: { className?: string
         </div>
 
         <div className={cn('grid grid-cols-4', wide ? 'gap-1' : 'gap-1.5')}>
-          <Key label="AC" onClick={clear} variant="op" />
-          <Key label="±" onClick={() => setDisplay(d => (d.startsWith('-') ? d.slice(1) : d === '0' ? d : '-' + d))} variant="op" />
-          <Key label="%" onClick={() => { setDisplay(d => fmt(parseFloat(d) / 100)); setFresh(true); }} variant="op" />
-          <Key label="÷" onClick={() => chooseOp('÷')} variant="accent" />
+          {key('AC', clear, 'op')}
+          {key('±', () => setDisplay(d => (d.startsWith('-') ? d.slice(1) : d === '0' ? d : '-' + d)), 'op')}
+          {key('%', () => { setDisplay(d => fmt(parseFloat(d) / 100)); setFresh(true); }, 'op')}
+          {key('÷', () => chooseOp('÷'), 'accent')}
 
-          {['7', '8', '9'].map(d => <Key key={d} label={d} onClick={() => digit(d)} />)}
-          <Key label="×" onClick={() => chooseOp('×')} variant="accent" />
+          {['7', '8', '9'].map(d => key(d, () => digit(d)))}
+          {key('×', () => chooseOp('×'), 'accent')}
 
-          {['4', '5', '6'].map(d => <Key key={d} label={d} onClick={() => digit(d)} />)}
-          <Key label="−" onClick={() => chooseOp('-')} variant="accent" />
+          {['4', '5', '6'].map(d => key(d, () => digit(d)))}
+          {key('−', () => chooseOp('-'), 'accent')}
 
-          {['1', '2', '3'].map(d => <Key key={d} label={d} onClick={() => digit(d)} />)}
-          <Key label="+" onClick={() => chooseOp('+')} variant="accent" />
+          {['1', '2', '3'].map(d => key(d, () => digit(d)))}
+          {key('+', () => chooseOp('+'), 'accent')}
 
-          <Key label="0" onClick={() => digit('0')} />
-          <Key label="." onClick={() => digit('.')} />
-          <Key label="⌫" onClick={() => setDisplay(d => (d.length <= 1 || (d.length === 2 && d.startsWith('-')) ? '0' : d.slice(0, -1)))} variant="op" />
-          <Key label="=" onClick={equals} variant="accent" />
+          {key('0', () => digit('0'))}
+          {key('.', () => digit('.'))}
+          {key('⌫', () => setDisplay(d => (d.length <= 1 || (d.length === 2 && d.startsWith('-')) ? '0' : d.slice(0, -1))), 'op')}
+          {key('=', equals, 'accent')}
         </div>
       </div>
     </div>
