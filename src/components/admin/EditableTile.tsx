@@ -49,6 +49,12 @@ export function EditableTile({
   return (
     <div
       className={cn(className, 'relative cursor-pointer', over && 'opacity-60')}
+      // A dashed outline while editing, so you can see each cell's exact bounds
+      // and catch a widget bleeding past them. `outline` rather than `border`
+      // because it draws outside the box and so can't shift the layout it is
+      // meant to be measuring — and it exists only in edit mode, so the shipped
+      // dashboard keeps no-border-design's flat surfaces.
+      style={{ outline: '1px dashed rgba(255,255,255,0.35)', outlineOffset: '-1px' }}
       onClick={next}
       draggable
       onDragStart={e => {
