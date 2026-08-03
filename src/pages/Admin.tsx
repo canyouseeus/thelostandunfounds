@@ -1778,13 +1778,12 @@ export default function Admin() {
 
             if (id === 'clock') return cell(invertIfLight(<ClockWidget size="lg" className="!min-h-0 w-full h-full" />));
 
+            // No FitBox: the widget lays itself out for the size it's given
+            // rather than being designed at one size and scaled, which is what
+            // cropped its footer and left it showing the same composition in
+            // every shape.
             if (id === 'weather') return cell(invertIfLight(
-              // 440, not 220: the widget's type is sized against a 440px design
-              // box, so a 220 box cropped "hold for detail" off the bottom.
-              // FitBox scales whatever it is given down to the cell.
-              <FitBox base={440} className="h-full">
-                <WeatherWidget className="w-full h-full !min-h-0" />
-              </FitBox>
+              <WeatherWidget size={size} className="w-full h-full" />
             ));
 
             if (id === 'calendar') return cell(invertIfLight(

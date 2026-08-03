@@ -292,7 +292,7 @@ function WeatherDetail({
  * calendar; a long press (touch) or a click (mouse) opens the full sheet —
  * hourly strip, 7-day forecast, air quality and the rest of the conditions.
  */
-export function WeatherWidget({ className }: { className?: string }) {
+export function WeatherWidget({ className, size = '2x2' }: { className?: string; size?: string }) {
   // Two separate ideas: the city the dashboard opens on, and the city you're
   // currently looking at. Searching only moves the second one — the first
   // changes when you pin it.
@@ -348,6 +348,11 @@ export function WeatherWidget({ className }: { className?: string }) {
   const isDefault = !!savedDefault && samePlace(place, savedDefault);
 
   const press = useLongPress(() => setOpen(true));
+  // Each size is its own view rather than the same composition scaled: a 1x1
+  // is the temperature alone, a wide tile spends its width on the hours, a tall
+  // one spends its height on the days, and the largest shows both.
+  const cols = Number(size.split('x')[0]) || 2;
+  const rows = Number(size.split('x')[1]) || 2;
 
   return (
     <>
@@ -358,14 +363,12 @@ export function WeatherWidget({ className }: { className?: string }) {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
         aria-label="Weather — open detailed forecast"
         className={cn(
-          'bg-black p-6 flex flex-col cursor-pointer touch-manipulation min-h-[120px] md:min-h-[200px]',
-          'select-none',
+          'bg-black flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
+          cols === 1 ? 'p-2' : 'p-4',
           className,
         )}
-        style={{ borderRadius: 0 }}
+        style={{ borderRadius: 0, WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
       >
-        <span className="text-[10px] font-black uppercase tracking-widest text-white/40 text-left">Weather</span>
-
         {error ? (
           <div className="flex-1 flex items-center">
             <span className="text-[11px] uppercase tracking-widest text-white/40 text-left">Unavailable</span>
@@ -374,21 +377,103 @@ export function WeatherWidget({ className }: { className?: string }) {
           <div className="flex-1 flex items-center">
             <span className="text-[11px] uppercase tracking-widest text-white/30 text-left">Loading…</span>
           </div>
+        ) : cols === 1 && rows === 1 ? (
+          /* 1x1 — the temperature, and nothing else that would not be legible. */
+          <div className="flex-1 flex flex-col items-start justify-between">
+            <span className={cn('text-lg leading-none', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
+            <span className="text-2xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</span>
+          </div>
+        ) : cols === 1 ? (
+          /* A narrow column: temperature over the day's range, and for the
+             tallest version a few days beneath it. */
+          <div className="flex-1 flex flex-col gap-2 text-left">
+            <span className={cn('text-xl leading-none', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
+            <span className="text-3xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</span>
+            <span className="text-[9px] uppercase tracking-widest text-white/40 tabular-nums">
+              {round(data.today.max)}° / {round(data.today.min)}°
+            </span>
+            {rows >= 4 && (
+              <div className="mt-auto flex flex-col gap-1">
+                {data.daily.slice(1, 4).map((d, i) => (
+                  <div key={d.date} className="flex items-center justify-between text-[9px] uppercase tracking-widest text-white/40 tabular-nums">
+                    <span>{weekday(d.date, i + 1).slice(0, 3)}</span>
+                    <span className="text-white/70">{round(d.max)}°</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="flex-1 flex flex-col justify-center text-left">
-            <div className={cn('text-5xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</div>
-            <div className="mt-3 text-5xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</div>
-            <div className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/70 truncate">{data.place.name}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 truncate">
-              {conditionLabel(data.current.code)}
+          <div className={cn(
+            'flex-1 min-h-0 gap-4',
+            cols >= 4 && rows === 2 ? 'flex items-center' : 'flex flex-col justify-between',
+          )}>
+            {/* Current conditions — the part every size above 1x1 shows. */}
+            <div className={cn('flex flex-col text-left shrink-0', cols >= 4 && rows === 2 ? 'w-1/3 justify-center' : 'justify-start')}>
+              <div className={cn('leading-none', rows >= 4 ? 'text-5xl' : 'text-3xl', GLYPH)}>
+                {conditionGlyph(data.current.code, data.current.isDay)}
+              </div>
+              <div className={cn('mt-2 font-black leading-none text-white tabular-nums', rows >= 4 ? 'text-6xl' : 'text-4xl')}>
+                {round(data.current.temperature)}°
+              </div>
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-widest text-white/70 truncate">{data.place.name}</div>
+              <div className="text-[10px] uppercase tracking-widest text-white/40 truncate">
+                {conditionLabel(data.current.code)} — H {round(data.today.max)}° L {round(data.today.min)}°
+              </div>
             </div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
-              H {round(data.today.max)}° L {round(data.today.min)}°
-            </div>
+
+            {/* Wide tiles get the hours; tall ones get the days; the largest
+                gets both. Each size shows what its shape has room for. */}
+            {cols >= 4 && (
+              // At 4x4 the hours and the days are siblings of the current block
+              // rather than nested together, so the column distributes three
+              // bands evenly instead of pinning two to the top and bottom with
+              // a hole between them.
+              <div className={cn('min-w-0 flex flex-col gap-4', rows === 2 ? 'flex-1 justify-center' : 'w-full')}>
+                <div className="flex items-end justify-between gap-1">
+                  {data.hourly.slice(0, rows >= 4 ? 8 : 6).map(h => (
+                    <div key={h.time} className="flex flex-col items-center gap-1 min-w-0">
+                      <span className="text-[9px] uppercase tracking-widest text-white/40">
+                        {new Date(h.time).toLocaleTimeString('en-US', { hour: 'numeric' }).replace(' ', '')}
+                      </span>
+                      <span className={cn('text-sm leading-none', GLYPH)}>{conditionGlyph(h.code)}</span>
+                      <span className="text-xs font-bold text-white tabular-nums">{round(h.temperature)}°</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {cols >= 4 && rows >= 4 && (
+              // Capped: across a 612px tile the day rows would otherwise strand
+              // each temperature at the far edge from its day.
+              <div className="flex flex-col gap-2 max-w-[26rem]">
+                {data.daily.slice(1, 5).map((d, i) => (
+                  <div key={d.date} className="flex items-center gap-3 text-[10px] uppercase tracking-widest tabular-nums">
+                    <span className="w-10 text-white/40">{weekday(d.date, i + 1)}</span>
+                    <span className={cn('w-4 text-center', GLYPH)}>{conditionGlyph(d.code)}</span>
+                    <span className="ml-auto text-white/70">{round(d.max)}°</span>
+                    <span className="w-8 text-right text-white/30">{round(d.min)}°</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Tall but narrow: days instead of hours. */}
+            {cols < 4 && rows >= 4 && (
+              <div className="flex flex-col gap-1.5">
+                {data.daily.slice(1, 5).map((d, i) => (
+                  <div key={d.date} className="flex items-center gap-2 text-[10px] uppercase tracking-widest tabular-nums">
+                    <span className="w-8 text-white/40">{weekday(d.date, i + 1)}</span>
+                    <span className={cn('w-4 text-center', GLYPH)}>{conditionGlyph(d.code)}</span>
+                    <span className="ml-auto text-white/70">{round(d.max)}°</span>
+                    <span className="w-7 text-right text-white/30">{round(d.min)}°</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        <span className="text-[9px] uppercase tracking-widest text-white/20 text-left">Hold for detail</span>
       </div>
 
       {open && (
