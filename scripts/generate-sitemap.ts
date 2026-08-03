@@ -148,6 +148,22 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
+  <!-- Capabilities -->
+  <url>
+    <loc>${baseUrl}/capabilities</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Documentation -->
+  <url>
+    <loc>${baseUrl}/docs</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
   <!-- King Midas Leaderboard -->
   <url>
     <loc>${baseUrl}/king-midas-leaderboard</loc>

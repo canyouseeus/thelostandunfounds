@@ -23,7 +23,14 @@ const CORE_PAGES = [
     { path: 'contact', title: 'CONTACT | THE LOST+UNFOUNDS', description: 'Get in touch with THE LOST+UNFOUNDS. We\'d love to hear from you and help with any questions, inquiries, or feedback you might have about our platform.' },
     { path: 'support', title: 'SUPPORT CENTER | THE LOST+UNFOUNDS', description: 'Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly.' },
     { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
-    { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' }
+    { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' },
+    // Public routes that existed in the router but not here, so the Vercel
+    // catch-all served them the noindex shell — telling Google not to index
+    // real, public pages. Any new public route must be added to this list.
+    { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
+    { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
+    { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
+    { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' }
 ];
 
 async function preRenderCorePages() {
