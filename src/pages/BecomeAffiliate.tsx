@@ -106,7 +106,7 @@ export default function BecomeAffiliate() {
             isOpen={showAuthModal}
             onClose={() => setShowAuthModal(false)}
             intent="affiliate"
-            title="Join the Affiliate Program"
+            title="Join THE AFFILIATE PROGRAM"
             initialMode="signup"
         />
         <SEOHead
@@ -126,7 +126,7 @@ export default function BecomeAffiliate() {
                 <div className="px-4 md:px-8 lg:px-12 pt-12 pb-10 md:pt-20 md:pb-16 relative z-10">
                     <div className="max-w-4xl text-left">
                         <div className="text-white text-[10px] font-black uppercase tracking-[0.4em] mb-6">
-                            Join the #1 Creator Affiliate Program
+                            Join The #1 Creator Affiliate Program
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter uppercase leading-none">

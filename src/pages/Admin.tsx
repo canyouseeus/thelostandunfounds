@@ -1666,7 +1666,7 @@ export default function Admin() {
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
                   users:       { title: 'User Management',          icon: <UsersIcon className="w-5 h-5 text-white/40" /> },
-                  affiliates:  { title: 'Affiliate Program',        icon: <LinkIcon className="w-5 h-5 text-white/40" /> },
+                  affiliates:  { title: 'The Affiliate Program',    icon: <LinkIcon className="w-5 h-5 text-white/40" /> },
                   submissions: { title: 'Submission Queue',         icon: <DocumentTextIcon className="w-5 h-5 text-white/40" />, extra: pendingSubmissions > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span> : null },
                   events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },

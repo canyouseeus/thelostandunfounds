@@ -250,7 +250,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
       <SageModeOverlay />
       <div ref={fixedHeaderRef} className="fixed top-0 left-0 w-full bg-black z-[999]">
-        {/* Affiliate program banner — sits above the nav for homepage visitors */}
+        {/* THE AFFILIATE PROGRAM banner — sits above the nav for homepage visitors */}
         {showAdBanner && <AffiliateBanner noMargin />}
 
         <nav className="w-full backdrop-blur-md">

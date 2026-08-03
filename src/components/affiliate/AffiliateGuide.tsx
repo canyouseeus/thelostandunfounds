@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { AdminBentoCard } from '../ui/admin-bento-card';
 import BrandName from '../ui/BrandName';
+import AffiliateProgramName from '../ui/AffiliateProgramName';
 
 export default function AffiliateGuide() {
     return (
@@ -21,7 +22,7 @@ export default function AffiliateGuide() {
                 >
                     <div className="space-y-4">
                         <p className="text-white/50 text-xs leading-relaxed tracking-wide">
-                            Welcome to the <BrandName /> Affiliate Program. You are now part of an exclusive network of agents earning high commissions by sharing art and stories.
+                            Welcome to <AffiliateProgramName className="text-white" /> at <BrandName />. You are now part of an exclusive network of agents earning high commissions by sharing art and stories.
                         </p>
                         <div className="space-y-px">
                             <div className="flex items-start gap-3 p-3 bg-white/5">

@@ -383,7 +383,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
     <div className="min-h-screen bg-black text-white px-0 py-0 sm:px-0 lg:px-0 overflow-x-hidden">
       <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3 flex-wrap">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold truncate">Affiliate Program Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight truncate">The Affiliate Program Dashboard</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <button

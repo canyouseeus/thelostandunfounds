@@ -115,7 +115,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
                 {copiedAffiliate ? 'Copied' : 'Copy'}
               </button>
               <button
-                onClick={() => shareLink(affiliateLink, 'Join THE LOST+UNFOUNDS Affiliate Program!')}
+                onClick={() => shareLink(affiliateLink, 'Join THE AFFILIATE PROGRAM at THE LOST+UNFOUNDS!')}
                 className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
                 title="Share link"
               >
