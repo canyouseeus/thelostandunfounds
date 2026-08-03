@@ -12,7 +12,7 @@ import {
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import { LoadingSpinner } from '../Loading';
-import { DashboardTile } from './DashboardTile';
+import { DashboardTile, TileShape } from './DashboardTile';
 
 interface SiteStats {
   totalViews: number;
@@ -53,7 +53,7 @@ function StatList({ rows, keyField, labelField }: { rows: { count: number; [key:
   );
 }
 
-export function SiteAnalyticsCard() {
+export function SiteAnalyticsCard({ span }: TileShape = {}) {
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +74,7 @@ export function SiteAnalyticsCard() {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile
             icon={<ChartBarIcon className="w-4 h-4" />}
             title="Site Analytics"

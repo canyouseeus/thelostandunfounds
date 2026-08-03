@@ -3,11 +3,11 @@ import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import { useCrmClients, CrmDirectoryScreen } from './CrmDirectory';
-import { DashboardTile } from './DashboardTile';
+import { DashboardTile, TileShape } from './DashboardTile';
 
 const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
-export function CrmCard() {
+export function CrmCard({ span }: TileShape = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const { totals, loading } = useCrmClients();
 
@@ -16,7 +16,7 @@ export function CrmCard() {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile icon={<UserGroupIcon className="w-4 h-4" />} title="CRM Clients">
               <AdminBentoRow label="Clients" value={val(totals.clients, (n) => String(n))} />
               <AdminBentoRow label="Billed" value={val(totals.billed, money)} />

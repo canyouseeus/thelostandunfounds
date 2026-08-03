@@ -1,6 +1,11 @@
 import { ReactNode } from 'react';
 import { cn } from '../ui/utils';
 
+/** Grid shape for a tile, e.g. "col-span-2 row-span-2". */
+export interface TileShape {
+  span?: string;
+}
+
 interface DashboardTileProps {
   icon: ReactNode;
   /** First word reads at full strength, the rest dims — e.g. "NETWORK status". */
@@ -23,9 +28,12 @@ interface DashboardTileProps {
  * So the square is gone. A tile keeps a floor height and then grows to fit
  * whatever it holds, at full type size rather than scaled into illegibility —
  * a four-row tile is simply taller than a two-row one. That's the bento read:
- * cells of uneven height, some spanning two columns, sized by their content
- * instead of cropped to a uniform square. Nothing is clipped, so every figure
- * the dashboard is kept open for is actually on screen.
+ * cells of uneven height, sized by their content instead of cropped to a
+ * uniform square. Nothing is clipped, so every figure the dashboard is kept
+ * open for is actually on screen.
+ *
+ * The tile is solid black — spacing and type weight do the separating, not a
+ * raised surface.
  */
 export function DashboardTile({ icon, title, children, footer, className }: DashboardTileProps) {
   const [first, ...rest] = title.split(' ');
@@ -33,8 +41,8 @@ export function DashboardTile({ icon, title, children, footer, className }: Dash
   return (
     <div
       className={cn(
-        'bg-white/5 hover:bg-white/10 active:scale-95 transition-all duration-300',
-        'w-full h-full flex flex-col p-5 min-h-[172px]',
+        'bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300',
+        'w-full h-full flex flex-col p-5 overflow-hidden',
         className,
       )}
       style={{ borderRadius: 0 }}

@@ -3,7 +3,7 @@ import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import ProfitGraph from './ProfitGraph';
-import { DashboardTile } from './DashboardTile';
+import { DashboardTile, TileShape } from './DashboardTile';
 
 interface ProfitTrendCardProps {
   affiliateRevenue: number;
@@ -12,14 +12,14 @@ interface ProfitTrendCardProps {
 }
 
 /** Dashboard tile for the live profit trend — collapsed shows today's revenue mix, expanded renders ProfitGraph. */
-export function ProfitTrendCard({ affiliateRevenue, galleryRevenue, bookingRevenue }: ProfitTrendCardProps) {
+export function ProfitTrendCard({ affiliateRevenue, galleryRevenue, bookingRevenue, span }: ProfitTrendCardProps & TileShape) {
   const [isOpen, setIsOpen] = useState(false);
   const total = affiliateRevenue + galleryRevenue + bookingRevenue;
 
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile icon={<ArrowTrendingUpIcon className="w-4 h-4" />} title="Profit Trend">
               <AdminBentoRow label="Total Revenue" valueClassName="text-green-400 font-bold" value={`$${total.toLocaleString()}`} />
               <AdminBentoRow label="Affiliate" value={`$${affiliateRevenue.toLocaleString()}`} />

@@ -7,16 +7,18 @@ interface DashboardCategoryCardProps {
   title: string;
   footer?: React.ReactNode;
   content: React.ReactNode;
+  /** Grid shape, e.g. "col-span-1 row-span-4". See the dashboard grid. */
+  span?: string;
 }
 
 /** Standardized dashboard tile — matches SiteAnalyticsCard's ExpandableScreen pattern. */
-export function DashboardCategoryCard({ icon, title, footer, content }: DashboardCategoryCardProps) {
+export function DashboardCategoryCard({ icon, title, footer, content, span }: DashboardCategoryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           {/* At-a-glance face; opens full screen on click. */}
           <DashboardTile icon={icon} title={title}>{content}</DashboardTile>
         </ExpandableScreenTrigger>

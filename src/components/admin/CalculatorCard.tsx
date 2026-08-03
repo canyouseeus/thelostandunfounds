@@ -69,17 +69,28 @@ export function CalculatorCard({ className, wide = false }: { className?: string
   }) => (
     <button
       onClick={onClick}
+      // The grey flash iOS paints over a tapped element, on top of our own
+      // press state.
+      style={{ WebkitTapHighlightColor: 'transparent' }}
       className={cn(
-        'font-mono transition-colors active:scale-95 bg-black',
+        'font-mono bg-black select-none',
+        // Press feedback is :active only — it ends when the finger lifts.
+        // transition-colors made the release fade out, which read as a blink.
+        'active:bg-white active:text-black',
         // Wide mode gets the room of a full-width row, so the keys grow to a
         // real touch target instead of the 32px a 1/3-width cell allowed.
         wide ? 'h-14 sm:h-16 text-xl sm:text-2xl' : 'h-8 text-[11px]',
         // No key plates. The keypad is type on black — weight and tone carry
-        // the hierarchy (operators bright, digits plain, utilities dim) and
-        // hover inverts a key rather than tinting a surface.
-        variant === 'accent' ? 'font-black text-white hover:bg-white hover:text-black'
-          : variant === 'op' ? 'font-bold text-white/50 hover:bg-white hover:text-black'
-          : 'font-bold text-white/90 hover:bg-white hover:text-black',
+        // the hierarchy (operators bright, digits plain, utilities dim).
+        //
+        // Hover is gated behind a real hover-capable pointer. A plain `hover:`
+        // sticks after a tap on iOS, so a key you pressed stayed inverted until
+        // you touched something else — the key that "kept blinking with no
+        // touches". Touch gets `active:` above instead, which ends on release.
+        variant === 'accent' ? 'font-black text-white'
+          : variant === 'op' ? 'font-bold text-white/50'
+          : 'font-bold text-white/90',
+        '[@media(hover:hover)]:hover:bg-white [@media(hover:hover)]:hover:text-black',
       )}
     >
       {label}

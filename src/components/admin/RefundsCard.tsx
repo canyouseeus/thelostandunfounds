@@ -4,7 +4,7 @@ import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } fr
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import { LoadingSpinner } from '../Loading';
 import { supabase } from '../../lib/supabase';
-import { DashboardTile } from './DashboardTile';
+import { DashboardTile, TileShape } from './DashboardTile';
 
 interface RefundRow {
   id: string;
@@ -27,7 +27,7 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 /** Dashboard tile surfacing the refunds ledger — previously invisible (webhook only logged to console). */
-export function RefundsCard() {
+export function RefundsCard({ span }: TileShape = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [refunds, setRefunds] = useState<RefundRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export function RefundsCard() {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
+        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile icon={<ReceiptRefundIcon className="w-4 h-4" />} title="Refunds">
               <AdminBentoRow
                 label="Last 30 Days"
