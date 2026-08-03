@@ -99,6 +99,8 @@ import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
+import { FitBox } from '../components/ui/fit-box';
+import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import { installGlobalListeners } from '../lib/adminErrorLog';
@@ -1426,6 +1428,7 @@ export default function Admin() {
     {
       id: 'network-status',
       title: 'Network Status',
+      wide: true,
       icon: <CpuChipIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System health</span>,
       content: (
@@ -1470,6 +1473,7 @@ export default function Admin() {
     {
       id: 'notifications',
       title: 'Notifications',
+      wide: true,
       icon: <BellIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
       content: (
@@ -1606,19 +1610,44 @@ export default function Admin() {
 
         {/* Row 2: Category Grid (3x3). Clock, calendar and calculator sit in
             this grid alongside the other widgets. */}
-        <div id="dashboard-widgets" className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+        {/* Bento, not a uniform 3×3: two columns on a phone so a tile has the
+            width to show its figures in full, three from md. Tiles size to
+            their content and some take both columns — see DashboardTile. */}
+        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
           {/* Square 1×1 cells so the widget row reads as a uniform grid.
               !min-h-0 overrides each widget's own min-height, which would
-              otherwise stretch the cell taller than its width. */}
-          <ClockWidget size="lg" className="aspect-square !min-h-0 w-full" />
-          <CalendarWidget className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
-          <CalculatorCard className="aspect-square !min-h-0 w-full [zoom:0.6] md:[zoom:1]" />
+              otherwise stretch the cell taller than its width.
+
+              The calendar sizes its internals in fixed px (a 240px column of
+              40px day rows), so a narrow cell squeezed the day grid until the
+              digits overlapped and the month spilled out the bottom. `zoom`
+              didn't help — the widget still laid out at the cell's width and
+              only painted smaller afterwards. FitBox lays these out at a full
+              440px square and scales the painted result to the cell, so they
+              keep their proportions at every width. */}
+          <div className="col-span-2 md:col-span-3 grid grid-cols-3 gap-3 sm:gap-6">
+            <FitBox>
+              <ClockWidget size="lg" className="w-full h-full !min-h-0" />
+            </FitBox>
+            <FitBox>
+              <CalendarWidget className="w-full h-full !min-h-0" />
+            </FitBox>
+            <FitBox>
+              <WeatherWidget className="w-full h-full !min-h-0" />
+            </FitBox>
+          </div>
+
+          {/* The calculator gets the full width to itself. Squeezed into a 1/3
+              cell its keys scaled down to well under a fingertip; across the
+              whole row they're a real touch target. */}
+          <CalculatorCard wide className="col-span-2 md:col-span-3 w-full" />
 
           {dashboardCategories.map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
+              wide={category.wide}
               footer={category.footer}
               content={category.content}
             />

@@ -3,6 +3,7 @@ import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import ProfitGraph from './ProfitGraph';
+import { DashboardTile } from './DashboardTile';
 
 interface ProfitTrendCardProps {
   affiliateRevenue: number;
@@ -19,21 +20,12 @@ export function ProfitTrendCard({ affiliateRevenue, galleryRevenue, bookingReven
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
-          {/* Square at-a-glance widget, matching the rest of the grid. */}
-          <div className="bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300 aspect-square w-full flex flex-col p-3 md:p-4 overflow-hidden">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 shrink-0">
-              <ArrowTrendingUpIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/50" />
-              <h3 className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/80 truncate">
-                Profit <span className="text-white/40">Trend</span>
-              </h3>
-            </div>
-            <div className="flex-1 min-h-0 overflow-hidden [zoom:0.72] md:[zoom:1]">
+          <DashboardTile icon={<ArrowTrendingUpIcon className="w-4 h-4" />} title="Profit Trend">
               <AdminBentoRow label="Total Revenue" valueClassName="text-green-400 font-bold" value={`$${total.toLocaleString()}`} />
               <AdminBentoRow label="Affiliate" value={`$${affiliateRevenue.toLocaleString()}`} />
               <AdminBentoRow label="Gallery" value={`$${galleryRevenue.toLocaleString()}`} />
               <AdminBentoRow label="Bookings" value={`$${bookingRevenue.toLocaleString()}`} />
-            </div>
-          </div>
+          </DashboardTile>
         </ExpandableScreenTrigger>
 
         <ExpandableScreenContent className="overflow-x-hidden">

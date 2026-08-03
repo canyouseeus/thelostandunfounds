@@ -26,8 +26,14 @@ import { useGallery } from '../contexts/GalleryContext'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
-  // Header widgets (clock + date) are admin-only.
-  const isAdminRoute = location.pathname.startsWith('/admin')
+  const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
+  // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
+  const userIsAdmin = !loading && !!user && isAdminUser(user)
+  // Header widgets (clock + date) stand in for the dashboard's full-size ones,
+  // so they belong to the signed-in admin dashboard only. Being on an /admin
+  // URL isn't enough: the sign-in gate lives there too, and a locked-out
+  // visitor shouldn't see dashboard chrome floating over the logo.
+  const isAdminRoute = location.pathname.startsWith('/admin') && userIsAdmin
   const [headerNow, setHeaderNow] = useState(new Date())
   useEffect(() => {
     if (!isAdminRoute) return
@@ -89,9 +95,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [isRouteLoading, setIsRouteLoading] = useState(false)
   const previousPathRef = useRef(location.pathname)
   const menuRef = useRef<HTMLDivElement>(null)
-  const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
-  // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
-  const userIsAdmin = !loading && !!user && isAdminUser(user)
   // Any signed-in user gets the nav menu — it's the entry point for the role
   // switcher, profile, and sign-out. Previously gated to admins only.
   const showHeaderMenu = !loading && !!user

@@ -23,7 +23,7 @@ const fmt = (n: number) => {
  * CalendarWidget so the three read as one row: black card, centered content,
  * live and usable in place rather than behind a modal.
  */
-export function CalculatorCard({ className }: { className?: string }) {
+export function CalculatorCard({ className, wide = false }: { className?: string; wide?: boolean }) {
   const [display, setDisplay] = useState('0');
   const [acc, setAcc] = useState<number | null>(null);
   const [op, setOp] = useState<Op | null>(null);
@@ -70,7 +70,10 @@ export function CalculatorCard({ className }: { className?: string }) {
     <button
       onClick={onClick}
       className={cn(
-        'h-8 text-[11px] font-bold font-mono transition-colors active:scale-95',
+        'font-bold font-mono transition-colors active:scale-95',
+        // Wide mode gets the room of a full-width row, so the keys grow to a
+        // real touch target instead of the 32px a 1/3-width cell allowed.
+        wide ? 'h-14 sm:h-16 text-base sm:text-lg' : 'h-8 text-[11px]',
         variant === 'accent' ? 'bg-white/90 text-black hover:bg-white'
           : variant === 'op' ? 'bg-white/10 text-white hover:bg-white/20'
           : 'bg-white/5 text-white hover:bg-white/10',
@@ -85,15 +88,18 @@ export function CalculatorCard({ className }: { className?: string }) {
       'bg-black p-6 flex flex-col items-center justify-center min-h-[280px]',
       className,
     )}>
-      <div className="w-full max-w-[240px]">
-        <div className="text-right mb-3">
+      <div className={cn('w-full', wide ? 'max-w-[640px]' : 'max-w-[240px]')}>
+        <div className={cn('text-right', wide ? 'mb-5' : 'mb-3')}>
           <div className="text-[10px] font-mono text-white/30 h-3 leading-none">{op ?? ''}</div>
-          <div className="text-3xl font-black font-mono text-white tabular-nums truncate">
+          <div className={cn(
+            'font-black font-mono text-white tabular-nums truncate',
+            wide ? 'text-5xl sm:text-6xl' : 'text-3xl',
+          )}>
             {display}
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className={cn('grid grid-cols-4', wide ? 'gap-2 sm:gap-3' : 'gap-1.5')}>
           <Key label="AC" onClick={clear} variant="op" />
           <Key label="±" onClick={() => setDisplay(d => (d.startsWith('-') ? d.slice(1) : d === '0' ? d : '-' + d))} variant="op" />
           <Key label="%" onClick={() => { setDisplay(d => fmt(parseFloat(d) / 100)); setFresh(true); }} variant="op" />
