@@ -58,6 +58,7 @@ import {
   ChevronDownIcon,
   BanknotesIcon,
   PrinterIcon,
+  EllipsisHorizontalIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -100,6 +101,7 @@ import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { FitBox } from '../components/ui/fit-box';
+import { useLongPress } from '../components/ui/use-long-press';
 import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
@@ -193,7 +195,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
-  const [businessSwitcherOpen, setBusinessSwitcherOpen] = useState(false);
+  const [adminActionsOpen, setAdminActionsOpen] = useState(false);
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -257,6 +259,10 @@ export default function Admin() {
     if (panel) setActivePanelSection(panel);
   }, []);
   const [searchParams] = useSearchParams();
+
+  // Long press on the dashboard calendar opens the master calendar panel —
+  // the same one the header date links to.
+  const calendarPress = useLongPress(() => openPanel('calendar'));
 
   const openPanel = (id: string) => {
     setActivePanelSection(prev => (prev === id ? null : id));
@@ -1379,6 +1385,7 @@ export default function Admin() {
   const dashboardCategories = [
     {
       id: 'operational-load',
+      span: 'col-span-1 row-span-4',
       title: 'Operational Load',
       icon: <ChartBarIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">Real-time sync</span>,
@@ -1413,6 +1420,7 @@ export default function Admin() {
     },
     {
       id: 'revenue-performance',
+      span: 'col-span-1 row-span-4',
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">Gross profit estimate</span>,
@@ -1427,6 +1435,7 @@ export default function Admin() {
     },
     {
       id: 'network-status',
+      span: 'col-span-1 row-span-3',
       title: 'Network Status',
       icon: <CpuChipIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System health</span>,
@@ -1457,6 +1466,7 @@ export default function Admin() {
     },
     {
       id: 'registry',
+      span: 'col-span-1 row-span-3',
       title: 'Registry',
       icon: <ShieldCheckIcon className="w-4 h-4" />,
       footer: <Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline" onClick={e => e.stopPropagation()}>Manage Affiliates</Link>,
@@ -1471,6 +1481,7 @@ export default function Admin() {
     },
     {
       id: 'notifications',
+
       title: 'Notifications',
       icon: <BellIcon className="w-4 h-4" />,
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
@@ -1522,53 +1533,14 @@ export default function Admin() {
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
-          {/* Business Switcher */}
-          <div className="relative min-w-0">
-            <button
-              onClick={() => setBusinessSwitcherOpen(o => !o)}
-              className="flex items-center gap-2 group"
-              aria-label="Switch business"
-            >
-              <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)]">
-                ADMIN DASHBOARD
-              </h1>
-              <ChevronDownIcon className={cn(
-                'w-4 h-4 text-white/40 transition-transform mt-1',
-                businessSwitcherOpen && 'rotate-180'
-              )} />
-            </button>
+          <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)] min-w-0">
+            ADMIN DASHBOARD
+          </h1>
 
-            <AnimatePresence>
-              {businessSwitcherOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 mt-2 bg-black border border-white/10 shadow-2xl z-50 min-w-[220px]"
-                >
-                  <div className="py-1">
-                    <button
-                      className="w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-white bg-white/10 flex items-center gap-2"
-                      onClick={() => setBusinessSwitcherOpen(false)}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
-                      The Lost+Unfounds
-                    </button>
-                    <Link
-                      to="/admin/kattitude"
-                      className="flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 transition-colors"
-                      onClick={() => setBusinessSwitcherOpen(false)}
-                    >
-                      <BuildingStorefrontIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                      Kattitude Tattoo Studio
-                    </Link>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          <div className="flex items-center gap-2">
+          {/* Three icon buttons beside a title that scales with the viewport
+              collided on a phone — they sat on top of "ADMIN DASHBOARD". Above
+              sm they stay inline; below it they collapse behind one button. */}
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <CopyDebugReport />
             <AdminDeploymentNotifications />
             <Link
@@ -1578,6 +1550,36 @@ export default function Admin() {
             >
               <UserIcon className="w-5 h-5" />
             </Link>
+          </div>
+
+          <div className="relative sm:hidden flex-shrink-0">
+            <button
+              onClick={() => setAdminActionsOpen(o => !o)}
+              aria-label="Dashboard actions"
+              aria-expanded={adminActionsOpen}
+              className="p-2 bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+              style={{ borderRadius: 0 }}
+            >
+              <EllipsisHorizontalIcon className="w-5 h-5" />
+            </button>
+
+            {adminActionsOpen && (
+              <div
+                className="absolute top-full right-0 mt-2 z-50 bg-black p-2 flex items-center gap-2"
+                style={{ borderRadius: 0 }}
+              >
+                <CopyDebugReport />
+                <AdminDeploymentNotifications />
+                <Link
+                  to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
+                  className="p-2 bg-white text-black hover:bg-white/90 transition"
+                  title="Profile"
+                  onClick={() => setAdminActionsOpen(false)}
+                >
+                  <UserIcon className="w-5 h-5" />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
         <p className="text-white/70 text-sm hidden sm:block mt-1">Manage your platform and users</p>
@@ -1626,32 +1628,46 @@ export default function Admin() {
               only painted smaller afterwards. FitBox lays these out at a full
               440px square and scales the painted result to the cell, so they
               keep their proportions at every width. */}
-          <div className="col-span-2 md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
-            {/* Two across on a phone, three from md. Three squares across a
-                390px screen is 120px each — the calendar's day grid ends up
-                rendering at about 4px, which is a picture of a calendar rather
-                than a calendar. The clock and weather pair up, and the calendar
-                takes the full width below them, where it's actually readable.
+          <div className="col-span-2 md:col-span-3 grid grid-cols-3 md:grid-cols-5 gap-3 sm:gap-6">
+            {/* Uneven by design: the clock and calendar are the widgets you
+                actually read, so they take two columns each and the weather
+                takes one — a half square in portrait rather than a third of the
+                row. On a phone the calendar drops to its own full-width row,
+                because a third of 390px renders its day grid at about 4px.
 
-                The clock is drawn in percentages, so it fills a square on its
+                The clock is drawn in percentages, so it fills its square on its
                 own — no FitBox needed. The calendar and weather lay out in fixed
-                px, so they're designed against FitBox's square and scaled to the
-                cell: `size="fill"` and the larger type exist to use that square
-                rather than float in the middle of it. */}
-            <ClockWidget size="lg" className="aspect-square !min-h-0 w-full bg-white/5" />
-            <FitBox className="md:order-3">
-              <WeatherWidget className="w-full h-full !min-h-0 bg-white/5" />
-            </FitBox>
-            {/* 500, not the default 440: the fill variant lays out at roughly
-                480px tall, and a base shorter than the content clips the last
-                week of the month.
+                px, so they're designed against a FitBox box and scaled to the
+                cell afterwards. */}
+            <ClockWidget size="lg" className="col-span-2 aspect-square !min-h-0 w-full" />
 
-                Ordered last so the clock and weather pair on the first row and
-                the calendar takes the full width beneath them; at md all three
-                sit in one row and `order` puts the calendar back in the middle. */}
-            <FitBox base={500} className="col-span-2 md:col-span-1 md:order-2">
-              <CalendarWidget size="fill" className="w-full h-full bg-white/5" />
+            {/* 220x440 — half of the square the other tiles use, so the weather
+                reads as a portrait strip beside them. */}
+            <FitBox baseWidth={220} baseHeight={440} className="col-span-1 md:order-3">
+              <WeatherWidget className="w-full h-full !min-h-0" />
             </FitBox>
+
+            {/* Long press (or click with a mouse) opens the master calendar —
+                the same panel the header date links to. Selection is suppressed
+                on the way in: a long press that lands on text otherwise starts
+                an iOS selection instead of opening anything.
+
+                500, not the default 440: the fill variant lays out at roughly
+                480px tall, and a base shorter than the content clips the last
+                week of the month. */}
+            <div
+              {...calendarPress}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
+              aria-label="Calendar — open master calendar"
+              className="col-span-3 md:col-span-2 md:order-2 cursor-pointer touch-manipulation select-none"
+              style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <FitBox base={500}>
+                <CalendarWidget size="fill" className="w-full h-full" />
+              </FitBox>
+            </div>
           </div>
 
           {/* The calculator gets the full width to itself. Squeezed into a 1/3
@@ -1660,43 +1676,59 @@ export default function Admin() {
           <CalculatorCard wide className="col-span-2 md:col-span-3 w-full" />
         </div>
 
-        {/* Tiles are masonry, not grid rows.
-            A CSS grid gives every cell in a row the height of the tallest tile
-            in it, so a three-stat tile beside a five-stat one sits in a box with
-            a band of empty space under it — the dead space beside Registry.
-            Columns pack each tile at its own height with nothing left over, and
-            the uneven heights are what make it read as a bento rather than a
-            spreadsheet. `break-inside-avoid` keeps a tile from being split
-            across the column boundary.
-            The selector reaches grandchildren because each card wraps itself in
-            a `display: contents` div — that wrapper is skipped for layout, so
-            its children are what actually flow in the columns. */}
-        <div className="mt-3 sm:mt-6 columns-2 md:columns-3 gap-3 sm:gap-6 [&>*>*]:break-inside-avoid [&>*>*]:mb-3 sm:[&>*>*]:mb-6">
-          {dashboardCategories.map((category) => (
+        {/* A mosaic on a unit grid, not a stack.
+            Masonry packed the tiles but left a ragged bottom edge, and every
+            tile was the same width. Here each tile takes an explicit shape on a
+            grid of 92px rows — squares, verticals, and a full-width horizontal —
+            and the shapes are chosen so the areas sum to a whole number of rows
+            at both column counts: 30 units over 2 columns is 15 rows, over 3
+            columns is 10. That's what makes the bottom edge come out flat.
+            `dense` backfills rather than leaving a hole if a shape changes.
+
+            Tile heights: a span of N rows is 92N + 12(N-1) px — 196, 300, 404 —
+            and each tile's shape is sized to its own content. */}
+        <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-3 auto-rows-[92px] gap-3 [grid-auto-flow:dense]">
+          {dashboardCategories.filter(c => c.id !== 'notifications').map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
+              span={category.span}
               footer={category.footer}
               content={category.content}
             />
           ))}
 
           {/* Site Analytics — fullscreen ExpandableScreen pattern */}
-          <SiteAnalyticsCard />
+          <SiteAnalyticsCard span="col-span-1 row-span-3" />
 
           {/* CRM — client directory + billing rollup */}
-          <CrmCard />
+          <CrmCard span="col-span-1 row-span-3" />
 
           {/* Profit Trend — wires ProfitGraph into the dashboard */}
           <ProfitTrendCard
+            span="col-span-1 row-span-3"
             affiliateRevenue={stats?.affiliateRevenue || 0}
             galleryRevenue={stats?.galleryRevenue || 0}
             bookingRevenue={stats?.bookingRevenue || 0}
           />
 
           {/* Refunds — previously invisible, now a real ledger */}
-          <RefundsCard />
+          <RefundsCard span="col-span-1 row-span-3" />
+
+          {/* Notifications runs full width and last, which is what makes the
+              bottom edge flat: whatever heights the columns above end on, the
+              grid closes on a single tile spanning every column. */}
+          {dashboardCategories.filter(c => c.id === 'notifications').map((category) => (
+            <DashboardCategoryCard
+              key={category.id}
+              icon={category.icon}
+              title={category.title}
+              span="col-span-2 md:col-span-3 row-span-2"
+              footer={category.footer}
+              content={category.content}
+            />
+          ))}
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}

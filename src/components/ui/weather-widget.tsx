@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon, MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
+import { useLongPress } from './use-long-press';
 import {
   DEFAULT_PLACE,
   WeatherPlace,
@@ -31,57 +32,6 @@ const weekday = (iso: string, index: number) =>
 
 const clockTime = (iso: string) =>
   iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—';
-
-/**
- * Opens the detail sheet on a long press where that's the natural gesture
- * (touch) and on a plain click where it isn't (mouse). Movement or an early
- * release cancels, so a scroll that starts on the tile doesn't open anything.
- */
-function useLongPress(onOpen: () => void, ms = 450) {
-  const timer = useRef<number | null>(null);
-  const origin = useRef<{ x: number; y: number } | null>(null);
-  const fired = useRef(false);
-
-  const clear = useCallback(() => {
-    if (timer.current) window.clearTimeout(timer.current);
-    timer.current = null;
-    origin.current = null;
-  }, []);
-
-  useEffect(() => clear, [clear]);
-
-  return {
-    onPointerDown: (e: React.PointerEvent) => {
-      fired.current = false;
-      if (e.pointerType === 'mouse') return;
-      origin.current = { x: e.clientX, y: e.clientY };
-      timer.current = window.setTimeout(() => {
-        fired.current = true;
-        // The press has become a long press — give the haptic confirmation the
-        // gesture normally carries on a phone, where there's no cursor to show
-        // that anything registered.
-        navigator.vibrate?.(8);
-        onOpen();
-      }, ms);
-    },
-    onPointerMove: (e: React.PointerEvent) => {
-      if (!origin.current) return;
-      const { x, y } = origin.current;
-      if (Math.abs(e.clientX - x) > 10 || Math.abs(e.clientY - y) > 10) clear();
-    },
-    onPointerUp: clear,
-    onPointerLeave: clear,
-    onPointerCancel: clear,
-    onClick: (e: React.MouseEvent) => {
-      // Mouse clicks open directly; a touch that already fired must not open twice.
-      if (fired.current) { e.preventDefault(); return; }
-      if (e.detail === 0) return;
-      onOpen();
-    },
-    // A long press on a phone otherwise raises the OS text/context menu.
-    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-  };
-}
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -135,7 +85,7 @@ function LocationPicker({ onPick }: { onPick: (p: WeatherPlace) => void }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="SEARCH A CITY"
-            className="w-full bg-transparent py-3 text-sm text-white placeholder:text-white/30 placeholder:tracking-widest focus:outline-none"
+            className="w-full bg-transparent py-3 text-sm text-white placeholder:text-white/30 placeholder:tracking-widest focus:outline-none select-text"
             style={{ borderRadius: 0 }}
           />
         </div>
@@ -203,7 +153,11 @@ function WeatherDetail({
   const uv = data?.today?.uvIndexMax ?? 0;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black p-4">
+    <div
+      className="fixed inset-0 z-[9999] overflow-y-auto bg-black p-4 select-none"
+      // Tailwind mis-parses vendor-prefixed arbitrary properties, so these go inline.
+      style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+    >
       <div className="relative mx-auto my-8 w-full max-w-2xl bg-black p-6" style={{ borderRadius: 0 }}>
         <button
           onClick={onClose}
@@ -404,14 +358,13 @@ export function WeatherWidget({ className }: { className?: string }) {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
         aria-label="Weather — open detailed forecast"
         className={cn(
-          'bg-black p-6 flex flex-col select-none cursor-pointer touch-manipulation min-h-[120px] md:min-h-[200px]',
-          // Rendered inside FitBox's 440px square, so these sizes are a design
-          // size and get scaled to the cell — big enough to fill the tile.
+          'bg-black p-6 flex flex-col cursor-pointer touch-manipulation min-h-[120px] md:min-h-[200px]',
+          'select-none',
           className,
         )}
         style={{ borderRadius: 0 }}
       >
-        <span className="text-sm font-black uppercase tracking-widest text-white/40 text-left">Weather</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-white/40 text-left">Weather</span>
 
         {error ? (
           <div className="flex-1 flex items-center">
@@ -423,19 +376,19 @@ export function WeatherWidget({ className }: { className?: string }) {
           </div>
         ) : (
           <div className="flex-1 flex flex-col justify-center text-left">
-            <div className={cn('text-7xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</div>
-            <div className="mt-4 text-8xl font-black leading-none text-white tabular-nums tracking-tight">{round(data.current.temperature)}°</div>
-            <div className="mt-5 text-lg font-black uppercase tracking-widest text-white truncate">{data.place.name}</div>
-            <div className="mt-2 text-sm uppercase tracking-widest text-white/50 truncate">
+            <div className={cn('text-5xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</div>
+            <div className="mt-3 text-5xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</div>
+            <div className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/70 truncate">{data.place.name}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 truncate">
               {conditionLabel(data.current.code)}
             </div>
-            <div className="mt-1 text-sm uppercase tracking-widest text-white/50 tabular-nums">
+            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
               H {round(data.today.max)}° L {round(data.today.min)}°
             </div>
           </div>
         )}
 
-        <span className="text-xs uppercase tracking-widest text-white/25 text-left">Hold for detail</span>
+        <span className="text-[9px] uppercase tracking-widest text-white/20 text-left">Hold for detail</span>
       </div>
 
       {open && (
