@@ -16,7 +16,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Frontend | `src/` | React 18, TypeScript, Vite |
 | API | `api/` | Vercel Serverless Functions |
 | Shared Logic | `lib/` | TypeScript handlers & utilities |
-| Database | Supabase | PostgreSQL + RLS |
+| Database | Supabase (`cxpyqjxhbvuygnxyukli`) | PostgreSQL + RLS |
 | Deployment | Vercel | Auto-deploy from `main` branch |
 | Email | Zoho Mail | OAuth2 integration |
 | Payments | Stripe | Checkout Sessions + webhooks; Connect for affiliate payouts |
@@ -32,12 +32,33 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Email branding rules | `.claude/skills/brand-email-manager/SKILL.md` |
 | Design system & styling | `.claude/skills/noir-design/SKILL.md`, `.claude/skills/no-border-design/SKILL.md` |
 | Database schema & migrations | Supabase MCP (`apply_migration`) — see `supabase-mcp` skill. `sql/` is a dead archive |
+| Which Supabase project is live | `cxpyqjxhbvuygnxyukli` — see Database Project Rule below |
 | Environment variables | `.env.local` (local), Vercel dashboard (prod) |
 | Deployment verification | `.agent/workflows/deploy-and-verify.md` |
 | Setup & onboarding docs | `docs/setup/` |
 | Feature documentation | `docs/features/` |
 | Security docs | `docs/security/` |
 | Archived/completed docs | `docs/archive/` |
+
+## DATABASE PROJECT RULE
+
+**Production runs on Supabase project `cxpyqjxhbvuygnxyukli` ("SCOT33 BACK-UP").** The site was
+switched to this backup to escape an egress overage on the original project,
+`nonaqhllakrckbtbawrb`. The old project is no longer the live database — do not apply migrations
+to it, and do not treat data there as current.
+
+**The local `.env` is stale and still names the old project.** It is not evidence of anything.
+When you need to know which database is live, read it off the deployed bundle rather than the
+repo:
+
+```bash
+JS=$(curl -sS https://www.thelostandunfounds.com | grep -o '/assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+curl -sS "https://www.thelostandunfounds.com$JS" | grep -o 'https://[a-z0-9]*\.supabase\.co' | sort -u
+```
+
+Vercel's environment variables are the source of truth for production; `.env` only affects local
+runs. If a Supabase MCP call returns "You do not have permission to perform this action", you are
+almost certainly pointed at the retired project — check the ref before concluding you lack access.
 
 ## EVIDENCE RULE — every task, no exceptions
 

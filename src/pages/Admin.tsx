@@ -1684,7 +1684,14 @@ export default function Admin() {
             come from the saved layout; the editor below writes to it. */}
         <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
-            {layout.editing ? `${layout.units} units — ${layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'}, ${layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}` : ''}
+            {layout.editing && (
+              <>
+                {layout.units} units — {layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'},{' '}
+                {layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}
+                {' · '}
+                {layout.syncing ? 'saving' : layout.syncedRemotely ? 'synced to your account' : 'this device only'}
+              </>
+            )}
           </span>
           <div className="flex items-center gap-2">
             {layout.editing && (

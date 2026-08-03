@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
 import { TILE_1X2, TILE_1X4, TILE_2X2, TILE_2X4, TILE_4X2, TILE_4X4 } from './DashboardTile';
 
 /**
@@ -54,32 +56,23 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
 /** Order tiles appear in. Rearranged by dragging in edit mode. */
 export const DEFAULT_ORDER = Object.keys(DEFAULT_LAYOUT);
 
-const KEY = 'lu.dashboard.layout';
-
 interface Stored {
   shapes: Record<string, ShapeName>;
   order: string[];
 }
 
-function read(): Stored {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<Stored>;
-      return {
-        // Merge rather than replace: a tile added after a layout was saved
-        // should appear at its default size instead of vanishing.
-        shapes: { ...DEFAULT_LAYOUT, ...(parsed.shapes ?? {}) },
-        order: [
-          ...(parsed.order ?? []).filter(id => DEFAULT_ORDER.includes(id)),
-          ...DEFAULT_ORDER.filter(id => !(parsed.order ?? []).includes(id)),
-        ],
-      };
-    }
-  } catch {
-    /* unreadable storage just means the default layout */
-  }
-  return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER] };
+/** Fill in anything a saved layout doesn't mention, and drop anything stale. */
+function reconcile(saved: Partial<Stored> | null): Stored {
+  if (!saved) return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER] };
+  return {
+    // Merge rather than replace: a tile added after a layout was saved should
+    // appear at its default size instead of vanishing.
+    shapes: { ...DEFAULT_LAYOUT, ...(saved.shapes ?? {}) },
+    order: [
+      ...(saved.order ?? []).filter(id => DEFAULT_ORDER.includes(id)),
+      ...DEFAULT_ORDER.filter(id => !(saved.order ?? []).includes(id)),
+    ],
+  };
 }
 
 /**
@@ -87,16 +80,40 @@ function read(): Stored {
  * they sit in. Persisted to this browser.
  */
 export function useDashboardLayout() {
-  const [{ shapes, order }, setState] = useState<Stored>(() => read());
+  const { user } = useAuth();
+  // Local first so the grid draws immediately; the account's layout arrives a
+  // moment later and takes over if there is one.
+  const [{ shapes, order }, setState] = useState<Stored>(() => reconcile(readLocal()));
   const [editing, setEditing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncedRemotely, setSyncedRemotely] = useState(false);
+  const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ shapes, order }));
-    } catch {
-      /* private mode — the layout just won't persist */
-    }
-  }, [shapes, order]);
+    if (!user?.id || loadedFor.current === user.id) return;
+    loadedFor.current = user.id;
+    let alive = true;
+    (async () => {
+      const remote = await readRemote(user.id);
+      if (!alive || !remote) return;
+      setState(reconcile(remote));
+      setSyncedRemotely(true);
+    })();
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    writeLocal({ shapes, order });
+    if (!user?.id) return;
+    // Debounced: resizing a tile is a burst of clicks, not one decision.
+    setSyncing(true);
+    const t = window.setTimeout(async () => {
+      const ok = await writeRemote(user.id, { shapes, order });
+      setSyncedRemotely(ok);
+      setSyncing(false);
+    }, 800);
+    return () => { window.clearTimeout(t); setSyncing(false); };
+  }, [shapes, order, user?.id]);
 
   const cycleShape = useCallback((id: string) => {
     setState(prev => {
@@ -132,5 +149,10 @@ export function useDashboardLayout() {
   const units = order.reduce((sum, id) => sum + SHAPE_UNITS[shapes[id] ?? '2x2'], 0);
   const fillsRows = { phone: units % 4 === 0, desktop: units % 8 === 0 };
 
-  return { shapes, order, editing, setEditing, cycleShape, setShape, moveBefore, reset, classOf, units, fillsRows };
+  return {
+    shapes, order, editing, setEditing, cycleShape, setShape, moveBefore, reset, classOf, units, fillsRows,
+    // `syncedRemotely` is false until a write actually lands, so the editor can
+    // say "this device only" rather than implying a sync that didn't happen.
+    syncing, syncedRemotely,
+  };
 }
