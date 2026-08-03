@@ -52,9 +52,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
       const el = grid?.firstElementChild
       if (!el) return setBigWidgetsVisible(false)
       const r = el.getBoundingClientRect()
-      // The header widgets stand in for the full-size ones, so show the verse
-      // exactly while the real clock and calendar are on screen.
-      setBigWidgetsVisible(r.bottom > 0 && r.top < window.innerHeight)
+      // Swap once the row has actually been scrolled to — its top reaching the
+      // middle of the viewport — not on the first sliver. At the top of the
+      // page the row already peeks in by ~45px, which would otherwise hand
+      // straight over to the verse before you'd scrolled anywhere.
+      setBigWidgetsVisible(r.bottom > 0 && r.top <= window.innerHeight * 0.5)
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(measure) }
     measure()
