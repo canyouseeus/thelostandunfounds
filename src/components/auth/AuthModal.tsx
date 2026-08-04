@@ -26,7 +26,9 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   const [justSignedIn, setJustSignedIn] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
 
-  const { signUp, signIn, signInWithGoogle, user } = useAuth();
+  const [magicSent, setMagicSent] = useState(false);
+
+  const { signUp, signIn, signInWithGoogle, signInWithMagicLink, user } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
@@ -87,6 +89,33 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   };
 
   if (!isOpen) return null;
+
+  // Passwordless entry. A client who was emailed a private gallery link should
+  // not have to invent a password to see photos we already sent them — the
+  // gallery is gated on their email address, so proving the address is enough.
+  // Returns them to the exact page they were on, gallery slug included.
+  const handleMagicLink = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setError('Enter your email address first.');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const { error } = await signInWithMagicLink(email.trim(), window.location.href);
+      if (error) {
+        setError(error.message);
+        showError(error.message);
+      } else {
+        setMagicSent(true);
+        success('Check your email for a sign-in link.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Could not send the sign-in link.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,6 +259,25 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
           </form>
+
+          {magicSent ? (
+            <div className="mt-4 bg-white/10 px-4 py-4">
+              <p className="text-white text-sm font-bold mb-1">CHECK YOUR EMAIL</p>
+              <p className="text-white/60 text-xs">
+                We sent a sign-in link to {email}. Open it on this device and
+                you'll land right back here — no password needed.
+              </p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleMagicLink}
+              disabled={loading}
+              className="mt-3 w-full px-4 py-2 bg-white/5 text-white font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              EMAIL ME A SIGN-IN LINK
+            </button>
+          )}
 
           <div className="mt-6">
             <div className="relative">
