@@ -79,11 +79,13 @@ function Key({ label, onClick, variant = 'default', wide, pressed, onPressStart,
  * CalendarWidget so the three read as one row: black card, centered content,
  * live and usable in place rather than behind a modal.
  */
-export function CalculatorCard({ className, wide = false, compact = false }: {
+export function CalculatorCard({ className, wide = false, compact = false, faceSize = 'sm' }: {
   className?: string;
   wide?: boolean;
   /** Too small for a keypad: show a face that opens the calculator full screen. */
   compact?: boolean;
+  /** Which cell the face is filling — 1x1 or a phone's 2x2. */
+  faceSize?: 'sm' | 'lg';
 }) {
   const [expanded, setExpanded] = useState(false);
   const [display, setDisplay] = useState('0');
@@ -196,9 +198,27 @@ export function CalculatorCard({ className, wide = false, compact = false }: {
       <div className="contents">
         <ExpandableScreen isOpen={expanded} onOpenChange={setExpanded}>
           <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
-            <div className={cn('bg-black w-full h-full flex flex-col justify-between p-2 overflow-hidden', className)} style={{ borderRadius: 0 }}>
-              <span className="opacity-30"><CalculatorIcon className="w-4 h-4" /></span>
-              <span className="text-xl font-black font-mono tabular-nums truncate">{display}</span>
+            {/* The operator quad: plus, divide, equals, times in a two-by-two,
+                white on black. Says calculator without a word or a literal
+                icon, stays black so it doesn't shout in a field of black tiles,
+                and rhymes with the keypad it opens.
+
+                Two type scales because this face now covers two cell sizes —
+                1x1 at 81-120px, and 2x2 on a phone at 173px, where a keypad's
+                keys would be 39x25 and too small for a thumb. */}
+            <div
+              className={cn('w-full h-full bg-black grid grid-cols-2 grid-rows-2', className)}
+              style={{ borderRadius: 0 }}
+            >
+              {['+', '÷', '=', '×'].map(op => (
+                <span
+                  key={op}
+                  className="flex items-center justify-center text-white font-black leading-none"
+                  style={{ fontSize: faceSize === 'lg' ? 56 : 26 }}
+                >
+                  {op}
+                </span>
+              ))}
             </div>
           </ExpandableScreenTrigger>
 

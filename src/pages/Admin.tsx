@@ -101,7 +101,9 @@ import AdminBookingView from '../components/admin/AdminBookingView';
 import AdminCalendarView from '../components/admin/AdminCalendarView';
 import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
+import { RevenueWidget } from '../components/ui/revenue-widget';
 import { ClockWidget } from '../components/ui/clock-widget';
+import { DetailSheet } from '../components/ui/detail-sheet';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { FitBox } from '../components/ui/fit-box';
 import { MiniBars, Sparkline, StatusMarks } from '../components/ui/viz';
@@ -267,6 +269,10 @@ export default function Admin() {
   // Long press on the dashboard calendar opens the master calendar panel —
   // the same one the header date links to.
   const calendarPress = useLongPress(() => openPanel('calendar'));
+  // The clock expands on hold only — plain clicks belong to the widget itself
+  // (face click cycles format, label click cycles mode, per the clock rule).
+  const [clockOpen, setClockOpen] = useState(false);
+  const clockPress = useLongPress(() => setClockOpen(true), 450, { holdOnMouse: true });
   // Widget shapes and order, editable and saved to this browser.
   const layout = useDashboardLayout();
   // The grid's rows are set to exactly one column width, measured, so a tile
@@ -1825,6 +1831,27 @@ export default function Admin() {
             if (id === 'calculator') return cell(invertIfLight(
               <CalculatorCard wide compact={size === '1x1'} className="w-full h-full" />
             ));
+            // Revenue is a drawn widget like the clock and weather: the trace
+            // is the mass, per-size views, long press for the full breakdown.
+            if (id === 'revenue-performance') {
+              const category = dashboardCategories.find(c => c.id === id);
+              return cell(invertIfLight(
+                <RevenueWidget
+                  size={size}
+                  className="w-full h-full"
+                  data={{
+                    total: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
+                    sources: [
+                      { label: 'Affiliate', value: stats?.affiliateRevenue || 0 },
+                      { label: 'Gallery', value: stats?.galleryRevenue || 0 },
+                      { label: 'Bookings', value: stats?.bookingRevenue || 0 },
+                    ],
+                    series: (stats?.history?.revenue || []).map(r => (typeof r === 'string' ? 1 : r.amount)),
+                  }}
+                  detail={category?.content}
+                />
+              ));
+            }
             if (id === 'site-analytics') return cell(<SiteAnalyticsCard light={light} size={size} />);
             if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
 
@@ -1892,6 +1919,14 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        {/* The clock's expanded card: the same widget with a full screen —
+            which is also the 1x1's only route to the stopwatch and timer. */}
+        {clockOpen && (
+          <DetailSheet onClose={() => setClockOpen(false)} label="Close clock">
+            <ClockWidget size="md" className="w-full min-h-[60vh]" />
+          </DetailSheet>
+        )}
 
         {/* Console ExpandableScreen — full-screen overlay for each section */}
         <ExpandableScreen

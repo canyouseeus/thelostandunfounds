@@ -14,6 +14,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { CalendarWidget } from '../ui/calendar-widget';
 import { ExpandableScreen, ExpandableScreenContent } from '../ui/expandable-screen';
+import { DetailSheet } from '../ui/detail-sheet';
+import { NotesApp } from '../ui/notes-app';
 
 interface CalendarBooking {
     id: string;
@@ -247,6 +249,7 @@ export default function AdminCalendarView() {
 
     const summaryData = viewMode === 'month' ? monthData : detailData;
     const isLoading = viewMode === 'month' ? monthLoading : detailLoading;
+    const [notesOpen, setNotesOpen] = useState(false);
 
     function handleRefresh() {
         if (viewMode === 'month') {
@@ -274,14 +277,33 @@ export default function AdminCalendarView() {
                         Site-wide activity — bookings, events, uploads.
                     </p>
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    className="text-white/40 hover:text-white transition-colors flex-shrink-0"
-                    title="Refresh"
-                >
-                    <ArrowPathIcon className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                </button>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                    <button
+                        onClick={() => setNotesOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+                        style={{ borderRadius: 0 }}
+                    >
+                        <PencilSquareIcon className="w-3.5 h-3.5" />
+                        Notes
+                    </button>
+                    <button
+                        onClick={handleRefresh}
+                        className="text-white/40 hover:text-white transition-colors"
+                        title="Refresh"
+                    >
+                        <ArrowPathIcon className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
             </div>
+
+            {/* The notes app rides along inside the master calendar as its own
+                expandable card — same shell every widget's detail view uses. */}
+            {notesOpen && (
+                <DetailSheet onClose={() => setNotesOpen(false)} label="Close notes" wide>
+                    <h2 className="text-lg font-black uppercase tracking-widest text-white pr-10 mb-4 text-left">Notes</h2>
+                    <NotesApp />
+                </DetailSheet>
+            )}
 
             {/* View mode toggle */}
             <div className="flex border border-white/10">
@@ -534,6 +556,21 @@ function DayView({
     onBookingChange?: () => void;
 }) {
     const ymd = toYMD(focusDate);
+    const [addingBooking, setAddingBooking] = useState(false);
+    // The day's business recap — sales with their money trail, and what shipped.
+    const [recap, setRecap] = useState<RecapResponse | null>(null);
+    const [recapLoading, setRecapLoading] = useState(false);
+    useEffect(() => {
+        let alive = true;
+        setRecapLoading(true);
+        setRecap(null);
+        fetch(`/api/calendar/recap?date=${ymd}`)
+            .then(r => (r.ok ? r.json() : null))
+            .then(d => { if (alive) setRecap(d); })
+            .catch(() => { /* the section shows its own unavailable state */ })
+            .finally(() => { if (alive) setRecapLoading(false); });
+        return () => { alive = false; };
+    }, [ymd]);
     const bookings = data?.bookings.filter(b => b.event_date === ymd) || [];
     const events = data?.events.filter(e => e.event_date === ymd) || [];
     const photos = data?.photos[ymd] || [];
@@ -558,8 +595,27 @@ function DayView({
                 <div className="text-white/30 text-xs text-center py-12">Loading…</div>
             ) : (
                 <div className="space-y-6">
-                    <Section title={`Bookings (${bookings.length})`}>
-                        {bookings.length === 0 ? (
+                    <DailyRecap recap={recap} loading={recapLoading} />
+
+                    <Section
+                        title={`Bookings (${bookings.length})`}
+                        action={
+                            <button
+                                onClick={() => setAddingBooking(v => !v)}
+                                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                            >
+                                <PlusIcon className="w-3 h-3" />
+                                {addingBooking ? 'Cancel' : 'Add Booking'}
+                            </button>
+                        }
+                    >
+                        {addingBooking && (
+                            <AddBookingForm
+                                date={ymd}
+                                onDone={() => { setAddingBooking(false); onBookingChange?.(); }}
+                            />
+                        )}
+                        {bookings.length === 0 && !addingBooking ? (
                             <EmptyLine>No bookings on this day.</EmptyLine>
                         ) : (
                             <div className="space-y-px">
@@ -1026,12 +1082,217 @@ function NotesSection({
 
 // ─── Primitives ────────────────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+interface RecapSale {
+    source: 'shop' | 'gallery' | 'tickets' | 'invoice';
+    customerName: string | null;
+    customerEmail: string | null;
+    amountCents: number;
+    occurredAt: string;
+    reference: string | null;
+    invoiceId: string | null;
+    invoiceNumber: string | null;
+    crmContactId: string | null;
+}
+interface RecapDeployment {
+    vercel_deployment_id: string;
+    status: string;
+    commit_sha: string | null;
+    commit_message: string | null;
+    url: string | null;
+    created_at: string;
+}
+interface RecapResponse {
+    date: string;
+    sales: RecapSale[];
+    totalCents: number;
+    deployments: RecapDeployment[];
+}
+
+const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+const SOURCE_LABEL: Record<RecapSale['source'], string> = {
+    shop: 'SHOP', gallery: 'GALLERY', tickets: 'TICKETS', invoice: 'INVOICE',
+};
+
+/**
+ * The day as a business record: every sale with who it came from and where the
+ * money trail continues (invoice, CRM contact, payment reference), and what
+ * shipped that day. Links use ?panel= URLs, which the admin opens directly.
+ */
+function DailyRecap({ recap, loading }: { recap: RecapResponse | null; loading: boolean }) {
+    return (
+        <Section title="Daily Recap">
+            {loading ? (
+                <EmptyLine>Loading recap…</EmptyLine>
+            ) : !recap ? (
+                <EmptyLine>Recap unavailable.</EmptyLine>
+            ) : (
+                <div className="space-y-4">
+                    {/* Sales */}
+                    {recap.sales.length === 0 ? (
+                        <EmptyLine>No sales on this day.</EmptyLine>
+                    ) : (
+                        <div className="space-y-px">
+                            <div className="flex items-center justify-between bg-white/[0.04] px-3 py-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+                                    {recap.sales.length} sale{recap.sales.length === 1 ? '' : 's'}
+                                </span>
+                                <span className="text-sm font-black text-white tabular-nums">{money(recap.totalCents)}</span>
+                            </div>
+                            {recap.sales.map((s, i) => (
+                                <div key={i} className="bg-white/[0.02] px-3 py-2.5">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="px-1.5 py-0.5 bg-white text-black text-[9px] font-black tracking-widest">
+                                            {SOURCE_LABEL[s.source]}
+                                        </span>
+                                        <span className="text-xs font-bold text-white truncate">
+                                            {s.customerName || s.customerEmail || 'Unknown customer'}
+                                        </span>
+                                        {s.customerName && s.customerEmail && (
+                                            <span className="text-[10px] text-white/40 truncate">{s.customerEmail}</span>
+                                        )}
+                                        <span className="ml-auto text-xs font-black text-white tabular-nums">{money(s.amountCents)}</span>
+                                        <span className="text-[10px] text-white/30 tabular-nums">{clock(s.occurredAt)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        {s.invoiceId && (
+                                            <a href="/admin?panel=invoices"
+                                               className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                                                Invoice {s.invoiceNumber || ''} →
+                                            </a>
+                                        )}
+                                        {s.crmContactId ? (
+                                            <a href="/admin?panel=crm"
+                                               className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                                                In CRM →
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] uppercase tracking-widest text-white/20">Not in CRM</span>
+                                        )}
+                                        {s.reference && (
+                                            <span className="text-[10px] font-mono text-white/25 truncate" title={s.reference}>
+                                                {s.reference.slice(0, 24)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Deployments — what shipped while the sales happened. */}
+                    {recap.deployments.length > 0 && (
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-1.5">
+                                Deployments ({recap.deployments.length})
+                            </p>
+                            <div className="space-y-px">
+                                {recap.deployments.map(d => (
+                                    <div key={d.vercel_deployment_id} className="flex items-center gap-2 bg-white/[0.02] px-3 py-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                            d.status === 'succeeded' ? 'bg-green-400' : 'bg-red-400'
+                                        }`} />
+                                        <span className="text-xs text-white/80 truncate flex-1">
+                                            {d.commit_message?.split('\n')[0] || '(no commit message)'}
+                                        </span>
+                                        {d.commit_sha && (
+                                            <span className="text-[10px] font-mono text-white/30">{d.commit_sha.slice(0, 7)}</span>
+                                        )}
+                                        <span className="text-[10px] text-white/30 tabular-nums">{clock(d.created_at)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </Section>
+    );
+}
+
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
     return (
         <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">{title}</p>
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{title}</p>
+                {action}
+            </div>
             {children}
         </div>
+    );
+}
+
+/**
+ * Books an appointment from the day view, through the same endpoint the public
+ * booking form uses — so availability blocking, admin notification and the
+ * booking's lifecycle (it lands as pending, confirmable from its card below)
+ * all behave exactly as if the client had requested it.
+ */
+function AddBookingForm({ date, onDone }: { date: string; onDone: () => void }) {
+    const [f, setF] = useState({
+        name: '', email: '', phone: '', business_name: '', event_type: '',
+        start_time: '', end_time: '', location: '', notes: '', retainer: false,
+    });
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        setF(prev => ({ ...prev, [k]: k === 'retainer' ? e.target.checked : e.target.value }));
+
+    async function submit(e: React.FormEvent) {
+        e.preventDefault();
+        setBusy(true);
+        setError(null);
+        try {
+            const res = await fetch('/api/booking?action=request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...f, event_date: date }),
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body?.error || `HTTP ${res.status}`);
+            }
+            onDone();
+        } catch (err: any) {
+            setError(err?.message || 'Failed to create booking');
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    const field = "bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:bg-white/10 w-full";
+    return (
+        <form onSubmit={submit} className="bg-white/[0.02] p-3 mb-2 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input required value={f.name} onChange={set('name')} placeholder="NAME *" className={field} style={{ borderRadius: 0 }} />
+                <input required type="email" value={f.email} onChange={set('email')} placeholder="EMAIL *" className={field} style={{ borderRadius: 0 }} />
+                <input value={f.phone} onChange={set('phone')} placeholder="PHONE" className={field} style={{ borderRadius: 0 }} />
+                <input value={f.business_name} onChange={set('business_name')} placeholder="BUSINESS" className={field} style={{ borderRadius: 0 }} />
+                <input required value={f.event_type} onChange={set('event_type')} placeholder="EVENT TYPE * (PORTRAIT, SHOW…)" className={field} style={{ borderRadius: 0 }} />
+                <input value={f.location} onChange={set('location')} placeholder="LOCATION" className={field} style={{ borderRadius: 0 }} />
+                <input type="time" value={f.start_time} onChange={set('start_time')} className={field} style={{ borderRadius: 0 }} aria-label="Start time" />
+                <input type="time" value={f.end_time} onChange={set('end_time')} className={field} style={{ borderRadius: 0 }} aria-label="End time" />
+            </div>
+            <input value={f.notes} onChange={set('notes')} placeholder="NOTES" className={field} style={{ borderRadius: 0 }} />
+            <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white/60 cursor-pointer">
+                    <input type="checkbox" checked={f.retainer} onChange={set('retainer')} className="accent-white" />
+                    Retainer
+                </label>
+                <div className="flex items-center gap-3">
+                    {error && <span className="text-[10px] uppercase tracking-widest text-red-400">{error}</span>}
+                    <button
+                        type="submit"
+                        disabled={busy}
+                        className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
+                        style={{ borderRadius: 0 }}
+                    >
+                        {busy ? 'Booking…' : `Book ${date}`}
+                    </button>
+                </div>
+            </div>
+        </form>
     );
 }
 

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { XMarkIcon, MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { DetailSheet } from './detail-sheet';
 import { cn } from './utils';
 import { useLongPress } from './use-long-press';
+import { WeatherFx } from './weather-fx';
 import {
+  conditionKind,
   DEFAULT_PLACE,
   WeatherPlace,
   WeatherSnapshot,
@@ -140,34 +142,11 @@ function WeatherDetail({
   onUseDefault: () => void;
   hasSavedDefault: boolean;
 }) {
-  // Escape closes, and the page behind must not scroll while the sheet is up.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
-  }, [onClose]);
-
   const aqi = data?.air.usAqi ?? null;
   const uv = data?.today?.uvIndexMax ?? 0;
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] overflow-y-auto bg-black p-4 select-none"
-      // Tailwind mis-parses vendor-prefixed arbitrary properties, so these go inline.
-      style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
-    >
-      <div className="relative mx-auto my-8 w-full max-w-2xl bg-black p-6" style={{ borderRadius: 0 }}>
-        <button
-          onClick={onClose}
-          aria-label="Close weather detail"
-          className="absolute top-4 right-4 p-2 text-white/60 hover:text-white transition-colors"
-          style={{ borderRadius: 0 }}
-        >
-          <XMarkIcon className="w-5 h-5" />
-        </button>
-
+  return (
+    <DetailSheet onClose={onClose} label="Close weather detail">
         {!data ? (
           <p className="text-sm uppercase tracking-widest text-white/40 text-left">Loading forecast…</p>
         ) : (
@@ -281,9 +260,7 @@ function WeatherDetail({
             </div>
           </>
         )}
-      </div>
-    </div>,
-    document.body,
+    </DetailSheet>
   );
 }
 
@@ -354,6 +331,13 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
   const cols = Number(size.split('x')[0]) || 2;
   const rows = Number(size.split('x')[1]) || 2;
 
+  // `cqmin` is the tile's shorter edge, so it is ~264px for 2x2, 4x2 and 2x4
+  // (desktop) but ~552px for 4x4. One set of percentages would therefore render
+  // 4x4 at roughly double the type size of its siblings. S rescales that branch
+  // so the composition reads the same across all four; 4x4 still comes out
+  // larger, just proportionally rather than by a factor of two.
+  const S = cols >= 4 && rows >= 4 ? 0.55 : 1;
+
   return (
     <>
       <div
@@ -363,117 +347,277 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
         aria-label="Weather — open detailed forecast"
         className={cn(
-          'bg-black flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
-          cols === 1 ? 'p-2' : 'p-4',
+          'relative bg-black flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
         )}
-        style={{ borderRadius: 0, WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+        // `containerType: size` turns the tile into the reference box for the
+        // `cq*` units below. Every dimension inside this widget is a percentage
+        // of the tile's own shorter edge, so a 2x1 looks the same on a phone
+        // (173x80.5) as on desktop (264x120) even though those are not the same
+        // aspect ratio — which is why FitBox, with its single fixed ratio, can
+        // only serve the square-only widgets.
+        // No padding here on purpose: `cq*` units resolve against the nearest
+        // *ancestor* container, so a `cqmin` padding on the container itself
+        // would fall back to viewport units and blow the tile out. Padding
+        // belongs on the readout wrapper below, which is a descendant.
+        style={{
+          borderRadius: 0,
+          containerType: 'size',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
+        }}
       >
+        {/* Ambient conditions, full-bleed behind the padding. Skipped at 1x1:
+            at 80px there is no room for weather to happen behind two numbers. */}
+        {data && !(cols === 1 && rows === 1) && (
+          <WeatherFx kind={conditionKind(data.current.code)} isDay={data.current.isDay} />
+        )}
+
+        {/* Absolutely-positioned siblings paint over static in-flow content, so
+            the readout is positioned too — otherwise the canvas covers it. */}
+        <div className="relative flex-1 min-h-0 flex flex-col" style={{ padding: '7cqmin' }}>
         {error ? (
-          <div className="flex-1 flex items-center">
-            <span className="text-[11px] uppercase tracking-widest text-white/40 text-left">Unavailable</span>
+          <div className="flex-1 min-h-0 flex items-center">
+            <span className="uppercase tracking-widest text-white/40 text-left" style={{ fontSize: '9cqmin', lineHeight: 1.2 }}>
+              Unavailable
+            </span>
           </div>
         ) : !data ? (
-          <div className="flex-1 flex items-center">
-            <span className="text-[11px] uppercase tracking-widest text-white/30 text-left">Loading…</span>
+          <div className="flex-1 min-h-0 flex items-center">
+            <span className="uppercase tracking-widest text-white/30 text-left" style={{ fontSize: '9cqmin', lineHeight: 1.2 }}>
+              Loading…
+            </span>
           </div>
-        ) : cols === 1 && rows === 1 ? (
-          /* 1x1 — the temperature, and nothing else that would not be legible. */
-          <div className="flex-1 flex flex-col items-start justify-between">
-            <span className={cn('text-lg leading-none', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
-            <span className="text-2xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</span>
+        ) : (cols === 1 && rows === 1) || (cols === 2 && rows === 2) ? (
+          /* 1x1 and 2x2 — the diagonal face (variation F): the glyph big in
+             the top-right, city and temperature anchored bottom-left, the two
+             masses holding opposite corners. The same cqmin percentages serve
+             both, so the 2x2 is the 1x1 exactly doubled — with the condition
+             animation running behind it, which the 1x1 skips. */
+          <div className="flex-1 min-h-0 relative">
+            <span
+              className={cn('absolute leading-none', GLYPH)}
+              style={{ fontSize: '42cqmin', top: '-2cqmin', right: '-3cqmin' }}
+            >
+              {conditionGlyph(data.current.code, data.current.isDay)}
+            </span>
+            <div className="absolute left-0 bottom-0 flex flex-col text-left">
+              <span
+                className="font-black uppercase tracking-widest text-white/60 truncate"
+                style={{ fontSize: '9cqmin', lineHeight: 1, marginBottom: '3cqmin', maxWidth: '80cqmin' }}
+              >
+                {data.place.name}
+              </span>
+              <span className="font-black leading-none text-white tabular-nums" style={{ fontSize: '32cqmin' }}>
+                {round(data.current.temperature)}°
+              </span>
+            </div>
+          </div>
+        ) : rows === 1 ? (
+          /* A single-row strip: everything on one line, since there is no
+             height to stack into. 2x1 keeps it to the essentials; 4x1 has room
+             for the place and the day's range as well. */
+          <div className="flex-1 min-h-0 flex items-center justify-between" style={{ gap: '4cqmin' }}>
+            {data.daily.slice(0, cols >= 4 ? 7 : 3).map((d, i) => (
+              <div key={d.date} className="flex-1 min-w-0 flex flex-col items-center" style={{ gap: '2cqmin' }}>
+                <span
+                  className="uppercase tracking-widest text-white/40 truncate"
+                  style={{ fontSize: '11cqmin', lineHeight: 1.1 }}
+                >
+                  {weekday(d.date, i).slice(0, 3)}
+                </span>
+                <span className={cn('leading-none', GLYPH)} style={{ fontSize: '20cqmin' }}>
+                  {conditionGlyph(d.code, i === 0 ? data.current.isDay : true)}
+                </span>
+                {/* Today reads the live temperature; the rest can only be a
+                    forecast high, so they show high over low. */}
+                {i === 0 ? (
+                  <span
+                    className="font-black text-white tabular-nums"
+                    style={{ fontSize: '20cqmin', lineHeight: 1.1 }}
+                  >
+                    {round(data.current.temperature)}°
+                  </span>
+                ) : (
+                  /* High over low, stacked: inline "104°/78°" is wider than a
+                     seventh of the strip and collides with the next column. */
+                  <span className="flex flex-col items-center tabular-nums">
+                    <span className="font-bold text-white" style={{ fontSize: '13cqmin', lineHeight: 1.15 }}>
+                      {round(d.max)}°
+                    </span>
+                    <span className="text-white/40" style={{ fontSize: '11cqmin', lineHeight: 1.15 }}>
+                      {round(d.min)}°
+                    </span>
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         ) : cols === 1 ? (
-          /* A narrow column: temperature over the day's range, and for the
-             tallest version a few days beneath it. */
-          <div className="flex-1 flex flex-col gap-2 text-left">
-            <span className={cn('text-xl leading-none', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
-            <span className="text-3xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</span>
-            <span className="text-[9px] uppercase tracking-widest text-white/40 tabular-nums">
-              {round(data.today.max)}° / {round(data.today.min)}°
-            </span>
-            {rows >= 4 && (
-              <div className="mt-auto flex flex-col gap-1">
-                {data.daily.slice(1, 4).map((d, i) => (
-                  <div key={d.date} className="flex items-center justify-between text-[9px] uppercase tracking-widest text-white/40 tabular-nums">
-                    <span>{weekday(d.date, i + 1).slice(0, 3)}</span>
-                    <span className="text-white/70">{round(d.max)}°</span>
+          /* One unit wide. The reading holds the top; the rest of the height
+             goes to forecast — two day rows for the 1x2, five stacked
+             mini-cards for the 1x4 — so the column fills instead of leaving
+             its lower half dead. */
+          <div className="flex-1 min-h-0 flex flex-col justify-between text-left">
+            <div className="flex flex-col" style={{ gap: '3cqmin' }}>
+              <span className={cn('leading-none', GLYPH)} style={{ fontSize: '26cqmin' }}>
+                {conditionGlyph(data.current.code, data.current.isDay)}
+              </span>
+              <span className="font-black leading-none text-white tabular-nums" style={{ fontSize: '36cqmin' }}>
+                {round(data.current.temperature)}°
+              </span>
+              <span
+                className="uppercase tracking-widest text-white/40 tabular-nums"
+                style={{ fontSize: '11cqmin', lineHeight: 1.1 }}
+              >
+                {round(data.today.max)}° / {round(data.today.min)}°
+              </span>
+            </div>
+            {rows >= 4 ? (
+              <div className="flex-1 min-h-0 flex flex-col justify-evenly" style={{ marginTop: '6cqmin' }}>
+                {data.daily.slice(1, 6).map((d, i) => (
+                  <div key={d.date} className="flex flex-col items-start" style={{ gap: '2cqmin' }}>
+                    <span
+                      className="uppercase tracking-widest text-white/40"
+                      style={{ fontSize: '9cqmin', lineHeight: 1 }}
+                    >
+                      {weekday(d.date, i + 1).slice(0, 3)}
+                    </span>
+                    <div className="flex items-baseline" style={{ gap: '3cqmin' }}>
+                      <span className={cn('leading-none', GLYPH)} style={{ fontSize: '12cqmin' }}>
+                        {conditionGlyph(d.code)}
+                      </span>
+                      <span className="font-bold text-white tabular-nums" style={{ fontSize: '13cqmin', lineHeight: 1 }}>
+                        {round(d.max)}°
+                      </span>
+                      <span className="text-white/40 tabular-nums" style={{ fontSize: '11cqmin', lineHeight: 1 }}>
+                        {round(d.min)}°
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col" style={{ gap: '5cqmin' }}>
+                {data.daily.slice(1, 3).map((d, i) => (
+                  <div
+                    key={d.date}
+                    className="flex items-center justify-between uppercase tracking-widest tabular-nums"
+                    style={{ fontSize: '10cqmin', lineHeight: 1 }}
+                  >
+                    <span className="text-white/40">{weekday(d.date, i + 1).slice(0, 3)}</span>
+                    <span className={GLYPH} style={{ fontSize: '11cqmin' }}>{conditionGlyph(d.code)}</span>
+                    <span className="text-white/70 font-bold">{round(d.max)}°</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
         ) : (
-          <div className={cn(
-            'flex-1 min-h-0 gap-4',
-            cols >= 4 && rows === 2 ? 'flex items-center' : 'flex flex-col justify-between',
-          )}>
+          <div
+            className={cn(
+              'flex-1 min-h-0',
+              cols >= 4 && rows === 2 ? 'flex items-center' : 'flex flex-col justify-between',
+            )}
+            style={{ gap: `${8 * S}cqmin` }}
+          >
             {/* Current conditions — the part every size above 1x1 shows. */}
             <div className={cn('flex flex-col text-left shrink-0', cols >= 4 && rows === 2 ? 'w-1/3 justify-center' : 'justify-start')}>
-              <div className={cn('leading-none', rows >= 4 ? 'text-5xl' : 'text-3xl', GLYPH)}>
+              <div className={cn('leading-none', GLYPH)} style={{ fontSize: `${14 * S}cqmin` }}>
                 {conditionGlyph(data.current.code, data.current.isDay)}
               </div>
-              <div className={cn('mt-2 font-black leading-none text-white tabular-nums', rows >= 4 ? 'text-6xl' : 'text-4xl')}>
+              <div
+                className="font-black leading-none text-white tabular-nums"
+                style={{ fontSize: `${21 * S}cqmin`, marginTop: `${3 * S}cqmin` }}
+              >
                 {round(data.current.temperature)}°
               </div>
-              <div className="mt-2 text-[11px] font-bold uppercase tracking-widest text-white/70 truncate">{data.place.name}</div>
-              <div className="text-[10px] uppercase tracking-widest text-white/40 truncate">
+              <div
+                className="font-bold uppercase tracking-widest text-white/70 truncate"
+                style={{ fontSize: `${5.5 * S}cqmin`, lineHeight: 1.3, marginTop: `${3 * S}cqmin` }}
+              >
+                {data.place.name}
+              </div>
+              <div
+                className="uppercase tracking-widest text-white/40 truncate"
+                style={{ fontSize: `${4.8 * S}cqmin`, lineHeight: 1.3 }}
+              >
                 {conditionLabel(data.current.code)} — H {round(data.today.max)}° L {round(data.today.min)}°
               </div>
             </div>
 
             {/* Wide tiles get the hours; tall ones get the days; the largest
                 gets both. Each size shows what its shape has room for. */}
-            {cols >= 4 && (
+            {(cols >= 4 || rows >= 4) && (
               // At 4x4 the hours and the days are siblings of the current block
               // rather than nested together, so the column distributes three
               // bands evenly instead of pinning two to the top and bottom with
               // a hole between them.
-              <div className={cn('min-w-0 flex flex-col gap-4', rows === 2 ? 'flex-1 justify-center' : 'w-full')}>
-                <div className="flex items-end justify-between gap-1">
-                  {data.hourly.slice(0, rows >= 4 ? 8 : 6).map(h => (
-                    <div key={h.time} className="flex flex-col items-center gap-1 min-w-0">
-                      <span className="text-[9px] uppercase tracking-widest text-white/40">
+              <div className={cn('min-w-0 flex flex-col', rows === 2 ? 'flex-1 justify-center' : 'w-full')}>
+                <div className="flex items-end justify-between" style={{ gap: `${1.5 * S}cqmin` }}>
+                  {data.hourly.slice(0, cols >= 4 ? (rows >= 4 ? 8 : 6) : 4).map(h => (
+                    <div key={h.time} className="flex flex-col items-center min-w-0" style={{ gap: `${1.5 * S}cqmin` }}>
+                      <span
+                        className="uppercase tracking-widest text-white/40"
+                        style={{ fontSize: `${4.2 * S}cqmin`, lineHeight: 1.2 }}
+                      >
                         {new Date(h.time).toLocaleTimeString('en-US', { hour: 'numeric' }).replace(' ', '')}
                       </span>
-                      <span className={cn('text-sm leading-none', GLYPH)}>{conditionGlyph(h.code)}</span>
-                      <span className="text-xs font-bold text-white tabular-nums">{round(h.temperature)}°</span>
+                      <span className={cn('leading-none', GLYPH)} style={{ fontSize: `${6.5 * S}cqmin` }}>
+                        {conditionGlyph(h.code)}
+                      </span>
+                      <span
+                        className="font-bold text-white tabular-nums"
+                        style={{ fontSize: `${5.5 * S}cqmin`, lineHeight: 1.2 }}
+                      >
+                        {round(h.temperature)}°
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {cols >= 4 && rows >= 4 && (
-              // Capped: across a 612px tile the day rows would otherwise strand
-              // each temperature at the far edge from its day.
-              <div className="flex flex-col gap-2 max-w-[26rem]">
-                {data.daily.slice(1, 5).map((d, i) => (
-                  <div key={d.date} className="flex items-center gap-3 text-[10px] uppercase tracking-widest tabular-nums">
-                    <span className="w-10 text-white/40">{weekday(d.date, i + 1)}</span>
-                    <span className={cn('w-4 text-center', GLYPH)}>{conditionGlyph(d.code)}</span>
-                    <span className="ml-auto text-white/70">{round(d.max)}°</span>
-                    <span className="w-8 text-right text-white/30">{round(d.min)}°</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Tall but narrow: days instead of hours. */}
-            {cols < 4 && rows >= 4 && (
-              <div className="flex flex-col gap-1.5">
-                {data.daily.slice(1, 5).map((d, i) => (
-                  <div key={d.date} className="flex items-center gap-2 text-[10px] uppercase tracking-widest tabular-nums">
-                    <span className="w-8 text-white/40">{weekday(d.date, i + 1)}</span>
-                    <span className={cn('w-4 text-center', GLYPH)}>{conditionGlyph(d.code)}</span>
-                    <span className="ml-auto text-white/70">{round(d.max)}°</span>
-                    <span className="w-7 text-right text-white/30">{round(d.min)}°</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Tall tiles spend everything below the hours on six days, each
+                with a temperature range bar placed on the week's shared scale
+                — Apple's large-widget device. The list is flex-1/justify-evenly
+                so it stretches to the tile's floor instead of leaving the
+                bottom half dead. */}
+            {rows >= 4 && (() => {
+              const days = data.daily.slice(1, 7);
+              const lo = Math.min(...days.map(d => d.min));
+              const hi = Math.max(...days.map(d => d.max));
+              const span = Math.max(hi - lo, 1);
+              const u = (n: number) => `${cols >= 4 ? n * S : n}cqmin`;
+              return (
+                <div className="flex-1 min-h-0 flex flex-col justify-evenly" style={{ marginTop: u(2) }}>
+                  {days.map((d, i) => (
+                    <div
+                      key={d.date}
+                      className="flex items-center uppercase tracking-widest tabular-nums"
+                      style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(3) }}
+                    >
+                      <span className="text-white/40" style={{ width: u(11) }}>{weekday(d.date, i + 1).slice(0, 3)}</span>
+                      <span className={cn('text-center', GLYPH)} style={{ width: u(6) }}>{conditionGlyph(d.code)}</span>
+                      <span className="text-right text-white/40" style={{ width: u(10) }}>{round(d.min)}°</span>
+                      <span className="relative flex-1 min-w-0 bg-white/10" style={{ height: u(1.3), borderRadius: 0 }}>
+                        <span
+                          className="absolute top-0 bottom-0 bg-white"
+                          style={{
+                            left: `${((d.min - lo) / span) * 100}%`,
+                            right: `${((hi - d.max) / span) * 100}%`,
+                          }}
+                        />
+                      </span>
+                      <span className="text-right font-bold text-white" style={{ width: u(10) }}>{round(d.max)}°</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
+        </div>
       </div>
 
       {open && (
@@ -490,3 +634,4 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
     </>
   );
 }
+

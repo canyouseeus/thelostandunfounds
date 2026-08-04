@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
-import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X2, TILE_2X4, TILE_4X2, TILE_4X4 } from './DashboardTile';
+import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X1, TILE_2X2, TILE_2X4, TILE_4X1, TILE_4X2, TILE_4X4 } from './DashboardTile';
 
 /**
  * The widget shapes, smallest first — the order the resize control offers them.
  * Named in columns x rows on a grid four columns wide on a phone and eight on
  * desktop, so 2x2 is the familiar small widget and 1x2 is half of one.
  */
-export const SHAPES = ['1x1', '1x2', '1x4', '2x2', '2x4', '4x2', '4x4'] as const;
+export const SHAPES = ['1x1', '2x1', '1x2', '4x1', '2x2', '1x4', '4x2', '2x4', '4x4'] as const;
 export type ShapeName = (typeof SHAPES)[number];
 
 export const SHAPE_CLASS: Record<ShapeName, string> = {
   '1x1': TILE_1X1,
+  '2x1': TILE_2X1,
+  '4x1': TILE_4X1,
   '1x2': TILE_1X2,
   '1x4': TILE_1X4,
   '2x2': TILE_2X2,
@@ -23,6 +25,8 @@ export const SHAPE_CLASS: Record<ShapeName, string> = {
 
 export const SHAPE_LABEL: Record<ShapeName, string> = {
   '1x1': '1×1',
+  '2x1': '2×1',
+  '4x1': '4×1',
   '1x2': '1×2',
   '1x4': '1×4',
   '2x2': '2×2',
@@ -38,6 +42,8 @@ export const SHAPE_LABEL: Record<ShapeName, string> = {
  */
 const SHAPE_UNITS: Record<ShapeName, number> = {
   '1x1': 1 * 1,
+  '2x1': 2 * 1,
+  '4x1': 4 * 1,
   '1x2': 1 * 2, '1x4': 1 * 4, '2x2': 2 * 2, '2x4': 2 * 4, '4x2': 4 * 2, '4x4': 4 * 4,
 };
 
