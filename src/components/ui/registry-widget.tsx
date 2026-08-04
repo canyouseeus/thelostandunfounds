@@ -6,8 +6,12 @@ import { DetailSheet } from './detail-sheet';
 export interface RegistryWidgetData {
   /** Gallery photos on record — the headline. */
   photos: number;
+  /** Published posts — all of them in The Lost Archives column. */
+  posts: number;
+  /** Blog contributors registered on the platform. */
   writers: number;
-  admins: number;
+  products: number;
+  subscribers: number;
 }
 
 const fmt = (n: number) => n.toLocaleString();
@@ -78,8 +82,10 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
 
   const figures = [
     { label: 'Photos', value: data.photos },
+    { label: 'Posts', value: data.posts },
     { label: 'Writers', value: data.writers },
-    { label: 'Admins', value: data.admins },
+    { label: 'Products', value: data.products },
+    { label: 'Subs', value: data.subscribers },
   ];
 
   return (
@@ -142,7 +148,7 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
             /* One unit wide: the three figures spread down the column, the
                field at the foot of the 1x4. */
             <div className="flex-1 min-h-0 flex flex-col justify-between text-left">
-              {figures.map((f, i) => (
+              {figures.slice(0, rows >= 4 ? 5 : 3).map((f, i) => (
                 <Figure key={f.label} label={f.label} value={f.value} big={i === 0} u={u} />
               ))}
               {rows >= 4 && (
@@ -168,12 +174,7 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
                     <span className="font-bold tabular-nums" style={{ fontSize: u(rows >= 4 ? 9 : 7), lineHeight: 1 }}>{fmt(f.value)}</span>
                   </div>
                 ))}
-                {rows >= 4 && (
-                  <div className="flex items-baseline justify-between w-full" style={{ gap: u(4) }}>
-                    <span className="uppercase tracking-widest opacity-40" style={{ fontSize: u(5.4), lineHeight: 1 }}>Environment</span>
-                    <span className="font-bold uppercase tracking-widest" style={{ fontSize: u(6), lineHeight: 1 }}>Production</span>
-                  </div>
-                )}
+
               </div>
             </div>
           )}
