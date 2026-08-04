@@ -633,11 +633,12 @@ const BookingPage: React.FC = () => {
                                 Authentic Moments, Delivered Fast
                             </p>
                             <p className="text-white/40 text-xs leading-relaxed max-w-2xl">
-                                Shot on a{' '}
-                                <span className="text-white font-bold">Fujifilm X-S20</span>{' '}
-                                straight out of camera — no filters, no presets, no editing queue.
-                                What you get is the real thing, preserved exactly as it happened,
-                                and in your hands the same day.
+                                Candid-first direction and a{' '}
+                                <span className="text-white font-bold">fast turnaround</span> —
+                                real moments, not posed briefs. We match each shoot to the right
+                                photographer and the right kit, so the work fits the space instead
+                                of the other way around. Tell us what you need and we'll scope it
+                                with you.
                             </p>
                         </div>
                     </div>
@@ -791,7 +792,7 @@ const BookingPage: React.FC = () => {
                                         <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Photography</p>
                                         <p className="text-white/40 text-xs leading-relaxed">
                                             Candid-first, lifestyle direction. Real moments, not posed briefs.
-                                            Fujifilm X-S20, straight out of camera.
+                                            Contact us and we'll match the shoot to the right photographer.
                                         </p>
                                     </div>
                                     <div className="bg-white/[0.03] p-5">
