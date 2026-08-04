@@ -71,7 +71,6 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   clock: '2x2',
   weather: '2x2',
   calendar: '4x4',
-  'operational-load': '2x2',
   'revenue-performance': '4x2',
   'network-status': '4x2',
   registry: '2x2',

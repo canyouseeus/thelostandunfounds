@@ -6,15 +6,20 @@ import { DetailSheet } from './detail-sheet';
 export interface RegistryWidgetData {
   /** Gallery photos on record — the headline. */
   photos: number;
+  /** Registered accounts. */
+  users: number;
   /** Published posts — all of them in The Lost Archives column. */
   posts: number;
+  products: number;
   /** Blog contributors registered on the platform. */
   writers: number;
-  products: number;
+  affiliates: number;
   subscribers: number;
 }
 
 const fmt = (n: number) => n.toLocaleString();
+/** 13275 -> 13.3K: the small faces have no room for a five-digit figure. */
+const compact = (n: number) => (n >= 10_000 ? `${(n / 1000).toFixed(1)}K` : n.toLocaleString());
 
 /**
  * The archive field: a grid of marks whose opacities are a fixed pseudo-random
@@ -80,11 +85,14 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
   const S = cols >= 4 && rows >= 4 ? 0.55 : 1;
   const u = (n: number) => `${n * S}cqmin`;
 
+  // The full census, content and community, most-consulted first.
   const figures = [
     { label: 'Photos', value: data.photos },
+    { label: 'Users', value: data.users },
     { label: 'Posts', value: data.posts },
-    { label: 'Writers', value: data.writers },
     { label: 'Products', value: data.products },
+    { label: 'Writers', value: data.writers },
+    { label: 'Affiliates', value: data.affiliates },
     { label: 'Subs', value: data.subscribers },
   ];
 
@@ -120,7 +128,7 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
                   Registry
                 </span>
                 <span className="font-black leading-none tabular-nums" style={{ fontSize: '28cqmin' }}>
-                  {fmt(data.photos)}
+                  {compact(data.photos)}
                 </span>
               </div>
             </div>
@@ -131,10 +139,10 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
               <div className="flex flex-col shrink-0">
                 <span className="font-black uppercase tracking-widest opacity-40" style={{ fontSize: '10cqmin', lineHeight: 1 }}>Photos</span>
                 <span className="font-black leading-none tabular-nums" style={{ fontSize: '30cqmin', marginTop: '3cqmin' }}>
-                  {fmt(data.photos)}
+                  {compact(data.photos)}
                 </span>
               </div>
-              {cols >= 4 && figures.slice(1).map(f => (
+              {cols >= 4 && figures.slice(1, 5).map(f => (
                 <div key={f.label} className="flex flex-col shrink-0">
                   <span className="uppercase tracking-widest opacity-40" style={{ fontSize: '8cqmin', lineHeight: 1 }}>{f.label}</span>
                   <span className="font-bold tabular-nums" style={{ fontSize: '15cqmin', marginTop: '3cqmin' }}>{fmt(f.value)}</span>
@@ -148,14 +156,10 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
             /* One unit wide: the three figures spread down the column, the
                field at the foot of the 1x4. */
             <div className="flex-1 min-h-0 flex flex-col justify-between text-left">
-              {figures.slice(0, rows >= 4 ? 5 : 3).map((f, i) => (
+              {figures.slice(0, rows >= 4 ? 7 : 3).map((f, i) => (
                 <Figure key={f.label} label={f.label} value={f.value} big={i === 0} u={u} />
               ))}
-              {rows >= 4 && (
-                <div style={{ height: '38cqmin' }}>
-                  <ArchiveField cols={6} rows={4} u={u} />
-                </div>
-              )}
+
             </div>
           ) : (
             /* The composed views: headline and field share the top, the other
@@ -167,15 +171,27 @@ export function RegistryWidget({ size = '2x2', data, detail, className }: {
                   <ArchiveField cols={rows >= 4 ? 14 : 12} rows={5} u={u} />
                 </div>
               </div>
-              <div className={cn('flex', rows >= 4 ? 'flex-1 flex-col justify-evenly' : 'items-end justify-between')} style={{ gap: u(4) }}>
-                {figures.slice(1).map(f => (
-                  <div key={f.label} className="flex items-baseline justify-between w-full" style={{ gap: u(4) }}>
-                    <span className="uppercase tracking-widest opacity-40" style={{ fontSize: u(5.4), lineHeight: 1 }}>{f.label}</span>
-                    <span className="font-bold tabular-nums" style={{ fontSize: u(rows >= 4 ? 9 : 7), lineHeight: 1 }}>{fmt(f.value)}</span>
-                  </div>
-                ))}
-
-              </div>
+              {rows >= 4 ? (
+                <div className="flex-1 flex flex-col justify-evenly" style={{ gap: u(4) }}>
+                  {figures.slice(1).map(f => (
+                    <div key={f.label} className="flex items-baseline justify-between w-full" style={{ gap: u(4) }}>
+                      <span className="uppercase tracking-widest opacity-40" style={{ fontSize: u(5.4), lineHeight: 1 }}>{f.label}</span>
+                      <span className="font-bold tabular-nums" style={{ fontSize: u(9), lineHeight: 1 }}>{fmt(f.value)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* 4x2: six pairs as a three-column grid of mini figures — as
+                   full-width rows they overflowed the tile sideways. */
+                <div className="grid grid-cols-3" style={{ gap: u(4) }}>
+                  {figures.slice(1).map(f => (
+                    <div key={f.label} className="flex flex-col text-left min-w-0">
+                      <span className="uppercase tracking-widest opacity-40 truncate" style={{ fontSize: u(4.6), lineHeight: 1 }}>{f.label}</span>
+                      <span className="font-bold tabular-nums" style={{ fontSize: u(8), lineHeight: 1, marginTop: u(1.5) }}>{fmt(f.value)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
