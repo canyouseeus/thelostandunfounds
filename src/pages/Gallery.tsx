@@ -76,6 +76,13 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         if (!isHomepage || user || newsletterBarDismissed) return;
         if (hasNewsletterCookie()) return;
         if (sessionStorage.getItem('nl_dismissed')) return;
+        // Arriving on a deep link (?view=booking from a client email, ?view=shop,
+        // ?view=services) means the visitor came with a specific intent. Covering
+        // that intent with a newsletter signup is how a booking CTA turns into a
+        // subscribe prompt — which is what it did to a real client. Read the query
+        // string directly rather than useSearchParams: this is a mount-time
+        // decision, and the hook is declared further down the component.
+        if (new URLSearchParams(window.location.search).get('view')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
     }, [isHomepage, user, newsletterBarDismissed]);

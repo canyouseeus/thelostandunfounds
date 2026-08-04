@@ -64,6 +64,14 @@ interface PhotoLibrary {
     owner_id?: string;
     google_drive_folder_id?: string;
     gdrive_folder_id?: string;
+    // Set on client work shot by a subcontractor. When `photographer` is
+    // present the gallery renders a byline under the description; the
+    // Instagram URL, when present, makes that byline a link to them.
+    metadata?: {
+        photographer?: string;
+        photographer_handle?: string;
+        photographer_instagram?: string;
+    } | null;
 }
 
 export interface PricingOption {
@@ -951,9 +959,35 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-white tracking-tight uppercase mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
                         {library?.name}
                     </h1>
-                    <p className="text-zinc-500 text-sm md:text-base font-medium tracking-tight mb-8">
+                    <p className="text-zinc-500 text-sm md:text-base font-medium tracking-tight mb-2">
                         {library?.description}
                     </p>
+                    {library?.metadata?.photographer && (
+                        <p className="text-zinc-500 text-sm md:text-base font-medium tracking-tight">
+                            Photographed by{' '}
+                            {library.metadata.photographer_instagram ? (
+                                <a
+                                    href={library.metadata.photographer_instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-white/80 underline underline-offset-4 hover:text-white transition-colors"
+                                >
+                                    {library.metadata.photographer}
+                                    {library.metadata.photographer_handle
+                                        ? ` (${library.metadata.photographer_handle})`
+                                        : ''}
+                                </a>
+                            ) : (
+                                <span className="text-white/80">
+                                    {library.metadata.photographer}
+                                    {library.metadata.photographer_handle
+                                        ? ` (${library.metadata.photographer_handle})`
+                                        : ''}
+                                </span>
+                            )}
+                        </p>
+                    )}
+                    <div className="mb-8" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">

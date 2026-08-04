@@ -32,6 +32,24 @@ const PHOTO_SERVICES = [
         ],
     },
     {
+        // Priced to enter the Austin short-term-rental market competitively.
+        // Reference points (2026): Austin MLS listing work runs $150–325 with a
+        // ~$185 median; STR shoots run $100–400 for a standard unit, with budget
+        // operators from $149. A $195 entry undercuts the mid-market without
+        // landing in the budget bracket, and the ladder carries the margin on
+        // larger properties. Add-ons track market: drone $95–400, 3D $100–525.
+        id: 'airbnb',
+        label: 'AIRBNB / SHORT-TERM RENTAL',
+        price: '$195+',
+        meta: 'Studio / 1BR · Your property',
+        eventType: 'Airbnb / Short-Term Rental',
+        features: [
+            '25–35 edited photos · 24–72 hr delivery',
+            '2BR $265 · 3BR $335 · 4BR+ / luxury from $425',
+            'Twilight +$125 · Drone +$150 · 3D tour +$200',
+        ],
+    },
+    {
         id: 'event',
         label: 'EVENT COVERAGE',
         price: '$600',
@@ -173,6 +191,7 @@ const isWebDevEventType = (eventType: string) => WEBDEV_EVENT_TYPES.includes(eve
 const EVENT_TYPES = [
     'Portrait Session',
     'Lifestyle Shoot',
+    'Airbnb / Short-Term Rental',
     'Event Coverage',
     'Half-Day Content',
     'Full-Day Content',
