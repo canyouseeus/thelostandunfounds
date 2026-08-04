@@ -474,6 +474,40 @@ const BookingPage: React.FC = () => {
     const set = (field: keyof FormData, value: any) =>
         setForm(prev => ({ ...prev, [field]: value }));
 
+    // Deep link from a client email CTA:
+    //   /?view=booking&service=airbnb&promo=AIRBNB10
+    // `service` preselects the event type and jumps to the scheduler, so a
+    // repeat client books the thing they already bought instead of landing on
+    // a generic service list. `promo` is recorded on the booking — there is no
+    // automated discount engine for bookings, so the code travels in the notes
+    // and is honoured when the invoice is raised.
+    const [promoCode, setPromoCode] = useState('');
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        const svc = (params.get('service') || '').toLowerCase();
+        if (svc) {
+            const match = [...PHOTO_SERVICES, ...WEB_SERVICES, ...BUNDLES]
+                .find(s => s.id === svc);
+            if (match) {
+                setForm(prev => ({ ...prev, event_type: match.eventType }));
+                requestAnimationFrame(() => {
+                    scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+        }
+
+        const promo = (params.get('promo') || '').trim();
+        if (promo && /^[A-Za-z0-9-]{3,24}$/.test(promo)) {
+            const code = promo.toUpperCase();
+            setPromoCode(code);
+            setForm(prev => ({
+                ...prev,
+                notes: prev.notes ? `${prev.notes}\n\nPromo code: ${code}` : `Promo code: ${code}`,
+            }));
+        }
+    }, []);
+
     const handleDateSelect = (date: string) => {
         set('event_date', date);
         setStep('details');
@@ -705,6 +739,19 @@ const BookingPage: React.FC = () => {
                         <p className="text-white/40 text-sm max-w-md">
                             Pick a date and we'll reach out within 24 hours to confirm scope and send a contract.
                         </p>
+                        {promoCode && (
+                            <div className="mt-6 bg-white/10 px-5 py-4 max-w-md">
+                                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/40 mb-2">
+                                    DISCOUNT APPLIED
+                                </p>
+                                <p className="text-white text-sm font-bold">
+                                    10% off this booking &middot; {promoCode}
+                                </p>
+                                <p className="text-white/40 text-xs mt-2">
+                                    We'll apply it to your invoice — nothing else to enter.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <AnimatePresence mode="wait">
