@@ -71,6 +71,7 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   crm: ['2x2', '4x2', '2x4', '4x4'],
   // A feed: the face plus the list shapes.
   notifications: ['2x2', '4x2', '2x4', '4x4'],
+  'network-status': ['2x2', '4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {
@@ -78,17 +79,25 @@ export function shapeOptions(id: string): readonly ShapeName[] {
 }
 
 /** Shipped layout. A tile with no entry falls back to 2x2. */
+/**
+ * The designed default: a composed mosaic, not a starting mess. Shapes and
+ * order are chosen so the phone lattice (4 units per row) and the desktop
+ * lattice (8 per row) both fill with zero holes: total area is 80 units —
+ * twenty full phone rows, ten desktop rows. On a phone it reads top to
+ * bottom: time and sky, then money, the calendar, the census, analytics
+ * beside the client book, the feed, the services, the keypad.
+ */
 export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   clock: '2x2',
   weather: '2x2',
-  calendar: '4x4',
   'revenue-performance': '4x2',
-  'network-status': '4x2',
+  calendar: '4x4',
   registry: '4x2',
   'site-analytics': '2x2',
   crm: '2x2',
-  calculator: '4x4',
   notifications: '4x2',
+  'network-status': '4x2',
+  calculator: '4x4',
 };
 
 /** Order tiles appear in. Rearranged by dragging in edit mode. */
@@ -100,13 +109,28 @@ interface Stored {
   backgrounds: Record<string, 'black' | 'white'>;
 }
 
+/**
+ * A saved layout can predate a widget's shape restrictions — clamp every
+ * stored shape to the widget's current catalogue, falling back to its
+ * default (or the catalogue's first entry) rather than rendering a view
+ * the widget no longer has.
+ */
+function clampShapes(shapes: Record<string, ShapeName>): Record<string, ShapeName> {
+  const out: Record<string, ShapeName> = {};
+  for (const [id, shape] of Object.entries(shapes)) {
+    const options = shapeOptions(id);
+    out[id] = options.includes(shape) ? shape : (DEFAULT_LAYOUT[id] ?? options[0]);
+  }
+  return out;
+}
+
 /** Fill in anything a saved layout doesn't mention, and drop anything stale. */
 function reconcile(saved: Partial<Stored> | null): Stored {
   if (!saved) return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {} };
   return {
     // Merge rather than replace: a tile added after a layout was saved should
     // appear at its default size instead of vanishing.
-    shapes: { ...DEFAULT_LAYOUT, ...(saved.shapes ?? {}) },
+    shapes: clampShapes({ ...DEFAULT_LAYOUT, ...(saved.shapes ?? {}) }),
     order: [
       ...(saved.order ?? []).filter(id => DEFAULT_ORDER.includes(id)),
       ...DEFAULT_ORDER.filter(id => !(saved.order ?? []).includes(id)),
