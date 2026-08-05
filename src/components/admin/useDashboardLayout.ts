@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
+import { LAYOUT_GENERATION, readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
 import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X1, TILE_2X2, TILE_2X4, TILE_4X1, TILE_4X2, TILE_4X4 } from './DashboardTile';
 
 /**
@@ -111,6 +111,7 @@ interface Stored {
   shapes: Record<string, ShapeName>;
   order: string[];
   backgrounds: Record<string, 'black' | 'white'>;
+  generation?: number;
 }
 
 /**
@@ -130,7 +131,14 @@ function clampShapes(shapes: Record<string, ShapeName>): Record<string, ShapeNam
 
 /** Fill in anything a saved layout doesn't mention, and drop anything stale. */
 function reconcile(saved: Partial<Stored> | null): Stored {
-  if (!saved) return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {} };
+  // No layout, or one from an older generation of the default: take the
+  // designed board. A layout saved before the shapes were redesigned is an
+  // arrangement of a different dashboard — merging it strands tiles at sizes
+  // that no longer compose, which is how a board of 1x1s survived the
+  // redesign.
+  if (!saved || (saved.generation ?? 1) < LAYOUT_GENERATION) {
+    return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {}, generation: LAYOUT_GENERATION };
+  }
   return {
     // Merge rather than replace: a tile added after a layout was saved should
     // appear at its default size instead of vanishing.
@@ -140,6 +148,7 @@ function reconcile(saved: Partial<Stored> | null): Stored {
       ...DEFAULT_ORDER.filter(id => !(saved.order ?? []).includes(id)),
     ],
     backgrounds: saved.backgrounds ?? {},
+    generation: LAYOUT_GENERATION,
   };
 }
 
@@ -215,7 +224,7 @@ export function useDashboardLayout() {
   }, []);
 
   const reset = useCallback(() => {
-    setState({ shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {} });
+    setState({ shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {}, generation: LAYOUT_GENERATION });
   }, []);
 
   const classOf = useCallback((id: string) => SHAPE_CLASS[shapes[id] ?? '2x2'], [shapes]);

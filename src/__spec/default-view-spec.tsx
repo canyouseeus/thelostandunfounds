@@ -90,7 +90,7 @@ function Widget({ id, size, phone }: { id: string; size: string; phone: boolean 
   )
 }
 
-function Board({ phone }: { phone: boolean }) {
+function Board({ phone, pageWidth, cap }: { phone: boolean; pageWidth?: number; cap?: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const [unit, setUnit] = useState(0)
   const cols = phone ? 4 : 8
@@ -106,9 +106,9 @@ function Board({ phone }: { phone: boolean }) {
     return () => ro.disconnect()
   }, [cols, gap])
   return (
-    <div data-board={phone ? 'phone' : 'desktop'} style={{ width: (phone ? 358 : 1128) + 24, padding: 12 }} className="bg-black">
+    <div data-board={phone ? 'phone' : 'desktop'} style={{ width: pageWidth ?? ((phone ? 358 : 1128) + 24), padding: 12 }} className="bg-black">
       <div ref={ref} className={`grid ${phone ? 'grid-cols-4 gap-3' : 'grid-cols-8 gap-6'} [grid-auto-flow:dense]`}
-           style={unit ? { gridAutoRows: `${unit}px` } : undefined}>
+           style={unit ? { gridAutoRows: `${unit}px`, maxWidth: cap } : undefined}>
         {DEFAULT_ORDER.map(id => (
           <div key={id} className={SHAPE_CLASS[DEFAULT_LAYOUT[id]]} data-tile={id}>
             <Widget id={id} size={DEFAULT_LAYOUT[id]} phone={phone} />
@@ -119,10 +119,13 @@ function Board({ phone }: { phone: boolean }) {
   )
 }
 
-const which = new URLSearchParams(location.search).get('b')
+const q = new URLSearchParams(location.search)
+const which = q.get('b')
+const pageWidth = q.get('w') ? Number(q.get('w')) : undefined
+const cap = q.get('cap') ? Number(q.get('cap')) : undefined
 createRoot(document.getElementById('root')!).render(
   <div className="bg-black p-4 flex flex-col gap-8">
     {which !== 'desktop' && <Board phone />}
-    {which !== 'phone' && <Board phone={false} />}
+    {which !== 'phone' && <Board phone={false} pageWidth={pageWidth} cap={cap} />}
   </div>
 )

@@ -166,7 +166,15 @@ export function EditableTile({
   const [over, setOver] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  if (!editing) return <div className={className}>{children}</div>;
+  // Hover flips the tile to its opposite — the same inversion the white
+  // background option applies, so a black tile lights up white under the
+  // cursor and a white one goes black. Gated on real hover so a phone never
+  // gets stuck in the inverted state after a tap.
+  if (!editing) return (
+    <div className={cn(className, 'transition-[filter] duration-150 [@media(hover:hover)]:hover:invert')}>
+      {children}
+    </div>
+  );
 
   return (
     <>
