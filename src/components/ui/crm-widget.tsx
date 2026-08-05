@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from './utils';
 import { useLongPress } from './use-long-press';
 import { DetailSheet } from './detail-sheet';
@@ -20,6 +20,16 @@ export interface CrmWidgetClient {
   lastInvoiceDate: string | null;
 }
 
+export interface CrmInvoiceRow {
+  id: string;
+  invoice_number: string | null;
+  date: string | null;
+  total: number;
+  amount_due: number;
+  status: string | null;
+  description: string | null;
+}
+
 export interface CrmWidgetData {
   clients: CrmWidgetClient[];
   totals: { clients: number; billed: number; collected: number; outstanding: number };
@@ -31,6 +41,55 @@ const cmoney = (n: number) => (n >= 10_000 ? `$${(n / 1000).toFixed(1)}K` : mone
 const shortDate = (iso: string | null) =>
   iso ? iso.slice(0, 10) : '—';
 
+const STATUS_LINE = (inv: CrmInvoiceRow) =>
+  [inv.status ?? 'unknown', inv.amount_due > 0 ? `${money(inv.amount_due)} due` : 'settled'].join(' — ');
+
+/** The dossier's invoice drill: a client's invoices, then one invoice's fields. */
+function ClientInvoices({ clientId, fetchInvoices, nav }: {
+  clientId: string;
+  fetchInvoices?: (clientId: string) => Promise<CrmInvoiceRow[]>;
+  nav: { push: (card: StackCard) => void };
+}) {
+  const [rows, setRows] = useState<CrmInvoiceRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetchInvoices?.(clientId)
+      .then(r => { if (alive) setRows(r); })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [clientId, fetchInvoices]);
+
+  if (failed) return <p className="text-[11px] uppercase tracking-widest text-white/30 py-4 text-left">Invoices unavailable.</p>;
+  if (!rows) return <p className="text-[11px] uppercase tracking-widest text-white/30 py-4 text-left">Loading…</p>;
+  if (rows.length === 0) return <p className="text-[11px] uppercase tracking-widest text-white/30 py-4 text-left">No invoices on record.</p>;
+  return (
+    <div className="space-y-px">
+      {rows.map(inv => (
+        <StackRow
+          key={inv.id}
+          label={inv.invoice_number ? `Invoice ${inv.invoice_number}` : 'Invoice'}
+          sub={STATUS_LINE(inv)}
+          value={money(inv.total)}
+          onPress={() => nav.push({
+            title: inv.invoice_number ? `Invoice ${inv.invoice_number}` : 'Invoice',
+            render: () => (
+              <FieldsCard fields={{
+                Number: inv.invoice_number ?? '—',
+                Date: inv.date ? inv.date.slice(0, 10) : '—',
+                Total: money(inv.total),
+                'Amount due': money(inv.amount_due),
+                Status: inv.status ?? '—',
+                Description: inv.description ?? '—',
+              }} />
+            ),
+          })}
+        />
+      ))}
+    </div>
+  );
+}
+
 /**
  * CRM tile. The ring is its instrument — collected against billed, the dial
  * exception the clock also uses — and the client roster fills the larger
@@ -38,9 +97,11 @@ const shortDate = (iso: string | null) =>
  * client explorer: roster → dossier, cards with a way back at every level.
  * Accent: amber, the hero's bookings hue — CRM money is booking money.
  */
-export function CrmWidget({ size = '2x2', data, className }: {
+export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
   size?: string;
   data: CrmWidgetData;
+  /** Loads a client's invoices for the dossier's invoice drill. */
+  fetchInvoices?: (clientId: string) => Promise<CrmInvoiceRow[]>;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -53,21 +114,32 @@ export function CrmWidget({ size = '2x2', data, className }: {
   const { totals } = data;
   const maxBilled = Math.max(...data.clients.map(c => c.billed), 1);
 
+  const invoicesCard = (c: CrmWidgetClient): StackCard => ({
+    title: `${c.name} — Invoices`,
+    render: nav => <ClientInvoices clientId={c.id} fetchInvoices={fetchInvoices} nav={nav} />,
+  });
+
   const dossier = (c: CrmWidgetClient): StackCard => ({
     title: c.name,
-    render: () => (
+    render: nav => (
       <div className="space-y-4">
         <FieldsCard fields={{
           Business: c.business ?? '—',
           Email: c.email ?? '—',
           Phone: c.phone ?? '—',
           'Client since': shortDate(c.created_at),
-          Invoices: String(c.invoiceCount),
           Billed: money(c.billed),
           Collected: money(c.collected),
           Outstanding: money(c.outstanding),
           'Last invoice': shortDate(c.lastInvoiceDate),
         }} />
+        {fetchInvoices && c.invoiceCount > 0 && (
+          <StackRow
+            label="Invoices"
+            value={String(c.invoiceCount)}
+            onPress={() => nav.push(invoicesCard(c))}
+          />
+        )}
         {c.notes && (
           <div className="px-3 py-2.5 bg-white/[0.03]">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Notes</p>

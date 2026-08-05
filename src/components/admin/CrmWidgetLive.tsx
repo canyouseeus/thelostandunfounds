@@ -1,4 +1,5 @@
-import { CrmWidget } from '../ui/crm-widget';
+import { CrmWidget, CrmInvoiceRow } from '../ui/crm-widget';
+import { supabase } from '../../lib/supabase';
 import { useCrmClients } from './CrmDirectory';
 
 /**
@@ -16,5 +17,15 @@ export function CrmWidgetLive({ size, className }: { size?: string; className?: 
       </div>
     );
   }
-  return <CrmWidget size={size} className={className} data={{ clients, totals }} />;
+  const fetchInvoices = async (clientId: string): Promise<CrmInvoiceRow[]> => {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, date, total, amount_due, status, description')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false })
+      .limit(24);
+    if (error) throw error;
+    return (data ?? []).map(r => ({ ...r, total: Number(r.total ?? 0), amount_due: Number(r.amount_due ?? 0) }));
+  };
+  return <CrmWidget size={size} className={className} data={{ clients, totals }} fetchInvoices={fetchInvoices} />;
 }
