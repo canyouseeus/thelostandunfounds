@@ -108,8 +108,11 @@ async function getDrive() {
     return google.drive({ version: 'v3', auth });
 }
 
+// No fallback to DRIVE_FOLDER_ID on purpose — that one points at the music
+// library, and dropping client folders in there would be worse than dropping
+// them at the root of Drive.
 function parentFolderId(): string | undefined {
-    return process.env.CLIENT_UPLOADS_DRIVE_FOLDER_ID || process.env.DRIVE_FOLDER_ID || undefined;
+    return process.env.CLIENT_UPLOADS_DRIVE_FOLDER_ID || undefined;
 }
 
 async function createDriveFolder(name: string): Promise<{ id: string; url: string }> {
