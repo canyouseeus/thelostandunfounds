@@ -64,6 +64,9 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   // truncate it into a number with no story, so registry offers the wide,
   // tall and large shapes only.
   registry: ['4x2', '2x4', '4x4'],
+  // Analytics reads as a chart with a split — the squares under 2x2 and the
+  // strips have no room for either.
+  'site-analytics': ['2x2', '4x2', '2x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {

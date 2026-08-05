@@ -103,6 +103,7 @@ import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { RevenueWidget } from '../components/ui/revenue-widget';
 import { RegistryWidget } from '../components/ui/registry-widget';
+import { AnalyticsWidget } from '../components/ui/analytics-widget';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { DetailSheet } from '../components/ui/detail-sheet';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -1866,7 +1867,11 @@ export default function Admin() {
                 />
               ));
             }
-            if (id === 'site-analytics') return cell(<SiteAnalyticsCard light={light} size={size} />);
+            // Analytics is a drawn widget now: trace mass, per-size views,
+            // and the card-stack explorer behind a click.
+            if (id === 'site-analytics') return cell(invertIfLight(
+              <AnalyticsWidget size={size} className="w-full h-full" />
+            ));
             if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
 
             const category = dashboardCategories.find(c => c.id === id);
