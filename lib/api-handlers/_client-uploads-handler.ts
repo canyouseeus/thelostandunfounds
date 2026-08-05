@@ -161,7 +161,7 @@ export async function createLink(
     const slug = slugify(clientName);
     const folderName = body.project_name
         ? `${clientName} — ${body.project_name}`
-        : `${clientName} — Client Uploads`;
+        : `${clientName} — Uploads`;
 
     let drive: { id: string; url: string } | null = null;
     let driveError: string | null = null;
@@ -469,13 +469,13 @@ export async function sendInvite(
         : '';
 
     const content = `
-        <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SEND US YOUR ASSETS</h1>
+        <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SEND US YOUR CONTENT</h1>
         <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${escapeHtml(link.client_name)},</p>
         <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
-          ${custom ? escapeHtml(custom).replace(/\n/g, '<br>') : `Click the link below to upload your assets — no account, no sign-in, just drop the files in. Photos, logos, a mood board, brand colors, anything you already have.<br><br>And if you have content sitting on your phone or a hard drive that has never made it onto a website, send that too. We can work it into the build.`}
+          ${custom ? escapeHtml(custom).replace(/\n/g, '<br>') : `Click the link below to send your content over — no account, no sign-in, just drop the files in. Photos, logos, a mood board, brand colors, anything you already have.<br><br>And if there's content sitting on your phone or a hard drive that has never made it onto a website, send that too. We can work it into the build.`}
         </p>
         <p style="margin:0 0 24px 0;">
-          <a href="${url}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">UPLOAD YOUR ASSETS</a>
+          <a href="${url}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">SEND YOUR CONTENT</a>
         </p>
         <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.5;">Or paste this into your browser: ${url}</p>
         ${expiryLine}
@@ -485,7 +485,7 @@ export async function sendInvite(
     // visible recipient so client correspondence is on file.
     const result = await sendTransactionalEmail({
         to: [to, MEDIA_EMAIL],
-        subject: `Upload your assets — ${link.project_name || 'THE LOST+UNFOUNDS'}`,
+        subject: `Send your content — ${link.project_name || 'THE LOST+UNFOUNDS'}`,
         content,
     });
     if (!result.success) throw new HttpError(502, result.error || 'Email failed to send');
@@ -536,7 +536,7 @@ export async function retryMirror(supabase: ServiceSupabaseClient, linkId: strin
     if (!link.drive_folder_id) {
         const folderName = link.project_name
             ? `${link.client_name} — ${link.project_name}`
-            : `${link.client_name} — Client Uploads`;
+            : `${link.client_name} — Uploads`;
         const folder = await createDriveFolder(folderName);
         link.drive_folder_id = folder.id;
         await supabase

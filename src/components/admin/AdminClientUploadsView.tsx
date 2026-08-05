@@ -1,10 +1,14 @@
 /**
- * Client Uploads — admin panel.
+ * Content Requests — admin panel.
  *
- * Mint a link per client, copy it into an email (or have the platform send the
- * email), then review whatever comes back. "Copy brief" produces a plain-text
- * block naming every file and where it lives, which is what gets handed to an
- * agent to build the landing page from.
+ * Mint a link per person you're asking content from — a client, a contributor,
+ * a photographer, a business that has photos sitting on a phone. Copy it into
+ * an email, or have the platform send the email. Then review whatever comes
+ * back. "Copy brief" produces a plain-text block naming every file and where it
+ * lives, which is what gets handed to an agent to build a page from.
+ *
+ * The database columns still say `client_*`; the feature outgrew that name and
+ * renaming live columns wasn't worth the migration.
  */
 
 import { useEffect, useState } from 'react';
@@ -207,7 +211,7 @@ export default function AdminClientUploadsView() {
     // them into a landing page.
     function briefFor(link: UploadLink): string {
         const lines = [
-            `Client uploads — ${link.client_name}${link.project_name ? ` (${link.project_name})` : ''}`,
+            `Content request — ${link.client_name}${link.project_name ? ` (${link.project_name})` : ''}`,
             link.drive_folder_url ? `Drive folder: ${link.drive_folder_url}` : 'Drive folder: (not created)',
             `Files: ${uploads.length}`,
             '',
@@ -232,7 +236,7 @@ export default function AdminClientUploadsView() {
 
             <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-white/40 uppercase tracking-[0.3em]">
-                    {links.length} link{links.length === 1 ? '' : 's'}
+                    {links.length} request{links.length === 1 ? '' : 's'}
                 </p>
                 <div className="flex items-center gap-2">
                     <button
@@ -248,7 +252,7 @@ export default function AdminClientUploadsView() {
                         className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
                         style={surface}
                     >
-                        <PlusIcon className="w-4 h-4" /> New link
+                        <PlusIcon className="w-4 h-4" /> New request
                     </button>
                 </div>
             </div>
@@ -259,21 +263,21 @@ export default function AdminClientUploadsView() {
                         <input
                             value={form.client_name}
                             onChange={e => setForm({ ...form, client_name: e.target.value })}
-                            placeholder="Client name *"
+                            placeholder="Who you're asking *"
                             className="bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none"
                             style={surface}
                         />
                         <input
                             value={form.project_name}
                             onChange={e => setForm({ ...form, project_name: e.target.value })}
-                            placeholder="Project (optional)"
+                            placeholder="What it's for (optional)"
                             className="bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none"
                             style={surface}
                         />
                         <input
                             value={form.client_email}
                             onChange={e => setForm({ ...form, client_email: e.target.value })}
-                            placeholder="Client email (optional)"
+                            placeholder="Their email (optional)"
                             className="bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none"
                             style={surface}
                         />
@@ -290,17 +294,18 @@ export default function AdminClientUploadsView() {
                         value={form.intro}
                         onChange={e => setForm({ ...form, intro: e.target.value })}
                         rows={2}
-                        placeholder="What to ask them for (shown on the upload page)"
+                        placeholder="What you're asking them for — shown on their upload page"
                         className="w-full bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none resize-none"
                         style={surface}
                     />
                     <button
                         onClick={handleCreate}
                         disabled={creating || !form.client_name.trim()}
+                        title="Creates the link and its Drive folder"
                         className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] disabled:bg-white/10 disabled:text-white/30 transition-colors"
                         style={surface}
                     >
-                        {creating ? 'Creating…' : 'Create link'}
+                        {creating ? 'Creating…' : 'Create request link'}
                     </button>
                 </div>
             )}
@@ -308,7 +313,7 @@ export default function AdminClientUploadsView() {
             {loading ? (
                 <p className="text-white/40 text-sm">Loading…</p>
             ) : links.length === 0 ? (
-                <p className="text-white/40 text-sm">No upload links yet.</p>
+                <p className="text-white/40 text-sm">No content requests yet.</p>
             ) : (
                 <div className="space-y-2">
                     {links.map(link => (

@@ -1969,7 +1969,7 @@ export default function Admin() {
             <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
               {[
                 { id: 'gallery', icon: PhotoIcon, title: 'Gallery' },
-                { id: 'clientuploads', icon: CloudArrowUpIcon, title: 'Client Uploads' },
+                { id: 'clientuploads', icon: CloudArrowUpIcon, title: 'Content Requests' },
                 { id: 'blog', icon: BookOpenIcon, title: 'Blog' },
                 { id: 'newsletter', icon: EnvelopeIcon, title: 'Newsletter' },
                 { id: 'mail', icon: PaperAirplaneIcon, title: 'Webmail' },
@@ -2031,7 +2031,7 @@ export default function Admin() {
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
-                  clientuploads: { title: 'Client Uploads',         icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
+                  clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -2075,7 +2075,7 @@ export default function Admin() {
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'clientuploads' && (
-                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Client Uploads</div>}>
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Content Requests</div>}>
                     <AdminClientUploadsView />
                   </ErrorBoundary>
                 )}

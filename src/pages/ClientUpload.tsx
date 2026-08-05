@@ -1,10 +1,11 @@
 /**
- * Client Upload — /upload/:token
+ * Content request — /upload/:token
  *
- * A client opens this from a link in an email. No account, no sign-in: the
+ * Whoever you asked for content opens this from a link in an email — a client,
+ * a contributor, a business with photos on a phone. No account, no sign-in: the
  * token in the URL is the whole credential. They drop files, the files go
  * straight to storage via signed URLs, and the server mirrors them into the
- * Drive folder cut for that client.
+ * Drive folder cut for that request.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -207,7 +208,7 @@ export default function ClientUpload() {
     return (
         <div className={shell}>
             <Helmet>
-                <title>THE LOST+UNFOUNDS | Upload Your Assets</title>
+                <title>THE LOST+UNFOUNDS | Send Your Content</title>
                 <meta
                     name="description"
                     content="A private upload link for sending photos, logos, and brand assets to THE LOST+UNFOUNDS."
@@ -219,7 +220,7 @@ export default function ClientUpload() {
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-3">
                     THE LOST+UNFOUNDS
                 </p>
-                <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-widest mb-6">UPLOAD YOUR ASSETS</h1>
+                <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-widest mb-6">SEND YOUR CONTENT</h1>
                 <p className="text-white/70 text-base leading-relaxed mb-2">{title}</p>
                 <p className="text-white/60 text-base leading-relaxed mb-10">
                     {meta.intro ||
