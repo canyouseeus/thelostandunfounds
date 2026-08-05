@@ -30,9 +30,24 @@ import {
     signUploads,
 } from '../../lib/api-handlers/_client-uploads-handler.js';
 
+// Vercel doesn't reliably populate req.query.path for a catch-all — it may
+// arrive under '...path' or 'slug', or not at all, depending on the runtime
+// version. api/gallery/[...path].ts hit the same thing. The URL itself is the
+// one source that's always there, so read that first and treat the query keys
+// as fallbacks.
+function resolveRoute(req: VercelRequest): string {
+    const fromUrl = (req.url || '').split('?')[0]
+        .replace(/^\/api\/client-uploads\/?/, '')
+        .replace(/\/$/, '');
+    if (fromUrl) return fromUrl.split('/')[0].toLowerCase();
+
+    const raw = req.query.path || req.query['...path'] || req.query['slug'];
+    const joined = Array.isArray(raw) ? raw.join('/') : (raw as string) || '';
+    return joined.replace(/\/$/, '').split('/')[0].toLowerCase();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const segments = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
-    const route = (segments[0] as string) || '';
+    const route = resolveRoute(req);
     const supabase = createServiceClient();
 
     try {
