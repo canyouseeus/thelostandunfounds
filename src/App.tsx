@@ -85,6 +85,20 @@ import FadeboxLanding from './templates/fadebox/FadeboxLanding'
 import FadeboxProposal from './templates/fadebox/FadeboxProposal'
 import FadeboxDashboard from './templates/fadebox/FadeboxDashboard'
 
+// DEMO MODE — the same site with one flag set. The provider and the checkout
+// overlay mount app-wide rather than under /demo, because ?demo=1 puts any page
+// on the site into demo mode and the payment guards have to hold everywhere.
+import { DemoProvider } from './lib/demo/DemoContext'
+import DemoCheckoutOverlay from './components/demo/DemoCheckoutOverlay'
+import DemoSaveDialog from './components/demo/DemoSaveDialog'
+import { GlobalDemoBanner } from './components/demo/DemoBanner'
+import DemoShell from './components/demo/DemoShell'
+import DemoHome from './pages/demo/DemoHome'
+import DemoDashboard from './pages/demo/DemoDashboard'
+import DemoClients from './pages/demo/DemoClients'
+import DemoSeo from './pages/demo/DemoSeo'
+import DemoSignup from './pages/demo/DemoSignup'
+
 
 
 
@@ -128,6 +142,7 @@ function App() {
   return (
     <BrowserRouter>
       <NavigationExposer />
+      <DemoProvider>
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
@@ -373,13 +388,28 @@ function App() {
               </Route>
               <Route path="/kattitude/waiver" element={<KattitudeWaiver />} />
 
+              {/* DEMO MODE — real components, false numbers, nothing saves. */}
+              <Route path="/demo" element={<DemoShell />}>
+                <Route index element={<DemoHome />} />
+                <Route path="dashboard" element={<DemoDashboard />} />
+                <Route path="clients" element={<DemoClients />} />
+                <Route path="seo" element={<DemoSeo />} />
+                <Route path="signup" element={<DemoSignup />} />
+              </Route>
+
               <Route path="*" element={<NotFound />} />
             </Routes>
+            {/* Mounted outside the route tree: ?demo=1 works on any page, so the
+                checkout interception has to be able to take over from anywhere. */}
+            <GlobalDemoBanner />
+            <DemoSaveDialog />
+            <DemoCheckoutOverlay />
             <Analytics />
           </ErrorBoundary>
         </SageModeProvider>
         </GalleryProvider>
       </AuthProvider>
+      </DemoProvider>
     </BrowserRouter>
   )
 }

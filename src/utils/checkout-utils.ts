@@ -7,6 +7,14 @@
  *   - Strike (Bitcoin Lightning, on-site QR)     → getStrikeCheckoutInvoice
  */
 
+// DEMO MODE — every payment rail below is stopped here first.
+//
+// These are the only functions in the app that move money, so this is the one
+// place a demo has to be airtight. The guard sits above the fetch in each one:
+// in demo mode nothing is called, no session is created, no invoice is minted.
+// The overlay takes over and narrates the flow instead. See src/lib/demo/.
+import { isDemoModeNow, interceptCheckout } from '../lib/demo/demoFlag'
+
 /**
  * Create a Strike (Bitcoin Lightning) invoice for checkout.
  * Returns the invoiceId and Lightning bolt11 invoice string for QR display.
@@ -25,6 +33,14 @@ export async function getStrikeCheckoutInvoice(params: {
   amount: { amount: string; currency: string }
   description: string
 }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: params.description || 'Cart checkout',
+      rail: 'Strike · Bitcoin Lightning',
+      amount: `$${params.amount.toFixed(2)}`,
+    })
+  }
+
   // Get affiliate ref if not provided
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
@@ -130,6 +146,13 @@ export async function getStripeCheckoutUrlByPriceId(params: {
     productId?: string
     affiliateRef?: string | null
 }): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: `Price ${params.priceId}`,
+      rail: 'Stripe · Card',
+    })
+  }
+
     let affiliateRef = params.affiliateRef
     if (!affiliateRef && typeof window !== 'undefined') {
         const { getAffiliateRef } = await import('./affiliate-tracking')
@@ -177,6 +200,13 @@ export async function getProdigiCheckoutUrl(params: {
   customerEmail?: string
   affiliateRef?: string | null
 }): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: `Print ${params.productId}`,
+      rail: 'Stripe · Card (print on demand)',
+    })
+  }
+
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
     const { getAffiliateRef } = await import('./affiliate-tracking')
@@ -237,6 +267,13 @@ export async function getProdigiStrikeInvoice(params: {
   amount: { amount: string; currency: string }
   description: string
 }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: `Print ${params.productId}`,
+      rail: 'Strike · Bitcoin Lightning (print on demand)',
+    })
+  }
+
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
     const { getAffiliateRef } = await import('./affiliate-tracking')
@@ -282,6 +319,13 @@ export async function getPhotoPrintCheckoutUrl(params: {
   customerEmail?: string
   affiliateRef?: string | null
 }): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: `Photo print ${params.photoId}`,
+      rail: 'Stripe · Card (photo print)',
+    })
+  }
+
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
     const { getAffiliateRef } = await import('./affiliate-tracking')
@@ -331,6 +375,13 @@ export async function getPhotoPrintStrikeInvoice(params: {
   amount: { amount: string; currency: string }
   description: string
 }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: `Photo print ${params.photoId}`,
+      rail: 'Strike · Bitcoin Lightning (photo print)',
+    })
+  }
+
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
     const { getAffiliateRef } = await import('./affiliate-tracking')
@@ -381,6 +432,14 @@ export async function getStripeCheckoutUrl(params: {
   variantId?: string
   affiliateRef?: string | null
 }): Promise<{ sessionId: string; url: string }> {
+  if (isDemoModeNow()) {
+    return interceptCheckout({
+      label: params.description || 'Cart checkout',
+      rail: 'Stripe · Card',
+      amount: `$${params.amount.toFixed(2)}`,
+    })
+  }
+
   // Get affiliate ref if not provided
   let affiliateRef = params.affiliateRef
   if (!affiliateRef && typeof window !== 'undefined') {
