@@ -1,4 +1,22 @@
+import { useEffect, useRef, useState } from 'react';
 import { cn } from './utils';
+
+/**
+ * GRAPH STYLE RULE — the hero chart (DashboardCharts) is the format for every
+ * graph on the platform: monotone-smoothed 2px line, flat ~12% fill, r=2 data
+ * dots (Sparkline draws exactly this); bars are the accent at 10% for the
+ * track with a solid accent fill. Categories are told apart by accent, never
+ * by dialect — the same hues the hero's metric tabs use:
+ */
+export const CHART_ACCENTS = {
+  revenue: 'text-green-400',    // #4ade80 — money
+  newsletter: 'text-blue-400',  // #60a5fa
+  affiliates: 'text-purple-400',// #c084fc
+  bookings: 'text-amber-500',   // #f59e0b
+  analytics: 'text-blue-400',   // traffic reads in the newsletter blue family
+  crm: 'text-amber-500',        // client money is booking money
+} as const;
+
 
 /**
  * Monochrome instruments for the dashboard tiles.
@@ -56,8 +74,14 @@ export function RingGauge({
 }
 
 /**
- * Trace of a series over time. Draws the line plus a flat tint beneath it —
- * a fill, not a gradient.
+ * Trace of a series over time, in the hero revenue chart's exact dialect
+ * (DashboardCharts): a monotone-smoothed 2px line, a flat fill beneath it,
+ * and r=2 dots at the data points. Drawn in pixel space — measured with a
+ * ResizeObserver rather than a stretched viewBox, because a non-uniform
+ * viewBox distorts curves and turns dots into ellipses, which is exactly why
+ * the tiles used to look like a different chart language from the hero.
+ * Dots thin out automatically when the series is denser than the width can
+ * carry, so a 30-point trace on an 81px tile doesn't become a bead chain.
  */
 export function Sparkline({
   values,
@@ -66,19 +90,74 @@ export function Sparkline({
   values: number[];
   className?: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) setBox({ w: r.width, h: r.height });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   if (values.length < 2) return null;
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const span = max - min || 1;
-  const step = 100 / (values.length - 1);
-  const y = (v: number) => 30 - ((v - min) / span) * 28;
-  const line = values.map((v, i) => `${i * step},${y(v)}`).join(' ');
+
+  let svg = null;
+  if (box) {
+    const { w, h } = box;
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values, 0);
+    const span = max - min || 1;
+    const pad = 3; // room for the dots and the 2px stroke at the extremes
+    const px = (i: number) => pad + (i / (values.length - 1)) * (w - pad * 2);
+    const py = (v: number) => h - pad - ((v - min) / span) * (h - pad * 2);
+    const pts = values.map((v, i) => [px(i), py(v)] as const);
+
+    // Monotone-x smoothing, the same curve recharts' type="monotone" draws.
+    const slopes: number[] = [];
+    for (let i = 0; i < pts.length; i++) {
+      const prev = pts[i - 1], cur = pts[i], next = pts[i + 1];
+      if (!prev) slopes.push((next[1] - cur[1]) / (next[0] - cur[0] || 1));
+      else if (!next) slopes.push((cur[1] - prev[1]) / (cur[0] - prev[0] || 1));
+      else {
+        const a = (cur[1] - prev[1]) / (cur[0] - prev[0] || 1);
+        const b = (next[1] - cur[1]) / (next[0] - cur[0] || 1);
+        slopes.push(a * b <= 0 ? 0 : (a + b) / 2);
+      }
+    }
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      const dx = (x1 - x0) / 3;
+      d += ` C ${x0 + dx} ${y0 + slopes[i - 1] * dx}, ${x1 - dx} ${y1 - slopes[i] * dx}, ${x1} ${y1}`;
+    }
+    const area = `${d} L ${pts[pts.length - 1][0]} ${h - pad} L ${pts[0][0]} ${h - pad} Z`;
+    // Dots need ~8px each to read as points rather than a solid bead chain.
+    const every = Math.max(1, Math.ceil(values.length / Math.max(1, Math.floor(w / 8))));
+
+    svg = (
+      <svg width={w} height={h} className="block">
+        <path d={area} fill="currentColor" fillOpacity="0.12" />
+        <path d={d} fill="none" stroke="currentColor" strokeWidth="2" />
+        {pts.map(([x, y], i) =>
+          i % every === 0 || i === pts.length - 1
+            ? <circle key={i} cx={x} cy={y} r="2" fill="currentColor" />
+            : null,
+        )}
+      </svg>
+    );
+  }
 
   return (
-    <svg viewBox="0 0 100 32" preserveAspectRatio="none" className={cn('w-full', className)}>
-      <polygon points={`0,32 ${line} 100,32`} fill="currentColor" fillOpacity="0.12" />
-      <polyline points={line} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div ref={ref} className={cn('w-full overflow-hidden', className)} style={{ minHeight: 12 }}>
+      {svg}
+    </div>
   );
 }
 

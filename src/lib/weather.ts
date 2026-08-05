@@ -109,6 +109,25 @@ export const conditionGlyph = (code: number, isDay = true) => {
   return '⚡';
 };
 
+/**
+ * The condition families the tile animates. Coarser than the glyph mapping on
+ * purpose: drizzle, rain and rain showers all fall the same way, so they share
+ * one particle system rather than three near-identical ones.
+ */
+export type ConditionKind = 'clear' | 'cloud' | 'fog' | 'rain' | 'snow' | 'storm';
+
+export const conditionKind = (code: number): ConditionKind => {
+  if (code === 0) return 'clear';
+  if (code <= 3) return 'cloud';
+  if (code <= 48) return 'fog';
+  if (code <= 57) return 'rain';
+  if (code <= 67) return 'rain';
+  if (code <= 77) return 'snow';
+  if (code <= 82) return 'rain';
+  if (code <= 86) return 'snow';
+  return 'storm';
+};
+
 /** US AQI bands, matching the EPA categories Apple Weather also uses. */
 export const aqiCategory = (aqi: number) => {
   if (aqi <= 50) return 'Good';

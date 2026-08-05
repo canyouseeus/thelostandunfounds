@@ -211,16 +211,16 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
             // this block against the bottom of the box aligned it to the
             // descender space under the digits instead, which left the seconds
             // sitting low. AM/PM rides above the seconds off the same box.
-            <span className={cn(
-                "relative ml-1 font-mono text-white/40 tabular-nums leading-none",
-                responsive ? "text-sm md:text-xl" : "text-xl",
-            )}>
+            <span
+                style={{ fontSize: '6.5cqw', lineHeight: 1 }}
+                className="relative ml-1 font-mono text-white/40 tabular-nums leading-none"
+            >
                 :{ds}
-                <span className={cn(
-                    "absolute bottom-full left-0 mb-[2px] font-bold text-white/30 leading-none",
-                    responsive ? "text-[8px] md:text-[10px]" : "text-[10px]",
-                    is24Hour ? "opacity-0" : "opacity-100"
-                )}>{ampm}</span>
+                <span
+                    style={{ fontSize: '3.4cqw', lineHeight: 1 }}
+                    className={cn("absolute bottom-full left-0 mb-[2px] font-bold text-white/30 leading-none",
+                        is24Hour ? "opacity-0" : "opacity-100")}
+                >{ampm}</span>
             </span>
         );
     } else if (mode === 'stopwatch') {
@@ -241,20 +241,23 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
 
 
     // Unified render component for digits
-    const digitSize = responsive ? "text-2xl md:text-5xl" : "text-5xl";
+    // 15% of the face's width. On a 358px 4x4 that is ~54px, close to the
+    // text-5xl this replaces; on an 81px 1x1 it is ~12px, which fits.
+    const digitStyle = { fontSize: '15cqw', lineHeight: 1 } as const;
+    const digitSize = "";
 
     const UnifiedDigits = () => (
         <div className="relative flex items-center justify-center gap-1 tabular-nums select-none">
             {/* Left Pane */}
-            <span className={cn(digitSize, "font-mono font-bold text-white tracking-tight tabular-nums")}>
+            <span style={digitStyle} className={cn(digitSize, "font-mono font-bold text-white tracking-tight tabular-nums")}>
                 {leftDisplay}
             </span>
 
             {/* Colon */}
-            {showColon && <span className={cn(digitSize, "font-mono font-bold text-white tracking-tight")}>:</span>}
+            {showColon && <span style={digitStyle} className={cn(digitSize, "font-mono font-bold text-white tracking-tight")}>:</span>}
 
             {/* Right Pane */}
-            <div className={cn(digitSize, "relative font-mono font-bold text-white tracking-tight tabular-nums flex items-baseline")}>
+            <div style={digitStyle} className={cn(digitSize, "relative font-mono font-bold text-white tracking-tight tabular-nums flex items-baseline")}>
                 {rightDisplay}
                 {/* Absolute Indicators */}
                 {extraRight}
@@ -264,7 +267,9 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
 
 
     return (
-        <div className={cn(
+        <div
+            style={{ containerType: 'size' }}
+            className={cn(
             'bg-black relative overflow-hidden flex flex-col select-none',
             responsive ? 'min-h-[120px] md:min-h-[200px]' : 'min-h-[200px]', // Ensure enough height
             className
@@ -278,22 +283,52 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                         {!isDigital ? (
                             /* Analog Face */
                             <div
-                                className="absolute inset-0 w-full h-full"
+                                className="absolute inset-0 flex items-center justify-center"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleClockType();
                                 }}
                             >
+                              {/* The dial is locked square inside whatever box
+                                  it is given. Hand lengths are percentages of
+                                  the face, so a non-square container — the
+                                  64x46 header slot, for one — stretched them
+                                  into an ellipse. This keeps every proportion
+                                  fixed at every size. */}
+                              <div className="relative h-full aspect-square max-w-full max-h-full">
                                 {/* Clock Face Border */}
                                 <div className="absolute inset-2 rounded-full" />
 
                                 {/* Hands - Flat Design, No Shadows */}
                                 <div className="relative w-full h-full">
-                                    <div className="absolute top-1/2 left-1/2 w-2 h-2 -mt-1 -ml-1 rounded-full bg-white z-10" />
-                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[3px] h-[28%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${hourDeg}deg)` }} />
-                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[2px] h-[38%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${minuteDeg}deg)` }} />
-                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[1px] h-[42%] bg-white/40" style={{ transform: `translateX(-50%) rotate(${secondDeg}deg)` }} />
+                                    {/* Hand weight is a percentage of the face,
+                                        like the lengths already were. Fixed
+                                        pixel widths meant a hand stayed 3px
+                                        whether the face was 612px or 135px, so
+                                        the small sizes came out four times too
+                                        heavy. The percentages are calibrated to
+                                        reproduce the 4x4 weights exactly —
+                                        3px, 2px and 1px on a 612px face — with
+                                        a floor of one pixel so a hand can't
+                                        vanish at 1x1. */}
+                                    <div
+                                        className="absolute top-1/2 left-1/2 rounded-full bg-white z-10"
+                                        style={{ width: 'max(3px, 1.31%)', height: 'max(3px, 1.31%)', transform: 'translate(-50%, -50%)' }}
+                                    />
+                                    <div
+                                        className="absolute left-1/2 bottom-1/2 origin-bottom h-[28%] bg-white transition-transform duration-500"
+                                        style={{ width: 'max(1px, 0.49%)', transform: `translateX(-50%) rotate(${hourDeg}deg)` }}
+                                    />
+                                    <div
+                                        className="absolute left-1/2 bottom-1/2 origin-bottom h-[38%] bg-white transition-transform duration-500"
+                                        style={{ width: 'max(1px, 0.33%)', transform: `translateX(-50%) rotate(${minuteDeg}deg)` }}
+                                    />
+                                    <div
+                                        className="absolute left-1/2 bottom-1/2 origin-bottom h-[42%] bg-white/40"
+                                        style={{ width: 'max(1px, 0.16%)', transform: `translateX(-50%) rotate(${secondDeg}deg)` }}
+                                    />
                                 </div>
+                              </div>
                             </div>
                         ) : (
                             <div
@@ -408,3 +443,4 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
         </div>
     );
 }
+

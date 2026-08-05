@@ -101,7 +101,13 @@ import AdminBookingView from '../components/admin/AdminBookingView';
 import AdminCalendarView from '../components/admin/AdminCalendarView';
 import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
+import { RevenueWidget } from '../components/ui/revenue-widget';
+import { RegistryWidget } from '../components/ui/registry-widget';
+import { AnalyticsWidget } from '../components/ui/analytics-widget';
+import { CrmWidgetLive } from '../components/admin/CrmWidgetLive';
+import { NotificationsWidgetLive } from '../components/admin/NotificationsWidgetLive';
 import { ClockWidget } from '../components/ui/clock-widget';
+import { DetailSheet } from '../components/ui/detail-sheet';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { FitBox } from '../components/ui/fit-box';
 import { MiniBars, Sparkline, StatusMarks } from '../components/ui/viz';
@@ -212,6 +218,7 @@ export default function Admin() {
   const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [registeredWriters, setRegisteredWriters] = useState<number>(0);
+  const [censusCounts, setCensusCounts] = useState<{ posts: number; products: number; users: number | null }>({ posts: 0, products: 0, users: null });
   const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
@@ -267,6 +274,10 @@ export default function Admin() {
   // Long press on the dashboard calendar opens the master calendar panel —
   // the same one the header date links to.
   const calendarPress = useLongPress(() => openPanel('calendar'));
+  // The clock expands on hold only — plain clicks belong to the widget itself
+  // (face click cycles format, label click cycles mode, per the clock rule).
+  const [clockOpen, setClockOpen] = useState(false);
+  const clockPress = useLongPress(() => setClockOpen(true), 450, { holdOnMouse: true });
   // Widget shapes and order, editable and saved to this browser.
   const layout = useDashboardLayout();
   // The grid's rows are set to exactly one column width, measured, so a tile
@@ -824,6 +835,24 @@ export default function Admin() {
             galleryPhotoCountVal = count || 0;
           } catch (err) {
             console.warn('Error fetching photo count:', err);
+          }
+
+          // Registry census: published Lost Archives posts and products.
+          try {
+            const [postsRes, productsRes] = await Promise.all([
+              supabase.from('blog_posts').select('*', { count: 'exact', head: true }).eq('status', 'published'),
+              supabase.from('products').select('*', { count: 'exact', head: true }),
+            ]);
+            // Real accounts, not the max-of-side-tables guess: auth.users via
+            // the registry endpoint.
+            let realUsers: number | null = null;
+            try {
+              const r = await fetch('/api/admin/registry?section=users');
+              if (r.ok) realUsers = (await r.json()).total ?? null;
+            } catch { /* tile falls back to the legacy figure */ }
+            setCensusCounts({ posts: postsRes.count || 0, products: productsRes.count || 0, users: realUsers });
+          } catch (err) {
+            console.warn('Error fetching census counts:', err);
           }
 
 
@@ -1417,53 +1446,6 @@ export default function Admin() {
 
   const dashboardCategories = [
     {
-      id: 'operational-load',
-      title: 'Operational Load',
-      icon: <ChartBarIcon className="w-4 h-4" />,
-      primary: <AnimatedNumber value={stats?.totalUsers || 0} />,
-      caption: 'Total users',
-      aside: (
-        <MiniBars
-          className="h-full max-h-24"
-          values={[
-            { label: 'Users', value: stats?.totalUsers || 0 },
-            { label: 'Subscribers', value: stats?.newsletterSubscribers || 0 },
-            { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0 },
-            { label: 'Pending', value: pendingSubmissions },
-          ]}
-        />
-      ),
-      footer: <span className="text-[10px] text-white/40">Real-time sync</span>,
-      content: (
-        <div className="space-y-4 pt-2">
-          <AdminBentoRow
-            label="Total Users"
-            value={<AnimatedNumber value={stats?.totalUsers || 0} />}
-            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => openPanel('users')}
-          />
-          <AdminBentoRow
-            label="Subscribers"
-            value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />}
-            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => openPanel('newsletter')}
-          />
-          <AdminBentoRow
-            label="Affiliates"
-            value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />}
-            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => openPanel('affiliates')}
-          />
-          <AdminBentoRow
-            label="Pending Reviews"
-            value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>}
-            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => openPanel('submissions')}
-          />
-        </div>
-      )
-    },
-    {
       id: 'revenue-performance',
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
@@ -1578,6 +1560,19 @@ export default function Admin() {
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
       content: (
         <div className="space-y-3 pt-2">
+          {/* The work queue lives with the other things that want attention —
+              it came off the retired users tile, which was a census row it
+              never belonged on. */}
+          {pendingSubmissions > 0 && (
+            <button
+              onClick={() => openPanel('submissions')}
+              className="w-full flex items-center justify-between px-3 py-2 bg-amber-400/10 hover:bg-amber-400/20 transition-colors"
+              style={{ borderRadius: 0 }}
+            >
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Pending Reviews</span>
+              <span className="text-sm font-bold text-amber-400 tabular-nums">{pendingSubmissions}</span>
+            </button>
+          )}
           {alerts.length > 0 ? (
             alerts.slice(0, 8).map(alert => (
               <div key={alert.id} className="flex flex-col gap-1 py-1">
@@ -1822,12 +1817,95 @@ export default function Admin() {
               </div>
             ));
 
+            // The keypad's keys are a fixed height; laid out at a 440px design
+            // size and scaled to the cell, every key keeps its proportions at
+            // every size. 1x1 (and a phone's 2x2) stays the operator-quad face
+            // that opens the keypad full screen.
             if (id === 'calculator') return cell(invertIfLight(
-              <CalculatorCard wide compact={size === '1x1'} className="w-full h-full" />
+              size === '1x1' || (!window.matchMedia('(min-width: 768px)').matches && size === '2x2')
+                ? <CalculatorCard wide compact faceSize={size === '1x1' ? 'sm' : 'lg'} className="w-full h-full" />
+                : (
+                  <FitBox base={440} className="h-full">
+                    <CalculatorCard wide className="w-full h-full" />
+                  </FitBox>
+                )
             ));
-            if (id === 'site-analytics') return cell(<SiteAnalyticsCard light={light} size={size} />);
-            if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
+            // Revenue is a drawn widget like the clock and weather: the trace
+            // is the mass, per-size views, long press for the full breakdown.
+            if (id === 'notifications') return cell(invertIfLight(
+              <NotificationsWidgetLive
+                size={size}
+                className="w-full h-full"
+                pendingReviews={pendingSubmissions}
+                onOpenPanel={openPanel}
+              />
+            ));
+            // Revenue is a drawn widget like the clock and weather: the trace
+            // is the mass, per-size views, long press for the full breakdown.
+            if (id === 'revenue-performance') {
+            const category = dashboardCategories.find(c => c.id === id);
+              return cell(invertIfLight(
+                <RevenueWidget
+                  size={size}
+                  className="w-full h-full"
+                  data={{
+                    total: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
+                    sources: [
+                      { label: 'Affiliate', value: stats?.affiliateRevenue || 0 },
+                      { label: 'Gallery', value: stats?.galleryRevenue || 0 },
+                      { label: 'Bookings', value: stats?.bookingRevenue || 0 },
+                    ],
+                    series: (stats?.history?.revenue || []).map(r => (typeof r === 'string' ? 1 : r.amount)),
+                  }}
+                  detail={category?.content}
+                />
+              ));
+            }
+            if (id === 'registry') {
+              const census = [
+                { label: 'Gallery Photos', value: stats?.galleryPhotoCount || 0, panel: 'gallery', section: 'photos' },
+                { label: 'Users', value: censusCounts.users ?? (stats?.totalUsers || 0), panel: 'users', section: 'users' },
+                { label: 'Lost Archives Posts', value: censusCounts.posts, panel: 'blog', section: 'posts' },
+                { label: 'Products', value: censusCounts.products, panel: 'pricing', section: 'products' },
+                { label: 'Writers', value: registeredWriters, panel: 'blog', section: 'writers' },
+                { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0, panel: 'affiliates', section: 'affiliates' },
+                { label: 'Subscribers', value: stats?.newsletterSubscribers || 0, panel: 'newsletter', section: 'subscribers' },
+              ];
+              return cell(invertIfLight(
+                <RegistryWidget
+                  size={size}
+                  className="w-full h-full"
+                  data={{
+                    photos: stats?.galleryPhotoCount || 0,
+                    users: censusCounts.users ?? (stats?.totalUsers || 0),
+                    posts: censusCounts.posts,
+                    products: censusCounts.products,
+                    writers: registeredWriters,
+                    affiliates: affiliateStats?.totalAffiliates || 0,
+                    subscribers: stats?.newsletterSubscribers || 0,
+                  }}
+                  census={census}
+                  onOpenPanel={openPanel}
+                />
+              ));
+            }
+            // Analytics is a drawn widget now: trace mass, per-size views,
+            // and the card-stack explorer behind a click.
+            if (id === 'site-analytics') return cell(invertIfLight(
+              <AnalyticsWidget size={size} className="w-full h-full" />
+            ));
+            if (id === 'crm') return cell(invertIfLight(
+              <CrmWidgetLive size={size} className="w-full h-full" />
+            ));
 
+            if (id === 'notifications') return cell(invertIfLight(
+              <NotificationsWidgetLive
+                size={size}
+                className="w-full h-full"
+                pendingReviews={pendingSubmissions}
+                onOpenPanel={openPanel}
+              />
+            ));
             const category = dashboardCategories.find(c => c.id === id);
             if (!category) return null;
             return cell(
@@ -1892,6 +1970,14 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        {/* The clock's expanded card: the same widget with a full screen —
+            which is also the 1x1's only route to the stopwatch and timer. */}
+        {clockOpen && (
+          <DetailSheet onClose={() => setClockOpen(false)} label="Close clock">
+            <ClockWidget size="md" className="w-full min-h-[60vh]" />
+          </DetailSheet>
+        )}
 
         {/* Console ExpandableScreen — full-screen overlay for each section */}
         <ExpandableScreen

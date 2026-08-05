@@ -7,8 +7,12 @@ import { useCallback, useEffect, useRef } from 'react';
  * Movement cancels, so a scroll that begins on the element doesn't fire, and a
  * touch that has already fired swallows the click the browser sends afterwards.
  * Returns props to spread onto the element.
+ *
+ * `holdOnMouse` makes the mouse hold for the full delay too, and leaves plain
+ * clicks alone — for widgets whose clicks already mean something (the clock
+ * cycles its formats on click, so only a hold may open its expanded card).
  */
-export function useLongPress(onOpen: () => void, ms = 450) {
+export function useLongPress(onOpen: () => void, ms = 450, { holdOnMouse = false } = {}) {
   const timer = useRef<number | null>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
   const fired = useRef(false);
@@ -24,7 +28,7 @@ export function useLongPress(onOpen: () => void, ms = 450) {
   return {
     onPointerDown: (e: React.PointerEvent) => {
       fired.current = false;
-      if (e.pointerType === 'mouse') return;
+      if (e.pointerType === 'mouse' && !holdOnMouse) return;
       origin.current = { x: e.clientX, y: e.clientY };
       timer.current = window.setTimeout(() => {
         fired.current = true;
@@ -43,9 +47,18 @@ export function useLongPress(onOpen: () => void, ms = 450) {
     onPointerUp: clear,
     onPointerLeave: clear,
     onPointerCancel: clear,
+    // Capture phase, so a press that became a hold suppresses the release
+    // click before it reaches the widget's own handlers — otherwise holding
+    // the clock face would open the card AND cycle the format on release.
+    onClickCapture: (e: React.MouseEvent) => {
+      if (fired.current) { e.preventDefault(); e.stopPropagation(); }
+    },
     onClick: (e: React.MouseEvent) => {
-      // Mouse clicks open directly; a touch that already fired must not open twice.
-      if (fired.current) { e.preventDefault(); return; }
+      // A press that already fired must not also register as a click — whether
+      // that click would have opened the sheet (default) or done the widget's
+      // own click work (holdOnMouse), it was spent on the hold.
+      if (fired.current) { e.preventDefault(); e.stopPropagation(); return; }
+      if (holdOnMouse) return; // plain clicks belong to the widget
       if (e.detail === 0) return;
       onOpen();
     },
@@ -53,3 +66,4 @@ export function useLongPress(onOpen: () => void, ms = 450) {
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   };
 }
+

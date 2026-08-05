@@ -237,7 +237,7 @@ export default function ProfitGraph() {
             </div>
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative text-green-400">
             <svg
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
               className="w-full h-64"
@@ -253,49 +253,35 @@ export default function ProfitGraph() {
                     y1={y}
                     x2={chartWidth - padding}
                     y2={y}
-                    stroke="rgba(255,255,255,0.1)"
+                    stroke="rgba(255,255,255,0.08)"
                     strokeWidth="0.5"
+                    strokeDasharray="3 3"
                   />
                 );
               })}
 
-              {/* Area fill */}
+              {/* Area fill — flat, matching the hero revenue chart
+                  (DashboardCharts): green-400 ink at ~12%, no gradient. */}
               <path
                 d={generateAreaPath()}
-                fill="url(#profitGradient)"
-                opacity="0.3"
+                fill="currentColor"
+                fillOpacity="0.12"
               />
-              <defs>
-                <linearGradient id="profitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#14f195" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#14f195" stopOpacity="0" />
-                </linearGradient>
-              </defs>
 
-              {/* Line */}
+              {/* Line — same weight and ink as the hero chart. */}
               <path
                 d={generatePath()}
                 fill="none"
-                stroke="#14f195"
+                stroke="currentColor"
                 strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
               />
 
-              {/* Data points */}
+              {/* Data points, as the hero chart draws them (r=2, no ring). */}
               {profitData.map((point, index) => {
                 const x = padding + (index / (profitData.length - 1 || 1)) * (chartWidth - padding * 2);
                 const y = chartHeight - padding - (point.profit / maxProfit) * (chartHeight - padding * 2);
-                return (
-                  <circle
-                    key={index}
-                    cx={x}
-                    cy={y}
-                    r="2"
-                    fill="#14f195"
-                    className="hover:r-3 transition-all"
-                  />
-                );
+                return <circle key={index} cx={x} cy={y} r="2" fill="currentColor" />;
               })}
             </svg>
 
