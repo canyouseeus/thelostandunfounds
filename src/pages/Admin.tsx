@@ -265,11 +265,14 @@ export default function Admin() {
   const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
   // ?panel=<id> opens a panel directly — used by the header date to jump
   // straight to the master calendar from anywhere in the admin.
-  useEffect(() => {
-    const panel = new URLSearchParams(window.location.search).get('panel');
-    if (panel) setActivePanelSection(panel);
-  }, []);
   const [searchParams] = useSearchParams();
+  // Watches the query rather than reading it once: clicking the header date
+  // while already on /admin changes the search string but never remounts, so
+  // a mount-only read left the panel closed.
+  useEffect(() => {
+    const panel = searchParams.get('panel');
+    if (panel) setActivePanelSection(panel);
+  }, [searchParams]);
 
   // Long press on the dashboard calendar opens the master calendar panel —
   // the same one the header date links to.
@@ -285,22 +288,14 @@ export default function Admin() {
   // same size. Without this the row height comes from whatever content lands in
   // a row, and two tiles both marked 2x2 render differently.
   const gridRef = useRef<HTMLDivElement>(null);
-  const [rowUnit, setRowUnit] = useState(0);
-  useEffect(() => {
-    const el = gridRef.current;
-    if (!el) return;
-    const measure = () => {
-      const cols = window.matchMedia('(min-width: 768px)').matches ? 8 : 4;
-      const gap = window.matchMedia('(min-width: 640px)').matches ? 24 : 12;
-      const width = el.getBoundingClientRect().width;
-      if (width > 0) setRowUnit((width - (cols - 1) * gap) / cols);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener('resize', measure);
-    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, []);
+  /* The row unit is CSS now, not a measurement. It used to come from a
+     ResizeObserver in an effect with empty deps that bailed when the grid
+     was not mounted yet — and the dashboard renders a loading state first,
+     so it bailed every time, never measured again, and the rows fell back
+     to content height. That is why a 2x2 came out a rectangle and a 4x2
+     came out smashed: the column spans were right and the row heights were
+     never applied. Container query units give the same number with nothing
+     to race. */
   // Ticks once a minute — enough for a date face.
   const [today, setToday] = useState(new Date());
   useEffect(() => {
@@ -1753,25 +1748,37 @@ export default function Admin() {
           </div>
         </div>
 
+        <style>{`
+          #dashboard-widgets {
+            --lattice-gap: 12px;
+            --lattice-cols: 4;
+            --lattice-unit: calc((100cqw - (var(--lattice-cols) - 1) * var(--lattice-gap)) / var(--lattice-cols));
+            grid-auto-rows: var(--lattice-unit);
+          }
+          @media (min-width: 640px) { #dashboard-widgets { --lattice-gap: 24px; } }
+          @media (min-width: 768px) { #dashboard-widgets { --lattice-cols: 8; } }
+          #dashboard-widgets[data-editing="true"] {
+            background-image:
+              repeating-linear-gradient(to right, transparent 0,
+                transparent calc(var(--lattice-unit) + var(--lattice-gap) / 2 - 1px),
+                rgba(255,255,255,.08) calc(var(--lattice-unit) + var(--lattice-gap) / 2 - 1px),
+                rgba(255,255,255,.08) calc(var(--lattice-unit) + var(--lattice-gap) / 2),
+                transparent calc(var(--lattice-unit) + var(--lattice-gap) / 2),
+                transparent calc(var(--lattice-unit) + var(--lattice-gap))),
+              repeating-linear-gradient(to bottom, transparent 0,
+                transparent calc(var(--lattice-unit) + var(--lattice-gap) / 2 - 1px),
+                rgba(255,255,255,.08) calc(var(--lattice-unit) + var(--lattice-gap) / 2 - 1px),
+                rgba(255,255,255,.08) calc(var(--lattice-unit) + var(--lattice-gap) / 2),
+                transparent calc(var(--lattice-unit) + var(--lattice-gap) / 2),
+                transparent calc(var(--lattice-unit) + var(--lattice-gap)));
+          }
+        `}</style>
+        <div style={{ containerType: 'inline-size' }}>
         <div
           id="dashboard-widgets"
           ref={gridRef}
+          data-editing={layout.editing ? 'true' : 'false'}
           className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]"
-          style={rowUnit ? {
-            gridAutoRows: `${rowUnit}px`,
-            ...(layout.editing ? (() => {
-              // Guides through the gap centres, so the lattice is visible
-              // while arranging without outlining (and clipping) any tile.
-              const gap = window.matchMedia('(min-width: 640px)').matches ? 24 : 12;
-              const period = rowUnit + gap;
-              const line = 'rgba(255,255,255,0.08)';
-              return {
-                backgroundImage:
-                  `repeating-linear-gradient(to right, transparent 0, transparent ${period - gap / 2 - 1}px, ${line} ${period - gap / 2 - 1}px, ${line} ${period - gap / 2}px, transparent ${period - gap / 2}px, transparent ${period}px),` +
-                  `repeating-linear-gradient(to bottom, transparent 0, transparent ${period - gap / 2 - 1}px, ${line} ${period - gap / 2 - 1}px, ${line} ${period - gap / 2}px, transparent ${period - gap / 2}px, transparent ${period}px)`,
-              };
-            })() : {}),
-          } : undefined}
         >
           {layout.order.map(id => {
             const light = layout.isLight(id);
@@ -1950,6 +1957,7 @@ export default function Admin() {
               />
             );
           })}
+        </div>
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}

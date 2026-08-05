@@ -166,13 +166,18 @@ export function EditableTile({
   const [over, setOver] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Hover flips the tile to its opposite — the same inversion the white
-  // background option applies, so a black tile lights up white under the
-  // cursor and a white one goes black. Gated on real hover so a phone never
-  // gets stuck in the inverted state after a tap.
+  // Hover lifts the tile a shade rather than inverting it. Inverting turned
+  // every widget white and flipped its accents — the green went magenta, the
+  // amber went blue — which read as a different design, not a highlight. A
+  // low white wash over the top keeps the widget's own colours and still says
+  // "this one". Gated on real hover so a phone never sticks after a tap.
   if (!editing) return (
-    <div className={cn(className, 'transition-[filter] duration-150 [@media(hover:hover)]:hover:invert')}>
+    <div className={cn(className, 'relative group')}>
       {children}
+      <span
+        className="pointer-events-none absolute inset-0 bg-white/[0.07] opacity-0 transition-opacity duration-150 [@media(hover:hover)]:group-hover:opacity-100"
+        style={{ borderRadius: 0 }}
+      />
     </div>
   );
 
