@@ -217,6 +217,15 @@ After creating any deployment (Vercel or otherwise), you MUST before calling the
 
 **Never verify against production before the deploy carrying your change is `READY`.** Fetching a page or hitting an endpoint mid-build exercises the *previous* deployment, so a fix looks broken and an unfixed bug looks fixed. Both have happened. Confirm `READY` first, then verify.
 
+## GRAPH STYLE RULE
+
+Every chart on the platform draws in the hero revenue chart's dialect — see
+`CHART_ACCENTS` and the `Sparkline` primitive in `src/components/ui/viz.tsx`:
+monotone-smoothed 2px line, flat ~12% fill, r=2 data dots; bars are the accent at
+10% for the track with a solid accent fill. Categories differ by **accent color
+only** (revenue green-400, newsletter/analytics blue-400, affiliates purple-400,
+bookings amber-500), never by dialect. Never introduce a new chart style.
+
 ## PAGE TITLE STYLE RULE
 
 Main page titles (h1 headings — page titles, navigation/landing titles, major section titles) are **UPPERCASE**. Does NOT apply to error messages, loading states, success toasts, subheadings (h2+), body text, button labels, or form labels.

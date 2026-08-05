@@ -2,6 +2,22 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from './utils';
 
 /**
+ * GRAPH STYLE RULE — the hero chart (DashboardCharts) is the format for every
+ * graph on the platform: monotone-smoothed 2px line, flat ~12% fill, r=2 data
+ * dots (Sparkline draws exactly this); bars are the accent at 10% for the
+ * track with a solid accent fill. Categories are told apart by accent, never
+ * by dialect — the same hues the hero's metric tabs use:
+ */
+export const CHART_ACCENTS = {
+  revenue: 'text-green-400',    // #4ade80 — money
+  newsletter: 'text-blue-400',  // #60a5fa
+  affiliates: 'text-purple-400',// #c084fc
+  bookings: 'text-amber-500',   // #f59e0b
+  analytics: 'text-blue-400',   // traffic reads in the newsletter blue family
+} as const;
+
+
+/**
  * Monochrome instruments for the dashboard tiles.
  *
  * The clock is a dial, the calendar is a month grid, the calculator is a keypad

@@ -33,7 +33,7 @@ function ShareRow({ label, value, max, u }: { label: string; value: number; max:
       style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(3) }}
     >
       <span className="opacity-40 truncate" style={{ width: u(34) }}>{label}</span>
-      <span className="relative flex-1 min-w-0" style={{ height: u(1.3) }}>
+      <span className="relative flex-1 min-w-0 text-blue-400" style={{ height: u(1.3) }}>
         <span className="absolute inset-0 bg-current opacity-10" />
         <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${max > 0 ? (value / max) * 100 : 0}%` }} />
       </span>
@@ -87,7 +87,7 @@ function analyticsRoot(data: AnalyticsWidgetData, onClose: () => void): StackCar
     title: 'Site Analytics',
     render: nav => (
       <div className="space-y-4">
-        <div style={{ height: 96 }}>
+        <div className="text-blue-400" style={{ height: 96 }}>
           <Sparkline values={data.trend.length >= 2 ? data.trend : [0, 0]} className="h-full opacity-80" />
         </div>
         <div className="space-y-px">
@@ -188,7 +188,7 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
           {(cols === 1 && rows === 1) || (cols === 2 && rows === 2) ? (
             /* The diagonal face: the trace above, the views figure bottom-left. */
             <div className="flex-1 min-h-0 relative">
-              <div className="absolute top-0 left-0 right-0 opacity-60" style={{ height: '42%' }}>
+              <div className="text-blue-400 absolute top-0 left-0 right-0 opacity-60" style={{ height: '42%' }}>
                 <Sparkline values={data.trend.length >= 2 ? data.trend : [0, 0]} className="h-full" />
               </div>
               <div className="absolute left-0 bottom-0 flex flex-col text-left">
@@ -221,7 +221,7 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
                   </div>
                 </>
               )}
-              <div className="flex-1 min-w-0 self-center opacity-70" style={{ height: '42cqmin' }}>
+              <div className="text-blue-400 flex-1 min-w-0 self-center opacity-70" style={{ height: '42cqmin' }}>
                 <Sparkline values={data.trend.length >= 2 ? data.trend : [0, 0]} className="h-full" />
               </div>
             </div>
@@ -241,7 +241,7 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
                       <span className="opacity-40 truncate" style={{ maxWidth: '55cqmin' }}>{p.label.replace(/^\//, '') || 'home'}</span>
                       <span className="font-bold">{compact(p.count)}</span>
                     </div>
-                    <span className="relative block" style={{ height: '1.5cqmin' }}>
+                    <span className="relative block text-blue-400" style={{ height: '1.5cqmin' }}>
                       <span className="absolute inset-0 bg-current opacity-10" />
                       <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${(p.count / maxPage) * 100}%` }} />
                     </span>
@@ -264,14 +264,14 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
                   </span>
                 </div>
                 {cols >= 4 && rows === 2 && (
-                  <div className="flex-1 min-w-0 self-center opacity-70" style={{ height: `${30 * S}cqmin` }}>
+                  <div className="text-blue-400 flex-1 min-w-0 self-center opacity-70" style={{ height: `${30 * S}cqmin` }}>
                     <Sparkline values={data.trend.length >= 2 ? data.trend : [0, 0]} className="h-full" />
                   </div>
                 )}
               </div>
 
               {!(cols >= 4 && rows === 2) && (
-                <div className="w-full opacity-70" style={{ height: u(20) }}>
+                <div className="text-blue-400 w-full opacity-70" style={{ height: u(20) }}>
                   <Sparkline values={data.trend.length >= 2 ? data.trend : [0, 0]} className="h-full" />
                 </div>
               )}

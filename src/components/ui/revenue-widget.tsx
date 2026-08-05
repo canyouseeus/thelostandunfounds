@@ -49,7 +49,7 @@ function ShareRow({ label, value, max, u }: { label: string; value: number; max:
       style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(3) }}
     >
       <span className="text-current opacity-40 truncate" style={{ width: u(34) }}>{label}</span>
-      <span className="relative flex-1 min-w-0 bg-current opacity-100" style={{ height: u(1.3), background: 'none' }}>
+      <span className="relative flex-1 min-w-0 text-green-400" style={{ height: u(1.3) }}>
         <span className="absolute inset-0 bg-current opacity-10" />
         <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${max > 0 ? (value / max) * 100 : 0}%` }} />
       </span>
@@ -309,7 +309,7 @@ export function RevenueWidget({ size = '2x2', data: pinned, detail, className }:
                       <span className="opacity-40">{s.label.slice(0, 4)}</span>
                       <span className="font-bold">{dollars(s.value)}</span>
                     </div>
-                    <span className="relative block bg-current opacity-100" style={{ height: '1.5cqmin', background: 'none' }}>
+                    <span className="relative block text-green-400" style={{ height: '1.5cqmin' }}>
                       <span className="absolute inset-0 bg-current opacity-10" />
                       <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${(s.value / maxSource) * 100}%` }} />
                     </span>
