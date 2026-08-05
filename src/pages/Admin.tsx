@@ -59,6 +59,7 @@ import {
   BanknotesIcon,
   PrinterIcon,
   EllipsisHorizontalIcon,
+  CloudArrowUpIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
@@ -95,6 +96,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
+import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -1967,6 +1969,7 @@ export default function Admin() {
             <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
               {[
                 { id: 'gallery', icon: PhotoIcon, title: 'Gallery' },
+                { id: 'clientuploads', icon: CloudArrowUpIcon, title: 'Client Uploads' },
                 { id: 'blog', icon: BookOpenIcon, title: 'Blog' },
                 { id: 'newsletter', icon: EnvelopeIcon, title: 'Newsletter' },
                 { id: 'mail', icon: PaperAirplaneIcon, title: 'Webmail' },
@@ -2028,6 +2031,7 @@ export default function Admin() {
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
+                  clientuploads: { title: 'Client Uploads',         icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -2068,6 +2072,11 @@ export default function Admin() {
                 {activePanelSection === 'gallery' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
                     <AdminGalleryView onBack={() => setActivePanelSection(null)} />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'clientuploads' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Client Uploads</div>}>
+                    <AdminClientUploadsView />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'blog' && (
