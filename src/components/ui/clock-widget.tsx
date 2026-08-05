@@ -283,7 +283,13 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                         {!isDigital ? (
                             /* Analog Face */
                             <div
-                                className="absolute inset-0 flex items-center justify-center"
+                                // The mode label occupies a fixed band across
+                                // the top; the dial insets past it so the 12
+                                // o'clock mark doesn't run through the word.
+                                className={cn(
+                                    "absolute inset-0 flex items-center justify-center",
+                                    !hideLabel && (responsive ? "pt-6 md:pt-12" : "pt-12"),
+                                )}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleClockType();
@@ -296,8 +302,34 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                                   into an ellipse. This keeps every proportion
                                   fixed at every size. */}
                               <div className="relative h-full aspect-square max-w-full max-h-full">
-                                {/* Clock Face Border */}
-                                <div className="absolute inset-2 rounded-full" />
+                                {/* The dial: twelve hour marks, four of them
+                                    long. Without them a large clock is three
+                                    lines on an empty field — at 4x4 it read as
+                                    a blank tile beside a calendar's month grid.
+                                    Every dimension is a percentage of the face,
+                                    like the hands, so the dial is the same
+                                    drawing at 81px and at 744px. */}
+                                {Array.from({ length: 12 }, (_, i) => {
+                                    const major = i % 3 === 0;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className="absolute inset-0 pointer-events-none"
+                                            style={{ transform: `rotate(${i * 30}deg)` }}
+                                        >
+                                            <span
+                                                className="absolute left-1/2 bg-white"
+                                                style={{
+                                                    top: '3%',
+                                                    width: major ? 'max(1px, 0.9%)' : 'max(1px, 0.45%)',
+                                                    height: major ? '7%' : '4%',
+                                                    marginLeft: major ? 'max(-0.5px, -0.45%)' : 'max(-0.5px, -0.225%)',
+                                                    opacity: major ? 0.85 : 0.35,
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                })}
 
                                 {/* Hands - Flat Design, No Shadows */}
                                 <div className="relative w-full h-full">
