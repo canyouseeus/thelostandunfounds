@@ -91,13 +91,17 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   clock: '2x2',
   weather: '2x2',
   'revenue-performance': '4x2',
+  // The two 4x4s are adjacent on purpose: on the eight-column desktop they
+  // pair into one band. Split apart, whichever came last took four rows of
+  // the left half and left the right half empty — a hole no amount of total
+  // area fixes, because packing is placement, not arithmetic.
   calendar: '4x4',
+  calculator: '4x4',
   registry: '4x2',
   'site-analytics': '2x2',
   crm: '2x2',
   notifications: '4x2',
   'network-status': '4x2',
-  calculator: '4x4',
 };
 
 /** Order tiles appear in. Rearranged by dragging in edit mode. */
