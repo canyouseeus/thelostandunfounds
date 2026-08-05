@@ -28,16 +28,20 @@ const compact = (n: number) =>
 /** Label · share bar on the group's scale · count. */
 function ShareRow({ label, value, max, u }: { label: string; value: number; max: number; u: (n: number) => string }) {
   return (
-    <div
-      className="flex items-center uppercase tracking-widest tabular-nums"
-      style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(3) }}
-    >
-      <span className="opacity-40 truncate" style={{ width: u(34) }}>{label}</span>
-      <span className="relative flex-1 min-w-0 text-blue-400" style={{ height: u(1.3) }}>
+    /* Two lines: dynamic page names take the full width instead of a fixed
+       column that clips them; the bar runs beneath. */
+    <div className="flex flex-col" style={{ gap: u(1.5) }}>
+      <div
+        className="flex items-baseline justify-between uppercase tracking-widest tabular-nums"
+        style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(4) }}
+      >
+        <span className="opacity-40 truncate">{label}</span>
+        <span className="font-bold shrink-0">{compact(value)}</span>
+      </div>
+      <span className="relative block text-blue-400" style={{ height: u(1.3) }}>
         <span className="absolute inset-0 bg-current opacity-10" />
         <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${max > 0 ? (value / max) * 100 : 0}%` }} />
       </span>
-      <span className="text-right font-bold" style={{ width: u(12) }}>{compact(value)}</span>
     </div>
   );
 }

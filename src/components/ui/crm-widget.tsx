@@ -254,18 +254,21 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
                 </div>
               )}
               <div className={cn('flex flex-col', rows >= 4 && 'flex-1 justify-evenly')} style={{ gap: rows >= 4 ? undefined : u(2.5) }}>
-                {data.clients.slice(0, rows >= 4 ? 7 : 3).map(c => (
-                  <div
-                    key={c.id}
-                    className="flex items-center uppercase tracking-widest tabular-nums"
-                    style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(3) }}
-                  >
-                    <span className="opacity-40 truncate" style={{ width: u(34) }}>{c.name}</span>
-                    <span className="relative flex-1 min-w-0 text-amber-500" style={{ height: u(1.3) }}>
+                {data.clients.slice(0, rows >= 4 ? 6 : 3).map(c => (
+                  /* Two lines: the name gets the full width (no fixed column to
+                     clip it), the bar runs beneath on the book's scale. */
+                  <div key={c.id} className="flex flex-col" style={{ gap: u(1.5) }}>
+                    <div
+                      className="flex items-baseline justify-between uppercase tracking-widest tabular-nums"
+                      style={{ fontSize: u(5.4), lineHeight: 1.2, gap: u(4) }}
+                    >
+                      <span className="opacity-40 truncate">{c.name}</span>
+                      <span className="font-bold shrink-0">{cmoney(c.billed)}</span>
+                    </div>
+                    <span className="relative block text-amber-500" style={{ height: u(1.3) }}>
                       <span className="absolute inset-0 bg-current opacity-10" />
                       <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${(c.billed / maxBilled) * 100}%` }} />
                     </span>
-                    <span className="text-right font-bold" style={{ width: u(13) }}>{cmoney(c.billed)}</span>
                   </div>
                 ))}
               </div>
