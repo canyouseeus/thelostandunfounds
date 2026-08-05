@@ -215,7 +215,7 @@ export default function Admin() {
   const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [registeredWriters, setRegisteredWriters] = useState<number>(0);
-  const [censusCounts, setCensusCounts] = useState({ posts: 0, products: 0 });
+  const [censusCounts, setCensusCounts] = useState<{ posts: number; products: number; users: number | null }>({ posts: 0, products: 0, users: null });
   const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
@@ -840,7 +840,14 @@ export default function Admin() {
               supabase.from('blog_posts').select('*', { count: 'exact', head: true }).eq('status', 'published'),
               supabase.from('products').select('*', { count: 'exact', head: true }),
             ]);
-            setCensusCounts({ posts: postsRes.count || 0, products: productsRes.count || 0 });
+            // Real accounts, not the max-of-side-tables guess: auth.users via
+            // the registry endpoint.
+            let realUsers: number | null = null;
+            try {
+              const r = await fetch('/api/admin/registry?section=users');
+              if (r.ok) realUsers = (await r.json()).total ?? null;
+            } catch { /* tile falls back to the legacy figure */ }
+            setCensusCounts({ posts: postsRes.count || 0, products: productsRes.count || 0, users: realUsers });
           } catch (err) {
             console.warn('Error fetching census counts:', err);
           }
@@ -1833,13 +1840,13 @@ export default function Admin() {
             }
             if (id === 'registry') {
               const census = [
-                { label: 'Gallery Photos', value: stats?.galleryPhotoCount || 0, panel: 'gallery' },
-                { label: 'Users', value: stats?.totalUsers || 0, panel: 'users' },
-                { label: 'Lost Archives Posts', value: censusCounts.posts, panel: 'blog' },
-                { label: 'Products', value: censusCounts.products, panel: 'pricing' },
-                { label: 'Writers', value: registeredWriters, panel: 'blog' },
-                { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0, panel: 'affiliates' },
-                { label: 'Subscribers', value: stats?.newsletterSubscribers || 0, panel: 'newsletter' },
+                { label: 'Gallery Photos', value: stats?.galleryPhotoCount || 0, panel: 'gallery', section: 'photos' },
+                { label: 'Users', value: censusCounts.users ?? (stats?.totalUsers || 0), panel: 'users', section: 'users' },
+                { label: 'Lost Archives Posts', value: censusCounts.posts, panel: 'blog', section: 'posts' },
+                { label: 'Products', value: censusCounts.products, panel: 'pricing', section: 'products' },
+                { label: 'Writers', value: registeredWriters, panel: 'blog', section: 'writers' },
+                { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0, panel: 'affiliates', section: 'affiliates' },
+                { label: 'Subscribers', value: stats?.newsletterSubscribers || 0, panel: 'newsletter', section: 'subscribers' },
               ];
               return cell(invertIfLight(
                 <RegistryWidget
@@ -1847,31 +1854,15 @@ export default function Admin() {
                   className="w-full h-full"
                   data={{
                     photos: stats?.galleryPhotoCount || 0,
-                    users: stats?.totalUsers || 0,
+                    users: censusCounts.users ?? (stats?.totalUsers || 0),
                     posts: censusCounts.posts,
                     products: censusCounts.products,
                     writers: registeredWriters,
                     affiliates: affiliateStats?.totalAffiliates || 0,
                     subscribers: stats?.newsletterSubscribers || 0,
                   }}
-                  detail={
-                    <div className="space-y-1 text-left">
-                      {census.map(row => (
-                        <button
-                          key={row.label}
-                          onClick={() => openPanel(row.panel)}
-                          className="w-full flex items-baseline justify-between px-3 py-3 bg-white/[0.03] hover:bg-white/10 transition-colors"
-                          style={{ borderRadius: 0 }}
-                        >
-                          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{row.label}</span>
-                          <span className="text-sm font-bold text-white tabular-nums">{row.value.toLocaleString()}</span>
-                        </button>
-                      ))}
-                      <p className="text-[10px] uppercase tracking-widest text-white/25 pt-3">
-                        Tap a row to open its panel
-                      </p>
-                    </div>
-                  }
+                  census={census}
+                  onOpenPanel={openPanel}
                 />
               ));
             }

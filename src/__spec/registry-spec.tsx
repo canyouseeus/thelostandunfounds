@@ -40,7 +40,7 @@ function Lattice({ id, size, phone, neighbours }: {
       <div ref={ref} className={`grid ${phone ? 'grid-cols-4 gap-3' : 'grid-cols-8 gap-6'} [grid-auto-flow:dense]`}
            style={unit ? { gridAutoRows: `${unit}px` } : undefined}>
         <div className={`${SHAPE_CLASS[size]} relative`} data-subject={id}>
-          <RegistryWidget size={size} data={DATA} className="w-full h-full" />
+          <RegistryWidget size={size} data={DATA} census={[]} onOpenPanel={() => {}} className="w-full h-full" />
           <span className="absolute inset-0 pointer-events-none"
                 style={{ outline: '2px dashed rgba(255,255,255,.75)', outlineOffset: '-2px' }} />
         </div>
@@ -79,7 +79,7 @@ const DESK_FILL: Record<string, (keyof typeof SHAPE_CLASS)[]> = {
   '4x4': ['2x4', '2x4', '4x2', '4x2'],
 }
 
-const SIZES = ['1x1', '2x1', '4x1', '1x2', '2x2', '1x4', '4x2', '2x4', '4x4'] as const
+const SIZES = ['4x2', '2x4', '4x4'] as const
 
 createRoot(document.getElementById('root')!).render(
   <div className="bg-black p-4 flex flex-col gap-6">

@@ -60,6 +60,10 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   clock: ['1x1', '2x2', '4x4'],
   calendar: ['1x1', '2x2', '4x4'],
   calculator: ['1x1', '2x2', '4x4'],
+  // A census wants a ledger's proportions: the small squares and thin strips
+  // truncate it into a number with no story, so registry offers the wide,
+  // tall and large shapes only.
+  registry: ['4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {
@@ -73,7 +77,7 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   calendar: '4x4',
   'revenue-performance': '4x2',
   'network-status': '4x2',
-  registry: '2x2',
+  registry: '4x2',
   'site-analytics': '2x2',
   crm: '2x2',
   calculator: '4x4',
