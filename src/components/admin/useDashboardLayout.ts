@@ -71,6 +71,7 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   crm: ['2x2', '4x2', '2x4', '4x4'],
   // A feed: the face plus the list shapes.
   notifications: ['2x2', '4x2', '2x4', '4x4'],
+  'network-status': ['2x2', '4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {
@@ -90,16 +91,17 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   clock: '2x2',
   weather: '2x2',
   'revenue-performance': '4x2',
-  // Desktop is two four-wide columns, so every band has to pair: the two
-  // 4x4s can't both sit at the end or one strands the half beside it. This
-  // order gives calendar a partner in notifications, and closes with the
-  // keypad beside the census and the two small squares.
+  // The two 4x4s are adjacent on purpose: on the eight-column desktop they
+  // pair into one band. Split apart, whichever came last took four rows of
+  // the left half and left the right half empty — a hole no amount of total
+  // area fixes, because packing is placement, not arithmetic.
   calendar: '4x4',
-  notifications: '4x4',
   calculator: '4x4',
   registry: '4x2',
   'site-analytics': '2x2',
   crm: '2x2',
+  notifications: '4x2',
+  'network-status': '4x2',
 };
 
 /** Order tiles appear in. Rearranged by dragging in edit mode. */

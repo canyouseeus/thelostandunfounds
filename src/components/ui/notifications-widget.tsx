@@ -22,17 +22,9 @@ export interface NotificationItem {
   } | null;
 }
 
-export interface ServiceHealth { label: string; ok: boolean }
-
 export interface NotificationsWidgetData {
   items: NotificationItem[];
   pendingReviews: number;
-  /**
-   * Platform services. A service going down is something that wants your
-   * attention, not a permanent tile — so health lives here, and only speaks
-   * up when something is actually wrong.
-   */
-  services?: ServiceHealth[];
 }
 
 /** Severity is state, drawn as the square marks the status tiles use. */
@@ -90,39 +82,10 @@ function notificationsRoot(data: NotificationsWidgetData, onOpenPanel?: (panel: 
     ),
   });
 
-  const servicesCard = (): StackCard => ({
-    title: 'Services',
-    render: () => (
-      <div className="space-y-px">
-        {(data.services ?? []).map(sv => (
-          <div key={sv.label} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-white/[0.03]">
-            <span className="flex items-center gap-2 text-xs text-white">
-              <span className={cn('w-2 h-2 shrink-0', sv.ok ? 'bg-green-400' : 'bg-red-500')} />
-              {sv.label}
-            </span>
-            <span className={cn('text-[10px] font-black uppercase tracking-widest', sv.ok ? 'text-green-400' : 'text-red-500')}>
-              {sv.ok ? 'Online' : 'Offline'}
-            </span>
-          </div>
-        ))}
-      </div>
-    ),
-  });
-
-  const down = (data.services ?? []).filter(sv => !sv.ok);
-
   return {
     title: 'Notifications',
     render: nav => (
       <div className="space-y-4">
-        {data.services && data.services.length > 0 && (
-          <StackRow
-            label={down.length ? `${down.length} service${down.length === 1 ? '' : 's'} down` : 'All services online'}
-            sub={down.length ? down.map(sv => sv.label).join(', ') : data.services.map(sv => sv.label).join(', ')}
-            value={`${data.services.filter(sv => sv.ok).length}/${data.services.length}`}
-            onPress={() => nav.push(servicesCard())}
-          />
-        )}
         {data.pendingReviews > 0 && onOpenPanel && (
           <button
             onClick={() => onOpenPanel('submissions')}
@@ -170,9 +133,7 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
   const S = cols >= 4 && rows >= 4 ? 0.55 : 1;
   const u = (n: number) => `${n * S}cqmin`;
 
-  const down = (data.services ?? []).filter(sv => !sv.ok);
-  // A service that is down is unread attention until it comes back.
-  const unread = data.items.filter(n => !n.read).length + data.pendingReviews + down.length;
+  const unread = data.items.filter(n => !n.read).length + data.pendingReviews;
   const latest = data.items[0];
 
   return (
@@ -230,19 +191,6 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
                 )}
               </div>
               <div className={cn('flex flex-col', rows >= 4 && 'flex-1 justify-evenly')} style={{ gap: rows >= 4 ? undefined : u(3) }}>
-                {data.services && data.services.length > 0 && (
-                  <div className="flex items-center" style={{ gap: u(3) }}>
-                    <span className={cn('shrink-0', down.length ? 'bg-red-500' : 'bg-green-400')}
-                          style={{ width: u(3.5), height: u(3.5) }} />
-                    <span className={cn('min-w-0 flex-1 truncate uppercase tracking-wider', down.length ? 'text-red-500' : 'opacity-40')}
-                          style={{ fontSize: u(5.4), lineHeight: 1.2 }}>
-                      {down.length ? `${down.map(sv => sv.label).join(', ')} down` : 'All services online'}
-                    </span>
-                    <span className="shrink-0 tabular-nums opacity-30" style={{ fontSize: u(4.6) }}>
-                      {data.services.filter(sv => sv.ok).length}/{data.services.length}
-                    </span>
-                  </div>
-                )}
                 {data.pendingReviews > 0 && (
                   <div className="flex items-center" style={{ gap: u(3) }}>
                     <span className="shrink-0 bg-amber-500" style={{ width: u(3.5), height: u(3.5) }} />

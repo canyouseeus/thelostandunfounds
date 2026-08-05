@@ -1478,6 +1478,44 @@ export default function Admin() {
       )
     },
     {
+      id: 'network-status',
+      title: 'Network Status',
+      icon: <CpuChipIcon className="w-4 h-4" />,
+      primary: `${[healthMetrics.db, healthMetrics.api, healthMetrics.auth, healthMetrics.storage].filter(Boolean).length}/4`,
+      caption: 'Services online — 42ms',
+      aside: (
+        <StatusMarks
+          items={[
+            { label: 'Database', ok: healthMetrics.db },
+            { label: 'API Engine', ok: healthMetrics.api },
+            { label: 'Auth', ok: healthMetrics.auth },
+            { label: 'Storage', ok: healthMetrics.storage },
+          ]}
+        />
+      ),
+      footer: <span className="text-[10px] text-white/40">System health</span>,
+      content: (
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Database</span>
+            <span className={healthMetrics.db ? "text-green-400" : "text-red-500"}>{healthMetrics.db ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">API Engine</span>
+            <span className={healthMetrics.api ? "text-green-400" : "text-red-500"}>{healthMetrics.api ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Auth Service</span>
+            <span className={healthMetrics.auth ? "text-green-400" : "text-red-500"}>{healthMetrics.auth ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Storage</span>
+            <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'registry',
       title: 'Registry',
       icon: <ShieldCheckIcon className="w-4 h-4" />,
@@ -1827,12 +1865,6 @@ export default function Admin() {
                 size={size}
                 className="w-full h-full"
                 pendingReviews={pendingSubmissions}
-                services={[
-                  { label: 'Database', ok: healthMetrics.db },
-                  { label: 'API Engine', ok: healthMetrics.api },
-                  { label: 'Auth', ok: healthMetrics.auth },
-                  { label: 'Storage', ok: healthMetrics.storage },
-                ]}
                 onOpenPanel={openPanel}
               />
             ));
@@ -1899,12 +1931,6 @@ export default function Admin() {
                 size={size}
                 className="w-full h-full"
                 pendingReviews={pendingSubmissions}
-                services={[
-                  { label: 'Database', ok: healthMetrics.db },
-                  { label: 'API Engine', ok: healthMetrics.api },
-                  { label: 'Auth', ok: healthMetrics.auth },
-                  { label: 'Storage', ok: healthMetrics.storage },
-                ]}
                 onOpenPanel={openPanel}
               />
             ));

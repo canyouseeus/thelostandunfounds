@@ -17,7 +17,7 @@ export interface StoredLayout {
 }
 
 /** Raise this whenever DEFAULT_LAYOUT changes in a way worth adopting. */
-export const LAYOUT_GENERATION = 3;
+export const LAYOUT_GENERATION = 2;
 
 /**
  * Where a dashboard layout lives.

@@ -6,11 +6,9 @@ import { NotificationsWidget, NotificationItem } from '../ui/notifications-widge
  * (/api/admin/notifications — admin_notifications plus each deployment
  * notification's commit and error context) and the review queue count.
  */
-export function NotificationsWidgetLive({ size, pendingReviews, services, onOpenPanel, className }: {
+export function NotificationsWidgetLive({ size, pendingReviews, onOpenPanel, className }: {
   size?: string;
   pendingReviews: number;
-  /** Platform health, folded in from the retired network-status tile. */
-  services?: { label: string; ok: boolean }[];
   onOpenPanel?: (panel: string) => void;
   className?: string;
 }) {
@@ -36,7 +34,7 @@ export function NotificationsWidgetLive({ size, pendingReviews, services, onOpen
     <NotificationsWidget
       size={size}
       className={className}
-      data={{ items, pendingReviews, services }}
+      data={{ items, pendingReviews }}
       onOpenPanel={onOpenPanel}
     />
   );

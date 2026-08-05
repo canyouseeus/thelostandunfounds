@@ -52,10 +52,6 @@ const CRM = {
 }
 const NOTIFS = {
   pendingReviews: 2,
-  services: [
-    { label: 'Database', ok: true }, { label: 'API Engine', ok: true },
-    { label: 'Auth', ok: true }, { label: 'Storage', ok: true },
-  ],
   items: [
     { id:'1', type:'deployment', title:'Deployment Succeeded', message:'Layout: clamp saved shapes', severity:'info', read:false, created_at:'2026-08-05T14:22:00Z', deployment:null },
     { id:'2', type:'system', title:'Gallery Sync Complete', message:'214 photos synced', severity:'success', read:false, created_at:'2026-08-05T09:15:00Z', deployment:null },
