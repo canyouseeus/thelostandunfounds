@@ -69,6 +69,8 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   'site-analytics': ['2x2', '4x2', '2x4'],
   // The CRM face is a dial and a count; the roster needs ledger room.
   crm: ['2x2', '4x2', '2x4', '4x4'],
+  // A feed: the face plus the list shapes.
+  notifications: ['2x2', '4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {

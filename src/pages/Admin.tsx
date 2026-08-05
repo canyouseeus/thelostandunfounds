@@ -105,6 +105,7 @@ import { RevenueWidget } from '../components/ui/revenue-widget';
 import { RegistryWidget } from '../components/ui/registry-widget';
 import { AnalyticsWidget } from '../components/ui/analytics-widget';
 import { CrmWidgetLive } from '../components/admin/CrmWidgetLive';
+import { NotificationsWidgetLive } from '../components/admin/NotificationsWidgetLive';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { DetailSheet } from '../components/ui/detail-sheet';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -1816,13 +1817,33 @@ export default function Admin() {
               </div>
             ));
 
+            // The keypad's keys are a fixed height; laid out at a 440px design
+            // size and scaled to the cell, every key keeps its proportions at
+            // every size. 1x1 (and a phone's 2x2) stays the operator-quad face
+            // that opens the keypad full screen.
             if (id === 'calculator') return cell(invertIfLight(
-              <CalculatorCard wide compact={size === '1x1'} className="w-full h-full" />
+              size === '1x1' || (!window.matchMedia('(min-width: 768px)').matches && size === '2x2')
+                ? <CalculatorCard wide compact faceSize={size === '1x1' ? 'sm' : 'lg'} className="w-full h-full" />
+                : (
+                  <FitBox base={440} className="h-full">
+                    <CalculatorCard wide className="w-full h-full" />
+                  </FitBox>
+                )
+            ));
+            // Revenue is a drawn widget like the clock and weather: the trace
+            // is the mass, per-size views, long press for the full breakdown.
+            if (id === 'notifications') return cell(invertIfLight(
+              <NotificationsWidgetLive
+                size={size}
+                className="w-full h-full"
+                pendingReviews={pendingSubmissions}
+                onOpenPanel={openPanel}
+              />
             ));
             // Revenue is a drawn widget like the clock and weather: the trace
             // is the mass, per-size views, long press for the full breakdown.
             if (id === 'revenue-performance') {
-              const category = dashboardCategories.find(c => c.id === id);
+            const category = dashboardCategories.find(c => c.id === id);
               return cell(invertIfLight(
                 <RevenueWidget
                   size={size}
@@ -1877,6 +1898,14 @@ export default function Admin() {
               <CrmWidgetLive size={size} className="w-full h-full" />
             ));
 
+            if (id === 'notifications') return cell(invertIfLight(
+              <NotificationsWidgetLive
+                size={size}
+                className="w-full h-full"
+                pendingReviews={pendingSubmissions}
+                onOpenPanel={openPanel}
+              />
+            ));
             const category = dashboardCategories.find(c => c.id === id);
             if (!category) return null;
             return cell(
