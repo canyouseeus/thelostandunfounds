@@ -367,9 +367,12 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        {/* Ambient conditions, full-bleed behind the padding. Skipped at 1x1:
-            at 80px there is no room for weather to happen behind two numbers. */}
-        {data && !(cols === 1 && rows === 1) && (
+        {/* Ambient conditions, full-bleed behind the padding — but only where
+            the tile is big enough for weather to read as weather. Below a
+            four-unit edge the cloud and fog bands lose their softness and come
+            out as grey bars behind the readout, so the effect is skipped
+            rather than shrunk. */}
+        {data && cols >= 4 && rows >= 2 && (
           <WeatherFx kind={conditionKind(data.current.code)} isDay={data.current.isDay} />
         )}
 
