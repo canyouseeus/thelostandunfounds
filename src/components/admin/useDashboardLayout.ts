@@ -67,6 +67,8 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   // Analytics reads as a chart with a split — the squares under 2x2 and the
   // strips have no room for either.
   'site-analytics': ['2x2', '4x2', '2x4'],
+  // The CRM face is a dial and a count; the roster needs ledger room.
+  crm: ['2x2', '4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {

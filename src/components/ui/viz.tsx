@@ -14,6 +14,7 @@ export const CHART_ACCENTS = {
   affiliates: 'text-purple-400',// #c084fc
   bookings: 'text-amber-500',   // #f59e0b
   analytics: 'text-blue-400',   // traffic reads in the newsletter blue family
+  crm: 'text-amber-500',        // client money is booking money
 } as const;
 
 

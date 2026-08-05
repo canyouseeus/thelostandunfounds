@@ -104,6 +104,7 @@ import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { RevenueWidget } from '../components/ui/revenue-widget';
 import { RegistryWidget } from '../components/ui/registry-widget';
 import { AnalyticsWidget } from '../components/ui/analytics-widget';
+import { CrmWidgetLive } from '../components/admin/CrmWidgetLive';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { DetailSheet } from '../components/ui/detail-sheet';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -1872,7 +1873,9 @@ export default function Admin() {
             if (id === 'site-analytics') return cell(invertIfLight(
               <AnalyticsWidget size={size} className="w-full h-full" />
             ));
-            if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
+            if (id === 'crm') return cell(invertIfLight(
+              <CrmWidgetLive size={size} className="w-full h-full" />
+            ));
 
             const category = dashboardCategories.find(c => c.id === id);
             if (!category) return null;
