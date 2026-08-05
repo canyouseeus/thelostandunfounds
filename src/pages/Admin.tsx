@@ -1717,6 +1717,15 @@ export default function Admin() {
           </span>
           <div className="flex items-center gap-2">
             {layout.editing && (
+              <span className="px-2 py-2 text-[10px] font-black uppercase tracking-widest tabular-nums text-white/40">
+                {layout.units % 4 === 0 && layout.units % 8 === 0
+                  ? 'Fills — phone & desktop'
+                  : layout.units % 4 !== 0
+                    ? `${4 - (layout.units % 4)}u short on phone`
+                    : `${8 - (layout.units % 8)}u short on desktop`}
+              </span>
+            )}
+            {layout.editing && (
               <button
                 onClick={layout.reset}
                 className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
@@ -1743,7 +1752,21 @@ export default function Admin() {
           id="dashboard-widgets"
           ref={gridRef}
           className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]"
-          style={rowUnit ? { gridAutoRows: `${rowUnit}px` } : undefined}
+          style={rowUnit ? {
+            gridAutoRows: `${rowUnit}px`,
+            ...(layout.editing ? (() => {
+              // Guides through the gap centres, so the lattice is visible
+              // while arranging without outlining (and clipping) any tile.
+              const gap = window.matchMedia('(min-width: 640px)').matches ? 24 : 12;
+              const period = rowUnit + gap;
+              const line = 'rgba(255,255,255,0.08)';
+              return {
+                backgroundImage:
+                  `repeating-linear-gradient(to right, transparent 0, transparent ${period - gap / 2 - 1}px, ${line} ${period - gap / 2 - 1}px, ${line} ${period - gap / 2}px, transparent ${period - gap / 2}px, transparent ${period}px),` +
+                  `repeating-linear-gradient(to bottom, transparent 0, transparent ${period - gap / 2 - 1}px, ${line} ${period - gap / 2 - 1}px, ${line} ${period - gap / 2}px, transparent ${period - gap / 2}px, transparent ${period}px)`,
+              };
+            })() : {}),
+          } : undefined}
         >
           {layout.order.map(id => {
             const light = layout.isLight(id);
