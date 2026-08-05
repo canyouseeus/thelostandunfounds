@@ -16,7 +16,6 @@ const SECTIONS = [
   { to: '/demo', label: 'Overview', end: true },
   { to: '/demo/dashboard', label: 'Dashboard' },
   { to: '/demo/clients', label: 'Clients' },
-  { to: '/demo/seo', label: 'SEO' },
   { to: '/demo/signup', label: 'Signup' },
 ];
 

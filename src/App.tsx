@@ -96,7 +96,6 @@ import DemoShell from './components/demo/DemoShell'
 import DemoHome from './pages/demo/DemoHome'
 import DemoDashboard from './pages/demo/DemoDashboard'
 import DemoClients from './pages/demo/DemoClients'
-import DemoSeo from './pages/demo/DemoSeo'
 import DemoSignup from './pages/demo/DemoSignup'
 
 
@@ -393,7 +392,6 @@ function App() {
                 <Route index element={<DemoHome />} />
                 <Route path="dashboard" element={<DemoDashboard />} />
                 <Route path="clients" element={<DemoClients />} />
-                <Route path="seo" element={<DemoSeo />} />
                 <Route path="signup" element={<DemoSignup />} />
               </Route>
 

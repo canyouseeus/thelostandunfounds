@@ -269,27 +269,6 @@ export const DEMO_REQUESTS: DemoRequest[] = [
   { id: 'dr_4', title: 'Proposal generator wired to client assets', from: 'you', status: 'shipped', contextRef: 'client:dc_solace' },
 ];
 
-/**
- * Ahrefs-shaped SEO fixtures. Shaped to match what the Ahrefs API actually
- * returns so the panel can be pointed at the live API later without the
- * component changing — the fixture is the contract.
- */
-export type DemoSeoRow = {
-  metric: string;
-  value: string;
-  meaning: string;
-  series: number[];
-};
-
-export const DEMO_SEO: DemoSeoRow[] = [
-  { metric: 'Domain Rating', value: '18', meaning: 'Link authority versus competitors. Moves slowly — months, not weeks.', series: series(71, 24, 11, 0.3, 1.4) },
-  { metric: 'Organic Traffic', value: '2,140 /mo', meaning: 'Visitors arriving from search, before any ad spend.', series: series(72, 24, 900, 52, 180) },
-  { metric: 'Organic Keywords', value: '486', meaning: 'Distinct search terms the site ranks for at all.', series: series(73, 24, 210, 12, 40) },
-  { metric: 'Referring Domains', value: '112', meaning: 'The leading indicator. Links earned now show up in rankings in ~3 months.', series: series(74, 24, 58, 2.4, 6) },
-  { metric: 'Traffic Value', value: '$3,180 /mo', meaning: 'What that same traffic would cost bought as ads.', series: series(75, 24, 1400, 74, 300) },
-  { metric: 'Site Audit Issues', value: '23', meaning: 'Technical problems suppressing rankings right now — the fastest wins.', series: series(76, 24, 61, -1.6, 7) },
-];
-
 /** Where a demo signup lands: nowhere. Listed so the walkthrough can say so. */
 export const DEMO_SIGNUP_FIELDS = [
   { name: 'business', label: 'Business Name', type: 'text', placeholder: 'Northgate Restoration', required: true },

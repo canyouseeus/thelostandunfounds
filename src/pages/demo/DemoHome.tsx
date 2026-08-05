@@ -11,7 +11,6 @@ import { Link } from 'react-router-dom';
 const SURFACES = [
   { to: '/demo/dashboard', title: 'Dashboard', body: 'The four readables — flow, capacity, geography, money. Every card explains where its number comes from.' },
   { to: '/demo/clients', title: 'Clients', body: 'One profile shape for everybody: identity, stage, billing trace, open requests.' },
-  { to: '/demo/seo', title: 'SEO', body: 'Ahrefs-shaped metrics with what each one actually tells you.' },
   { to: '/demo/signup', title: 'Signup', body: 'Walk the whole form. Hit save. See the payload that would have been written, then watch it reset.' },
   { to: '/shop?demo=1', title: 'Shop', body: 'The real shop. Add to cart, check out, and the payment stops at authorization.' },
   { to: '/?demo=1', title: 'Gallery', body: 'The real gallery, the real photos. Demo mode follows the ?demo=1 anywhere on the site.' },
