@@ -78,7 +78,8 @@ export function NewInvoiceForm({
     if (creatingNewClient && !newClientName.trim()) return setErr('New client needs a name');
 
     const validItems = items.filter(li => li.description.trim() && lineTotal(li) > 0);
-    if (validItems.length === 0) return setErr('Add at least one line item with an amount');
+    if (validItems.length === 0)
+      return setErr('Each line item needs a description, a quantity and a price');
 
     const payout = parseFloat(contractorPayout) || 0;
     if (payout > total) return setErr('Contractor payout cannot exceed the invoice total');
@@ -214,41 +215,62 @@ export function NewInvoiceForm({
 
         <div>
           <span className={label}>Line items</span>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {items.map((li, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <input
-                  value={li.description}
-                  onChange={(e) => setItem(i, { description: e.target.value })}
-                  className={`${field} flex-1`}
-                  placeholder="Description"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  value={li.quantity}
-                  onChange={(e) => setItem(i, { quantity: e.target.value })}
-                  className={`${field} w-16 text-center`}
-                  title="Quantity"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={li.unit_price}
-                  onChange={(e) => setItem(i, { unit_price: e.target.value })}
-                  className={`${field} w-28`}
-                  placeholder="0.00"
-                  title="Unit price"
-                />
-                <button
-                  onClick={() => setItems(prev => prev.filter((_, idx) => idx !== i))}
-                  disabled={items.length === 1}
-                  className="p-2.5 text-white/30 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                  title="Remove line"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+              <div key={i} className="bg-white/[0.02] p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9px] text-white/30 uppercase tracking-widest">
+                    Item {i + 1}
+                  </span>
+                  <button
+                    onClick={() => setItems(prev => prev.filter((_, idx) => idx !== i))}
+                    disabled={items.length === 1}
+                    className="p-1 text-white/30 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                    title="Remove line"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <label className="block">
+                  <span className={label}>Description</span>
+                  <input
+                    value={li.description}
+                    onChange={(e) => setItem(i, { description: e.target.value })}
+                    className={field}
+                    placeholder="e.g. Wall painting (back wall)"
+                  />
+                </label>
+
+                <div className="grid grid-cols-[5rem_1fr_auto] gap-2 items-end">
+                  <label className="block min-w-0">
+                    <span className={label}>Qty</span>
+                    <input
+                      type="number"
+                      min="0"
+                      inputMode="decimal"
+                      value={li.quantity}
+                      onChange={(e) => setItem(i, { quantity: e.target.value })}
+                      className={`${field} text-center`}
+                    />
+                  </label>
+                  <label className="block min-w-0">
+                    <span className={label}>Price</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={li.unit_price}
+                      onChange={(e) => setItem(i, { unit_price: e.target.value })}
+                      className={field}
+                      placeholder="0.00"
+                    />
+                  </label>
+                  <div className="pb-2.5 text-right">
+                    <span className="text-sm font-mono text-white/70">{money(lineTotal(li))}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
