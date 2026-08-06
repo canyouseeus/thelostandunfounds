@@ -203,10 +203,45 @@ const FIXED_PHOTO_PRICES: Record<string, number> = {
   'Full-Day Content': 1400,
 }
 
-// Client discount codes. Percentages only, applied to the resolved rate.
-const PROMO_CODES: Record<string, number> = {
-  AIRBNB10: 10,
-  RUBYHOPE10: 10,
+/**
+ * Resolve a discount code against public.promo_codes.
+ *
+ * A code arriving on a booking is a claim, never a percentage — the terms live
+ * in the database: who may use it, whether it is single-use, whether it has
+ * expired, whether it is still active. A hardcoded map had none of those, so a
+ * one-time offer could be redeemed for ever by anyone who kept the link.
+ *
+ * Returns null when the code does not apply, which simply means full price.
+ */
+async function resolvePromo(
+  supabase: ReturnType<typeof getSupabase>,
+  rawCode: string | null,
+  clientEmail: string,
+): Promise<{ code: string; pct: number } | null> {
+  if (!rawCode) return null
+  const code = rawCode.toUpperCase()
+
+  const { data: promo } = await supabase
+    .from('promo_codes')
+    .select('code, discount_pct, client_id, single_use, used_at, expires_at, active')
+    .eq('code', code)
+    .maybeSingle()
+
+  if (!promo || !promo.active) return null
+  if (promo.single_use && promo.used_at) return null
+  if (promo.expires_at && new Date(promo.expires_at) < new Date()) return null
+
+  // A code issued to one client is not transferable.
+  if (promo.client_id) {
+    const { data: owner } = await supabase
+      .from('clients')
+      .select('email')
+      .eq('id', promo.client_id)
+      .maybeSingle()
+    if (!owner?.email || owner.email.toLowerCase() !== clientEmail.toLowerCase()) return null
+  }
+
+  return { code: promo.code, pct: Number(promo.discount_pct) }
 }
 
 function resolvePhotoPrice(
@@ -227,9 +262,7 @@ function resolvePhotoPrice(
 function extractPromoCode(notes: string | null | undefined): string | null {
   if (!notes) return null
   const m = /Promo code:\s*([A-Za-z0-9-]{3,24})/i.exec(notes)
-  if (!m) return null
-  const code = m[1].toUpperCase()
-  return PROMO_CODES[code] != null ? code : null
+  return m ? m[1].toUpperCase() : null
 }
 
 async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
@@ -349,8 +382,10 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     const pricing = resolvePhotoPrice(event_type.trim(), bedrooms)
     if (pricing) {
         try {
-            const promo = extractPromoCode(notes)
-            const discountPct = promo ? PROMO_CODES[promo] : 0
+            const claimed = extractPromoCode(notes)
+            const resolved = await resolvePromo(supabase, claimed, email.toLowerCase().trim())
+            const promo = resolved?.code || null
+            const discountPct = resolved?.pct || 0
             const total = Math.round((pricing.price * (1 - discountPct / 100)) * 100) / 100
             const lineItems = [
                 { description: pricing.label, quantity: 1, unit_price: pricing.price, amount: pricing.price },
@@ -372,6 +407,18 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
                 origin: siteOrigin(req),
             })
             quote = { created: true, invoiceNumber: result.invoiceNumber, total: result.total }
+
+            // Burn a single-use code only once the quote actually exists, so a
+            // failed quote does not consume the client's discount.
+            if (promo && resolved) {
+                const { error: burnErr } = await supabase
+                    .from('promo_codes')
+                    .update({ used_at: new Date().toISOString(), used_by_booking_id: data.id })
+                    .eq('code', promo)
+                    .eq('single_use', true)
+                    .is('used_at', null)
+                if (burnErr) console.warn('[BookingRequest] could not mark promo used:', burnErr.message)
+            }
         } catch (quoteErr: any) {
             const msg = quoteErr?.message || String(quoteErr)
             console.warn('[BookingRequest] auto-quote failed:', msg)
