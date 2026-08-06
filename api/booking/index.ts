@@ -90,7 +90,7 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'date (YYYY-MM-DD) required' })
     }
     const supabase = getSupabase(true)
-    const [bookingsRes, eventsRes] = await Promise.all([
+    const [bookingsRes, eventsRes, availRes] = await Promise.all([
         supabase
             .from('bookings')
             .select('start_time, end_time, status')
@@ -104,11 +104,24 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
             .select('id, title, status, location')
             .eq('event_date', date)
             .neq('status', 'cancelled'),
+        // Per-date slot window. Photography is subcontracted, so a date is
+        // often only partially coverable. NULL allowed_slots means no
+        // restriction and every slot stays open.
+        supabase
+            .from('booking_availability')
+            .select('allowed_slots')
+            .eq('date', date)
+            .maybeSingle(),
     ])
     if (bookingsRes.error) {
         console.error('[Slots] Query error:', bookingsRes.error)
         return res.status(500).json({ error: 'Failed to fetch slots' })
     }
+    const rawAllowed = (availRes as any)?.data?.allowed_slots as string | null | undefined
+    const allowedSlots = rawAllowed && rawAllowed.trim()
+        ? rawAllowed.split(',').map(s => s.trim()).filter(Boolean)
+        : null
+
     return res.status(200).json({
         slots: (bookingsRes.data || [])
             .filter(b => b.start_time || b.end_time)
@@ -118,6 +131,7 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
             title: e.title,
             location: e.location,
         })),
+        allowedSlots,
     })
 }
 
@@ -165,17 +179,39 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     // the admin will handle scheduling conflicts manually through the
     // dashboard. Dates only become unselectable when explicitly blocked in
     // booking_availability.
-    const { data: adminBlocked } = await supabase
+    const { data: availRow } = await supabase
         .from('booking_availability')
-        .select('date')
+        .select('is_blocked, allowed_slots')
         .eq('date', event_date)
-        .eq('is_blocked', true)
-        .limit(1)
+        .maybeSingle()
 
-    if (adminBlocked && adminBlocked.length > 0) {
+    if (availRow?.is_blocked) {
         return res.status(409).json({
             error: 'This date is not available. Please pick another date.'
         })
+    }
+
+    // The form hides slots outside the day's window, but the endpoint is
+    // reachable directly — enforce the window here too rather than trusting
+    // the client, or a request lands for a time nobody can cover.
+    const allowedSlots = availRow?.allowed_slots?.trim()
+        ? availRow.allowed_slots.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : null
+    if (allowedSlots && start_time) {
+        const SLOT_STARTS: Record<string, string> = {
+            'Early Morning': '06:00',
+            'Morning': '09:00',
+            'Afternoon': '12:00',
+            'Evening': '17:00',
+            'Night': '20:00',
+        }
+        const requested = String(start_time).slice(0, 5)
+        const permitted = allowedSlots.map((l: string) => SLOT_STARTS[l]).filter(Boolean)
+        if (permitted.length > 0 && !permitted.includes(requested)) {
+            return res.status(409).json({
+                error: 'That time is not available on this date. Please pick another slot.'
+            })
+        }
     }
 
     const { data, error } = await supabase
