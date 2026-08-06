@@ -29,7 +29,10 @@ const EMAIL_STYLES = {
     heading3: `color: ${BRAND.colors.text} !important; font-size: 20px; font-weight: bold; margin: 25px 0 15px 0;`,
     paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
     link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
-    button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background}; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${BRAND.colors.text};`,
+    // Solid white fill, black type, no border. A border here renders as an
+    // empty outlined box in clients that drop the background colour — see the
+    // brand-email-manager skill, which bans it outright.
+    button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
     divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
     muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };
@@ -480,6 +483,14 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
 
 async function handleInvite(req: VercelRequest, res: VercelResponse) {
     try {
+        // Admin only. This endpoint sends mail from our domain to any address
+        // handed to it, so ungated it is an open relay: anyone could make
+        // THE LOST+UNFOUNDS email anyone. Every other write on this router is
+        // already behind requireAdminUser; this one was missed.
+        const { requireAdminUser } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+
         const { libraryId, emails } = req.body;
         if (!libraryId || !emails || !Array.isArray(emails)) {
             return res.status(400).json({ error: 'Missing libraryId or emails array' });
@@ -519,31 +530,41 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
 
         for (const email of emails) {
             try {
+                const body = `
+                    <h1 style="${EMAIL_STYLES.heading1}">YOUR GALLERY IS OPEN</h1>
+
+                    <p style="${EMAIL_STYLES.paragraph}">
+                      Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.
+                    </p>
+
+                    <p style="${EMAIL_STYLES.paragraph}">
+                      Open the link below and enter this email address — <strong style="color: #ffffff;">${email}</strong> — and we'll send you a sign-in link. There's no password to create.
+                    </p>
+
+                    <div style="margin: 40px 0;">
+                      <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">OPEN MY GALLERY</a>
+                    </div>
+
+                    <p style="${EMAIL_STYLES.paragraph}">
+                      The gallery stays available — come back and pull anything you need, whenever you need it. There's no expiry on it.
+                    </p>
+
+                    <hr style="${EMAIL_STYLES.divider}">
+
+                    <p style="${EMAIL_STYLES.muted}">
+                      GALLERY: ${library.name}<br>
+                      INVITED: ${email}<br>
+                      Questions? Reply to this email or reach us at media@thelostandunfounds.com.
+                    </p>
+                `;
+
                 const result = await sendZohoEmail({
                     auth,
                     to: email,
-                    subject: `ACCESS GRANTED: ${library.name} | THE LOST+UNFOUNDS`,
-                    htmlContent: `
-                        <div style="background-color: #000; color: #fff; padding: 40px; font-family: monospace; text-align: left;">
-                            <h1 style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; display: inline-block;">
-                                GALLERY OPENED
-                            </h1>
-                            <p style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 40px 0;">
-                                YOU HAVE BEEN INVITED TO ACCESS THE FOLLOWING SECURED ARCHIVE:
-                            </p>
-                            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">${library.name}</h2>
-                            <div style="margin: 40px 0;">
-                                <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #000; color: #fff; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ENTER GALLERY</a>
-                            </div>
-                            <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
-                                <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
-                                    SECURE AUTOMATED DELIVERY SYSTEM<br/>
-                                    GALLERY: ${library.name}<br/>
-                                    INVITEE: ${email}
-                                </p>
-                            </div>
-                        </div>
-                    `
+                    // Business record — client correspondence stays on file.
+                    cc: 'media@thelostandunfounds.com',
+                    subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
+                    htmlContent: generateTransactionalEmail(body)
                 });
                 if (result.success) {
                     results.succeeded.push(email);

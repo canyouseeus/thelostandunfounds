@@ -9,7 +9,7 @@ set -e  # Exit on error
 CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-your_account_id}"
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-your_api_token}"
 TURNSTILE_SITE_KEY="${TURNSTILE_SITE_KEY:-your_site_key}"
-SUPABASE_PROJECT_REF="${SUPABASE_PROJECT_REF:-nonaqhllakrckbtbawrb}"
+SUPABASE_PROJECT_REF="${SUPABASE_PROJECT_REF:-cxpyqjxhbvuygnxyukli}"
 
 # Colors for output
 GREEN='\033[0;32m'
