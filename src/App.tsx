@@ -18,6 +18,7 @@ import PhotographerDashboard from './pages/PhotographerDashboard'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 import Docs from './pages/Docs'
+import Changelog from './pages/Changelog'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Support from './pages/Support'
@@ -178,6 +179,9 @@ function App() {
               <Route path="/docs" element={<Layout />}>
                 <Route index element={<Docs />} />
                 <Route path="photographer-guide" element={<PhotographerGuide />} />
+              </Route>
+              <Route path="/changelog" element={<Layout />}>
+                <Route index element={<Changelog />} />
               </Route>
               <Route path="/privacy" element={<Layout />}>
                 <Route index element={<Privacy />} />

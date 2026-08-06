@@ -156,6 +156,14 @@ async function generateSitemap() {
     <priority>0.7</priority>
   </url>
 
+  <!-- Changelog -->
+  <url>
+    <loc>${baseUrl}/changelog</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Documentation -->
   <url>
     <loc>${baseUrl}/docs</loc>

@@ -19,7 +19,19 @@ export default function Footer() {
               to="/terms"
               className="text-white/60 hover:!text-white transition-colors"
             >
-              Terms of Use
+              Terms of Service
+            </Link>
+            <Link
+              to="/docs"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Docs
+            </Link>
+            <Link
+              to="/changelog"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Changelog
             </Link>
             <Link
               to="/thelostarchives"

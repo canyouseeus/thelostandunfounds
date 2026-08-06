@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { BookOpenIcon, DocumentTextIcon, QuestionMarkCircleIcon, ShieldCheckIcon, CodeBracketIcon, WrenchIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, DocumentTextIcon, QuestionMarkCircleIcon, ShieldCheckIcon, CodeBracketIcon, WrenchIcon, ClockIcon } from '@heroicons/react/24/outline';
 import GettingStarted from './docs/GettingStarted';
 import ToolsDocs from './docs/Tools';
 import SEOHead from '../components/SEOHead';
@@ -16,7 +16,7 @@ import Terms from './docs/Terms';
 const docSections = [
   { id: 'getting-started', label: 'Getting Started', icon: BookOpenIcon },
   { id: 'tools-guide', label: 'Tools Guide', icon: WrenchIcon },
-  { id: 'api-reference', label: 'API Reference', icon: CodeBracketIcon },
+  { id: 'api-reference', label: 'Developer Access', icon: CodeBracketIcon },
   { id: 'faq', label: 'FAQ', icon: QuestionMarkCircleIcon },
   { id: 'privacy', label: 'Privacy Policy', icon: ShieldCheckIcon },
   { id: 'terms', label: 'Terms of Service', icon: DocumentTextIcon },
@@ -55,7 +55,7 @@ export default function Docs() {
     <>
       <SEOHead
         title="DOCUMENTATION"
-        description="Everything you need to know about THE LOST+UNFOUNDS. Getting started guides, tools documentation, API reference, FAQ, and policies."
+        description="Everything you need to know about THE LOST+UNFOUNDS. Getting started, tools, developer access, FAQ, privacy policy and terms of service."
         canonicalPath="/docs"
       />
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -82,9 +82,10 @@ export default function Docs() {
                         e.preventDefault();
                         scrollToSection(section.id);
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-none transition cursor-pointer border-l-2 ${isActive
-                        ? 'border-white bg-white/10 text-white font-bold'
-                        : 'border-transparent text-white/40 hover:text-white hover:bg-white/5'
+                      style={{ borderRadius: 0 }}
+                      className={`flex items-center gap-3 px-4 py-3 transition cursor-pointer ${isActive
+                        ? 'bg-white text-black font-bold'
+                        : 'text-white/40 hover:text-white hover:bg-white/5'
                         }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -94,6 +95,16 @@ export default function Docs() {
                 );
               })}
             </ul>
+
+            {/* Not a section of this page — a route of its own. */}
+            <a
+              href="/changelog"
+              style={{ borderRadius: 0 }}
+              className="flex items-center gap-3 px-4 py-3 mt-6 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <ClockIcon className="w-4 h-4" />
+              <span className="uppercase tracking-wider text-xs">Changelog</span>
+            </a>
           </nav>
         </div>
 
