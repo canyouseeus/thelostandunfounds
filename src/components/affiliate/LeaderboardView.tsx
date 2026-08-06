@@ -179,6 +179,7 @@ export default function LeaderboardView({
               onClick={() => setDateRange(range)}
               className={cn(
                 'px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                'text-center [text-indent:0.1em]',
                 dateRange === range
                   ? 'bg-white text-black'
                   : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'

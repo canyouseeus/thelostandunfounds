@@ -971,6 +971,7 @@ export default function Affiliate() {
                         onClick={() => setRevenueView(mode)}
                         className={cn(
                           'px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                          'text-center [text-indent:0.1em]',
                           revenueView === mode ? 'bg-white text-black' : 'text-white/40 hover:text-white'
                         )}
                       >

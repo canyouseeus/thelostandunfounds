@@ -137,7 +137,12 @@ export function RevenueTracker({
                 <div className="relative overflow-hidden flex flex-col">
 
                     {/* Time Period Selector - Horizontal, Scrollable on mobile */}
-                    <div className="flex items-center justify-center gap-1 py-4 px-4 overflow-x-auto scrollbar-hide">
+                    {/* The track scrolls from the start, and the inner row centres itself
+                        with auto margins. `justify-center` on the scroller itself would
+                        overflow the first toggle past the left edge, out of reach of the
+                        scroll — which is what clipped ALL TIME. */}
+                    <div className="flex overflow-x-auto scrollbar-hide py-4 px-4">
+                      <div className="flex items-center gap-2 mx-auto">
                         {periods.map((period) => (
                             <button
                                 key={period.key}
@@ -146,7 +151,11 @@ export function RevenueTracker({
                                     setTimePeriod(period.key);
                                 }}
                                 className={cn(
+                                    // Letter-spacing adds a trailing space after the last glyph, which
+                                    // shifts the word left of the badge's true centre. The matching
+                                    // text-indent puts it back.
                                     'px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap',
+                                    'shrink-0 text-center [text-indent:0.05em]',
                                     timePeriod === period.key
                                         ? 'text-black bg-white'
                                         : 'text-white/40 hover:text-white hover:bg-white/10'
@@ -155,6 +164,7 @@ export function RevenueTracker({
                                 {period.label}
                             </button>
                         ))}
+                      </div>
                     </div>
 
                     {/* Main Revenue Data - Centered */}
