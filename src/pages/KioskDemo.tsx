@@ -296,13 +296,15 @@ export default function KioskDemo() {
             <div>
               <h2>Investment</h2>
               <div className="price">
+                <span className="u" style={{ letterSpacing: '.14em' }}>Starting at</span>
                 <span className="n">$2,500</span>
-                <span className="u">one time · software</span>
               </div>
               <p className="note">
-                Hardware is billed separately and bought at cost &mdash; the panel, the
-                mount and the machine behind it are yours, not a rental. Ongoing hosting
-                is minimal and quoted with the build.
+                Software build and setup. The final number moves with the shop &mdash; how
+                many artists, how many screens, and how much of the catalog needs
+                bringing across. Hardware is separate and bought at cost: the panel, the
+                mount and the machine behind it are yours, not a rental. Hosting is
+                minimal and quoted with the build.
               </p>
               <h2 style={{ marginTop: 22 }}>Next</h2>
               <p className="spec">
