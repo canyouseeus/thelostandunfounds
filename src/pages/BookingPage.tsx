@@ -16,6 +16,7 @@ import {
     BoltIcon,
 } from '@heroicons/react/24/outline';
 import ExpressBookingModal from '../components/booking/ExpressBookingModal';
+import { getAffiliateRef } from '../utils/affiliate-tracking';
 
 // ── Service data ──────────────────────────────────────────────────────────────
 
@@ -576,11 +577,20 @@ const BookingPage: React.FC = () => {
         setError('');
         setSubmitting(true);
         try {
+            // The affiliate who sent this client, if any. Passed on the booking
+            // so the referral lands on their CRM record and the lifetime tie —
+            // an affiliate must not lose a customer because the sale happened
+            // through the booking form rather than the shop checkout.
+            const affiliateRef = getAffiliateRef();
             const res = await fetch('/api/booking?action=request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+                },
                 body: JSON.stringify({
                     ...form,
+                    affiliate_code: affiliateRef || undefined,
                     notes: [form.notes, form.access_notes && `Access: ${form.access_notes}`]
                         .filter(Boolean).join('\n\n'),
                     retainer: form.event_type === 'Retainer (Monthly)',
