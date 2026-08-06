@@ -82,7 +82,10 @@ export function DashboardTile({ icon, primary, caption, children, light, size = 
   return (
     <div
       className={cn(
-        light ? 'bg-white text-black' : 'bg-black text-white hover:bg-[#0a0a0a]',
+        // No hover state here. The grid cell (EditableTile) draws the one hover
+        // wash every widget shares; a second one inside the tile stacked with it
+        // and made the legacy tiles flash a different shade to the drawn ones.
+        light ? 'bg-white text-black' : 'bg-black text-white',
         'transition-colors duration-300',
         'w-full h-full flex flex-col justify-between overflow-hidden text-left',
         cols === 1 ? 'p-2' : 'p-4 sm:p-5',

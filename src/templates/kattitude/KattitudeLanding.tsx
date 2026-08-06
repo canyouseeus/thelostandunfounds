@@ -32,7 +32,7 @@ const LEOPARD_BTN: React.CSSProperties = {
   backgroundPosition: 'center',
   color: '#ffffff',
 };
-const BEE = 'https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png';
+const BEE = '/brand/kattitude-logo.png';
 
 function useLocalDark() {
   const [dark, setDark] = useState<boolean>(() => {
@@ -393,7 +393,7 @@ function Artists({ dark }: { dark: boolean }) {
       initials: 'AL',
       name: 'Alena',
       role: 'Senior Artist',
-      instagram: '@Alenanobodytattoo',
+      instagram: '@Alenanebotattoos',
       specialties: ['Large Scale Fine Line', 'Florals', 'Ornamentals'],
       bio: 'Senior artist known for large scale fine line compositions. Her ornamental and floral work transforms entire limbs into seamless, flowing pieces.',
       availability: 'Booking 4–6 weeks out',
@@ -403,7 +403,7 @@ function Artists({ dark }: { dark: boolean }) {
       initials: 'MI',
       name: 'Miranda',
       role: 'Junior Artist',
-      instagram: '@mirandaink',
+      instagram: '@mirandaiink',
       specialties: ['Large Scale Fine Line', 'Gothic', 'Abstract', 'Realism'],
       bio: 'Junior artist with a dark, moody edge. Miranda excels at large scale fine line with gothic influence, abstract compositions, and realism work.',
       availability: 'Booking 2–3 weeks out',
@@ -413,7 +413,7 @@ function Artists({ dark }: { dark: boolean }) {
       initials: 'JN',
       name: 'Jen',
       role: 'Junior Artist',
-      instagram: '@inkedByjennin',
+      instagram: '@inkedbyjemini',
       specialties: ['3 Needle', 'Single Needle'],
       bio: 'Junior artist focused on precision needle work. Jen brings clean, consistent execution to both 3 needle and single needle styles.',
       availability: 'Booking 2–3 weeks out',
@@ -423,10 +423,20 @@ function Artists({ dark }: { dark: boolean }) {
       initials: 'NM',
       name: 'Naomi',
       role: 'Junior Artist',
-      instagram: '@Paratinta_26',
+      instagram: '@Puratinta_26',
       specialties: ['Single Needle', '3 Needle', 'Large Scale Flowers'],
       bio: 'Junior artist specializing in single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
       availability: 'Booking 2–3 weeks out',
+      rating: 5,
+    },
+    {
+      initials: 'AY',
+      name: 'Ally',
+      role: 'Junior Artist',
+      instagram: '@allycat_ink',
+      specialties: [],
+      bio: '',
+      availability: '',
       rating: 5,
     },
   ];
@@ -598,10 +608,10 @@ function BookingCTA({ dark }: { dark: boolean }) {
                 <option>Any Artist Best Fit</option>
                 <option>Kat (@Kattitudetattoo) — Return Clients Only</option>
                 <option>Barbie (@delicatelyscripted) — Senior · Single Needle, Micro Realism, Florals</option>
-                <option>Alena (@Alenanobodytattoo) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
-                <option>Miranda (@mirandaink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
-                <option>Jen (@inkedByjennin) — Junior · 3 Needle, Single Needle</option>
-                <option>Naomi (@Paratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
+                <option>Alena (@Alenanebotattoos) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
+                <option>Miranda (@mirandaiink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
+                <option>Jen (@inkedbyjemini) — Junior · 3 Needle, Single Needle</option>
+                <option>Naomi (@Puratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
               </select>
             </div>
           </div>

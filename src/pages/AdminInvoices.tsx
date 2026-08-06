@@ -236,36 +236,37 @@ export default function AdminInvoices() {
           ) : invoices.length === 0 ? (
             <div className="py-16 text-center text-white/20 text-xs uppercase tracking-widest">No invoices yet.</div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="space-y-2">
               {invoices.map(inv => (
                 <div
                   key={inv.id}
                   className={cn(
-                    'flex items-center justify-between px-4 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors',
-                    selectedInvoice?.id === inv.id && 'bg-white/[0.04]'
+                    'flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] transition-colors',
+                    selectedInvoice?.id === inv.id && 'bg-white/[0.07]'
                   )}
                   onClick={() => { setShowPdf(false); setSelectedInvoice(selectedInvoice?.id === inv.id ? null : inv); }}
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <DocumentTextIcon className="w-5 h-5 text-white/20 shrink-0" />
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-4 min-w-0">
+                    <DocumentTextIcon className="w-5 h-5 text-white/20 shrink-0 mt-0.5" />
+                    <div className="min-w-0 space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="text-sm font-bold font-mono">{inv.invoice_number}</span>
                         <StatusBadge status={inv.status} />
                       </div>
-                      <p className="text-[10px] text-white/40 mt-0.5 truncate">
+                      <p className="text-[10px] leading-relaxed text-white/40">
                         <span className="uppercase">{(inv.clients as any)?.name || 'Unknown Client'}</span> &nbsp;·&nbsp; {fmt(inv.date)}
                         {inv.event_date && <> &nbsp;·&nbsp; Event: {fmt(inv.event_date)}</>}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 ml-4">
-                    <div className="text-right">
-                      <p className="text-lg font-black font-mono text-white">{fmtUSD(inv.total)}</p>
-                      <p className="text-[9px] text-white/20 uppercase tracking-wider">
+                  <div className="flex items-center justify-between gap-4 sm:justify-end sm:gap-5 shrink-0">
+                    <div className="sm:text-right">
+                      <p className="text-lg font-black font-mono text-white leading-none">{fmtUSD(inv.total)}</p>
+                      <p className="text-[9px] text-white/20 uppercase tracking-wider mt-1.5">
                         {inv.payment_method || '—'}
                       </p>
                     </div>
+                    <div className="flex items-center gap-2">
                     {inv.pdf_token && (
                       <a
                         href={`/api/invoices/pdf?id=${inv.id}&token=${inv.pdf_token}`}
@@ -293,6 +294,7 @@ export default function AdminInvoices() {
                       <PaperAirplaneIcon className="w-3 h-3" />
                       {sendingId === inv.id ? 'Sending…' : 'Send'}
                     </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -540,33 +542,33 @@ export default function AdminInvoices() {
           ) : clients.length === 0 ? (
             <div className="py-8 text-center text-white/20 text-xs uppercase tracking-widest">No clients yet.</div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="space-y-2">
               {clients.map(client => {
                 const cInvoices = clientInvoices(client.id);
                 const isExpanded = expandedClients.has(client.id);
                 const clientTotal = cInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0);
                 return (
-                  <div key={client.id}>
+                  <div key={client.id} className="bg-white/[0.02]">
                     <div
-                      className="flex items-center justify-between px-4 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                      className="flex items-start justify-between gap-5 px-5 py-5 cursor-pointer hover:bg-white/[0.03] transition-colors"
                       onClick={() => toggleClient(client.id)}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-start gap-4 min-w-0">
                         {isExpanded
-                          ? <ChevronDownIcon className="w-4 h-4 text-white/30" />
-                          : <ChevronRightIcon className="w-4 h-4 text-white/30" />}
-                        <div>
+                          ? <ChevronDownIcon className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
+                          : <ChevronRightIcon className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />}
+                        <div className="min-w-0 space-y-2">
                           <p className="text-sm font-bold uppercase">{client.name}</p>
-                          <p className="text-[10px] text-white/30 mt-0.5">
+                          <p className="text-[10px] leading-relaxed text-white/30">
                             {client.business && <>{client.business} &nbsp;·&nbsp;</>}
                             {cInvoices.length} invoice{cInvoices.length !== 1 && 's'}
                             {client.email && <> &nbsp;·&nbsp; {client.email}</>}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-mono font-bold text-white">{fmtUSD(clientTotal)}</p>
-                        <p className="text-[9px] text-white/20 uppercase tracking-wider">collected</p>
+                      <div className="text-right shrink-0">
+                        <p className="font-mono font-bold text-white leading-none">{fmtUSD(clientTotal)}</p>
+                        <p className="text-[9px] text-white/20 uppercase tracking-wider mt-1.5">collected</p>
                       </div>
                     </div>
                     {isExpanded && (
@@ -581,10 +583,10 @@ export default function AdminInvoices() {
                             {cInvoices.map(inv => (
                               <div
                                 key={inv.id}
-                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-white/5 px-2 transition-colors"
+                                className="flex items-center justify-between gap-4 py-3 cursor-pointer hover:bg-white/5 px-3 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); setSelectedInvoice(inv); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-wrap min-w-0">
                                   <span className="text-[10px] font-mono text-white/50">{inv.invoice_number}</span>
                                   <StatusBadge status={inv.status} />
                                   <span className="text-[10px] text-white/30">{fmt(inv.date)}</span>
