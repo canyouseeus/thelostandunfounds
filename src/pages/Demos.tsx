@@ -143,10 +143,10 @@ export default function Demos() {
           name="description"
           content="Working demos of the interactive kiosk, business websites and owner dashboards built by The Lost+Unfounds. Real software, running."
         />
-        {/* Consistent with the individual previews, which show real clients'
-            studios, rosters and handles. This is a link Joshua sends, not one
-            strangers should arrive at through search. */}
-        <meta name="robots" content="noindex,nofollow" />
+        {/* Indexable, on Joshua's call — this is a sales page and being found
+            in search is the point. The individual CLIENT previews it links to
+            keep their own robots rules; nothing here changes those. */}
+        <meta name="robots" content="index,follow" />
       </Helmet>
 
       <div className="dmx">

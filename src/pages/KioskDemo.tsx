@@ -19,10 +19,10 @@ import { Helmet } from 'react-helmet-async';
        every button works and nothing can reach live data
      - the kiosk is the actual wall app running on its seed catalog
 
-   NOINDEX, deliberately. This shows a real client's studio, their roster and
-   their handles. Joshua sends this link to people he chooses; it should not
-   arrive at strangers through a search result. Remove the robots tag if that
-   judgement changes.
+   INDEXABLE, on Joshua's call. This page is sales copy for a service he
+   sells: it names no artists and shows no roster, so there is nothing here
+   that should be kept out of search. The live demos it links to carry their
+   own sample content and say so.
    ============================================================ */
 
 const DASHBOARD_DEMO = 'https://kattitude-flash-dashboard.vercel.app/demo.html';
@@ -180,7 +180,7 @@ export default function KioskDemo() {
           name="description"
           content="A working demo of the interactive flash kiosk and the studio dashboard behind it. Real software, running — not a mockup."
         />
-        <meta name="robots" content="noindex,nofollow" />
+        <meta name="robots" content="index,follow" />
       </Helmet>
 
       <div className="kdemo">
