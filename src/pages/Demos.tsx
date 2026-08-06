@@ -28,6 +28,16 @@ type Demo = {
 
 const DEMOS: Demo[] = [
   {
+    kind: 'Website + booking',
+    title: 'The Lost+Unfounds',
+    blurb:
+      'Our own site, and the clearest example of the customer-facing build: a landing page that carries the work, with booking running inline on it — pick a service, pick a date, and the request lands without leaving the page or bouncing to a third-party scheduler. Photo galleries, a shop and a blog sit on the same platform.',
+    links: [
+      { label: 'The site + booking', href: '/', note: 'Scroll to the booking calendar' },
+      { label: 'Photo gallery', href: '/gallery' },
+    ],
+  },
+  {
     kind: 'Interactive kiosk',
     title: 'Flash Kiosk + Studio Dashboard',
     blurb:
