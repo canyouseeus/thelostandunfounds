@@ -195,6 +195,22 @@ interface Alert {
 
 const PLATFORM_LAUNCH_DATE = '2026-01-15';
 
+/**
+ * The instruments, as opposed to the data tiles.
+ *
+ * You point at a key, a day or a control inside these — not at the tile — and
+ * each of those already lights on its own hover. The cell's tile-wide wash is
+ * suppressed for them so hovering one key doesn't highlight the whole widget.
+ * Data tiles keep the wash: there, the tile *is* the target.
+ *
+ * The calendar's 1x1 shape is the exception. It isn't the month grid, it's a
+ * single date face with nothing inside it to light, and the whole tile opens
+ * the master calendar — so it behaves like a data tile and keeps the wash.
+ */
+const TOOL_WIDGETS = new Set(['clock', 'calendar', 'calculator']);
+const drawsOwnHover = (id: string, size: string) =>
+  TOOL_WIDGETS.has(id) && !(id === 'calendar' && size === '1x1');
+
 const isTestEmail = (email: string | null | undefined) => {
   if (!email) return false;
   const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
@@ -1803,6 +1819,7 @@ export default function Admin() {
                 onDropBefore={layout.moveBefore}
                 light={layout.isLight(id)}
                 onToggleBackground={layout.toggleBackground}
+                wash={!drawsOwnHover(id, size)}
               >
                 {node}
               </EditableTile>
