@@ -134,6 +134,53 @@ access instructions — nothing already on file — then generates the invoice.
 **That link is a bearer link.** Anyone holding it can read that client's name, email and business.
 Acceptable for a link mailed to that client; do not post it anywhere public.
 
+## Negotiated pricing — saying yes to a deal over email
+
+Repeat clients ask. "This is what I can work with" is a normal opening, and taking the job at a
+lower number to keep a good client and build the portfolio is a business decision, not an
+exception to route around the system.
+
+**Every automatic path resolves price from the rate card on purpose (RULE 1). This is the one
+endpoint that accepts a price verbatim, which is why it is admin-only.**
+
+```bash
+curl -sS -X POST https://www.thelostandunfounds.com/api/booking/create-negotiated-quote \
+  -H 'Content-Type: application/json' \
+  -H 'X-Admin-Email: thelostandunfounds@gmail.com' \
+  -d '{
+    "clientEmail": "kelly@rubyhopehomesolutions.com",
+    "clientName":  "Kelly Kohler",
+    "eventType":   "Airbnb / Short-Term Rental",
+    "eventDate":   "2026-08-10",
+    "startTime":   "06:00",
+    "location":    "1302 W 24th St, Austin TX",
+    "listPrice":   335,
+    "agreedPrice": 300,
+    "reason":      "Returning client"
+  }'
+```
+
+It creates the booking record the job needs and hands off to `createQuoteForBooking()` — the same
+path the website uses — so a negotiated job produces an identical invoice, Stripe deposit link and
+branded email.
+
+**Always send `listPrice` alongside `agreedPrice`.** The difference renders as its own line item
+("Adjustment — Returning client"), so:
+
+- the client sees what they were given rather than just a lower number
+- the record explains the price to whoever reads it months later
+- the rate card stays intact — one client's deal does not become the new price
+
+Never quietly bill less by passing only `agreedPrice`. An invoice that shows $300 with no context
+looks like the list price, and the next quote at $335 reads as a rise.
+
+### When to hold the line
+
+Discounting is not automatic generosity. A price is worth holding when the schedule is tight, the
+property is large enough that the work does not shrink with the fee, or the client is new and has
+no history to reward. Concede for repeat clients, multi-unit portfolios and work that will be
+shown publicly — those buy something back.
+
 ## Pitfalls that have actually happened
 
 - **`invoice_number` not selected** in the webhook's invoice query — the confirmation email
