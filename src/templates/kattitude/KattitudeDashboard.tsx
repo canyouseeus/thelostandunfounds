@@ -94,16 +94,16 @@ const ALL_DEPOSITS_INIT: Deposit[] = [
 ];
 
 const CLIENTS: Client[] = [
-  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@rivera.io',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Single Needle', preferredArtist:'Barbie', since:'Oct 2023', note:'Wants full sleeve eventually — fine line botanicals. Very loyal.' },
-  { name:'Camila Vega',    phone:'(512) 555-0181', email:'camilav@outlook.com',     instagram:'@camila.tatted',   sessions:5, lastVisit:'Jun 21', spend:1240, favStyle:'Fine Line',     preferredArtist:'Kat',   since:'Nov 2023', note:'Fine line only. Loves delicate botanical work. Refers friends often.' },
-  { name:'Tyler Brooks',   phone:'(512) 555-0391', email:'tyler@brooksco.com',      instagram:'@tbrooks_ink',     sessions:4, lastVisit:'Jun 20', spend:1750, favStyle:'Large Scale Fine Line', preferredArtist:'Alena', since:'Jan 2024', note:'Building a Japanese-inspired sleeve with Alena. Large scale fine line work.' },
-  { name:'Devon Santos',   phone:'(512) 555-0167', email:'devon.santos@gmail.com',  instagram:'@devonsantos_atx', sessions:4, lastVisit:'Jun 19', spend:1020, favStyle:'Traditional',   preferredArtist:'Kat',   since:'Feb 2024', note:'Classic American traditional. Interested in chest panel next.' },
-  { name:'Priya Mehta',    phone:'(512) 555-0209', email:'priya.mehta@pm.me',       instagram:'@priyaink',        sessions:3, lastVisit:'Jun 16', spend:1450, favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Mar 2024', note:'Portrait work. Very detail-oriented about references.' },
-  { name:'Jordan Torres',  phone:'(512) 555-0143', email:'j.torres@live.com',       instagram:'@jordantats',      sessions:3, lastVisit:'Jun 15', spend:1170, favStyle:'Gothic',        preferredArtist:'Miranda', since:'Mar 2024', note:'Cover-up completed in Jun. Now wants ornamental sleeve pieces with Miranda.' },
-  { name:'Mia Chen',       phone:'(512) 555-0488', email:'mia.chen@gmail.com',      instagram:'@mia_fineline',    sessions:2, lastVisit:'Jun 18', spend:470,  favStyle:'Single Needle', preferredArtist:'Jen', since:'Apr 2024', note:'Minimalist single needle. Wants matching pieces with her sister.' },
-  { name:'Maya Kim',       phone:'(512) 555-0278', email:'maya@mayakim.art',        instagram:'@mayakim.art',     sessions:2, lastVisit:'Jun 14', spend:600,  favStyle:'Illustrative',  preferredArtist:'Kat',   since:'May 2024', note:'Illustrative character work. Shows up with very detailed briefs.' },
-  { name:'Marcus Bell',    phone:'(512) 555-0115', email:'marcusbell@icloud.com',   instagram:'@bellinkd',        sessions:2, lastVisit:'Jun 10', spend:620,  favStyle:'Cover-Up',      preferredArtist:'Kat',   since:'May 2024', note:'Has 2 cover-up areas. First done. Second (back piece) scheduled Jun 26.' },
-  { name:'Rina Park',      phone:'(512) 555-0362', email:'rinapark@gmail.com',      instagram:'@rinapark_tats',   sessions:1, lastVisit:'Jun 21', spend:620,  favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Jun 2024', note:'First session was a portrait — very happy. Wants second session.' },
+  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@example.com',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Single Needle', preferredArtist:'Barbie', since:'Oct 2023', note:'Wants full sleeve eventually — fine line botanicals. Very loyal.' },
+  { name:'Camila Vega',    phone:'(512) 555-0181', email:'camilav@example.com',     instagram:'@camila.tatted',   sessions:5, lastVisit:'Jun 21', spend:1240, favStyle:'Fine Line',     preferredArtist:'Kat',   since:'Nov 2023', note:'Fine line only. Loves delicate botanical work. Refers friends often.' },
+  { name:'Tyler Brooks',   phone:'(512) 555-0391', email:'tyler@example.com',      instagram:'@tbrooks_ink',     sessions:4, lastVisit:'Jun 20', spend:1750, favStyle:'Large Scale Fine Line', preferredArtist:'Alena', since:'Jan 2024', note:'Building a Japanese-inspired sleeve with Alena. Large scale fine line work.' },
+  { name:'Devon Santos',   phone:'(512) 555-0167', email:'devon.santos@example.com',  instagram:'@devonsantos_atx', sessions:4, lastVisit:'Jun 19', spend:1020, favStyle:'Traditional',   preferredArtist:'Kat',   since:'Feb 2024', note:'Classic American traditional. Interested in chest panel next.' },
+  { name:'Priya Mehta',    phone:'(512) 555-0209', email:'priya.mehta@example.com',       instagram:'@priyaink',        sessions:3, lastVisit:'Jun 16', spend:1450, favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Mar 2024', note:'Portrait work. Very detail-oriented about references.' },
+  { name:'Jordan Torres',  phone:'(512) 555-0143', email:'j.torres@example.com',       instagram:'@jordantats',      sessions:3, lastVisit:'Jun 15', spend:1170, favStyle:'Gothic',        preferredArtist:'Miranda', since:'Mar 2024', note:'Cover-up completed in Jun. Now wants ornamental sleeve pieces with Miranda.' },
+  { name:'Mia Chen',       phone:'(512) 555-0488', email:'mia.chen@example.com',      instagram:'@mia_fineline',    sessions:2, lastVisit:'Jun 18', spend:470,  favStyle:'Single Needle', preferredArtist:'Jen', since:'Apr 2024', note:'Minimalist single needle. Wants matching pieces with her sister.' },
+  { name:'Maya Kim',       phone:'(512) 555-0278', email:'maya@example.com',        instagram:'@mayakim.art',     sessions:2, lastVisit:'Jun 14', spend:600,  favStyle:'Illustrative',  preferredArtist:'Kat',   since:'May 2024', note:'Illustrative character work. Shows up with very detailed briefs.' },
+  { name:'Marcus Bell',    phone:'(512) 555-0115', email:'marcusbell@example.com',   instagram:'@bellinkd',        sessions:2, lastVisit:'Jun 10', spend:620,  favStyle:'Cover-Up',      preferredArtist:'Kat',   since:'May 2024', note:'Has 2 cover-up areas. First done. Second (back piece) scheduled Jun 26.' },
+  { name:'Rina Park',      phone:'(512) 555-0362', email:'rinapark@example.com',      instagram:'@rinapark_tats',   sessions:1, lastVisit:'Jun 21', spend:620,  favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Jun 2024', note:'First session was a portrait — very happy. Wants second session.' },
 ];
 
 const ARTISTS_DATA: ArtistRecord[] = [
@@ -142,6 +142,19 @@ const ARTISTS_DATA: ArtistRecord[] = [
     instagram:'@Puratinta_26', specialties:['Single Needle','3 Needle','Large Scale Flowers'],
     bookingRate:70, rating:4.7, sessionsMonth:7, revenueMonth:2180, nextAvail:'Jun 26',
     status:'available', bio:'Single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
+  },
+  /* Ally was missing from this roster entirely — six artists here against seven
+   * active in the database. Added so the console matches the studio.
+   *
+   * HER NUMBERS ARE INVENTED, exactly like everyone else's on this page. The
+   * booking rates, ratings, session counts and revenue figures throughout this
+   * file are mockup values somebody made up; none of them come from the
+   * database. Replace them all before this page goes to a real client. */
+  {
+    id:'AY', initials:'AY', name:'Ally', role:'Junior Artist',
+    instagram:'@allycat_ink', specialties:['Fine Line','Blackwork'],
+    bookingRate:66, rating:4.7, sessionsMonth:7, revenueMonth:2050, nextAvail:'Jun 27',
+    status:'available', bio:'',
   },
 ];
 
