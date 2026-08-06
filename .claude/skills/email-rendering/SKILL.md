@@ -95,12 +95,48 @@ grep -c "<title>" <file>   # >0 → browser page, not email
 grep -c "sendEmail\|sendZohoEmail\|wrapEmailContent\|generateTransactional" <file>
 ```
 
+## RULE 6 — The test loop. Run it until the owner approves.
+
+**Never send a client-facing email that the owner has not approved from a test.** The loop is:
+
+1. Make the change.
+2. **Send a `[TEST n]` email to `thelostandunfounds@gmail.com`** — unprompted, in the same turn
+   as the change. Never wait to be asked.
+3. **Tell them you sent it**, which number it is, and the specific thing to look at.
+4. They approve, or they ask for a change.
+5. If they ask for a change: make it, **send another test**, notify again. Increment the number.
+6. Repeat from 4. Only an explicit approval ends the loop.
+
+There is no step where a change goes out without a fresh test behind it. A revision to an
+already-tested email is a new email and needs its own test — do not assume a small edit is
+safe because the previous version looked right.
+
+This is not optional politeness. Every email rendering defect in this codebase's history was
+invisible to local checks and obvious in a phone screenshot: the outlined button, the inverted
+palette, the black-on-black CTAs. A render assertion proves the HTML string. It proves nothing
+about the inbox, and the inbox is the product.
+
+The failure mode to avoid: making a change, asserting the palette locally, reporting success,
+and leaving the owner to find the problem in their own inbox. That happened repeatedly in one
+session, and each round cost a full exchange.
+
+```bash
+# part of the change, not a response to a request
+node --experimental-strip-types <render-script>.mjs   # assert palette locally
+curl -sS -X POST https://www.thelostandunfounds.com/api/mail/send \
+  -H 'Content-Type: application/json' \
+  -H 'X-Admin-Email: thelostandunfounds@gmail.com' \
+  --data @<payload>.json                              # [TEST n] to admin only, no CC
+```
+
+Then name the one thing that test can actually settle.
+
 ## Testing protocol
 
 1. Render locally and assert the palette: banner present, no `<title>`, no SVG data URI,
    body `#000000`, text `#ffffff`, button white fill with black text.
-2. Send a `[TEST]`-prefixed message to `thelostandunfounds@gmail.com`. Never CC `media@` or a
-   subcontractor on a test.
+2. Send a `[TEST]`-prefixed message to `thelostandunfounds@gmail.com` **without being asked**.
+   Never CC `media@` or a subcontractor on a test.
 3. When judging a screenshot, **state which client and whether dark mode is on** before drawing
    any conclusion about the template. A dark-mode phone shows the inverse of the truth.
 4. Only then send to a client.
