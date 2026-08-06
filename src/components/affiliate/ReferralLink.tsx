@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { CheckIcon, ClipboardIcon, ShareIcon, LinkIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ClipboardIcon, ShareIcon, LinkIcon, LightBulbIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { AdminBentoCard } from '../ui/admin-bento-card';
+import QRStudio from '../qr/QRStudio';
 
 interface ReferralLinkProps {
   affiliateCode: string;
@@ -9,6 +10,7 @@ interface ReferralLinkProps {
 export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
   const [copiedCustomer, setCopiedCustomer] = useState(false);
   const [copiedAffiliate, setCopiedAffiliate] = useState(false);
+  const [qrTarget, setQrTarget] = useState<{ value: string; title: string; headline: string } | null>(null);
 
   const customerLink = `https://thelostandunfounds.com/?ref=${affiliateCode}`;
   const affiliateLink = `https://thelostandunfounds.com/become-affiliate?ref=${affiliateCode}`;
@@ -83,6 +85,17 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
               >
                 <ShareIcon className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => setQrTarget({
+                  value: customerLink,
+                  title: `${affiliateCode}-customer`,
+                  headline: 'Shop The Lost+Unfounds',
+                })}
+                className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
+                title="Generate QR code"
+              >
+                <QrCodeIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -121,6 +134,17 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
               >
                 <ShareIcon className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => setQrTarget({
+                  value: affiliateLink,
+                  title: `${affiliateCode}-affiliate`,
+                  headline: 'Join The Affiliate Program',
+                })}
+                className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
+                title="Generate QR code"
+              >
+                <QrCodeIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -144,9 +168,22 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
               <span className="text-white/30 font-mono mt-0.5">03</span>
               <span>Links work forever — customers and affiliates are tied to you permanently.</span>
             </li>
+            <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
+              <span className="text-white/30 font-mono mt-0.5">04</span>
+              <span>Hit the QR icon to turn any link into a printable code or a portrait phone wallpaper.</span>
+            </li>
           </ul>
         </div>
       </div>
+
+      {qrTarget && (
+        <QRStudio
+          value={qrTarget.value}
+          title={qrTarget.title}
+          defaultHeadline={qrTarget.headline}
+          onClose={() => setQrTarget(null)}
+        />
+      )}
     </AdminBentoCard>
   );
 }
