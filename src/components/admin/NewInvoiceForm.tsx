@@ -45,7 +45,8 @@ export function NewInvoiceForm({
   ]);
   const [contractorName, setContractorName] = useState('');
   const [contractorPayout, setContractorPayout] = useState('');
-  const [markPaid, setMarkPaid] = useState(false);
+  const [recordPayment, setRecordPayment] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -55,6 +56,15 @@ export function NewInvoiceForm({
   const lineTotal = (li: DraftLineItem) =>
     (parseFloat(li.quantity) || 0) * (parseFloat(li.unit_price) || 0);
   const total = items.reduce((sum, li) => sum + lineTotal(li), 0);
+
+  /**
+   * Money already collected on this job. A partial payment is the normal case
+   * (deposit taken, balance to follow), so this is an amount rather than a
+   * paid/unpaid flag. Clamped to the total — an invoice can't be overpaid here.
+   */
+  const paidNow = recordPayment ? Math.min(Math.max(parseFloat(paymentAmount) || 0, 0), total) : 0;
+  const balance = total - paidNow;
+  const paidInFull = recordPayment && paidNow > 0 && balance < 0.005;
 
   const setItem = (i: number, patch: Partial<DraftLineItem>) =>
     setItems(prev => prev.map((li, idx) => (idx === i ? { ...li, ...patch } : li)));
@@ -120,10 +130,13 @@ export function NewInvoiceForm({
           line_items,
           subtotal: total,
           total,
-          amount_due: markPaid ? 0 : total,
-          status: markPaid ? 'paid' : 'draft',
-          payment_method: markPaid ? paymentMethod.trim() || null : null,
-          paid_at: markPaid ? new Date().toISOString() : null,
+          amount_due: balance,
+          // A part-paid job is still owed money, so it stays a draft/invoice —
+          // only a fully settled one is 'paid'. See client-documents:
+          // "Flip to `paid` only when the full balance is in".
+          status: paidInFull ? 'paid' : 'draft',
+          payment_method: paidNow > 0 ? paymentMethod.trim() || null : null,
+          paid_at: paidInFull ? new Date().toISOString() : null,
           invoice_type: 'standard',
           contractor_name: contractorName.trim() || null,
           contractor_payout: payout,
@@ -132,13 +145,15 @@ export function NewInvoiceForm({
         .single();
       if (invErr) throw invErr;
 
-      if (markPaid) {
+      if (paidNow > 0) {
         const { error: payErr } = await supabase.from('invoice_payments').insert({
           invoice_id: invoice.id,
-          amount: total,
+          amount: paidNow,
           method: paymentMethod.trim() || null,
           paid_at: new Date().toISOString(),
-          notes: 'Recorded at invoice creation.',
+          notes: paidInFull
+            ? 'Recorded at invoice creation.'
+            : 'Partial payment recorded at invoice creation.',
         });
         if (payErr) throw payErr;
       }
@@ -316,24 +331,52 @@ export function NewInvoiceForm({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={markPaid}
-              onChange={(e) => setMarkPaid(e.target.checked)}
+              checked={recordPayment}
+              onChange={(e) => setRecordPayment(e.target.checked)}
               className="accent-white"
             />
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-              Already paid in full — record the payment now
+              Some or all of this is already paid — record the payment now
             </span>
           </label>
-          {markPaid && (
-            <label className="block">
-              <span className={label}>Payment method</span>
-              <input
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className={field}
-                placeholder="Venmo, Stripe, Cash…"
-              />
-            </label>
+          {recordPayment && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className={label}>Amount received</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    className={field}
+                    placeholder="0.00"
+                  />
+                </label>
+                <label className="block">
+                  <span className={label}>Payment method</span>
+                  <input
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className={field}
+                    placeholder="Venmo, Stripe, Cash…"
+                  />
+                </label>
+              </div>
+              <button
+                onClick={() => setPaymentAmount(total.toFixed(2))}
+                className="text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+              >
+                Paid in full ({money(total)})
+              </button>
+              <p className="text-[10px] uppercase tracking-widest text-white/40">
+                {paidInFull
+                  ? 'Settled in full — invoice will be marked paid'
+                  : `Balance remaining ${money(balance)}`}
+              </p>
+            </div>
           )}
         </div>
       </div>

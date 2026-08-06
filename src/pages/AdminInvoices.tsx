@@ -89,6 +89,153 @@ function fmtUSD(n: number) {
   return `$${n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 }
 
+const sumPayments = (list: InvoicePayment[] | undefined) =>
+  (list || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+
+/**
+ * Records a payment against an existing invoice. Jobs are routinely part-paid —
+ * a deposit lands, the balance follows — so this takes an amount rather than
+ * flipping the invoice to 'paid'. Per client-documents: the invoice only
+ * becomes 'paid' once the full balance is in; until then the money lives in
+ * invoice_payments, which is what the revenue tiles actually sum.
+ */
+function RecordPaymentForm({
+  invoice,
+  collected,
+  onRecorded,
+}: {
+  invoice: Invoice;
+  collected: number;
+  onRecorded: () => void;
+}) {
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const outstanding = Math.max(0, invoice.total - collected);
+  const entered = Math.min(Math.max(parseFloat(amount) || 0, 0), outstanding);
+  const settles = entered > 0 && outstanding - entered < 0.005;
+
+  const field = 'w-full bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors';
+  const label = 'block text-[9px] text-white/40 uppercase tracking-widest mb-1.5';
+
+  async function save() {
+    setErr(null);
+    if (entered <= 0) return setErr('Enter an amount greater than zero');
+    setSaving(true);
+    try {
+      const { error: payErr } = await supabase.from('invoice_payments').insert({
+        invoice_id: invoice.id,
+        amount: entered,
+        method: method.trim() || null,
+        paid_at: new Date().toISOString(),
+        notes: notes.trim() || null,
+      });
+      if (payErr) throw payErr;
+
+      const { error: invErr } = await supabase
+        .from('invoices')
+        .update({
+          amount_due: Math.max(0, outstanding - entered),
+          ...(settles
+            ? { status: 'paid', paid_at: new Date().toISOString() }
+            : {}),
+          ...(method.trim() && !invoice.payment_method ? { payment_method: method.trim() } : {}),
+        })
+        .eq('id', invoice.id);
+      if (invErr) throw invErr;
+
+      setAmount('');
+      setMethod('');
+      setNotes('');
+      onRecorded();
+    } catch (e: any) {
+      setErr(e?.message || 'Could not record the payment');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (outstanding < 0.005) {
+    return (
+      <p className="text-[10px] uppercase tracking-widest text-green-400/70">
+        Paid in full — {fmtUSD(collected)} collected
+      </p>
+    );
+  }
+
+  return (
+    <div className="bg-white/[0.02] p-4 space-y-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-[9px] text-white/20 uppercase tracking-widest">Record a payment</p>
+        <p className="text-[10px] font-mono text-white/50">
+          {fmtUSD(collected)} of {fmtUSD(invoice.total)} · {fmtUSD(outstanding)} outstanding
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className={label}>Amount</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={field}
+            placeholder="0.00"
+          />
+        </label>
+        <label className="block">
+          <span className={label}>Method</span>
+          <input
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            className={field}
+            placeholder="Venmo, Cash, Zelle…"
+          />
+        </label>
+      </div>
+
+      <label className="block">
+        <span className={label}>Note (optional)</span>
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className={field}
+          placeholder="e.g. Deposit for wall painting"
+        />
+      </label>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={save}
+          disabled={saving || entered <= 0}
+          className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          {saving ? 'Recording…' : 'Record Payment'}
+        </button>
+        <button
+          onClick={() => setAmount(outstanding.toFixed(2))}
+          className="text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+        >
+          Pay balance ({fmtUSD(outstanding)})
+        </button>
+        {entered > 0 && (
+          <span className="text-[10px] uppercase tracking-widest text-white/40">
+            {settles ? 'Settles the invoice' : `Leaves ${fmtUSD(outstanding - entered)}`}
+          </span>
+        )}
+      </div>
+
+      {err && <p className="text-[10px] font-bold uppercase tracking-widest text-red-400">{err}</p>}
+    </div>
+  );
+}
+
 export default function AdminInvoices() {
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -160,6 +307,9 @@ export default function AdminInvoices() {
 
       setClients(clientList);
       setInvoices(invoiceList);
+      // The detail screen holds its own copy of the row; without this it keeps
+      // showing the pre-payment status and balance after a payment is recorded.
+      setSelectedInvoice(prev => (prev ? invoiceList.find(i => i.id === prev.id) || prev : prev));
 
       // Fetch payments for all invoices
       if (invoiceList.length > 0) {
@@ -183,9 +333,18 @@ export default function AdminInvoices() {
   }
 
   const paidInvoices  = invoices.filter(i => i.status === 'paid');
-  const totalRevenue  = paidInvoices.reduce((s, i) => s + i.total, 0);
+  // Collected follows money actually recorded, so a deposit on a part-paid job
+  // counts. Legacy 'paid' invoices predate invoice_payments and have no rows,
+  // so they fall back to their total — same rule as the revenue tiles.
+  const totalRevenue  = invoices.reduce((s, i) => {
+    const recorded = sumPayments(payments[i.id]);
+    return s + (recorded > 0 ? recorded : i.status === 'paid' ? i.total : 0);
+  }, 0);
   const pending       = invoices.filter(i => i.status === 'sent' || i.status === 'overdue');
-  const pendingTotal  = pending.reduce((s, i) => s + i.total, 0);
+  const pendingTotal  = pending.reduce(
+    (s, i) => s + Math.max(0, i.total - sumPayments(payments[i.id])),
+    0
+  );
 
   function toggleClient(id: string) {
     setExpandedClients(prev => {
@@ -262,9 +421,19 @@ export default function AdminInvoices() {
                   <div className="flex items-center justify-between gap-4 sm:justify-end sm:gap-5 shrink-0">
                     <div className="sm:text-right">
                       <p className="text-lg font-black font-mono text-white leading-none">{fmtUSD(inv.total)}</p>
-                      <p className="text-[9px] text-white/20 uppercase tracking-wider mt-1.5">
-                        {inv.payment_method || '—'}
-                      </p>
+                      {(() => {
+                        const collected = sumPayments(payments[inv.id]);
+                        const due = inv.total - collected;
+                        return collected > 0 && due > 0.005 ? (
+                          <p className="text-[9px] text-amber-400/70 uppercase tracking-wider mt-1.5 font-mono">
+                            {fmtUSD(collected)} paid · {fmtUSD(due)} due
+                          </p>
+                        ) : (
+                          <p className="text-[9px] text-white/20 uppercase tracking-wider mt-1.5">
+                            {inv.payment_method || '—'}
+                          </p>
+                        );
+                      })()}
                     </div>
                     <div className="flex items-center gap-2">
                     {inv.pdf_token && (
@@ -388,8 +557,20 @@ export default function AdminInvoices() {
                             </div>
                           ))}
                         </div>
+                        <div className="flex justify-between pt-3">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</span>
+                          <span className="font-mono font-bold text-white">
+                            {fmtUSD(Math.max(0, selectedInvoice.total - sumPayments(payments[selectedInvoice.id])))}
+                          </span>
+                        </div>
                       </div>
                     )}
+
+                    <RecordPaymentForm
+                      invoice={selectedInvoice}
+                      collected={sumPayments(payments[selectedInvoice.id])}
+                      onRecorded={load}
+                    />
 
                     {/* Payment methods note */}
                     {selectedInvoice.payment_method && (
