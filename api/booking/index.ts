@@ -217,13 +217,13 @@ async function resolvePromo(
   supabase: ReturnType<typeof getSupabase>,
   rawCode: string | null,
   clientEmail: string,
-): Promise<{ code: string; pct: number } | null> {
+): Promise<{ code: string; pct: number; amount: number | null; finalPrice: number | null } | null> {
   if (!rawCode) return null
   const code = rawCode.toUpperCase()
 
   const { data: promo } = await supabase
     .from('promo_codes')
-    .select('code, discount_pct, client_id, single_use, used_at, expires_at, active')
+    .select('code, discount_pct, discount_amount, final_price, client_id, single_use, used_at, expires_at, active')
     .eq('code', code)
     .maybeSingle()
 
@@ -241,7 +241,12 @@ async function resolvePromo(
     if (!owner?.email || owner.email.toLowerCase() !== clientEmail.toLowerCase()) return null
   }
 
-  return { code: promo.code, pct: Number(promo.discount_pct) }
+  return {
+    code: promo.code,
+    pct: promo.discount_pct != null ? Number(promo.discount_pct) : 0,
+    amount: promo.discount_amount != null ? Number(promo.discount_amount) : null,
+    finalPrice: promo.final_price != null ? Number(promo.final_price) : null,
+  }
 }
 
 function resolvePhotoPrice(
@@ -417,15 +422,32 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
             const claimed = extractPromoCode(notes)
             const resolved = await resolvePromo(supabase, claimed, email.toLowerCase().trim())
             const promo = resolved?.code || null
-            const discountPct = resolved?.pct || 0
-            const total = Math.round((pricing.price * (1 - discountPct / 100)) * 100) / 100
+
+            // final_price beats discount_amount beats discount_pct. A number
+            // agreed with a client in writing is stated, not approximated by a
+            // percentage that lands near it — 10% off $335 is $301.50, and the
+            // client was told $300.
+            let total = pricing.price
+            let discountLabel: string | null = null
+            if (resolved?.finalPrice != null) {
+                total = resolved.finalPrice
+                discountLabel = `Agreed rate — ${promo}`
+            } else if (resolved?.amount != null) {
+                total = Math.max(0, pricing.price - resolved.amount)
+                discountLabel = `Discount — ${promo}`
+            } else if (resolved && resolved.pct > 0) {
+                total = Math.round(pricing.price * (1 - resolved.pct / 100) * 100) / 100
+                discountLabel = `Discount — ${promo} (${resolved.pct}%)`
+            }
+            total = Math.round(total * 100) / 100
+
             const lineItems = [
                 { description: pricing.label, quantity: 1, unit_price: pricing.price, amount: pricing.price },
             ]
-            if (discountPct > 0) {
+            if (discountLabel && total < pricing.price) {
                 const off = Math.round((pricing.price - total) * 100) / 100
                 lineItems.push({
-                    description: `Discount — ${promo} (${discountPct}%)`,
+                    description: discountLabel,
                     quantity: 1,
                     unit_price: -off,
                     amount: -off,
