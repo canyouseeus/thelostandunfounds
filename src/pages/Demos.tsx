@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import AffiliateBanner from '../components/affiliate/AffiliateBanner';
 
 /* ============================================================
    THE LOST+UNFOUNDS — Demo index. Route: /demos
@@ -180,6 +181,11 @@ export default function Demos() {
 
       <div className="dmx">
         <style>{css}</style>
+
+        {/* Affiliate program banner — the same strip the homepage runs above its
+            nav. /demos renders outside <Layout>, so it has to be placed here
+            explicitly; noMargin keeps it flush to the top of the page. */}
+        <AffiliateBanner noMargin />
 
         <div className="page">
           <div className="eyebrow">The Lost+Unfounds</div>
