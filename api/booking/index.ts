@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
+import { createQuoteForBooking, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -135,6 +136,62 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
     })
 }
 
+/**
+ * Fixed-price photo services, priced server-side.
+ *
+ * Only services with a real rate card appear here. Web Development, Retainer
+ * and Brand / Editorial are quoted case by case, so they are deliberately
+ * absent — an automatic Stripe link for a consultation would be wrong.
+ *
+ * Prices are resolved on the server and never read from the request: the
+ * amount a client is charged must not be something they can post.
+ */
+const AIRBNB_EVENT_TYPE = 'Airbnb / Short-Term Rental'
+
+const AIRBNB_TIERS: Array<{ maxBedrooms: number; price: number; label: string }> = [
+  { maxBedrooms: 1, price: 195, label: 'Studio / 1 bedroom' },
+  { maxBedrooms: 2, price: 265, label: '2 bedroom' },
+  { maxBedrooms: 3, price: 335, label: '3 bedroom' },
+  { maxBedrooms: 99, price: 425, label: '4+ bedroom / luxury' },
+]
+
+const FIXED_PHOTO_PRICES: Record<string, number> = {
+  'Portrait Session': 250,
+  'Lifestyle Shoot': 250,
+  'Event Coverage': 600,
+  'Half-Day Content': 800,
+  'Full-Day Content': 1400,
+}
+
+// Client discount codes. Percentages only, applied to the resolved rate.
+const PROMO_CODES: Record<string, number> = {
+  AIRBNB10: 10,
+  RUBYHOPE10: 10,
+}
+
+function resolvePhotoPrice(
+  eventType: string,
+  bedrooms?: number,
+): { price: number; label: string } | null {
+  if (eventType === AIRBNB_EVENT_TYPE) {
+    const n = Number(bedrooms)
+    if (!Number.isFinite(n) || n < 0) return null
+    const tier = AIRBNB_TIERS.find(t => n <= t.maxBedrooms) || AIRBNB_TIERS[AIRBNB_TIERS.length - 1]
+    return { price: tier.price, label: `Airbnb listing photography (${tier.label})` }
+  }
+  const flat = FIXED_PHOTO_PRICES[eventType]
+  if (flat) return { price: flat, label: `Photography — ${eventType}` }
+  return null
+}
+
+function extractPromoCode(notes: string | null | undefined): string | null {
+  if (!notes) return null
+  const m = /Promo code:\s*([A-Za-z0-9-]{3,24})/i.exec(notes)
+  if (!m) return null
+  const code = m[1].toUpperCase()
+  return PROMO_CODES[code] != null ? code : null
+}
+
 async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
     try {
         return await handleBookingRequestInner(req, res)
@@ -161,7 +218,10 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         end_time,
         location,
         notes,
-        retainer
+        retainer,
+        // Only used to pick a rate-card tier — the price itself is resolved
+        // server-side from this, never taken from the request.
+        bedrooms
     } = req.body
 
     if (!name || !email || !event_type || !event_date) {
@@ -238,6 +298,47 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         return res.status(500).json({ error: 'Failed to submit booking request', details: error.message })
     }
 
+    // Fixed-price photo shoots are quoted immediately: the client sees an
+    // invoice with a Stripe deposit link as soon as they book, rather than
+    // waiting for someone to raise it by hand. Consultation-style work
+    // (web dev, retainers, brand) resolves to null here and stays manual.
+    //
+    // Best-effort: a booking that saved is not failed by a quoting problem —
+    // the quote can be raised from the admin endpoint afterwards.
+    let quote: { created: boolean; invoiceNumber?: string; total?: number; error?: string } = { created: false }
+    const pricing = resolvePhotoPrice(event_type.trim(), bedrooms)
+    if (pricing) {
+        try {
+            const promo = extractPromoCode(notes)
+            const discountPct = promo ? PROMO_CODES[promo] : 0
+            const total = Math.round((pricing.price * (1 - discountPct / 100)) * 100) / 100
+            const lineItems = [
+                { description: pricing.label, quantity: 1, unit_price: pricing.price, amount: pricing.price },
+            ]
+            if (discountPct > 0) {
+                const off = Math.round((pricing.price - total) * 100) / 100
+                lineItems.push({
+                    description: `Discount — ${promo} (${discountPct}%)`,
+                    quantity: 1,
+                    unit_price: -off,
+                    amount: -off,
+                })
+            }
+            const result = await createQuoteForBooking({
+                bookingId: data.id as string,
+                totalPrice: total,
+                lineItems,
+                description: `${pricing.label}${promo ? ` — ${promo} applied` : ''}`,
+                origin: siteOrigin(req),
+            })
+            quote = { created: true, invoiceNumber: result.invoiceNumber, total: result.total }
+        } catch (quoteErr: any) {
+            const msg = quoteErr?.message || String(quoteErr)
+            console.warn('[BookingRequest] auto-quote failed:', msg)
+            quote = { created: false, error: msg }
+        }
+    }
+
     // Send notification email inline (best-effort). We await it so there's no
     // dangling promise after res.json() — Vercel kills the function when the
     // response is sent, and a rejected pending fetch was surfacing as
@@ -253,7 +354,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         notify = { sent: false, error: msg }
     }
 
-    return res.status(200).json({ success: true, bookingId: data.id, notify })
+    return res.status(200).json({ success: true, bookingId: data.id, notify, quote })
 }
 
 async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>) {

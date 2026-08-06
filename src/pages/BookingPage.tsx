@@ -188,6 +188,15 @@ const TRAVEL_TIERS = [
 const WEBDEV_EVENT_TYPES = ['Web Development', 'Retainer (Monthly)'];
 const isWebDevEventType = (eventType: string) => WEBDEV_EVENT_TYPES.includes(eventType);
 
+// Mirrors AIRBNB_TIERS in api/booking/index.ts. Display only — the server
+// resolves the actual price from the bedroom count it is sent.
+const AIRBNB_BEDROOM_OPTIONS = [
+    { value: 1, label: 'Studio / 1', price: 195 },
+    { value: 2, label: '2 bed', price: 265 },
+    { value: 3, label: '3 bed', price: 335 },
+    { value: 4, label: '4+ / lux', price: 425 },
+];
+
 const EVENT_TYPES = [
     'Portrait Session',
     'Lifestyle Shoot',
@@ -236,6 +245,7 @@ interface FormData {
     location: string;
     notes: string;
     retainer: boolean;
+    bedrooms?: number;
 }
 
 const EMPTY_FORM: FormData = {
@@ -464,7 +474,12 @@ const BookingPage: React.FC = () => {
         switch (detailsStep) {
             case 0: return form.name.trim().length > 0;
             case 1: return form.email.trim().length > 0 && form.email.includes('@');
-            case 2: return form.event_type.trim().length > 0;
+            case 2:
+                if (form.event_type.trim().length === 0) return false;
+                // An Airbnb booking without a bedroom count cannot be priced,
+                // so it would silently fall back to a manual quote.
+                if (form.event_type === 'Airbnb / Short-Term Rental') return !!form.bedrooms;
+                return true;
             case 3: return true;
             case 4: return true;
             default: return false;
@@ -943,6 +958,27 @@ const BookingPage: React.FC = () => {
                                                 </button>
                                             ))}
                                         </div>
+                                        {form.event_type === 'Airbnb / Short-Term Rental' && (
+                                            <div className="mt-6">
+                                                <p className="text-white text-sm font-bold mb-1">How many bedrooms?</p>
+                                                <p className="text-white/40 text-xs mb-3">
+                                                    Sets your rate — we'll send the invoice as soon as you book.
+                                                </p>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {AIRBNB_BEDROOM_OPTIONS.map(o => (
+                                                        <button
+                                                            key={o.value}
+                                                            type="button"
+                                                            onClick={() => set('bedrooms', o.value)}
+                                                            className={`px-3 py-3 text-center transition-colors rounded-none ${form.bedrooms === o.value ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                                        >
+                                                            <span className="block text-[11px] font-black uppercase tracking-wider leading-tight">{o.label}</span>
+                                                            <span className={`block text-[10px] font-mono mt-1 ${form.bedrooms === o.value ? 'text-black/60' : 'text-white/40'}`}>${o.price}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

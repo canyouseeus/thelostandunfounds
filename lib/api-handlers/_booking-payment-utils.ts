@@ -281,3 +281,160 @@ export async function sendBookingPaymentEmail(args: {
     throw new Error(result.error || 'Failed to send payment email')
   }
 }
+
+/**
+ * Create a quote for a booking: invoice row, Stripe deposit link, branded email.
+ *
+ * Extracted so the admin endpoint (api/booking/create-quote.ts) and automatic
+ * quoting at booking time run the same code. A duplicated implementation of a
+ * payment path is how the two drift and one of them starts charging the wrong
+ * amount.
+ *
+ * Throws on validation or Stripe/DB failure. A failed *email* is not fatal —
+ * the invoice and link exist and can be resent — so it is reported instead.
+ */
+export async function createQuoteForBooking(args: {
+  bookingId: string
+  totalPrice: number
+  depositPct?: number
+  lineItems?: BookingLineItem[]
+  description?: string
+  origin: string
+}): Promise<{
+  invoiceId: string
+  invoiceNumber: string
+  paymentUrl: string
+  pdfUrl: string
+  total: number
+  depositAmount: number
+  emailed: boolean
+  emailError?: string
+}> {
+  const { bookingId, totalPrice, origin } = args
+  const pct = Number(args.depositPct ?? 50)
+
+  if (!bookingId) throw new Error('bookingId is required')
+  if (!(totalPrice > 0)) throw new Error('totalPrice must be a positive number')
+  if (!(pct > 0) || pct >= 100) throw new Error('depositPct must be between 1 and 99')
+
+  const supabase = getSupabaseAdmin()
+  const stripe = getStripe()
+
+  const { data: booking, error: bookingErr } = await supabase
+    .from('bookings').select('*').eq('id', bookingId).single()
+  if (bookingErr || !booking) throw new Error('Booking not found')
+
+  const client = await upsertClientForBooking(supabase, booking)
+  const recipient = client.email || booking.email
+  if (!recipient || !recipient.includes('@')) {
+    throw new Error('No client email available to send the quote to')
+  }
+
+  const items: BookingLineItem[] =
+    Array.isArray(args.lineItems) && args.lineItems.length > 0
+      ? args.lineItems.map((li) => ({
+          description: String(li.description || 'Photography services'),
+          quantity: li.quantity != null ? Number(li.quantity) : 1,
+          unit_price: li.unit_price != null ? Number(li.unit_price) : undefined,
+          amount: Number(li.amount) || 0,
+        }))
+      : [{
+          description: `Photography — ${booking.event_type || 'shoot'}`,
+          quantity: 1,
+          unit_price: totalPrice,
+          amount: totalPrice,
+        }]
+
+  const subtotal = items.reduce((s, li) => s + (Number(li.amount) || 0), 0)
+  const total = Math.round(totalPrice * 100) / 100
+  const depositAmount = Math.round(total * pct) / 100
+  const depositCents = Math.round(depositAmount * 100)
+  if (depositCents < 50) throw new Error('Deposit amount is below Stripe minimum ($0.50)')
+
+  const invoiceNumber = await nextInvoiceNumber(supabase, 'QUO')
+  const pdfToken = randomToken()
+
+  const { data: invoice, error: invErr } = await supabase
+    .from('invoices')
+    .insert({
+      client_id: client.id,
+      booking_id: bookingId,
+      invoice_number: invoiceNumber,
+      invoice_type: 'quote',
+      date: new Date().toISOString().slice(0, 10),
+      event_date: booking.event_date || null,
+      description: args.description || `Photography services — ${booking.event_type || 'shoot'}`,
+      line_items: items,
+      subtotal,
+      total,
+      amount_due: depositAmount,
+      status: 'sent',
+      payment_method: 'Stripe',
+      pdf_token: pdfToken,
+    })
+    .select('id')
+    .single()
+
+  if (invErr || !invoice) throw new Error(`Failed to create quote invoice: ${invErr?.message}`)
+
+  const link = await createPaymentLink(stripe, {
+    amountCents: depositCents,
+    productName: `Deposit (${pct}%) — ${booking.event_type || 'Photography'} — ${invoiceNumber}`,
+    description: `${invoiceNumber} deposit — booking ${bookingId}`,
+    metadata: {
+      source: BOOKING_PAYMENT_SOURCE,
+      kind: 'quote',
+      invoiceId: invoice.id,
+      bookingId,
+    },
+    redirectUrl: `${origin}/booking?payment=success`,
+  })
+
+  await supabase
+    .from('invoices')
+    .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url })
+    .eq('id', invoice.id)
+
+  await supabase
+    .from('bookings')
+    .update({
+      total_amount_cents: Math.round(total * 100),
+      deposit_amount_cents: depositCents,
+    })
+    .eq('id', bookingId)
+
+  const pdfUrl = `${origin}/api/invoices/pdf?id=${invoice.id}&token=${pdfToken}`
+
+  let emailed = false
+  let emailError: string | undefined
+  try {
+    const bodyHtml = buildBookingPaymentEmailBody({
+      kind: 'quote',
+      clientName: client.name || booking.name,
+      invoiceNumber,
+      eventType: booking.event_type,
+      eventDate: booking.event_date,
+      projectTotal: total,
+      amountDue: depositAmount,
+      amountDueLabel: `Deposit Due (${pct}%)`,
+      paymentUrl: link.url,
+      pdfUrl,
+    })
+    await sendBookingPaymentEmail({ to: recipient, kind: 'quote', invoiceNumber, bodyHtml })
+    emailed = true
+  } catch (mailErr: any) {
+    emailError = mailErr?.message || String(mailErr)
+    console.warn('[createQuoteForBooking] email send failed:', emailError)
+  }
+
+  return {
+    invoiceId: invoice.id,
+    invoiceNumber,
+    paymentUrl: link.url,
+    pdfUrl,
+    total,
+    depositAmount,
+    emailed,
+    emailError,
+  }
+}
