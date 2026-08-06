@@ -97,6 +97,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
 | invoice, proposal, quote, estimate, client document | `client-documents` |
 | billing, deposit, payment link, promo code, discount code, checkout | `email-billing` |
+| blocked connector, "requires approval", can't do it from here | `build-the-endpoint` |
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
@@ -126,6 +127,17 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | `/deploy-and-verify` | Deploying to production | `.agent/workflows/deploy-and-verify.md` |
 | `/cleanup` | Monthly maintenance | `.agent/workflows/cleanup.md` |
 | `/send-email` | Sending emails | `.agent/workflows/send-email.md` |
+
+## CAPABILITY RULE — build it before reporting you can't
+
+The Vercel environment holds the Stripe, Supabase, Zoho and Google credentials so the platform can
+act on its own behalf. When a connector or MCP tool is blocked in a non-interactive session
+(`requires approval`, unauthenticated server), **do not stop at "I can't do that from here" and do
+not send the owner into a third-party dashboard.** Check whether the app already holds the
+credential and add an admin-gated endpoint that does the job.
+
+Read `build-the-endpoint` first. It has the pattern, the admin gate, and the cases where this must
+NOT be used — chiefly, never rebuild a capability the owner deliberately denied.
 
 ## MODEL SELECTION RULE
 
