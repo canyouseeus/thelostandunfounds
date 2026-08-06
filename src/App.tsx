@@ -49,6 +49,7 @@ import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
 import BecomeAffiliate from './pages/BecomeAffiliate'
+import ScrollToTop from './components/ScrollToTop'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 import AdminAffiliates from './pages/AdminAffiliates'
 import Unsubscribe from './pages/Unsubscribe'
@@ -131,6 +132,7 @@ function App() {
   return (
     <BrowserRouter>
       <NavigationExposer />
+      <ScrollToTop />
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
