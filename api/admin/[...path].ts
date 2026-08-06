@@ -118,8 +118,6 @@ export default async function handler(
         return await handleSendWelcomeEmails(req, res)
       case 'send-silva-star-proposal':
         return await handleSendSilvaStarProposal(req, res)
-      case 'send-kelly-gallery-access':
-        return await handleSendKellyGalleryAccess(req, res)
       case 'secret-santa':
         return await handleSecretSanta(req, res)
       case 'affiliates':
@@ -187,14 +185,6 @@ async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) 
  */
 async function handleSendSilvaStarProposal(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/send-silva-star-proposal.js')
-  return handler.default(req, res)
-}
-
-/**
- * One-off: re-issue Kelly's gallery access link. Fixed recipient; delete once sent.
- */
-async function handleSendKellyGalleryAccess(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/send-kelly-gallery-access.js')
   return handler.default(req, res)
 }
 
