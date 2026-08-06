@@ -134,6 +134,64 @@ access instructions — nothing already on file — then generates the invoice.
 **That link is a bearer link.** Anyone holding it can read that client's name, email and business.
 Acceptable for a link mailed to that client; do not post it anywhere public.
 
+## Advising on a negotiation — consult first, never auto-approve
+
+A client emails asking for a deal. **Nothing is offered, quoted or sent until the owner decides
+the number.** There is no auto-approve, no "reasonable discount" applied on anyone's behalf, and
+no discount mentioned to a client before he has agreed to it. The job here is to give him the
+numbers to decide with, then execute the decision.
+
+### What to bring to the decision
+
+Never answer "what discount should I give?" with a percentage alone. Bring:
+
+1. **The list price** and what the client is anchored on. A returning client compares against what
+   they last paid, not the rate card — say so explicitly if the previous job was a smaller scope.
+2. **The subcontractor cost for this job.** This is the number that decides whether a discount is
+   affordable. Query it, do not estimate:
+
+```sql
+select invoice_number, total, contractor_name, contractor_payout
+  from invoices where client_id = '<id>' order by date desc;
+```
+
+3. **The resulting margin, in dollars and percent.** INV-004 is the reference point: $200 billed,
+   $130 to the photographer — **35% margin**. A 10% discount on a job with that split is coming
+   almost entirely out of the owner's share, not the job's.
+4. **Market position.** Austin STR shoots run $100–400 for a standard unit; MLS listing work
+   $150–325 with a ~$185 median. Say where the proposed number sits.
+5. **A recommendation with a floor**, and the reason for it.
+
+### The under-quoting guard
+
+Before advising any discount, state the margin **after** the discount, in dollars. If the
+subcontractor rate for the job is not yet agreed, say that the discount cannot be costed and
+recommend settling it first. A percentage that sounds small is not small when the contractor takes
+65% of revenue.
+
+Do not present a discount as free goodwill. It is margin, and it should be traded for something:
+
+- **Volume** — the rate holds across multiple units, growing the account instead of resetting the price
+- **Referral** — they join the affiliate program and earn on who they send
+- **Portfolio rights** — the work can be shown publicly
+- **Off-peak** — they take a slot that was hard to fill
+
+### Once he decides
+
+Only then: issue the invoice with `create-negotiated-quote` (always with `listPrice`, so the
+concession shows), and send the branded email. **That email must carry all three:**
+
+1. **The agreed price**, and one line explaining any difference from the rate card, so the number
+   does not read as arbitrary
+2. **The booking funnel link** — `?view=booking&service=<id>&promo=<CODE>&client=<clients.id>`,
+   never a bare `/?view=booking`
+3. **The affiliate invite** — `/become-affiliate?ref=<owner code>`, framed as earning rather than
+   saving. A client asking for a discount is telling you they are cost-sensitive; a referral link
+   is the answer that costs margin only once
+
+Built with `generateTransactionalEmail()`, CC `media@`, and tested to the admin inbox first per
+`email-rendering` RULE 6.
+
 ## Negotiated pricing — saying yes to a deal over email
 
 Repeat clients ask. "This is what I can work with" is a normal opening, and taking the job at a
