@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { getAffiliateRef } from '../../utils/affiliate-tracking';
 
 /**
  * Express booking for a client we already have on file.
@@ -124,10 +125,17 @@ export default function ExpressBookingModal({
         setSubmitting(true);
         setError('');
         try {
+            // Carry the affiliate link through the express flow too — a
+            // returning client can still arrive on a referral.
+            const affiliateRef = getAffiliateRef();
             const res = await fetch('/api/booking?action=request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+                },
                 body: JSON.stringify({
+                    affiliate_code: affiliateRef || undefined,
                     name: client.name,
                     email: client.email,
                     business_name: client.business || '',

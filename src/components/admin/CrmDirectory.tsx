@@ -17,6 +17,8 @@ export interface CrmClient {
   business: string | null;
   notes: string | null;
   created_at: string;
+  /** Affiliate who referred this client — the lifetime-attribution fallback. */
+  referred_by_code?: string | null;
   invoiceCount: number;
   billed: number;
   collected: number;
@@ -62,7 +64,7 @@ export function useCrmClients() {
     (async () => {
       try {
         const [clientsRes, invoicesRes, paymentsRes] = await Promise.all([
-          supabase.from('clients').select('id, name, email, phone, business, notes, created_at'),
+          supabase.from('clients').select('id, name, email, phone, business, notes, created_at, referred_by_code'),
           supabase.from('invoices').select('id, client_id, total, status, date, paid_at'),
           supabase.from('invoice_payments').select('invoice_id, amount'),
         ]);
@@ -238,6 +240,23 @@ function ClientEditor({
             placeholder="Anything worth remembering about this client…"
           />
         </label>
+
+        {/*
+          Read-only on purpose. Attribution is first-touch and permanent — it is
+          recorded when the client books through an affiliate link, and an admin
+          editing a phone number must not be able to move a customer from one
+          affiliate to another by accident.
+        */}
+        <div className="block">
+          <span className="block text-[9px] text-white/40 uppercase tracking-widest mb-1.5">Referred By</span>
+          <div className="w-full bg-white/5 px-3 py-2.5 text-sm">
+            {client.referred_by_code ? (
+              <span className="text-white font-bold tracking-widest">{client.referred_by_code}</span>
+            ) : (
+              <span className="text-white/30 normal-case">No affiliate referral on record</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {err && (

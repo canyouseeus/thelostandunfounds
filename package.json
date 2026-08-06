@@ -26,7 +26,8 @@
     "dev:mantis": "./scripts/dev-mantis.sh",
     "proposal:css": "node scripts/sync-proposal-css.mjs",
     "proposal:css:check": "node scripts/sync-proposal-css.mjs --check",
-    "proposal:pdf": "node scripts/proposal-pdf.mjs"
+    "proposal:pdf": "node scripts/proposal-pdf.mjs",
+    "check:referral-attach": "tsx scripts/check-referral-attach.ts"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

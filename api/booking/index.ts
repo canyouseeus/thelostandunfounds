@@ -2,7 +2,12 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
-import { createQuoteForBooking, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
+import { createQuoteForBooking, siteOrigin, upsertClientForBooking } from '../../lib/api-handlers/_booking-payment-utils.js'
+import {
+    affiliateCodeFromRequest,
+    attachReferralToClient,
+    resolveAffiliateByCode,
+} from '../../lib/api-handlers/affiliates/_referral-attach.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -380,9 +385,16 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
 
     const isTest = isTestBooking(req, req.body)
 
+    // The affiliate link that brought them here. Sent by the booking form from
+    // the `?ref=` cookie/storage, or as the X-Affiliate-Ref header the checkout
+    // paths already use. Recorded on the booking whether or not it resolves —
+    // an unrecognised code is still evidence of where the client came from.
+    const claimedAffiliateCode = affiliateCodeFromRequest(req as any)
+
     const { data, error } = await supabase
         .from('bookings')
         .insert({
+            affiliate_code: claimedAffiliateCode,
             name: name.trim(),
             business_name: business_name?.trim() || null,
             email: email.toLowerCase().trim(),
@@ -402,6 +414,51 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     if (error) {
         console.error('[BookingRequest] Insert error:', error)
         return res.status(500).json({ error: 'Failed to submit booking request', details: error.message })
+    }
+
+    // Lifetime referral fallback.
+    //
+    // A booking is where an affiliate's customer becomes *our* client, and it
+    // is the moment the link is still in hand. So: make sure the client exists
+    // in the CRM, make sure the lifetime tie exists in affiliate_customers, and
+    // mirror the referring code onto the CRM record. If the tie is ever lost or
+    // the client rebooks from a plain URL, the CRM still names the affiliate.
+    //
+    // First touch wins and is never overwritten — see _referral-attach.
+    // Best-effort: a saved booking is never failed by an attribution problem.
+    let referral: { attached: boolean; code?: string; reason?: string } = { attached: false }
+    if (!isTest) {
+        try {
+            const client = await upsertClientForBooking(supabase, {
+                name: name.trim(),
+                email: email.toLowerCase().trim(),
+                phone: phone?.trim() || null,
+                business_name: business_name?.trim() || null,
+            })
+            const result = await attachReferralToClient(supabase, {
+                clientId: client.id,
+                email: email.toLowerCase().trim(),
+                affiliateCode: claimedAffiliateCode,
+                source: 'booking_request',
+            })
+            referral = {
+                attached: result.attached,
+                code: result.affiliateCode,
+                reason: result.reason,
+            }
+            if (result.affiliateId) {
+                console.log('[BookingRequest] referral attribution:', {
+                    bookingId: data.id,
+                    clientId: client.id,
+                    code: result.affiliateCode,
+                    attached: result.attached,
+                    reason: result.reason,
+                })
+            }
+        } catch (referralErr: any) {
+            console.warn('[BookingRequest] referral attach failed:', referralErr?.message)
+            referral = { attached: false, reason: referralErr?.message || 'error' }
+        }
     }
 
     // Fixed-price photo shoots are quoted immediately: the client sees an
@@ -488,7 +545,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     try {
         if (isTest) {
             notify = { sent: false, error: 'test booking — notifications suppressed' }
-            return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote })
+            return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote, referral })
         }
         await sendBookingNotification(data.id as string, supabase)
         notify = { sent: true }
@@ -499,7 +556,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         notify = { sent: false, error: msg }
     }
 
-    return res.status(200).json({ success: true, bookingId: data.id, notify, quote })
+    return res.status(200).json({ success: true, bookingId: data.id, notify, quote, referral })
 }
 
 async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>) {
@@ -572,6 +629,36 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
 
     if (error) return res.status(500).json({ error: error.message })
 
+    // An admin attaching a code by hand is the manual half of the same
+    // fallback: it must reach the CRM record and the lifetime tie, not just sit
+    // on the booking row where only the commission trigger would ever see it.
+    if (affiliate_code !== undefined && affiliate_code) {
+        try {
+            const { data: b } = await supabase
+                .from('bookings')
+                .select('name, email, phone, business_name')
+                .eq('id', id)
+                .maybeSingle()
+            const affiliate = await resolveAffiliateByCode(supabase, affiliate_code)
+            if (b?.email && affiliate) {
+                const client = await upsertClientForBooking(supabase, {
+                    name: b.name,
+                    email: b.email,
+                    phone: b.phone,
+                    business_name: b.business_name,
+                })
+                await attachReferralToClient(supabase, {
+                    clientId: client.id,
+                    email: b.email,
+                    affiliateCode: affiliate.code,
+                    source: 'admin_booking_update',
+                })
+            }
+        } catch (attachErr: any) {
+            console.warn('[BookingAdminUpdate] referral attach failed:', attachErr?.message)
+        }
+    }
+
     const willTriggerCommission = status === 'paid' || status === 'completed'
     const willNotifyCustomer = !!(status && notify_customer)
     let booking: any = null
@@ -589,12 +676,29 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
     if (booking && willTriggerCommission) {
         try {
             if (booking.email && booking.total_amount_cents) {
+                // If this booking carries no code — a repeat client who came
+                // back through a plain URL — fall back to the referral stamped
+                // on their CRM record. The affiliate who brought them keeps
+                // them for life, whichever link the second booking came from.
+                let fallbackCode: string | null = booking.affiliate_code || null
+                if (!fallbackCode) {
+                    const { data: crmClient } = await supabase
+                        .from('clients')
+                        .select('referred_by_code')
+                        .ilike('email', booking.email)
+                        .limit(1)
+                        .maybeSingle()
+                    fallbackCode = crmClient?.referred_by_code || null
+                    if (fallbackCode) {
+                        console.log('[booking] using CRM referral fallback:', { id, code: fallbackCode })
+                    }
+                }
                 const result = await triggerReferralCommission(supabase, {
                     email: booking.email,
                     source: 'booking',
                     sourceId: booking.id,
                     grossAmount: Number(booking.total_amount_cents) / 100,
-                    fallbackAffiliateCode: booking.affiliate_code || null,
+                    fallbackAffiliateCode: fallbackCode,
                 })
                 if (result.triggered) {
                     console.log('[booking] commission triggered:', { id, amount: result.amount })
