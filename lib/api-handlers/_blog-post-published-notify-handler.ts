@@ -65,30 +65,30 @@ function generateEmailBody(postTitle: string, postUrl: string, authorName: strin
   const ordinal = getOrdinalSuffix(postNumber)
 
   return `
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Hello ${authorName},
     </p>
-    <p style="color: #ffffff; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif; font-weight: bold;">
+    <p style="color: #000000; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif; font-weight: bold;">
       Congratulations! Your ${ordinal} blog post has been published to THE LOST ARCHIVES BOOK CLUB!
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       <strong>${postTitle}</strong>
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
       Your article is now live and available for readers to discover.
     </p>
     <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
       <tr>
         <td align="left">
-          <a href="${postUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
+          <a href="${postUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; ">
             View Your Published Post &rarr;
           </a>
         </td>
       </tr>
     </table>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
-      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+    <hr style="border: none; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 30px 0;">
+    <p style="color: rgba(0, 0, 0, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(0, 0, 0, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
     </p>
   `
 }

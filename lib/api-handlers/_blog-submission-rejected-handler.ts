@@ -12,29 +12,29 @@ function generateEmailBody(articleTitle: string, authorName: string, rejectionRe
     .replace(/\n/g, '<br>')
 
   return `
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Hello ${authorName},
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Thank you for submitting your article to THE LOST ARCHIVES. After careful review, we're unable to publish your submission at this time.
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       <strong>${articleTitle}</strong>
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
       <strong>Reason for rejection:</strong>
     </p>
-    <div style="background-color: rgba(255, 255, 255, 0.05); border-left: 3px solid rgba(255, 255, 255, 0.3); padding: 15px; margin: 0 0 20px 0;">
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0; text-align: left; font-family: Arial, sans-serif;">
+    <div style="background-color: rgba(0, 0, 0, 0.05); border-left: 3px solid rgba(0, 0, 0, 0.3); padding: 15px; margin: 0 0 20px 0;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0; text-align: left; font-family: Arial, sans-serif;">
         ${escapedReason}
       </p>
     </div>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       We encourage you to revise your submission based on the feedback above and resubmit. We appreciate your interest in contributing to THE LOST ARCHIVES.
     </p>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
-      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+    <hr style="border: none; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 30px 0;">
+    <p style="color: rgba(0, 0, 0, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(0, 0, 0, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
     </p>
   `
 }

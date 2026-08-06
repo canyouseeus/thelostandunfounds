@@ -6,24 +6,24 @@ import { sendTransactionalEmail } from './_resend-email-handler.js'
  */
 function generateEmailBody(articleTitle: string, authorName: string, authorEmail?: string): string {
   return `
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Hello ${authorName},
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Thank you for submitting your article to THE LOST ARCHIVES.
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       <strong>${articleTitle}</strong>
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       We've received your submission and our team will review it shortly. You'll receive an email notification once your article has been reviewed.
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
       We appreciate your contribution to THE LOST ARCHIVES community.
     </p>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
-      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+    <hr style="border: none; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 30px 0;">
+    <p style="color: rgba(0, 0, 0, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(0, 0, 0, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
     </p>
   `
 }

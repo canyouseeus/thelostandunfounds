@@ -10,12 +10,18 @@ export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://www.thelostandunfounds.com/brand/banner.png',
   website: 'https://www.thelostandunfounds.com',
+  // The banner is a black block with white type; the message body below it is
+  // white with black text. Mail clients routinely refuse a dark body palette
+  // and re-render it light — Gmail was already serving these emails as white
+  // with black text regardless of what the template asked for. Specifying the
+  // light palette outright means every client renders the same thing instead
+  // of each one guessing.
   colors: {
-    background: '#000000',
-    text: '#ffffff',
-    textMuted: '#999999',
-    border: '#1a1a1a',
-    link: '#eeeeee',
+    background: '#ffffff',
+    text: '#000000',
+    textMuted: '#666666',
+    border: '#e5e5e5',
+    link: '#000000',
   },
 };
 
@@ -65,12 +71,12 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     :root {
-      color-scheme: light dark;
-      supported-color-schemes: light dark;
+      color-scheme: light;
+      supported-color-schemes: light;
     }
     /* Reset styles */
     body, table, td, p, a, li, blockquote {
@@ -249,7 +255,10 @@ export const EMAIL_STYLES = {
   heading3: `color: ${BRAND.colors.text} !important; font-size: 20px; font-weight: bold; margin: 25px 0 15px 0;`,
   paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
   link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
-  button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.background}; color: ${BRAND.colors.text}; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${BRAND.colors.text};`,
+  // Solid black fill, white type, no outline. The old rule filled the button
+  // with the page colour and relied on a 2px border to make it visible, which
+  // is why CTAs read as empty outlined boxes.
+  button: `display: inline-block; padding: 14px 28px; background-color: #000000; color: #ffffff !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
   divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
   muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };

@@ -90,7 +90,29 @@ When reviewing any file that sends email, check for:
 
 ## Palette
 
-- Background: `#000000`
-- Text: `#ffffff`
+The banner is a black block with white type. **The message body below it is
+white with black text** — the banner is the only dark region in the email.
+
+- Body background: `#ffffff`
+- Body text: `#000000`
+- Muted text: `#666666`
+- Buttons: **black fill `#000000`, white text `#ffffff`, no border**
 
 The template already applies these. Only restate them if you are hand-authoring a section that sits outside `wrapEmailContent`.
+
+### ❌ Never give a button a border
+
+A button is a solid black fill with white type. It never carries an outline.
+
+Historically the button was filled with the page colour and made visible by a
+`2px solid #ffffff` border — on a black body that rendered as an empty outlined
+box, which is not the brand. If you see `border: 2px solid` in any button
+style, delete it and set `background-color: #000000; color: #ffffff`.
+
+### ❌ Never reintroduce the dark body
+
+Body background is white. Mail clients routinely refuse a dark body palette and
+re-render it light — Gmail was already serving these emails as white with black
+text no matter what the template asked for, so clients disagreed with each
+other. `color-scheme` and `supported-color-schemes` are both `light`; leave them
+that way. Do not "restore" `#000000` as the body background.

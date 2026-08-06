@@ -12,24 +12,24 @@ function generateEmailBody(articleTitle: string, authorName: string, unpublishRe
         .replace(/\n/g, '<br>')
 
     return `
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
         Hello ${authorName},
       </p>
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
         We are writing to inform you that your article has been unpublished and returned to the review cycle for further revisions.
       </p>
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
         <strong>Article: ${articleTitle}</strong>
       </p>
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
         <strong>Reason for unpublishing:</strong>
       </p>
-      <div style="background-color: rgba(255, 255, 255, 0.05); border-left: 3px solid rgba(255, 255, 255, 0.3); padding: 15px; margin: 0 0 20px 0;">
-        <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0; text-align: left; font-family: Arial, sans-serif;">
+      <div style="background-color: rgba(0, 0, 0, 0.05); border-left: 3px solid rgba(0, 0, 0, 0.3); padding: 15px; margin: 0 0 20px 0;">
+        <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0; text-align: left; font-family: Arial, sans-serif;">
           ${escapedReason}
         </p>
       </div>
-      <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
         Your submission is once again "Pending Review". Please log in to your dashboard to address the feedback above and resubmit for publication.
       </p>
     `
