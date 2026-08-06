@@ -74,9 +74,16 @@ export function useCrmClients() {
           paidByInvoice.set(p.invoice_id, (paidByInvoice.get(p.invoice_id) || 0) + Number(p.amount || 0));
         }
 
+        // Only issued invoices count toward what a client has been billed.
+        // A draft was never sent, and void/cancelled were withdrawn — counting
+        // either overstates billed and leaves phantom money outstanding. A test
+        // invoice raised in error showed as $301.50 owed until this.
+        const COUNTS_AS_BILLED = new Set(['sent', 'paid', 'overdue']);
+
         const byClient = new Map<string, { count: number; billed: number; collected: number; last: string | null }>();
         for (const inv of invoicesRes.data || []) {
           if (!inv.client_id) continue;
+          if (!COUNTS_AS_BILLED.has(String(inv.status || ''))) continue;
           const agg = byClient.get(inv.client_id) || { count: 0, billed: 0, collected: 0, last: null };
           const total = Number(inv.total || 0);
           const recorded = paidByInvoice.get(inv.id);
