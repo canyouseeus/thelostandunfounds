@@ -13,6 +13,14 @@ interface EditableTileProps {
   onDropBefore: (dragged: string, target: string) => void;
   light: boolean;
   onToggleBackground: (id: string) => void;
+  /**
+   * Whether hovering the cell washes the whole tile. True for the data
+   * widgets, where the tile is the thing you click. False for the tools —
+   * clock, calendar, calculator — where the target is a key, a day or a
+   * control, and each already lights on its own hover. Washing those too
+   * highlighted the whole instrument to say you were over one key of it.
+   */
+  wash?: boolean;
   children: ReactNode;
 }
 
@@ -161,6 +169,7 @@ export function EditableTile({
   onDropBefore,
   light,
   onToggleBackground,
+  wash = true,
   children,
 }: EditableTileProps) {
   const [over, setOver] = useState(false);
@@ -174,10 +183,12 @@ export function EditableTile({
   if (!editing) return (
     <div className={cn(className, 'relative group')}>
       {children}
-      <span
-        className="pointer-events-none absolute inset-0 bg-white/[0.07] opacity-0 transition-opacity duration-150 [@media(hover:hover)]:group-hover:opacity-100"
-        style={{ borderRadius: 0 }}
-      />
+      {wash && (
+        <span
+          className="pointer-events-none absolute inset-0 bg-white/[0.07] opacity-0 transition-opacity duration-150 [@media(hover:hover)]:group-hover:opacity-100"
+          style={{ borderRadius: 0 }}
+        />
+      )}
     </div>
   );
 

@@ -29,7 +29,11 @@ export function DashboardCategoryCard({ icon, title, footer, content, span, prim
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
+        {/* `block w-full h-full` is what makes these tiles fill their cell. The
+            trigger is a button — inline-block, height from its content — so the
+            tile's own h-full resolved against a box the size of the text and the
+            widget sat short in a full-height cell, unlike the drawn widgets. */}
+        <ExpandableScreenTrigger className={`block w-full h-full text-left cursor-pointer ${span ?? ''}`}>
           {/* At-a-glance face; opens full screen on click. */}
           <DashboardTile light={light} size={size} icon={icon} primary={primary} caption={caption}>
             {aside}
