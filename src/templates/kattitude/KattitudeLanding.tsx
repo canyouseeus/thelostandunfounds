@@ -32,7 +32,7 @@ const LEOPARD_BTN: React.CSSProperties = {
   backgroundPosition: 'center',
   color: '#ffffff',
 };
-const BEE = 'https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png';
+const BEE = '/brand/kattitude-logo.png';
 
 function useLocalDark() {
   const [dark, setDark] = useState<boolean>(() => {
