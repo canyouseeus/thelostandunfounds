@@ -14,6 +14,7 @@ import {
     XMarkIcon,
     MagnifyingGlassIcon,
     MapPinIcon,
+    FunnelIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -292,6 +293,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const isAllPublic = librarySlug === 'all-public';
     const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
     const [searchModalOpen, setSearchModalOpen] = useState(false);
+    // Floating console tray — only one card open at a time (bento-design "Platform Console Tray")
+    const [openCard, setOpenCard] = useState<'filter' | 'view' | null>(null);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
@@ -1071,7 +1074,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
             </div>
 
-            {/* Sticky Toolbar - Full Width, Plain Black Bar */}
+            {/* Sticky Toolbar — tabs only. Every browsing tool now lives in the floating
+                console tray at the bottom of the viewport (see below). */}
+            {user && (
             <div
                 ref={toolbarRef}
                 className="sticky z-[100] bg-black w-full py-3 mb-6"
@@ -1079,8 +1084,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">
                     {/* Row 1: Tabs */}
-                    {user && (
-                        <div className="flex gap-8 text-center justify-center w-full relative z-[101]">
+                    <div className="flex gap-8 text-center justify-center w-full relative z-[101]">
                             <button
                                 onClick={() => setActiveTab('storefront')}
                                 className={`text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase transition-colors relative pb-2 ${activeTab === 'storefront' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
@@ -1098,95 +1102,10 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 {activeTab === 'assets' && (
                                     <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
                                 )}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Row 2: Icons (Centered underneath) */}
-                    <div className="flex items-center justify-center gap-12 sm:gap-16 w-full relative z-[101]">
-                        <button
-                            onClick={() => setViewMode(viewMode === 'grid' ? 'single' : 'grid')}
-                            className="p-2 transition-colors text-white/60 hover:text-white"
-                            title={viewMode === 'grid' ? 'Switch to Single Column View' : 'Switch to Grid View'}
-                        >
-                            {/* Icon shows the view you'll switch TO (grid is the default). */}
-                            <span className="block transition-transform duration-300 ease-in-out">
-                                {viewMode === 'grid' ? (
-                                    <StopIcon className="w-5 h-5" />
-                                ) : (
-                                    <Squares2X2Icon className="w-5 h-5" />
-                                )}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setViewMode(viewMode === 'map' ? 'grid' : 'map')}
-                            className={cn("p-2 transition-colors", viewMode === 'map' ? "text-white" : "text-white/40 hover:text-white/60")}
-                            title="Map View"
-                        >
-                            <MapPinIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (startDate || endDate) {
-                                    setStartDate('');
-                                    setEndDate('');
-                                    setShowCalendar(false);
-                                } else {
-                                    setShowCalendar(true);
-                                }
-                            }}
-                            className={cn(
-                                "p-2 transition-colors",
-                                startDate || endDate ? "text-white" : "text-white/40 hover:text-white/60"
-                            )}
-                            title={startDate && endDate ? "Clear Dates" : "Filter by Date"}
-                        >
-                            <CalendarIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setSearchModalOpen(true)}
-                            className="p-2 transition-colors text-white/40 hover:text-white/60"
-                            title="Search (⌘K)"
-                        >
-                            <MagnifyingGlassIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* Tag Filter Chips */}
-            {availableTags.length > 0 && (
-                <div className="max-w-7xl mx-auto mb-6 px-4 md:px-8">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {selectedTagIds.length > 0 && (
-                            <button
-                                onClick={() => setSelectedTagIds([])}
-                                className="flex items-center gap-1 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
-                            >
-                                <XMarkIcon className="w-2.5 h-2.5" />
-                                Clear
-                            </button>
-                        )}
-                        {availableTags.map(tag => {
-                            const active = selectedTagIds.includes(tag.id);
-                            return (
-                                <button
-                                    key={tag.id}
-                                    onClick={() => setSelectedTagIds(prev =>
-                                        active ? prev.filter(id => id !== tag.id) : [...prev, tag.id]
-                                    )}
-                                    className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border transition-colors ${
-                                        active
-                                            ? 'bg-white text-black border-white'
-                                            : 'text-white/40 border-white/20 hover:text-white hover:border-white/40'
-                                    }`}
-                                >
-                                    {tag.name}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
             )}
 
             {/* Map View */}
@@ -1413,33 +1332,181 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 galleryName={library?.name}
             />
 
-            {/* Back to Top Button */}
-            {
-                showBackToTop && (
-                    <button
-                        onClick={() => {
-                            if (!photosRef.current) return;
-                            // Account for fixed nav + sticky toolbar so the first date group
-                            // isn't hidden behind them after scrolling
-                            const navH = parseInt(
-                                getComputedStyle(document.documentElement)
-                                    .getPropertyValue('--nav-height') || '64'
-                            );
-                            const toolbarH = toolbarRef.current?.offsetHeight ?? 72;
-                            const offset = navH + toolbarH + 8; // 8px breathing room
-                            const top =
-                                photosRef.current.getBoundingClientRect().top +
-                                window.scrollY -
-                                offset;
-                            window.scrollTo({ top, behavior: 'smooth' });
-                        }}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
-                        aria-label="Back to top"
-                    >
-                        <ArrowUpIcon className="w-5 h-5" />
-                    </button>
-                )
-            }
+            {/* Floating console tray — the customer-facing counterpart to the admin gallery's
+                tray in AdminPhotosBrowse.tsx. Frosted glass (bg-white/10 backdrop-blur-md
+                rounded-full), fixed at bottom-24 so it stays reachable while the grid scrolls
+                underneath, exactly like the back-to-top button it absorbs. When the checkout
+                SelectionTray is up (fixed bottom-0), the tray lifts clear of it.
+                See "Platform Console Tray — Variant B" in the bento-design skill. */}
+            <div
+                className={cn(
+                    "fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300",
+                    selectedPhotos.length > 0 ? "bottom-[10.5rem] md:bottom-32" : "bottom-24"
+                )}
+            >
+                <AnimatePresence>
+                    {openCard && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.15 }}
+                            className="bg-black/80 backdrop-blur-2xl w-[calc(100vw-2rem)] max-w-sm p-4 max-h-[50vh] overflow-y-auto"
+                        >
+                            {openCard === 'filter' && (
+                                <>
+                                    <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Tag</p>
+                                    {availableTags.length === 0 ? (
+                                        <p className="text-[10px] text-white/30">No tags in this gallery.</p>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-1">
+                                            <button
+                                                onClick={() => setSelectedTagIds([])}
+                                                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedTagIds.length === 0 ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                                            >All</button>
+                                            {availableTags.map(tag => {
+                                                const active = selectedTagIds.includes(tag.id);
+                                                return (
+                                                    <button
+                                                        key={tag.id}
+                                                        onClick={() => setSelectedTagIds(prev =>
+                                                            active ? prev.filter(id => id !== tag.id) : [...prev, tag.id]
+                                                        )}
+                                                        className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${active ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                                                    >{tag.name}</button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {openCard === 'view' && (
+                                <>
+                                    <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">View</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {([
+                                            { id: 'grid', label: 'Grid' },
+                                            { id: 'single', label: 'Single' },
+                                            { id: 'map', label: 'Map' },
+                                        ] as const).map(opt => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => { setViewMode(opt.id); setOpenCard(null); }}
+                                                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${viewMode === opt.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                                            >{opt.label}</button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
+                    {([
+                        {
+                            id: 'search',
+                            icon: MagnifyingGlassIcon,
+                            label: 'Search',
+                            active: searchModalOpen,
+                            onClick: () => { setOpenCard(null); setSearchModalOpen(true); },
+                        },
+                        {
+                            id: 'filter',
+                            icon: FunnelIcon,
+                            label: 'Filter',
+                            active: openCard === 'filter' || selectedTagIds.length > 0,
+                            badge: selectedTagIds.length || undefined,
+                            onClick: () => setOpenCard(c => c === 'filter' ? null : 'filter'),
+                        },
+                        {
+                            id: 'dates',
+                            icon: CalendarIcon,
+                            label: (startDate || endDate) ? 'Clear Dates' : 'Dates',
+                            active: !!(startDate || endDate),
+                            onClick: () => {
+                                setOpenCard(null);
+                                if (startDate || endDate) {
+                                    setStartDate('');
+                                    setEndDate('');
+                                    setShowCalendar(false);
+                                } else {
+                                    setShowCalendar(true);
+                                }
+                            },
+                        },
+                        {
+                            id: 'view',
+                            icon: viewMode === 'map' ? MapPinIcon : viewMode === 'single' ? StopIcon : Squares2X2Icon,
+                            label: 'View',
+                            active: openCard === 'view' || viewMode !== 'grid',
+                            onClick: () => setOpenCard(c => c === 'view' ? null : 'view'),
+                        },
+                        {
+                            id: 'cart',
+                            icon: CheckCircleIcon,
+                            label: 'Selected',
+                            active: selectedPhotos.length > 0,
+                            badge: selectedPhotos.length || undefined,
+                            onClick: () => {
+                                setOpenCard(null);
+                                if (selectedPhotos.length > 0) handleCheckout();
+                            },
+                        },
+                        {
+                            id: 'top',
+                            icon: ArrowUpIcon,
+                            label: 'Back to Top',
+                            active: false,
+                            onClick: () => {
+                                setOpenCard(null);
+                                if (!photosRef.current) {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    return;
+                                }
+                                // Account for fixed nav + sticky toolbar so the first date group
+                                // isn't hidden behind them after scrolling
+                                const navH = parseInt(
+                                    getComputedStyle(document.documentElement)
+                                        .getPropertyValue('--nav-height') || '64'
+                                );
+                                const toolbarH = toolbarRef.current?.offsetHeight ?? 0;
+                                const offset = navH + toolbarH + 8; // 8px breathing room
+                                const top =
+                                    photosRef.current.getBoundingClientRect().top +
+                                    window.scrollY -
+                                    offset;
+                                window.scrollTo({ top, behavior: 'smooth' });
+                            },
+                        },
+                    ] as const)
+                        .filter(btn => !(btn.id === 'top' && !showBackToTop))
+                        .map(btn => (
+                            <button
+                                key={btn.id}
+                                onClick={btn.onClick}
+                                title={btn.label}
+                                aria-label={btn.label}
+                                className={`relative p-2.5 sm:p-3 transition-all duration-300 rounded-full group/btn ${
+                                    btn.active
+                                        ? 'bg-white text-black scale-110'
+                                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                                }`}
+                            >
+                                <btn.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                {'badge' in btn && btn.badge ? (
+                                    <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                                        {btn.badge}
+                                    </span>
+                                ) : null}
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                                    {btn.label}
+                                </span>
+                            </button>
+                        ))}
+                </div>
+            </div>
 
             {/* Tray */}
             <SelectionTray
