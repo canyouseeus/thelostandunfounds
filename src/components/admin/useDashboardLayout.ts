@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
-import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X2, TILE_2X4, TILE_4X2, TILE_4X4 } from './DashboardTile';
+import { LAYOUT_GENERATION, readLocal, readRemote, writeLocal, writeRemote } from './dashboardLayoutStore';
+import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X1, TILE_2X2, TILE_2X4, TILE_4X1, TILE_4X2, TILE_4X4 } from './DashboardTile';
 
 /**
  * The widget shapes, smallest first — the order the resize control offers them.
  * Named in columns x rows on a grid four columns wide on a phone and eight on
  * desktop, so 2x2 is the familiar small widget and 1x2 is half of one.
  */
-export const SHAPES = ['1x1', '1x2', '1x4', '2x2', '2x4', '4x2', '4x4'] as const;
+export const SHAPES = ['1x1', '2x1', '1x2', '4x1', '2x2', '1x4', '4x2', '2x4', '4x4'] as const;
 export type ShapeName = (typeof SHAPES)[number];
 
 export const SHAPE_CLASS: Record<ShapeName, string> = {
   '1x1': TILE_1X1,
+  '2x1': TILE_2X1,
+  '4x1': TILE_4X1,
   '1x2': TILE_1X2,
   '1x4': TILE_1X4,
   '2x2': TILE_2X2,
@@ -23,6 +25,8 @@ export const SHAPE_CLASS: Record<ShapeName, string> = {
 
 export const SHAPE_LABEL: Record<ShapeName, string> = {
   '1x1': '1×1',
+  '2x1': '2×1',
+  '4x1': '4×1',
   '1x2': '1×2',
   '1x4': '1×4',
   '2x2': '2×2',
@@ -38,6 +42,8 @@ export const SHAPE_LABEL: Record<ShapeName, string> = {
  */
 const SHAPE_UNITS: Record<ShapeName, number> = {
   '1x1': 1 * 1,
+  '2x1': 2 * 1,
+  '4x1': 4 * 1,
   '1x2': 1 * 2, '1x4': 1 * 4, '2x2': 2 * 2, '2x4': 2 * 4, '4x2': 4 * 2, '4x4': 4 * 4,
 };
 
@@ -54,6 +60,18 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   clock: ['1x1', '2x2', '4x4'],
   calendar: ['1x1', '2x2', '4x4'],
   calculator: ['1x1', '2x2', '4x4'],
+  // A census wants a ledger's proportions: the small squares and thin strips
+  // truncate it into a number with no story, so registry offers the wide,
+  // tall and large shapes only.
+  registry: ['4x2', '2x4', '4x4'],
+  // Analytics reads as a chart with a split — the squares under 2x2 and the
+  // strips have no room for either.
+  'site-analytics': ['2x2', '4x2', '2x4'],
+  // The CRM face is a dial and a count; the roster needs ledger room.
+  crm: ['2x2', '4x2', '2x4', '4x4'],
+  // A feed: the face plus the list shapes.
+  notifications: ['2x2', '4x2', '2x4', '4x4'],
+  'network-status': ['2x2', '4x2', '2x4', '4x4'],
 };
 
 export function shapeOptions(id: string): readonly ShapeName[] {
@@ -61,18 +79,29 @@ export function shapeOptions(id: string): readonly ShapeName[] {
 }
 
 /** Shipped layout. A tile with no entry falls back to 2x2. */
+/**
+ * The designed default: a composed mosaic, not a starting mess. Shapes and
+ * order are chosen so the phone lattice (4 units per row) and the desktop
+ * lattice (8 per row) both fill with zero holes: total area is 80 units —
+ * twenty full phone rows, ten desktop rows. On a phone it reads top to
+ * bottom: time and sky, then money, the calendar, the census, analytics
+ * beside the client book, the feed, the services, the keypad.
+ */
 export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   clock: '2x2',
   weather: '2x2',
-  calendar: '4x4',
-  'operational-load': '2x2',
   'revenue-performance': '4x2',
-  'network-status': '4x2',
-  registry: '2x2',
+  // The two 4x4s are adjacent on purpose: on the eight-column desktop they
+  // pair into one band. Split apart, whichever came last took four rows of
+  // the left half and left the right half empty — a hole no amount of total
+  // area fixes, because packing is placement, not arithmetic.
+  calendar: '4x4',
+  calculator: '4x4',
+  registry: '4x2',
   'site-analytics': '2x2',
   crm: '2x2',
-  calculator: '4x4',
   notifications: '4x2',
+  'network-status': '4x2',
 };
 
 /** Order tiles appear in. Rearranged by dragging in edit mode. */
@@ -82,20 +111,44 @@ interface Stored {
   shapes: Record<string, ShapeName>;
   order: string[];
   backgrounds: Record<string, 'black' | 'white'>;
+  generation?: number;
+}
+
+/**
+ * A saved layout can predate a widget's shape restrictions — clamp every
+ * stored shape to the widget's current catalogue, falling back to its
+ * default (or the catalogue's first entry) rather than rendering a view
+ * the widget no longer has.
+ */
+function clampShapes(shapes: Record<string, ShapeName>): Record<string, ShapeName> {
+  const out: Record<string, ShapeName> = {};
+  for (const [id, shape] of Object.entries(shapes)) {
+    const options = shapeOptions(id);
+    out[id] = options.includes(shape) ? shape : (DEFAULT_LAYOUT[id] ?? options[0]);
+  }
+  return out;
 }
 
 /** Fill in anything a saved layout doesn't mention, and drop anything stale. */
 function reconcile(saved: Partial<Stored> | null): Stored {
-  if (!saved) return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {} };
+  // No layout, or one from an older generation of the default: take the
+  // designed board. A layout saved before the shapes were redesigned is an
+  // arrangement of a different dashboard — merging it strands tiles at sizes
+  // that no longer compose, which is how a board of 1x1s survived the
+  // redesign.
+  if (!saved || (saved.generation ?? 1) < LAYOUT_GENERATION) {
+    return { shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {}, generation: LAYOUT_GENERATION };
+  }
   return {
     // Merge rather than replace: a tile added after a layout was saved should
     // appear at its default size instead of vanishing.
-    shapes: { ...DEFAULT_LAYOUT, ...(saved.shapes ?? {}) },
+    shapes: clampShapes({ ...DEFAULT_LAYOUT, ...(saved.shapes ?? {}) }),
     order: [
       ...(saved.order ?? []).filter(id => DEFAULT_ORDER.includes(id)),
       ...DEFAULT_ORDER.filter(id => !(saved.order ?? []).includes(id)),
     ],
     backgrounds: saved.backgrounds ?? {},
+    generation: LAYOUT_GENERATION,
   };
 }
 
@@ -171,7 +224,7 @@ export function useDashboardLayout() {
   }, []);
 
   const reset = useCallback(() => {
-    setState({ shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {} });
+    setState({ shapes: { ...DEFAULT_LAYOUT }, order: [...DEFAULT_ORDER], backgrounds: {}, generation: LAYOUT_GENERATION });
   }, []);
 
   const classOf = useCallback((id: string) => SHAPE_CLASS[shapes[id] ?? '2x2'], [shapes]);

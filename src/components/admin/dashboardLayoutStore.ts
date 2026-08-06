@@ -6,7 +6,18 @@ export interface StoredLayout {
   order: string[];
   /** Widget id -> 'white' for a white tile. Absent means black. */
   backgrounds: Record<string, 'black' | 'white'>;
+  /**
+   * Which generation of the designed default this layout descends from. When
+   * the shipped default changes shape — new widgets, new size catalogues — a
+   * layout saved under an older generation is arrangement from a different
+   * dashboard, and keeping it strands tiles at sizes that no longer compose.
+   * Bump LAYOUT_GENERATION and saved layouts adopt the new default once.
+   */
+  generation?: number;
 }
+
+/** Raise this whenever DEFAULT_LAYOUT changes in a way worth adopting. */
+export const LAYOUT_GENERATION = 2;
 
 /**
  * Where a dashboard layout lives.
@@ -46,12 +57,17 @@ export async function readRemote(userId: string): Promise<Partial<StoredLayout> 
   try {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('shapes, tile_order, backgrounds')
+      .select('shapes, tile_order, backgrounds, generation')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error || !data) return null;
-    return { shapes: data.shapes ?? undefined, order: data.tile_order ?? undefined, backgrounds: data.backgrounds ?? undefined };
+    return {
+      shapes: data.shapes ?? undefined,
+      order: data.tile_order ?? undefined,
+      backgrounds: data.backgrounds ?? undefined,
+      generation: data.generation ?? undefined,
+    };
   } catch {
     return null;
   }
@@ -68,6 +84,7 @@ export async function writeRemote(userId: string, layout: StoredLayout): Promise
           shapes: layout.shapes,
           tile_order: layout.order,
           backgrounds: layout.backgrounds,
+          generation: LAYOUT_GENERATION,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' },

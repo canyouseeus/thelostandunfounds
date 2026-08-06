@@ -16,6 +16,8 @@ import { cn } from '../ui/utils';
  * explicit now, so the span alone decides the size.
  */
 export const TILE_1X1 = 'col-span-1 row-span-1';
+export const TILE_2X1 = 'col-span-2 row-span-1';
+export const TILE_4X1 = 'col-span-4 row-span-1';
 export const TILE_1X2 = 'col-span-1 row-span-2';
 export const TILE_1X4 = 'col-span-1 row-span-4';
 export const TILE_2X2 = 'col-span-2 row-span-2';
@@ -31,7 +33,9 @@ export const TILE_TALL = TILE_2X4;
 
 export interface TileShape {
   span?: string;
+  /** White tile, black type. Chosen per widget in the layout editor. */
   light?: boolean;
+  /** Current shape, e.g. '2x2'. Decides how much of the tile's content fits. */
   size?: string;
 }
 

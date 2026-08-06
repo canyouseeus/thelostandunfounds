@@ -349,7 +349,13 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     <Link
                       to="/admin?panel=calendar"
                       title="Open master calendar"
-                      className="flex items-center h-[46px] font-mono text-[13px] tracking-widest text-white hover:text-white/70 transition-colors"
+                      // Matched to the mini clock's digits rather than styled
+                      // on its own: the clock draws them at 15cqw of its 64px
+                      // box — 9.6px, bold, mono, tabular — so the date is the
+                      // same face at the same size instead of a larger,
+                      // lighter, letter-spaced one beside it.
+                      className="flex items-center h-[46px] font-mono font-bold tabular-nums text-white hover:text-white/70 transition-colors"
+                      style={{ fontSize: '9.6px', letterSpacing: 0 }}
                     >
                       {`${headerNow.getMonth() + 1}.${headerNow.getDate()}.${headerNow.getFullYear()}`}
                     </Link>

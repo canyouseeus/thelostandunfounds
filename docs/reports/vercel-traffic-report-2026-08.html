@@ -1,0 +1,281 @@
+<title>THE LOST+UNFOUNDS — Traffic Report</title>
+<style>
+  :root{
+    --a:#60a5fa;              /* analytics accent — blue-400 */
+    --a-fill:rgba(96,165,250,.12);
+    --a-track:rgba(96,165,250,.10);
+    --ink:#ffffff;
+    --ink-2:rgba(255,255,255,.62);
+    --ink-3:rgba(255,255,255,.38);
+    --base:#000000;
+    --raised:#0a0a0a;
+    --subtle:rgba(255,255,255,.05);
+    --pad:clamp(1.25rem,2.4vw,2rem);
+  }
+  *{box-sizing:border-box;border-radius:0}
+  body{
+    margin:0;background:var(--base);color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:var(--pad) var(--pad) 5rem}
+  h1,h2{text-transform:uppercase;margin:0;text-wrap:balance;font-weight:700}
+  h1{font-size:clamp(2rem,6.2vw,4.2rem);line-height:1;letter-spacing:-.01em}
+  h2{font-size:clamp(.95rem,1.7vw,1.15rem);letter-spacing:.16em;font-weight:600}
+  h3{margin:0;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  p{margin:0;max-width:68ch;color:var(--ink-2)}
+  .eyebrow{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--a)}
+  .num{font-variant-numeric:tabular-nums}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em;color:var(--a)}
+
+  header.masthead{padding:3.25rem 0 2.25rem;display:flex;flex-direction:column;gap:1rem}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:2px}
+  .kpi{background:var(--subtle);padding:1.35rem 1.25rem;display:flex;flex-direction:column;gap:.4rem}
+  .kpi .v{font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .kpi .c{font-size:.76rem;color:var(--ink-3)}
+
+  section{margin-top:3.25rem;display:flex;flex-direction:column;gap:1.15rem}
+  .sechead{display:flex;flex-direction:column;gap:.5rem}
+  .panel{background:var(--subtle);padding:1.5rem 1.35rem;display:flex;flex-direction:column;gap:1.1rem}
+  .panel.raised{background:var(--raised)}
+  .chartbox{overflow-x:auto}
+  svg{display:block;min-width:620px;width:100%;height:auto}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:2px}
+
+  /* accent bar list — track at 10% accent, solid accent fill */
+  .blist{display:flex;flex-direction:column;gap:.85rem}
+  .brow{display:grid;grid-template-columns:1fr auto;gap:.3rem .9rem;align-items:baseline}
+  .brow .lbl{font-size:.86rem;color:var(--ink);word-break:break-word}
+  .brow .val{font-size:.86rem;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .brow .track{grid-column:1/-1;background:var(--a-track);height:6px;display:block}
+  .brow .track i{background:var(--a);height:6px;display:block}
+
+  footer{margin-top:3.5rem;padding-top:1.25rem;color:var(--ink-3);font-size:.75rem;display:flex;flex-direction:column;gap:.4rem}
+  footer strong{color:var(--ink-2);font-weight:600}
+  .flag{background:var(--raised);padding:1.35rem 1.25rem;display:flex;flex-direction:column;gap:.6rem;margin-top:2.5rem}
+  .flag p{font-size:.86rem}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Vercel Web Analytics · 8 Nov 2025 — 5 Aug 2026</div>
+    <h1>Traffic Report<br>THE LOST+UNFOUNDS</h1>
+    <p>The full recorded history of thelostandunfounds.com, pulled from Vercel Web Analytics for project <code>thelostandunfounds</code>. Every number here is read straight from the API — nothing modelled, nothing estimated. November 2025 and August 2026 are partial months.</p>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v num">2,140</div><div class="c">Visitors, all time</div></div>
+    <div class="kpi"><div class="v num">9,795</div><div class="c">Pageviews, all time</div></div>
+    <div class="kpi"><div class="v num">4.58</div><div class="c">Pageviews per visitor</div></div>
+    <div class="kpi"><div class="v num">64.5%</div><div class="c">Mobile share</div></div>
+    <div class="kpi"><div class="v num">91.1%</div><div class="c">United States</div></div>
+  </div>
+
+  <section>
+    <div class="sechead">
+      <h2>Pageviews Over Time</h2>
+      <p>December peaked at 2,888 pageviews and March bottomed at 304 — a 89% fall in four months, and the site has not been back above 700 since.</p>
+    </div>
+    <div class="panel raised">
+      <div class="chartbox">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="Monthly pageviews, November 2025 to August 2026, peaking at 2,888 in December">
+          <g stroke="rgba(255,255,255,.08)" stroke-width="1">
+            <line x1="52" y1="268.5" x2="968" y2="268.5"/><line x1="52" y1="187.5" x2="968" y2="187.5"/>
+            <line x1="52" y1="105.5" x2="968" y2="105.5"/><line x1="52" y1="24.5" x2="968" y2="24.5"/>
+          </g>
+          <g fill="rgba(255,255,255,.38)" font-size="11" text-anchor="end">
+            <text x="44" y="272">0</text><text x="44" y="191">1,000</text>
+            <text x="44" y="109">2,000</text><text x="44" y="28">3,000</text>
+          </g>
+          <path fill="var(--a-fill)" stroke="none" d="M 52.0 163.3 C 85.9 119.9, 119.9 33.1, 153.8 33.1 C 187.7 33.1, 221.6 150.4, 255.6 150.4 C 289.5 150.4, 323.4 117.5, 357.3 117.5 C 391.3 117.5, 425.2 243.3, 459.1 243.3 C 493.0 243.3, 527.0 227.1, 560.9 222.8 C 594.8 218.4, 628.7 217.2, 662.7 217.2 C 696.6 217.2, 730.5 234.2, 764.4 237.7 C 798.4 241.2, 832.3 234.5, 866.2 238.2 C 900.1 241.9, 934.1 252.7, 968.0 259.9 L 968.0 268 L 52.0 268 Z"/>
+          <path fill="none" stroke="var(--a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M 52.0 163.3 C 85.9 119.9, 119.9 33.1, 153.8 33.1 C 187.7 33.1, 221.6 150.4, 255.6 150.4 C 289.5 150.4, 323.4 117.5, 357.3 117.5 C 391.3 117.5, 425.2 243.3, 459.1 243.3 C 493.0 243.3, 527.0 227.1, 560.9 222.8 C 594.8 218.4, 628.7 217.2, 662.7 217.2 C 696.6 217.2, 730.5 234.2, 764.4 237.7 C 798.4 241.2, 832.3 234.5, 866.2 238.2 C 900.1 241.9, 934.1 252.7, 968.0 259.9"/>
+          <circle cx="52.0" cy="163.3" r="2" fill="var(--a)"/><circle cx="153.8" cy="33.1" r="2" fill="var(--a)"/><circle cx="255.6" cy="150.4" r="2" fill="var(--a)"/><circle cx="357.3" cy="117.5" r="2" fill="var(--a)"/><circle cx="459.1" cy="243.3" r="2" fill="var(--a)"/><circle cx="560.9" cy="222.8" r="2" fill="var(--a)"/><circle cx="662.7" cy="217.2" r="2" fill="var(--a)"/><circle cx="764.4" cy="237.7" r="2" fill="var(--a)"/><circle cx="866.2" cy="238.2" r="2" fill="var(--a)"/><circle cx="968.0" cy="259.9" r="2" fill="var(--a)"/>
+          <g fill="rgba(255,255,255,.62)" font-size="11.5" text-anchor="middle" letter-spacing="1.2">
+            <text x="52" y="288">NOV</text><text x="153.8" y="288">DEC</text><text x="255.6" y="288">JAN</text>
+            <text x="357.3" y="288">FEB</text><text x="459.1" y="288">MAR</text><text x="560.9" y="288">APR</text>
+            <text x="662.7" y="288">MAY</text><text x="764.4" y="288">JUN</text><text x="866.2" y="288">JUL</text>
+            <text x="968" y="288">AUG</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Visitors Over Time</h2>
+      <p>Visitors held up better than pageviews — February matched December at 461 — but the two curves separating is the real signal: people kept arriving, they just stopped reading past the first page.</p>
+    </div>
+    <div class="panel raised">
+      <div class="chartbox">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="Monthly unique visitors, November 2025 to August 2026, peaking at 477 in December">
+          <g stroke="rgba(255,255,255,.08)" stroke-width="1">
+            <line x1="52" y1="268.5" x2="968" y2="268.5"/><line x1="52" y1="187.5" x2="968" y2="187.5"/>
+            <line x1="52" y1="105.5" x2="968" y2="105.5"/><line x1="52" y1="24.5" x2="968" y2="24.5"/>
+          </g>
+          <g fill="rgba(255,255,255,.38)" font-size="11" text-anchor="end">
+            <text x="44" y="272">0</text><text x="44" y="191">167</text>
+            <text x="44" y="109">333</text><text x="44" y="28">500</text>
+          </g>
+          <path fill="var(--a-fill)" stroke="none" d="M 52.0 192.8 C 85.9 140.3, 119.9 35.2, 153.8 35.2 C 187.7 35.2, 221.6 88.4, 255.6 88.4 C 289.5 88.4, 323.4 43.0, 357.3 43.0 C 391.3 43.0, 425.2 208.0, 459.1 208.0 C 493.0 208.0, 527.0 181.1, 560.9 181.1 C 594.8 181.1, 628.7 185.5, 662.7 193.3 C 696.6 201.1, 730.5 228.0, 764.4 228.0 C 798.4 228.0, 832.3 207.0, 866.2 207.0 C 900.1 207.0, 934.1 241.5, 968.0 258.7 L 968.0 268 L 52.0 268 Z"/>
+          <path fill="none" stroke="var(--a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M 52.0 192.8 C 85.9 140.3, 119.9 35.2, 153.8 35.2 C 187.7 35.2, 221.6 88.4, 255.6 88.4 C 289.5 88.4, 323.4 43.0, 357.3 43.0 C 391.3 43.0, 425.2 208.0, 459.1 208.0 C 493.0 208.0, 527.0 181.1, 560.9 181.1 C 594.8 181.1, 628.7 185.5, 662.7 193.3 C 696.6 201.1, 730.5 228.0, 764.4 228.0 C 798.4 228.0, 832.3 207.0, 866.2 207.0 C 900.1 207.0, 934.1 241.5, 968.0 258.7"/>
+          <circle cx="52.0" cy="192.8" r="2" fill="var(--a)"/><circle cx="153.8" cy="35.2" r="2" fill="var(--a)"/><circle cx="255.6" cy="88.4" r="2" fill="var(--a)"/><circle cx="357.3" cy="43.0" r="2" fill="var(--a)"/><circle cx="459.1" cy="208.0" r="2" fill="var(--a)"/><circle cx="560.9" cy="181.1" r="2" fill="var(--a)"/><circle cx="662.7" cy="193.3" r="2" fill="var(--a)"/><circle cx="764.4" cy="228.0" r="2" fill="var(--a)"/><circle cx="866.2" cy="207.0" r="2" fill="var(--a)"/><circle cx="968.0" cy="258.7" r="2" fill="var(--a)"/>
+          <g fill="rgba(255,255,255,.62)" font-size="11.5" text-anchor="middle" letter-spacing="1.2">
+            <text x="52" y="288">NOV</text><text x="153.8" y="288">DEC</text><text x="255.6" y="288">JAN</text>
+            <text x="357.3" y="288">FEB</text><text x="459.1" y="288">MAR</text><text x="560.9" y="288">APR</text>
+            <text x="662.7" y="288">MAY</text><text x="764.4" y="288">JUN</text><text x="866.2" y="288">JUL</text>
+            <text x="968" y="288">AUG</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Month Over Month</h2>
+      <p>Change in visitors against the prior month. March's −73% is the single event that defines the year; nothing since has recovered more than half of it.</p>
+    </div>
+    <div class="panel">
+      <div class="cols">
+        <div class="blist">
+          <div class="brow"><span class="lbl">Dec 2025</span><span class="val num">477 · +209.7%</span><span class="track"><i style="width:100%"></i></span></div>
+          <div class="brow"><span class="lbl">Jan 2026</span><span class="val num">368 · −22.9%</span><span class="track"><i style="width:10.9%"></i></span></div>
+          <div class="brow"><span class="lbl">Feb 2026</span><span class="val num">461 · +25.3%</span><span class="track"><i style="width:12.1%"></i></span></div>
+          <div class="brow"><span class="lbl">Mar 2026</span><span class="val num">123 · −73.3%</span><span class="track"><i style="width:35.0%"></i></span></div>
+        </div>
+        <div class="blist">
+          <div class="brow"><span class="lbl">Apr 2026</span><span class="val num">178 · +44.7%</span><span class="track"><i style="width:21.3%"></i></span></div>
+          <div class="brow"><span class="lbl">May 2026</span><span class="val num">153 · −14.0%</span><span class="track"><i style="width:6.7%"></i></span></div>
+          <div class="brow"><span class="lbl">Jun 2026</span><span class="val num">82 · −46.4%</span><span class="track"><i style="width:22.1%"></i></span></div>
+          <div class="brow"><span class="lbl">Jul 2026</span><span class="val num">125 · +52.4%</span><span class="track"><i style="width:25.0%"></i></span></div>
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--ink-3)">Bar length is the magnitude of the change, not its direction. December's base month (November) is partial, so +209.7% overstates real growth. August is excluded — 5 days of data.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Top 10 Pages</h2>
+      <p>The homepage takes 1,658 of 2,140 visitors — 77% of everyone who arrives — and the gallery is the only interior section that clears 300.</p>
+    </div>
+    <div class="panel">
+      <div class="blist">
+        <div class="brow"><span class="lbl">/</span><span class="val num">1,658 visitors · 3,458 views</span><span class="track"><i style="width:100%"></i></span></div>
+        <div class="brow"><span class="lbl">/gallery</span><span class="val num">387 · 779</span><span class="track"><i style="width:23.3%"></i></span></div>
+        <div class="brow"><span class="lbl">/admin</span><span class="val num">263 · 842</span><span class="track"><i style="width:15.9%"></i></span></div>
+        <div class="brow"><span class="lbl">/gallery/last-night-noir</span><span class="val num">260 · 406</span><span class="track"><i style="width:15.7%"></i></span></div>
+        <div class="brow"><span class="lbl">/shop</span><span class="val num">231 · 473</span><span class="track"><i style="width:13.9%"></i></span></div>
+        <div class="brow"><span class="lbl">/gallery/last-night</span><span class="val num">187 · 313</span><span class="track"><i style="width:11.3%"></i></span></div>
+        <div class="brow"><span class="lbl">/thelostarchives</span><span class="val num">167 · 630</span><span class="track"><i style="width:10.1%"></i></span></div>
+        <div class="brow"><span class="lbl">/auth/callback</span><span class="val num">114 · 185</span><span class="track"><i style="width:6.9%"></i></span></div>
+        <div class="brow"><span class="lbl">/become-affiliate</span><span class="val num">65 · 130</span><span class="track"><i style="width:3.9%"></i></span></div>
+        <div class="brow"><span class="lbl">/blog/plutonium/to-maine-backand-back-again</span><span class="val num">63 · 66</span><span class="track"><i style="width:3.8%"></i></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Referrers</h2>
+      <p>1,824 visitors (85.2%) arrive with no referrer at all. Of the 316 that carry one, Instagram alone accounts for 221.</p>
+    </div>
+    <div class="panel">
+      <div class="blist">
+        <div class="brow"><span class="lbl">l.instagram.com</span><span class="val num">219 visitors</span><span class="track"><i style="width:100%"></i></span></div>
+        <div class="brow"><span class="lbl">accounts.google.com <span style="color:var(--ink-3)">— sign-in return, not discovery</span></span><span class="val num">146</span><span class="track"><i style="width:66.7%"></i></span></div>
+        <div class="brow"><span class="lbl">facebook.com</span><span class="val num">84</span><span class="track"><i style="width:38.4%"></i></span></div>
+        <div class="brow"><span class="lbl">m.facebook.com</span><span class="val num">49</span><span class="track"><i style="width:22.4%"></i></span></div>
+        <div class="brow"><span class="lbl">vercel.com</span><span class="val num">20</span><span class="track"><i style="width:9.1%"></i></span></div>
+        <div class="brow"><span class="lbl">com.reddit.frontpage</span><span class="val num">14</span><span class="track"><i style="width:6.4%"></i></span></div>
+        <div class="brow"><span class="lbl">t.co (X)</span><span class="val num">11</span><span class="track"><i style="width:5.0%"></i></span></div>
+        <div class="brow"><span class="lbl">bing.com</span><span class="val num">6</span><span class="track"><i style="width:2.7%"></i></span></div>
+        <div class="brow"><span class="lbl">google.com</span><span class="val num">5</span><span class="track"><i style="width:2.3%"></i></span></div>
+        <div class="brow"><span class="lbl">paypal.com</span><span class="val num">5</span><span class="track"><i style="width:2.3%"></i></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Devices</h2>
+      <p>Mobile brings two thirds of the people; desktop brings more than half the reading, at 7.2 pages per visitor against mobile's 3.2.</p>
+    </div>
+    <div class="panel">
+      <div class="blist">
+        <div class="brow"><span class="lbl">Mobile</span><span class="val num">1,381 visitors · 64.5% · 4,404 views</span><span class="track"><i style="width:100%"></i></span></div>
+        <div class="brow"><span class="lbl">Desktop</span><span class="val num">750 · 35.0% · 5,376 views</span><span class="track"><i style="width:54.3%"></i></span></div>
+        <div class="brow"><span class="lbl">Tablet</span><span class="val num">3 · 0.1% · 5 views</span><span class="track"><i style="width:0.2%"></i></span></div>
+        <div class="brow"><span class="lbl">Unknown</span><span class="val num">6 · 0.3% · 10 views</span><span class="track"><i style="width:0.4%"></i></span></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--ink-3)">By OS: iOS 1,207 · Windows 356 · Mac 331 · Android 179 · GNU/Linux 58. By browser: Mobile Safari 652 · Chrome 628 · Instagram in-app 469 · Chrome Mobile 100 · desktop Safari 86.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Countries</h2>
+      <p>The audience is domestic to the point of being a single market — 1,950 of 2,140 visitors are American, and no other country reaches 30.</p>
+    </div>
+    <div class="panel">
+      <div class="blist">
+        <div class="brow"><span class="lbl">United States</span><span class="val num">1,950 · 91.1%</span><span class="track"><i style="width:100%"></i></span></div>
+        <div class="brow"><span class="lbl">Sweden</span><span class="val num">29 · 1.4%</span><span class="track"><i style="width:1.5%"></i></span></div>
+        <div class="brow"><span class="lbl">Germany</span><span class="val num">25 · 1.2%</span><span class="track"><i style="width:1.3%"></i></span></div>
+        <div class="brow"><span class="lbl">Ireland</span><span class="val num">23 · 1.1%</span><span class="track"><i style="width:1.2%"></i></span></div>
+        <div class="brow"><span class="lbl">China</span><span class="val num">13 · 0.6%</span><span class="track"><i style="width:0.7%"></i></span></div>
+        <div class="brow"><span class="lbl">France</span><span class="val num">9 · 0.4%</span><span class="track"><i style="width:0.5%"></i></span></div>
+        <div class="brow"><span class="lbl">India</span><span class="val num">8 · 0.4%</span><span class="track"><i style="width:0.4%"></i></span></div>
+        <div class="brow"><span class="lbl">Canada</span><span class="val num">7 · 0.3%</span><span class="track"><i style="width:0.4%"></i></span></div>
+        <div class="brow"><span class="lbl">Netherlands</span><span class="val num">7 · 0.3%</span><span class="track"><i style="width:0.4%"></i></span></div>
+        <div class="brow"><span class="lbl">All others</span><span class="val num">69 · 3.2%</span><span class="track"><i style="width:3.5%"></i></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>What Stands Out</h2>
+    </div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Search sends 13 people. Total.</h3>
+        <p>Bing (6), Google (5), DuckDuckGo (1) and Brave (1) referred <strong>13 visitors across nine months</strong> — 0.6% of traffic. Whatever the site is earning, it is not earning it in search results. That is the single largest untapped channel in this data.</p>
+      </div>
+      <div class="panel">
+        <h3>Instagram is effectively the whole funnel</h3>
+        <p><strong>469 visitors</strong> arrived inside Instagram's in-app browser and <strong>219</strong> through its <code>l.instagram.com</code> redirector. With Facebook's 133, Meta properties account for nearly every referred visit. One platform's algorithm is the traffic strategy.</p>
+      </div>
+      <div class="panel">
+        <h3>The December spike was the homepage</h3>
+        <p>December ran <strong>2,888 pageviews on 477 visitors</strong> — 6.1 pages each, the deepest month recorded. The homepage's 3,458 lifetime views is the only page large enough to have carried it; no single post or gallery is big enough to explain the peak.</p>
+      </div>
+      <div class="panel">
+        <h3>Mac is 15% of visitors and 50% of pageviews</h3>
+        <p><strong>331 Mac visitors produced 4,875 pageviews</strong> — 14.7 each, against 3.3 on iOS. Desktop Safari alone shows 86 visitors against 2,170 views. That ratio is operator behaviour, not audience, and it inflates every site-wide average in this report.</p>
+      </div>
+      <div class="panel">
+        <h3>/admin outranks /shop</h3>
+        <p><strong>/admin</strong> drew 263 visitors and 842 views — more than <strong>/shop</strong> (231 / 473). Much of that is the operator, but 263 uniques is high enough to be worth confirming the route's auth and RLS policies hold against anonymous probing.</p>
+      </div>
+      <div class="panel">
+        <h3>Blog is the weakest section</h3>
+        <p>The best-performing post, <code>/blog/plutonium/to-maine-backand-back-again</code>, drew <strong>63 visitors and 66 views</strong> — a read-through of almost exactly one page. <code>/thelostarchives</code> index gets 167 visitors but 630 views, so the browsing happens on the index, not the posts.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flag">
+    <h3>Notes on sourcing</h3>
+    <p>Visitor counts are per-dimension uniques as Vercel reports them; they do not sum to the 2,140 all-time total across dimensions, and percentages here are shares of that total. Monthly buckets are calendar months, so November (from the 8th) and August (through the 5th) are partial. Referrer and page tables are the API's top-N with the remainder grouped as “Others”, which is excluded from the ranked lists above.</p>
+  </div>
+
+  <footer>
+    <div><strong>Source</strong> Vercel Web Analytics · project <code>thelostandunfounds</code> · team THE LOST AND UNFOUNDS · window 8 Nov 2025 – 5 Aug 2026.</div>
+    <div>All figures pulled live from the Vercel MCP <code>get_web_analytics</code> endpoint. No figure on this page is estimated or interpolated.</div>
+  </footer>
+
+</div>
