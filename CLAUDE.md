@@ -96,6 +96,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
 | invoice, proposal, quote, estimate, client document | `client-documents` |
+| billing, deposit, payment link, promo code, discount code, checkout | `email-billing` |
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
