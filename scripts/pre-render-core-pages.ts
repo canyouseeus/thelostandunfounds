@@ -27,6 +27,7 @@ const CORE_PAGES = [
     // Public routes that existed in the router but not here, so the Vercel
     // catch-all served them the noindex shell — telling Google not to index
     // real, public pages. Any new public route must be added to this list.
+    { path: 'changelog', title: 'CHANGELOG | THE LOST+UNFOUNDS', description: 'Every update shipped to THE LOST+UNFOUNDS, day by day, from the first commit to today. Gallery, bookings, billing, blog, shop and platform work in the open.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },

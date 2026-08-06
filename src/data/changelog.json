@@ -1,0 +1,3403 @@
+{
+  "generatedBy": "scripts/generate-changelog.mjs",
+  "firstDate": "2025-12-27",
+  "lastDate": "2026-08-06",
+  "totalEntries": 731,
+  "totalDays": 94,
+  "days": [
+    {
+      "date": "2026-08-06",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Client gallery access and invite handling"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery invites: gate the invite endpoint, brand the email, fix env drift"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Demos: add the affiliate program banner to the top of /demos"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery invites: give invited clients their own sign-in page"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Admin sign-in: Google only"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery tray: cycle the view toggle, drop the tray lower, green prices"
+        },
+        {
+          "area": "Billing",
+          "text": "Invoices: record partial payments"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Dashboard: dock the layout editor in the Platform Console"
+        },
+        {
+          "area": "Email",
+          "text": "Auth: remove EMAIL ME A SIGN-IN LINK from the sign-in modal"
+        },
+        {
+          "area": "Billing",
+          "text": "Invoices: make line-item description usable on mobile"
+        },
+        {
+          "area": "Blog",
+          "text": "Blog Management: editorial console, blog analytics, book club removed"
+        },
+        {
+          "area": "Billing",
+          "text": "CRM: only issued invoices count toward billed and outstanding"
+        },
+        {
+          "area": "Gallery",
+          "text": "Customer gallery: floating console tray for browsing tools"
+        },
+        {
+          "area": "Billing",
+          "text": "Invoices & CRM: give the invoice and client rows room to breathe"
+        },
+        {
+          "area": "Platform",
+          "text": "Time-period toggles: stop clipping the first badge, centre the labels"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Dashboard tiles: one hover wash, full cells, tools left alone"
+        },
+        {
+          "area": "Platform",
+          "text": "/demos: our row is just the website"
+        },
+        {
+          "area": "Platform",
+          "text": "/demos: add our own site — the customer-facing build"
+        },
+        {
+          "area": "Billing",
+          "text": "Admin: deactivate a Stripe payment link from inside the app"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: a test booking cannot reach the client"
+        },
+        {
+          "area": "Billing",
+          "text": "Promo codes: real terms, enforced"
+        },
+        {
+          "area": "Billing",
+          "text": "Billing: invoice a price agreed over email"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: express modal for clients already in the CRM"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: a deep link opens at the calendar, without scrolling"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Affiliates: record the referrer at signup"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: express funnel for known clients, and confirm a paid deposit"
+        },
+        {
+          "area": "Gallery",
+          "text": "Booking: quote fixed-price photo shoots automatically"
+        },
+        {
+          "area": "Design",
+          "text": "Reset scroll on navigation for routes outside Layout"
+        },
+        {
+          "area": "Design",
+          "text": "Demos + kiosk brief: Noir. Ours, not the client's."
+        },
+        {
+          "area": "Billing",
+          "text": "Kiosk pricing: per project, and the hardware is what varies"
+        },
+        {
+          "area": "Email",
+          "text": "Email: white body, black type, solid black buttons"
+        },
+        {
+          "area": "Discovery",
+          "text": "Demos: allow search indexing"
+        },
+        {
+          "area": "Platform",
+          "text": "/demos — one address for the set, every demo still sendable alone"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: per-date slot windows and a 6-8AM early slot"
+        },
+        {
+          "area": "Platform",
+          "text": "Kiosk demo: a route that opens the real software, not a mockup"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-05",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Content requests: read the route from the URL, not req.query.path"
+        },
+        {
+          "area": "Gallery",
+          "text": "Don't fall back to the music Drive folder for content requests"
+        },
+        {
+          "area": "Platform",
+          "text": "Content requests: it's for asking anyone for content, not just clients"
+        },
+        {
+          "area": "Gallery",
+          "text": "Client asset intake: a shareable upload link that lands in Drive"
+        },
+        {
+          "area": "Design",
+          "text": "Grid: row heights in CSS, and a hover that lifts instead of inverting"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Network status folds into notifications; the clock gets a dial"
+        },
+        {
+          "area": "Platform",
+          "text": "Desktop: fill the monitor, and light tiles up under the cursor"
+        },
+        {
+          "area": "Design",
+          "text": "Default layout: pair the two 4x4s so the desktop board has no holes"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Weather: the condition layer runs only where it reads as weather"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Spec harness for the default dashboard view"
+        },
+        {
+          "area": "Platform",
+          "text": "Editor: arrange on a visible lattice, pick sizes you can see"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Layout: clamp saved shapes to each widget's catalogue, designed default"
+        },
+        {
+          "area": "Platform",
+          "text": "Notifications: the real feed, and the drill from a failed deploy to its log"
+        },
+        {
+          "area": "Platform",
+          "text": "Nothing clipped: two-line rows for dynamic labels, clipped-text check"
+        },
+        {
+          "area": "Billing",
+          "text": "CRM: the dossier drills into invoices"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Match traffic report curves to Sparkline monotone dialect"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Vercel Web Analytics traffic report (Nov 2025 - Aug 2026)"
+        },
+        {
+          "area": "Dashboard",
+          "text": "CRM: collection dial, roster bars, roster-to-dossier explorer"
+        },
+        {
+          "area": "Platform",
+          "text": "Graphs: one dialect, hero's — accents tell categories apart"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Analytics: fix the page-view black hole, drawn widget, card-stack explorer"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Registry: card-stack explorer, real user census, three ledger shapes"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "entries": [
+        {
+          "area": "Booking",
+          "text": "Booking: remove camera-specific claims from service copy"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Registry: the platform census, users tile retired"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Registry census: five real figures, fake rows dropped (WIP)"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Registry widget: per-size faces over an archive-field texture (WIP)"
+        },
+        {
+          "area": "Gallery",
+          "text": "Widget system: per-size views, expanded cards, calendar ops, revenue depth"
+        },
+        {
+          "area": "Accounts",
+          "text": "Auth: passwordless magic-link sign-in for client galleries"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: preselect service and carry promo code from email deep links"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking: add Airbnb / short-term rental as a bookable service"
+        },
+        {
+          "area": "Email",
+          "text": "Homepage: suppress newsletter modal on intent deep links"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery: render photographer byline from library metadata"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Outline each cell while editing so bleed is visible"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Weather: a view for each size instead of one composition scaled"
+        },
+        {
+          "area": "Platform",
+          "text": "Make every tile of a shape the same size, and quieten the edit controls"
+        },
+        {
+          "area": "Platform",
+          "text": "Give the smallest sizes their own behaviour"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Per-widget backgrounds and sizes, and a tap-to-resize editor"
+        },
+        {
+          "area": "Gallery",
+          "text": "Sync the dashboard layout to the account, and record the database switch"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Add a widget grid editor, and halve the grid unit for 1x2 and 1x4"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Put the whole dashboard on one lattice"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Rebuild the dashboard tiles as instruments, not text"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix the calculator keys: press feedback, and stop remounting the keypad"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Dashboard: mosaic grid, portrait weather, and touch fixes"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Rework the dashboard as a real bento: masonry, surfaces, scale"
+        },
+        {
+          "area": "Design",
+          "text": "Lay the at-a-glance tiles out as a bento grid"
+        },
+        {
+          "area": "Platform",
+          "text": "Follow the device by default, and let a browsed city be pinned"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Default the weather widget to Austin, TX"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Give the calculator its own row and add a weather widget"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Scale the dashboard widgets to their cell instead of squeezing them"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Keep the header widgets off the admin sign-in screen"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Swap the header widgets on the row's centre, not its edges"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Hold the header clock until the widget row is actually reached"
+        },
+        {
+          "area": "Discovery",
+          "text": "SEO: stop serving the noindex shell to real public pages"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Header widgets: track the top widget row, and crossfade the swap"
+        },
+        {
+          "area": "Billing",
+          "text": "Render invoice preview as HTML instead of embedding the PDF"
+        },
+        {
+          "area": "Gallery",
+          "text": "Admin dashboard: uniform widget grid, CRM, invoicing, revenue fixes"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Point the banner artwork at the affiliate page, not the PDF"
+        },
+        {
+          "area": "Billing",
+          "text": "Let Checkout use the Dashboard payment method configuration"
+        }
+      ]
+    },
+    {
+      "date": "2026-08-02",
+      "entries": [
+        {
+          "area": "Affiliates",
+          "text": "Update /become-affiliate page title to THE AFFILIATE PROGRAM branding"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Center the QUANTUM JUMP artwork in the affiliate banner"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Rename affiliate program to THE AFFILIATE PROGRAM; invert banner to white"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-31",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "CC media@ on client correspondence; pace deploy polling to real build times"
+        },
+        {
+          "area": "Gallery",
+          "text": "Count collected money as revenue, not invoice status"
+        },
+        {
+          "area": "Billing",
+          "text": "Support CC on invoice emails"
+        },
+        {
+          "area": "Billing",
+          "text": "Render invoice tagline in ink, not muted grey"
+        },
+        {
+          "area": "Billing",
+          "text": "Require full scope of work on every invoice"
+        },
+        {
+          "area": "Billing",
+          "text": "Fix invoice PDF tagline text"
+        },
+        {
+          "area": "Gallery",
+          "text": "Invoice PDF attachments + net revenue on dashboard"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Make the newsletter draft script actually sendable"
+        },
+        {
+          "area": "Email",
+          "text": "Add support-announcement newsletter draft; fix double unsubscribe link"
+        },
+        {
+          "area": "Design",
+          "text": "Link /pay from the footer and Support page"
+        },
+        {
+          "area": "Platform",
+          "text": "Add public /pay page so the site can actually accept money"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Gallery view toggle: icon shows the target view, not the current one"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "entries": [
+        {
+          "area": "Shop",
+          "text": "Gate /shop to admins, restore shop position on back, fix scroll-on-back"
+        },
+        {
+          "area": "Gallery",
+          "text": "Shop: click product goes straight to Fourthwall page, skip lightbox"
+        },
+        {
+          "area": "Shop",
+          "text": "Shop mobile carousel: one item per view + swipe indicator"
+        },
+        {
+          "area": "Billing",
+          "text": "Shop cards: center title/price, drop description, mobile swipe carousel"
+        },
+        {
+          "area": "Shop",
+          "text": "Bake product outline into PNGs, thin it out, remove Mystery Box"
+        },
+        {
+          "area": "Shop",
+          "text": "Serve outlined product images as static assets (zero Supabase egress)"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-19",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fall back to original product photo when Supabase storage is down"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove unrecognized JD from Studio roster (client didn't recognize the name)"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Proposal: sell the unification outcome + analytics that scales with expansion"
+        },
+        {
+          "area": "Accounts",
+          "text": "Proposal: make Google-review generation an explicit deliverable"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-18",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix pre-existing build blocker: loosen Supabase client type in prodigi handler"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Trim map photo query to further cut Supabase egress"
+        },
+        {
+          "area": "Gallery",
+          "text": "Paginate gallery loading to fix Supabase egress overage"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Fix /leads build (meta description) + add 3-category pipeline"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Add sales pipeline tracker at /leads (admin-gated)"
+        },
+        {
+          "area": "Platform",
+          "text": "Add fabrication capabilities page at /capabilities"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Remove framed print option until a real mockup source is found"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix frame preview aspect-ratio mismatch cropping the composited photo"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add SVG frame mockup templates + loud print-order failure observability"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix print orientation fit and drop the non-functional mat toggle"
+        },
+        {
+          "area": "Shop",
+          "text": "Surface real productDimensions + attributes in catalog verification"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-12",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Scope live-Prodigi lookups to catalog verification only"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add admin Prodigi catalog verification tool"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add universal photo printing with orientation-aware framed previews"
+        },
+        {
+          "area": "Gallery",
+          "text": "Make All Photos sticky tray fully opaque, no gap above it — corrected"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add Prodigi print-on-demand shop integration"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-10",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Prefer requested string IDs over Zoho's numeric response fields"
+        },
+        {
+          "area": "Email",
+          "text": "Fix webmail message 404 by avoiding multi-segment catch-all paths"
+        },
+        {
+          "area": "Gallery",
+          "text": "Rebuild All Photos toolbar as a Platform Console icon dock"
+        },
+        {
+          "area": "Gallery",
+          "text": "Make All Photos sticky tray fully opaque, no gap above it"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix ExpandableScreen scroll lock to include documentElement, not just body"
+        },
+        {
+          "area": "Gallery",
+          "text": "Make All Photos toolbar sticky on mobile scroll"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix unit mismatch in photo detail drawer slide animation"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Add Vercel deployment webhook system with admin notifications"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-09",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix photos router 404s: handle '...path' query key from Vercel routing"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-08",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix PAY WITH CARD button crashing entire photos API (ESM import bug)"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Convert admin dashboard cards to fullscreen ExpandableScreen pattern"
+        },
+        {
+          "area": "Gallery",
+          "text": "SEO: fix homepage missing H1, stale sitemap entries, LocalBusiness schema"
+        },
+        {
+          "area": "Gallery",
+          "text": "Rebuild Gallery Management admin panel with batch editing and Drive sync"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-07",
+      "entries": [
+        {
+          "area": "Blog",
+          "text": "Add link to The Lost Archives blog"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-06",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Replace CSS zoom hack with real responsive sizing for clock widget"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Fix clock widget digital/stopwatch/timer views not scaling on mobile"
+        },
+        {
+          "area": "Booking",
+          "text": "Tighten mobile spacing above Clock/Calendar widgets"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Standardize admin dashboard cards; fix Site Analytics empty state"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-05",
+      "entries": [
+        {
+          "area": "Booking",
+          "text": "Align admin dashboard clock/calendar widget layout with affiliate dashboard"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Rebuild Site Analytics as fullscreen ExpandableScreen with real traffic data"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-04",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Fix admin login routing; use branded loading screen for auth callback"
+        },
+        {
+          "area": "Billing",
+          "text": "Remove dead PayPal integration (we no longer use PayPal)"
+        },
+        {
+          "area": "Gallery",
+          "text": "Consolidate api/photos/* into one catch-all function; remove dead email-template file"
+        },
+        {
+          "area": "Platform",
+          "text": "A/B test: revert postbuild parallelization to isolate deploy-time regression"
+        },
+        {
+          "area": "Platform",
+          "text": "Parallelize postbuild scripts to speed up deploys"
+        },
+        {
+          "area": "Shop",
+          "text": "Add Fourthwall Shop tab to Product Management"
+        },
+        {
+          "area": "Email",
+          "text": "Webmail redesign, console cleanup, and a live crash-bug fix"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix console viewport/tap bugs; make Profile/Affiliate consoles fullscreen"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix stuck user-details panel; convert to expandable cards"
+        },
+        {
+          "area": "Blog",
+          "text": "Log signup attempts end-to-end for post-hoc diagnosis"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Default auth modal to Sign Up for new affiliate signups"
+        },
+        {
+          "area": "Shop",
+          "text": "Make expanded product card fit mobile viewport without scrolling"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Rebuild Affiliate Program admin dashboard as expandable fullscreen cards"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Fix DEBUG REPORT button overflow on mobile admin header"
+        },
+        {
+          "area": "Shop",
+          "text": "Relabel product status toggle to Publish/Drafts"
+        },
+        {
+          "area": "Shop",
+          "text": "Turn product cards into a full Shopify-style product editor"
+        },
+        {
+          "area": "Shop",
+          "text": "Rebuild ProductCostManagement as expandable card grid"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-03",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Replace dummy Stripe products with real service catalog"
+        },
+        {
+          "area": "Booking",
+          "text": "Simplify booking payment methods to Stripe and Bitcoin"
+        },
+        {
+          "area": "Booking",
+          "text": "Add context-aware booking questions and free-consultation CTA"
+        },
+        {
+          "area": "Billing",
+          "text": "Services catalog with pricing tiers"
+        },
+        {
+          "area": "Billing",
+          "text": "Separate hardware from service pricing in kiosk proposal"
+        },
+        {
+          "area": "Billing",
+          "text": "Add low-voltage covers and pricing disclaimer to kiosk proposal"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Gallery",
+          "text": "Match gallery grid to the real site and make tabs true panel switches"
+        },
+        {
+          "area": "Platform",
+          "text": "Add generic kiosk building proposal template"
+        }
+      ]
+    },
+    {
+      "date": "2026-07-01",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Apply Noir styling to CopyDebugReport + document in design system"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Global Copy Debug Report button with Vercel logs + client errors"
+        },
+        {
+          "area": "Platform",
+          "text": "Verbose error display with full HTTP details on screen"
+        },
+        {
+          "area": "Platform",
+          "text": "Replace nested button with div to fix page refresh on message click"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-30",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Pass folderId when fetching message content from Zoho"
+        },
+        {
+          "area": "Email",
+          "text": "Add .js extension to mail handler import for ESM resolution"
+        },
+        {
+          "area": "Email",
+          "text": "Resolve Platform Webmail API error 500"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-23",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-22",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Platform",
+          "text": "Revert both proposals to THE LOST+UNFOUNDS branding"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-21",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Compact fullscreen console tabs to fit viewport without scrolling"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-20",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Console overlay fills viewport without body overflow"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Console tabs open as fullscreen overlay, lock page scroll"
+        },
+        {
+          "area": "Accounts",
+          "text": "Remove configured:false banner added by previous session"
+        },
+        {
+          "area": "Email",
+          "text": "Wire reading endpoints to same ZOHO_ACCOUNT_ID as send path"
+        },
+        {
+          "area": "Platform",
+          "text": "Prevent 500s on folders/messages endpoints, add graceful degradation"
+        },
+        {
+          "area": "Gallery",
+          "text": "Correct gallery overlay bg to pure black, fix scroll containment"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery edit form as full-screen modal overlay"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix horizontal overflow/scroll in gallery settings on mobile"
+        },
+        {
+          "area": "Platform",
+          "text": "Replace require('crypto') with ESM import"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add resend access emails button to admin gallery invited clients section"
+        },
+        {
+          "area": "Gallery",
+          "text": "Correct gallery invite email URL from /photos/ to /gallery/"
+        },
+        {
+          "area": "Gallery",
+          "text": "Auto-open login modal when visiting private gallery while logged out"
+        },
+        {
+          "area": "Gallery",
+          "text": "Drive-native private gallery access via invited_emails"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-19",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-17",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Check sendZohoEmail return value + import from shared module"
+        },
+        {
+          "area": "Platform",
+          "text": "Re-wrap PEM body at 64 chars for OpenSSL 3.x compatibility"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add robust private key parsing + diagnostics for gallery sync"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove launch-date filter on affiliates, fix revenue figures"
+        },
+        {
+          "area": "Platform",
+          "text": "Proper KPI cards + card blocks for all list sections"
+        },
+        {
+          "area": "Design",
+          "text": "Redesign summary stats as proper stat cards"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Query affiliates table instead of nonexistent affiliate_profiles"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove stray comment, fix collapse, add click and discount data"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve Vercel function 404 by dropping .js import extension"
+        },
+        {
+          "area": "Booking",
+          "text": "Add Bookings button to toolbar so panel is accessible"
+        },
+        {
+          "area": "Booking",
+          "text": "Add BookingInvoicePanel with invoice form + email thread"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Add autocomplete attributes to affiliate wizard inputs"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix iOS autofill killing wizard via auth loading overlay"
+        }
+      ]
+    },
+    {
+      "date": "2026-06-16",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Remove membership tier badge from dashboard header"
+        },
+        {
+          "area": "Email",
+          "text": "Fix iOS autofill modal dismiss + email wrapping on mobile"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix close button covered by progress bar in affiliate wizard"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Auto-check affiliate code availability after user stops typing"
+        },
+        {
+          "area": "Billing",
+          "text": "Affiliate signup: optional Stripe connect + fix affiliate data reload"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Affiliate signup wizard — replace blog onboarding, URL-param intent"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-21",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Stripe shipping_details cast + blog pre-render title refs"
+        },
+        {
+          "area": "Billing",
+          "text": "Show weekday + start/end time on invoice PDF"
+        },
+        {
+          "area": "Platform",
+          "text": "Embed brand banner at the top of the PDF"
+        },
+        {
+          "area": "Email",
+          "text": "Use multipart upload for Zoho attachments"
+        },
+        {
+          "area": "Email",
+          "text": "Use application/octet-stream for Zoho attachment upload"
+        },
+        {
+          "area": "Billing",
+          "text": "Payment buttons pure #000000, full-amount button visible"
+        },
+        {
+          "area": "Email",
+          "text": "Personal-message email with PDF attachment + dual pay links"
+        },
+        {
+          "area": "Billing",
+          "text": "Add Stripe pay-deposit button to invoice email"
+        },
+        {
+          "area": "Billing",
+          "text": "Add Location field to invoice email and PDF"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-20",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Platform",
+          "text": "Add missing LightBoard UI component"
+        },
+        {
+          "area": "Platform",
+          "text": "Left-align everything and replace expand text with triangles"
+        },
+        {
+          "area": "Platform",
+          "text": "Add publish/draft visibility toggle"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-19",
+      "entries": [
+        {
+          "area": "Design",
+          "text": "Expandable cards + footer no longer overlaps content"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Remove all decorative icons from become-affiliate page"
+        },
+        {
+          "area": "Design",
+          "text": "Remove gray backgrounds and tighten section spacing"
+        },
+        {
+          "area": "Design",
+          "text": "Prevent button text wrapping on mobile"
+        },
+        {
+          "area": "Design",
+          "text": "Equal-width side-by-side CTA buttons on mobile"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Limited affiliate menu, move admin elevation to /admin gate"
+        },
+        {
+          "area": "Email",
+          "text": "Recognize admin by email/role and add nav role switcher"
+        },
+        {
+          "area": "Booking",
+          "text": "Booking quote + invoice controls in the dashboard"
+        },
+        {
+          "area": "Billing",
+          "text": "Quote + invoice payment flow with Stripe Payment Links"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-18",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Platform",
+          "text": "Migrate all transactional handlers to standard template"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Restore white-space:nowrap on affiliate welcome heading"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix affiliate welcome heading: use color:#fff, remove white-space:nowrap"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix affiliate welcome email heading: inherit color from template"
+        },
+        {
+          "area": "Email",
+          "text": "Update email skills: ban SVG banners, document canonical patterns"
+        },
+        {
+          "area": "Email",
+          "text": "Fix SVG banner injection across all 6 email handlers"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix typo in affiliate email headline: YOR -> YOUR"
+        },
+        {
+          "area": "Email",
+          "text": "Fix email: remove SVG text above banner, move heading into body"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Remove title tag from emails; update affiliate headline"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Update affiliate welcome headline, force single line"
+        },
+        {
+          "area": "Email",
+          "text": "Fix white preheader strip above email banner"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix affiliate welcome email branding"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Wire product_costs into affiliate deep-link profit calculation"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix affiliate deep-link generator showing 0 physical products"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Wire Fourthwall products into affiliate deep-link generator"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Redesign affiliate dashboard: compact card grid with expandable panels"
+        },
+        {
+          "area": "Billing",
+          "text": "Fix Stripe requirements display — replace raw API fields with friendly message"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Fix Platform Console label alignment above pill buttons"
+        },
+        {
+          "area": "Billing",
+          "text": "Fix Stripe Connect: request card_payments alongside transfers capability"
+        },
+        {
+          "area": "Accounts",
+          "text": "Log full connect-onboarding response to surface actual error message"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-17",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Overhaul affiliate dashboard with Stripe Connect onboarding"
+        },
+        {
+          "area": "Accounts",
+          "text": "Always override .env.local in auto-login; add service-role-key script"
+        },
+        {
+          "area": "Accounts",
+          "text": "Simplify Google OAuth: global signOut + no extra queryParams"
+        },
+        {
+          "area": "Accounts",
+          "text": "Restore local signOut before Google OAuth to prevent server_error"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix Google OAuth: remove signOut before OAuth, detect callback URL errors"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix OAuth redirect: only resolve session promise when session is non-null"
+        },
+        {
+          "area": "Accounts",
+          "text": "Wait for detectSessionInUrl instead of explicit exchangeCodeForSession"
+        },
+        {
+          "area": "Accounts",
+          "text": "Explicitly exchange PKCE code before reading user in OAuth callback"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Translate /become-affiliate → /dashboard in ALL post-login paths"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Honour return URL in OAuth callback, route /become-affiliate → /dashboard"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Redirect to dashboard after login, not homepage"
+        },
+        {
+          "area": "Billing",
+          "text": "Bundle pricing tiers, mobile overflow fixes, auth modal on protected pages"
+        },
+        {
+          "area": "Billing",
+          "text": "Move singlePrice/seoMeta above loading guard to fix hooks violation"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-15",
+      "entries": [
+        {
+          "area": "Blog",
+          "text": "Put brand first in blog post title to satisfy SEO check"
+        },
+        {
+          "area": "Email",
+          "text": "Handle emailAddress array; honor ZOHO_FROM_EMAIL over Zoho-returned values"
+        },
+        {
+          "area": "Email",
+          "text": "Route transactional sends through Zoho-primary/Resend-fallback helper"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-14",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Add interactive env var rotation script for Vercel"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery structured data, LocalBusiness schema, image download protection"
+        },
+        {
+          "area": "Platform",
+          "text": "4-axis dedup in upload pipeline + namer helpers"
+        },
+        {
+          "area": "Billing",
+          "text": "Stripe Checkout for Mystery Box + price-ID-based one-time payments"
+        },
+        {
+          "area": "Shop",
+          "text": "Exclude Fourthwall orders from 42% employee discount"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add dynamic image sitemap + unblock gallery stream for Google indexing"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Scale widgets uniformly via zoom, not piecemeal"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Use clicked_at on affiliate_click_events"
+        },
+        {
+          "area": "Booking",
+          "text": "Restore clock + calendar on mobile"
+        },
+        {
+          "area": "Booking",
+          "text": "Scale ClockWidget and CalendarWidget down on mobile"
+        },
+        {
+          "area": "Booking",
+          "text": "Hide clock + calendar widgets on mobile"
+        },
+        {
+          "area": "Booking",
+          "text": "Clock and calendar side-by-side on mobile"
+        },
+        {
+          "area": "Platform",
+          "text": "Clean empty-state chart, fit chart-tab labels"
+        },
+        {
+          "area": "Platform",
+          "text": "Reposition period toggle, make empty chart visible"
+        },
+        {
+          "area": "Design",
+          "text": "Reorganize hero, drop redundant header, lift chart"
+        },
+        {
+          "area": "Design",
+          "text": "Drop overview duplicates, fit mobile tabs"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Affiliate-focused hero with admin view toggle"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Consolidate hub into /dashboard, restyle leaderboard"
+        },
+        {
+          "area": "Billing",
+          "text": "Stripe Connect onboarding + responsive commissions table"
+        },
+        {
+          "area": "Design",
+          "text": "Add bottom padding so content clears fixed footer"
+        },
+        {
+          "area": "Design",
+          "text": "Restyle Marketing tab + match homepage toggle"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-13",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Align Stripe-Connect upserts with legacy payout-settings schema"
+        },
+        {
+          "area": "Billing",
+          "text": "Don't init Stripe on GET connect-onboarding when no account exists"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-09",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Drop PayPal from existing-affiliate UX, surface Stripe Connect"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-08",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Drop PayPal from signup; auto-trigger Stripe Connect"
+        },
+        {
+          "area": "Gallery",
+          "text": "Use user-supplied photo for /become-affiliate hero"
+        },
+        {
+          "area": "Billing",
+          "text": "Noir-ify BecomeAffiliate page + correct payout copy"
+        },
+        {
+          "area": "Billing",
+          "text": "Swap top banner to affiliate-program promo + footer link"
+        },
+        {
+          "area": "Billing",
+          "text": "Wire Stripe Connect payouts, real commission triggers, fraud guards, Resend emails"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-07",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Resolve 8 orphan pages — link footer, delete pricing, admin-gate columns"
+        },
+        {
+          "area": "Gallery",
+          "text": "Pre-render blog posts to {slug}/index.html and add noindex shell for unmapped routes"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-05",
+      "entries": [
+        {
+          "area": "Discovery",
+          "text": "Retrograde upgrades legacy @tlau_ files to new SEO prefix"
+        },
+        {
+          "area": "Gallery",
+          "text": "Claptrop filenames now lead with @tlau.photos + brand"
+        },
+        {
+          "area": "Platform",
+          "text": "Hide internal filename caption"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove ZapButton from lightbox"
+        },
+        {
+          "area": "Gallery",
+          "text": "Lightbox price honors gallery_pricing_options single tier"
+        },
+        {
+          "area": "Gallery",
+          "text": "Plot at venue pin when tagged + neighborhood fallback tag"
+        },
+        {
+          "area": "Gallery",
+          "text": "Folder-wins rule with photo-GPS verification"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-04",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Header price uses gallery_pricing_options single tier"
+        },
+        {
+          "area": "Gallery",
+          "text": "Replace gallery credits flow with per-gallery pricing + Stripe/Strike checkout"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-30",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Wire Stripe checkout: handler, webhook, Pay with Card button"
+        },
+        {
+          "area": "Gallery",
+          "text": "Resolve AdminGalleryView stash conflict, add booking revenue to stats"
+        },
+        {
+          "area": "Billing",
+          "text": "Add stripe dependency"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-29",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Unwire retrograde rename from Test Connection"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-28",
+      "entries": [
+        {
+          "area": "Discovery",
+          "text": "Brand-first titles, fix broken links, add build-time SEO guard"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-27",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Re-accept Google Drive file/folder URLs alongside YouTube"
+        },
+        {
+          "area": "Platform",
+          "text": "Replace broken cobalt.tools with @distube/ytdl-core + reject non-YouTube URLs at input"
+        },
+        {
+          "area": "Gallery",
+          "text": "Unified all-public view with tag-based albums"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-26",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Add personal-use license language to download flow"
+        },
+        {
+          "area": "Gallery",
+          "text": "Public RLS for photos + simplify toolbar to grid/single/map/calendar/search"
+        },
+        {
+          "area": "Gallery",
+          "text": "Update gallery copy + add credit counter"
+        },
+        {
+          "area": "Gallery",
+          "text": "Default new gallery credit grant to 10, not 100"
+        },
+        {
+          "area": "Gallery",
+          "text": "Cron iterates all libraries with Drive folders"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-25",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Remove booking revenue from Gallery Management stats"
+        },
+        {
+          "area": "Platform",
+          "text": "Add .js extensions to ESM relative imports"
+        },
+        {
+          "area": "Gallery",
+          "text": "Cron-driven per-subfolder auto-sync with progress table"
+        },
+        {
+          "area": "Platform",
+          "text": "Batched per-subfolder mode + time budget to avoid Vercel 300s timeout"
+        },
+        {
+          "area": "Platform",
+          "text": "Replace yt-dlp with cobalt.tools and html scrape for music"
+        },
+        {
+          "area": "Billing",
+          "text": "Add /api/invoices/send endpoint and admin Send button"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-24",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Use service account fallback for broken stream photos"
+        },
+        {
+          "area": "Gallery",
+          "text": "Restore stream proxy, albums view, fix FUNCTION_INVOCATION_FAILED"
+        },
+        {
+          "area": "Gallery",
+          "text": "Post selected gallery photos to Nostr"
+        },
+        {
+          "area": "Platform",
+          "text": "Add environment variable management panel"
+        },
+        {
+          "area": "Discovery",
+          "text": "Use oEmbed for metadata to bypass bot detection"
+        },
+        {
+          "area": "Billing",
+          "text": "Use correct invoices schema (total not amount)"
+        },
+        {
+          "area": "Gallery",
+          "text": "Resolve 500 errors, re-dedup photos, add booking revenue"
+        },
+        {
+          "area": "Platform",
+          "text": "Repair single-video JSON parse + add playlist support"
+        },
+        {
+          "area": "Platform",
+          "text": "Brand banner on all templates + black buttons everywhere"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Platform",
+          "text": "Patch all ensureBannerHtml copies + add test script"
+        },
+        {
+          "area": "Gallery",
+          "text": "Backfill GPS lat/lng from metadata JSON + filename for map coverage"
+        },
+        {
+          "area": "Email",
+          "text": "Remove duplicate banner in all Zoho email sends"
+        },
+        {
+          "area": "Gallery",
+          "text": "Map popup shows real photo thumbnail, no Drive links or raw filenames"
+        },
+        {
+          "area": "Gallery",
+          "text": "Extend photo search to match camera make/model and month/year"
+        },
+        {
+          "area": "Gallery",
+          "text": "Map photo clicks open gallery lightbox instead of Drive popup"
+        },
+        {
+          "area": "Gallery",
+          "text": "Deduplicate photos — frontend guard + DB migration"
+        },
+        {
+          "area": "Billing",
+          "text": "Persist email across download and credits flows"
+        },
+        {
+          "area": "Platform",
+          "text": "Prevent ETXTBSY by staging yt-dlp before exec"
+        },
+        {
+          "area": "Discovery",
+          "text": "NIP-05 identity, Lightning zap button, Nostr meta tags"
+        },
+        {
+          "area": "Booking",
+          "text": "Month/Week/Day views, dots on cells, Expandable booking cards"
+        },
+        {
+          "area": "Platform",
+          "text": "Expandable cards not expanding due to CSS transition conflict"
+        },
+        {
+          "area": "Booking",
+          "text": "Add notes to master calendar"
+        },
+        {
+          "area": "Platform",
+          "text": "Warn about events on the selected date"
+        },
+        {
+          "area": "Booking",
+          "text": "Master calendar with TIME IN REVIEW range card"
+        },
+        {
+          "area": "Booking",
+          "text": "Hide hero on success + rename Book Me to Booking"
+        },
+        {
+          "area": "Platform",
+          "text": "Hide booked time windows entirely (don't show \"BOOKED\")"
+        },
+        {
+          "area": "Billing",
+          "text": "Add credit system: email-gated 100 free credits with bot protection"
+        },
+        {
+          "area": "Design",
+          "text": "Offset scroll-to-top by sticky nav + tab bar height"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-23",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Admin music player — Drive streaming, YouTube download, persistent bottom bar"
+        },
+        {
+          "area": "Platform",
+          "text": "WebsiteValuationCard — composite valuation stat with DR badge, delta, sparkline, and expandable breakdown"
+        },
+        {
+          "area": "Design",
+          "text": "Add design-feedback CRUD endpoint"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add maplibre-gl dependency to resolve Vercel build failure"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Email",
+          "text": "Branded admin + client emails"
+        },
+        {
+          "area": "Booking",
+          "text": "Scroll to step top on navigation + 2-col shoot-type grid"
+        },
+        {
+          "area": "Email",
+          "text": "Use .js extension on zoho import to match bundle resolution"
+        },
+        {
+          "area": "Booking",
+          "text": "Multi-booking/day + preset time slots with conflict detection"
+        },
+        {
+          "area": "Booking",
+          "text": "Wire up Bookings tile in platform console"
+        },
+        {
+          "area": "Email",
+          "text": "Dynamic-import zoho utils to unblock module load"
+        },
+        {
+          "area": "Platform",
+          "text": "Await notify inline instead of fire-and-forget"
+        },
+        {
+          "area": "Platform",
+          "text": "Surface real server error on submit failure"
+        },
+        {
+          "area": "Platform",
+          "text": "Optional business name on the name step"
+        },
+        {
+          "area": "Platform",
+          "text": "Prevent iOS Safari auto-zoom on form focus"
+        },
+        {
+          "area": "Platform",
+          "text": "Auto-hold date on request + race-condition guard"
+        },
+        {
+          "area": "Design",
+          "text": "Candid/lifestyle positioning + 50% fee disclosure"
+        },
+        {
+          "area": "Platform",
+          "text": "Convert details form to stepped wizard"
+        },
+        {
+          "area": "Design",
+          "text": "Sharp corners + tighter form spacing"
+        },
+        {
+          "area": "Shop",
+          "text": "Remove borders from form inputs to match noir brand"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add Booking tab alongside Gallery and Shop"
+        },
+        {
+          "area": "Platform",
+          "text": "Make vercel ignore-build-step actually build api/lib changes"
+        },
+        {
+          "area": "Booking",
+          "text": "Wire booking inquiries to our inbox"
+        },
+        {
+          "area": "Email",
+          "text": "Email-gated download tracking + Downloads admin tab"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-22",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Surface rename + sync failure details in Test Connection"
+        },
+        {
+          "area": "Gallery",
+          "text": "Bump sync endpoint timeouts to 300s"
+        },
+        {
+          "area": "Gallery",
+          "text": "Retrograde Drive rename wired into Test Connection"
+        },
+        {
+          "area": "Platform",
+          "text": "Show Recently Used tags below search bar in Tags panel"
+        },
+        {
+          "area": "Gallery",
+          "text": "Recursive Drive traversal + auto-tagging (folder/month/year/venue/location)"
+        },
+        {
+          "area": "Gallery",
+          "text": "Clean up All Photos header on mobile"
+        },
+        {
+          "area": "Design",
+          "text": "Clean up tag rows + fix mobile clipping across panels"
+        },
+        {
+          "area": "Gallery",
+          "text": "2x2 grid tab layout on mobile for gallery-ops"
+        },
+        {
+          "area": "Gallery",
+          "text": "Wrap gallery-ops tab bar on mobile + add no-clipping rule"
+        },
+        {
+          "area": "Accounts",
+          "text": "Auto-login on localhost dev without manual preview_eval"
+        },
+        {
+          "area": "Gallery",
+          "text": "Batch photo selection UI + per-tag venue radius in sync"
+        },
+        {
+          "area": "Gallery",
+          "text": "Branded download filenames for gallery photos"
+        },
+        {
+          "area": "Platform",
+          "text": "Add Dependabot for weekly npm dependency updates"
+        },
+        {
+          "area": "Platform",
+          "text": "Add project-level slash commands for web + terminal"
+        },
+        {
+          "area": "Gallery",
+          "text": "Unify all three stages into single /claptrop pipeline"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add Drive file index for O(1) duplicate detection"
+        },
+        {
+          "area": "Gallery",
+          "text": "Implement CLAPTROP naming pipeline and retrograde rename"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-21",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Add tags system, GPS support, and All Photos admin browse view"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve npm audit vulnerabilities (safe fixes)"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-18",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-17",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Clean .env escape chars and add migration to zero out gallery prices"
+        },
+        {
+          "area": "Gallery",
+          "text": "Force all gallery photos to free"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix singlePrice falsy bug in PhotoGallery so price=0 shows Free in lightbox"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-16",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Add accepted payment methods to contract"
+        },
+        {
+          "area": "Email",
+          "text": "Allow x-admin-email auth on send-contract endpoint"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Client project work — proposal, preview site and dashboard mockups"
+        },
+        {
+          "area": "Gallery",
+          "text": "Support free photo downloads when pricing is set to $0"
+        },
+        {
+          "area": "Platform",
+          "text": "Rewrite Advertise page with full system mechanics explained"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add photography contract email template and send-contract API"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-15",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Free gallery downloads with watermark, tip prompts, and booking system"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-13",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Clarify 8-second synchronized slot copy on Advertise page"
+        },
+        {
+          "area": "Email",
+          "text": "Replace mailto buttons on Advertise page with inline contact form"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix gallery calendar pill layout, remove blur, keep pure black & white"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove enhancing images toast and bgr progress state from Gallery"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-12",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix gallery calendar pill, remove blur, replace mailto with form"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-11",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix Latest New Uploads to sort by EXIF capture date"
+        },
+        {
+          "area": "Design",
+          "text": "Reduce header/banner/toolbar group height by ~25%"
+        },
+        {
+          "area": "Gallery",
+          "text": "Constrain single-view photo height on desktop so full image is visible"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix photo grid: show full images and match skeleton to actual grid"
+        },
+        {
+          "area": "Shop",
+          "text": "Fix filename collision causing all products to show same image"
+        },
+        {
+          "area": "Platform",
+          "text": "Move processed-image upload to server-side API route"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-10",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Remove auto-reload after background enhancement"
+        },
+        {
+          "area": "Platform",
+          "text": "Reduce chalk outline by ~66% (2-3px → 1px); log Supabase upload errors"
+        },
+        {
+          "area": "Platform",
+          "text": "Serialize background removal — one at a time to prevent main-thread crash"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix image proxy URL being resolved against @imgly CDN"
+        },
+        {
+          "area": "Email",
+          "text": "Fix newsletter modal X button invisible on desktop"
+        },
+        {
+          "area": "Platform",
+          "text": "Add blob: to connect-src CSP — fix fetch(blobUrl) for WASM loading"
+        },
+        {
+          "area": "Design",
+          "text": "Remove COOP/COEP headers that blocked @imgly CDN fetches on iOS/WebKit"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix background removal by unblocking blob: scripts and enabling cross-origin isolation"
+        },
+        {
+          "area": "Shop",
+          "text": "Fix background removal Worker module script error in Vite production bundle"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix background removal: serve ort-wasm worker from public/ static files"
+        },
+        {
+          "area": "Platform",
+          "text": "Chalk cutout outline: solid white edge instead of blurry glow"
+        },
+        {
+          "area": "Shop",
+          "text": "Show background removal error on product card for mobile debugging"
+        },
+        {
+          "area": "Email",
+          "text": "Lock body scroll while newsletter modal is open"
+        },
+        {
+          "area": "Email",
+          "text": "Newsletter modal: animate top to center, matching old homepage behavior"
+        },
+        {
+          "area": "Platform",
+          "text": "Skip Turnstile on Vercel preview deployments (.vercel.app)"
+        },
+        {
+          "area": "Email",
+          "text": "Fix newsletter modal centering on mobile"
+        },
+        {
+          "area": "Email",
+          "text": "Newsletter modal: use EmailSignup component (Turnstile included)"
+        },
+        {
+          "area": "Email",
+          "text": "Newsletter cookie: permanent (10 years) after subscribe"
+        },
+        {
+          "area": "Gallery",
+          "text": "Newsletter modal: hide while inside a photo gallery"
+        },
+        {
+          "area": "Email",
+          "text": "Newsletter modal: persist until closed, reappear on next session"
+        },
+        {
+          "area": "Email",
+          "text": "Replace newsletter bottom tray with centered slide-up modal"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix background removal: install missing onnxruntime-web peer dependency"
+        },
+        {
+          "area": "Gallery",
+          "text": "Scroll to top when navigating back to gallery grid from inline gallery"
+        },
+        {
+          "area": "Gallery",
+          "text": "Make gallery cards responsive for narrow 2/3-column mobile grid"
+        },
+        {
+          "area": "Gallery",
+          "text": "Responsive gallery grid: 2-col or 3-col on mobile based on count"
+        },
+        {
+          "area": "Shop",
+          "text": "Fix product modal X button not closing on mobile"
+        },
+        {
+          "area": "Platform",
+          "text": "Reduce banner height by 25%"
+        },
+        {
+          "area": "Design",
+          "text": "Fix back-to-top button: scroll clears sticky header + toolbar"
+        },
+        {
+          "area": "Email",
+          "text": "Remove border-t from newsletter bar"
+        },
+        {
+          "area": "Design",
+          "text": "Make Advertise page mobile-responsive"
+        },
+        {
+          "area": "Email",
+          "text": "Fix WASM CSP, sticky toggle, logo size, newsletter bar polish"
+        },
+        {
+          "area": "Shop",
+          "text": "Fix product modal covered by fixed header"
+        },
+        {
+          "area": "Billing",
+          "text": "Remove auth gate from checkout, add guest email modal + newsletter bar"
+        },
+        {
+          "area": "Platform",
+          "text": "Add background removal progress banner and auto-reload on completion"
+        },
+        {
+          "area": "Platform",
+          "text": "Add per-card Enhancing indicator during background removal processing"
+        },
+        {
+          "area": "Design",
+          "text": "Fix sticky toolbar: use dynamic --nav-height CSS var instead of hardcoded 64px"
+        },
+        {
+          "area": "Design",
+          "text": "Fix logo clipping for real: explicit top-4 + minHeight on nav row"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix logo clipping, remove Marketplace badge, fix banner copy"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix inline gallery: replace full-screen loading overlay with skeleton"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix background removal CORS via image proxy; add before/after demo"
+        },
+        {
+          "area": "Shop",
+          "text": "Remove rectangular card border, drop-shadow only after bg removal"
+        },
+        {
+          "area": "Design",
+          "text": "Persistent back button in nav, galleries open/collapse inline"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove auth wait and loading overlay — gallery loads immediately"
+        },
+        {
+          "area": "Design",
+          "text": "Increase bottom padding below nav logo (pt-4 pb-10)"
+        },
+        {
+          "area": "Platform",
+          "text": "Switch background removal cache from localStorage to Supabase storage"
+        },
+        {
+          "area": "Platform",
+          "text": "Add free client-side background removal with shape-following white outline"
+        },
+        {
+          "area": "Shop",
+          "text": "Restyle product cards: white border outline, product-only display"
+        },
+        {
+          "area": "Shop",
+          "text": "Hide SHOP header and search bar when embedded on homepage"
+        },
+        {
+          "area": "Shop",
+          "text": "Hide Shop's internal banner when embedded on homepage"
+        },
+        {
+          "area": "Design",
+          "text": "Replace fixed h-16 nav row with py-4 so logo has breathing room"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove excessive gap between toggle and albums tabs on homepage"
+        },
+        {
+          "area": "Platform",
+          "text": "Rewrite Advertise page: accurate banner copy, black & white only"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove all border/divider lines from gallery and banner"
+        },
+        {
+          "area": "Design",
+          "text": "Increase nav logo height from 28px to 84px"
+        },
+        {
+          "area": "Design",
+          "text": "Use logo.png in nav (same as animation), centered at 28px height"
+        },
+        {
+          "area": "Design",
+          "text": "Banner above nav, center logo, galleries open inline"
+        },
+        {
+          "area": "Shop",
+          "text": "Move advertising banner to top of page, fix Shop preloading"
+        },
+        {
+          "area": "Gallery",
+          "text": "Hide marketplace banner and gallery heading on visitor homepage"
+        },
+        {
+          "area": "Platform",
+          "text": "Hide apply/messaging on visitor homepage"
+        },
+        {
+          "area": "Design",
+          "text": "Combine preview banner+nav into one fixed block; center toggles"
+        },
+        {
+          "area": "Shop",
+          "text": "Move preview banner to top of page, remove border box"
+        },
+        {
+          "area": "Email",
+          "text": "Admin login slides up from bottom like newsletter signup"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery-as-homepage for visitors with admin-only full site"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-09",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Fix latest uploads to show newest by creation date, not modification date"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Add dev-only auto-login for admin dashboard access in Preview"
+        }
+      ]
+    },
+    {
+      "date": "2026-04-08",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Add Claude Code skills and launch.json for Co-Work migration"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-09",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Fix newsletter features and API module resolution"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add Advertise page to static pre-rendering and sitemap"
+        },
+        {
+          "area": "Design",
+          "text": "Fix 404 on Advertise and update MarketplaceBanner to full-width premium noir styling"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-08",
+      "entries": [
+        {
+          "area": "Shop",
+          "text": "UI: Unified full-screen navigation and refined borderless Admin dashboard."
+        },
+        {
+          "area": "Shop",
+          "text": "Admin dashboard: final borderless UI cleanup and fixed layout jumping"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove node-fetch import to use native fetch and fix TS error"
+        },
+        {
+          "area": "Gallery",
+          "text": "Sync pre-render-core-pages.ts with new SEO meta descriptions"
+        },
+        {
+          "area": "Discovery",
+          "text": "Update meta descriptions and implement SEOHead canonicals"
+        }
+      ]
+    },
+    {
+      "date": "2026-03-01",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Add image-sitemap.xml to robots.txt"
+        },
+        {
+          "area": "Platform",
+          "text": "Add dotenv auto-loading to all build scripts"
+        },
+        {
+          "area": "Platform",
+          "text": "Comprehensive search discoverability enhancements"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-22",
+      "entries": [
+        {
+          "area": "Platform",
+          "text": "Left-align templates and add links to website"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-21",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Implement Resend fallback for welcome emails in subscribe handler"
+        },
+        {
+          "area": "Gallery",
+          "text": "Prevent image saving via context menu in gallery and lightbox views"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-20",
+      "entries": [
+        {
+          "area": "Discovery",
+          "text": "Remove redundant CSP meta tag and consolidate in vercel.json"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-19",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Fix Strike API 404 by using specific file routing instead of catch-all"
+        },
+        {
+          "area": "Billing",
+          "text": "Point frontend to correct strike api endpoint and include amount"
+        },
+        {
+          "area": "Billing",
+          "text": "Add missing LightningPaymentModal component and shop updates"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve Vercel API TS compilation errors"
+        },
+        {
+          "area": "Gallery",
+          "text": "Integrate Strike payment into Photo Gallery checkout"
+        },
+        {
+          "area": "Email",
+          "text": "Remove stale api/newsletter/send.ts from vercel.json functions"
+        },
+        {
+          "area": "Billing",
+          "text": "Add Strike Bitcoin Lightning payments as default checkout"
+        },
+        {
+          "area": "Platform",
+          "text": "Cleanup: consolidate 81 root-level docs into organized docs/ structure"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-10",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Add cron job for scheduled newsletter sends"
+        },
+        {
+          "area": "Email",
+          "text": "Increase newsletter send function timeout to 300s"
+        },
+        {
+          "area": "Email",
+          "text": "Fix newsletter timeout: increase batch size to 2, reduce delay to 550ms"
+        },
+        {
+          "area": "Email",
+          "text": "Fix newsletter branding and add duplicate protection"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-05",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Fix gallery scroll sensitivity by switching to native click handling"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove grayscale styling from photos"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-04",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Standardize loading UI in Admin dashboard"
+        },
+        {
+          "area": "Blog",
+          "text": "Add BlogCard component"
+        },
+        {
+          "area": "Platform",
+          "text": "Fix data fetching race conditions and standardize loading UI"
+        },
+        {
+          "area": "Gallery",
+          "text": "Replace ArrowPathIcon spinners with animated dots + sync logo loading"
+        },
+        {
+          "area": "Platform",
+          "text": "Replace all full-page spinners with Toulouse LoadingOverlay"
+        },
+        {
+          "area": "Platform",
+          "text": "Add redirect from /terms-of-service to /terms"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Remove spinning arrows from admin dashboard loading"
+        },
+        {
+          "area": "Platform",
+          "text": "Add redirect from /privacy-policy to /privacy"
+        },
+        {
+          "area": "Platform",
+          "text": "Add Toulouse loading animation on route transitions (except homepage)"
+        },
+        {
+          "area": "Shop",
+          "text": "Remove border from selection tray"
+        },
+        {
+          "area": "Design",
+          "text": "Restore SelectionTray green styling for bundle progress"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add multi-layer photo protection to prevent saving without purchase"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-03",
+      "entries": [
+        {
+          "area": "Shop",
+          "text": "Sticky toolbar with glassmorphism, fix AbortError cleanup, remove toolbar border"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-02",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Correct profile revenue calculation and permissions"
+        },
+        {
+          "area": "Platform",
+          "text": "Removed stream locking getReader"
+        },
+        {
+          "area": "Accounts",
+          "text": "Refactor download handler to use lightweight fetch and GoogleAuth"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix TypeScript errors: implicit any types in gallery sync function"
+        },
+        {
+          "area": "Accounts",
+          "text": "Remove googleapis dependency in favor of lightweight fetch to fix Vercel crash"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix gallery sync production crash: use dynamic googleapis import and improve private key handling"
+        }
+      ]
+    },
+    {
+      "date": "2026-02-01",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Fix API import path for email template"
+        },
+        {
+          "area": "Platform",
+          "text": "Update success page copy and link handling"
+        },
+        {
+          "area": "Billing",
+          "text": "Require login for checkout, improve success page branding and fix download list"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix email branding and photo download 403 error"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix incorrect pricing in gallery checkout: Use tiered pricing from dashboard instead of legacy photo.price_cents"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix 500 error in gallery capture: Add service role key fallback and robust error handling"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-31",
+      "entries": [
+        {
+          "area": "Affiliates",
+          "text": "Fix AffiliateDashboard type errors by removing invalid component usage"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix syntax errors in PhotoGallery date sorting logic"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix duplicate closing tag in AffiliateDashboard"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix backend photo sync to treat EXIF as floating UTC time"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix photo gallery date sorting and timezone handling"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-30",
+      "entries": [
+        {
+          "area": "Affiliates",
+          "text": "Update UI/design system, enhance affiliate dashboard, and remove Discord integration"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Deploy Admin Dashboard UI fixes, Zoho Mail API 404 fix, and Affiliate Program updates"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-27",
+      "entries": [
+        {
+          "area": "Affiliates",
+          "text": "Added explicit handler for affiliate track-click to resolve 404"
+        },
+        {
+          "area": "Platform",
+          "text": "Updated CSP to include frame-src for Cloudflare Turnstile"
+        },
+        {
+          "area": "Platform",
+          "text": "Allow Cloudflare Turnstile in CSP script-src"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Updated CSP to allow Ahrefs and Vercel Analytics"
+        },
+        {
+          "area": "Shop",
+          "text": "Fix erratic ESM imports and remove missing handler references in shop api"
+        },
+        {
+          "area": "Platform",
+          "text": "Update debug-env to list filesystem"
+        },
+        {
+          "area": "Platform",
+          "text": "Ensure Vercel compiles lib files by adding to tsconfig and removing manual includeFiles"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve duplicate keys in tsconfig.json"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove broken local file dependency to resolve Vercel build/runtime crash"
+        },
+        {
+          "area": "Platform",
+          "text": "Revert to static imports to resolve Vercel tree-shaking issue"
+        },
+        {
+          "area": "Platform",
+          "text": "Revert lib move, keep at root, and force include in vercel.json"
+        },
+        {
+          "area": "Platform",
+          "text": "Force include api/lib in serverless functions via vercel.json"
+        },
+        {
+          "area": "Platform",
+          "text": "Move server-side lib to api/lib to resolve Vercel bundling issues"
+        },
+        {
+          "area": "Shop",
+          "text": "Use dynamic imports for shop api to isolate crashes and fix dependencies"
+        },
+        {
+          "area": "Shop",
+          "text": "Update shop API router with robust logging and error handling, and fix tailwind config"
+        },
+        {
+          "area": "Shop",
+          "text": "Update Fourthwall product fetching to fallback to 'all' collection endpoint, resolving 404 errors for valid tokens"
+        },
+        {
+          "area": "Shop",
+          "text": "Replace dynamic imports with static imports in Shop API router to prevent Vercel 500 errors"
+        },
+        {
+          "area": "Shop",
+          "text": "Add obfuscated fallback Fourthwall token to ensure product loading"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Restore Fourthwall shop and redirect legacy affiliate links to home"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Fix shop route and affiliate dashboard links"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-23",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Refine clock widget interactions - separate mode switching and format toggling"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add gallery invitation logging and deploy pending affiliate/shop fixes"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove duplicate scripts in package.json"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove legacy SQL infrastructure and fix build failures"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-22",
+      "entries": [
+        {
+          "area": "Affiliates",
+          "text": "Monochrome Affiliate Dashboard with colored status indicators"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Restrict ClockWidget mode switching to label tap only"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Unify dashboard layouts and fix widget interactions"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove hardcoded revenue dummy data and restore full newsletter subscriber count"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Filter out pre-launch dummy data for affiliates and newsletters on admin dashboard"
+        },
+        {
+          "area": "Gallery",
+          "text": "Replace dummy dashboard data with actual revenue history"
+        },
+        {
+          "area": "Gallery",
+          "text": "Restore proper 'Back' navigation in OnboardingWizard and sync username state with user metadata"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Decommission legacy SQL migration infrastructure and remove associated UI links"
+        },
+        {
+          "area": "Gallery",
+          "text": "Prioritize setup wizard redirect in AuthCallback to prevent incorrect blog onboarding for photographers"
+        },
+        {
+          "area": "Gallery",
+          "text": "Implement photographer application review system and polish modals"
+        },
+        {
+          "area": "Blog",
+          "text": "Integrate username registration into onboarding wizards and refine blog setup flow"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add photographer application flow to gallery page"
+        },
+        {
+          "area": "Platform",
+          "text": "Skip subdomain registration when returning to /setup wizard"
+        },
+        {
+          "area": "Email",
+          "text": "Update EmailSignup to match AuthModal design"
+        },
+        {
+          "area": "Email",
+          "text": "Check email match before skipping auth step on Get Started"
+        },
+        {
+          "area": "Accounts",
+          "text": "Restyle OnboardingWizard to match AuthModal design"
+        },
+        {
+          "area": "Accounts",
+          "text": "Add Google Sign-In button to OnboardingWizard"
+        },
+        {
+          "area": "Design",
+          "text": "Error text color white + fix Step 3 conditional closing"
+        },
+        {
+          "area": "Affiliates",
+          "text": "Move Amazon affiliate modal from login to article submission flow"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add password_protected migration for photo libraries"
+        },
+        {
+          "area": "Gallery",
+          "text": "Decouple gallery creation from sync for better status UI"
+        },
+        {
+          "area": "Gallery",
+          "text": "SEO improvements (sitemap, html fixes, duplicate H1s)"
+        },
+        {
+          "area": "Email",
+          "text": "Consolidate shop and newsletter api endpoints to reduce build times"
+        },
+        {
+          "area": "Platform",
+          "text": "Clean up redundant api files and fix pre-render script"
+        },
+        {
+          "area": "Platform",
+          "text": "Merge api config into main tsconfig to optimize vercel build"
+        },
+        {
+          "area": "Platform",
+          "text": "Add tsconfig.api.json for optimized API compilation"
+        },
+        {
+          "area": "Platform",
+          "text": "Configure ignoreCommand in vercel.json"
+        },
+        {
+          "area": "Blog",
+          "text": "Parallelize blog pre-rendering and add ignore build script"
+        },
+        {
+          "area": "Design",
+          "text": "Fix mobile navigation using React Portal for top-level overlay"
+        },
+        {
+          "area": "Gallery",
+          "text": "Constrain gallery overlay buttons to image bounds"
+        },
+        {
+          "area": "Platform",
+          "text": "Prevent infinite loop in RichTextEditor"
+        },
+        {
+          "area": "Gallery",
+          "text": "Adjust gallery selection and flip button positioning"
+        },
+        {
+          "area": "Email",
+          "text": "Implement client email management and fix zoho invites"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-21",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Inline Zoho email utils for Vercel bundling compatibility"
+        },
+        {
+          "area": "Platform",
+          "text": "Correct crypto import for TypeScript compatibility"
+        },
+        {
+          "area": "Gallery",
+          "text": "Use shared Zoho email utils for photographer invites"
+        },
+        {
+          "area": "Platform",
+          "text": "Restore eye icon to original bottom-right corner position"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve TypeScript error in date display"
+        },
+        {
+          "area": "Discovery",
+          "text": "Display metadata using both camelCase and snake_case field names for compatibility"
+        },
+        {
+          "area": "Platform",
+          "text": "Disable one-time countdown - was for launch event only"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-20",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Normalize EXIF-style dates (YYYY:MM:DD) to ISO format during sync"
+        },
+        {
+          "area": "Gallery",
+          "text": "Lint error in sync API and refined bulk upsert"
+        },
+        {
+          "area": "Gallery",
+          "text": "Use bulk upsert for sync to prevent timeouts and ensure all photos persist"
+        },
+        {
+          "area": "Gallery",
+          "text": "Improve sync persistence feedback and photo count display"
+        },
+        {
+          "area": "Gallery",
+          "text": "Ensure real-time dashboard updates after sync by sorting by updated_at"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Use streaming proxy for admin thumbnail images"
+        },
+        {
+          "area": "Shop",
+          "text": "Add dedicated analytics API routes for production"
+        },
+        {
+          "area": "Dashboard",
+          "text": "Add analytics routes to admin catch-all handler + API development workflow"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-19",
+      "entries": [
+        {
+          "area": "Dashboard",
+          "text": "Disable countdown clock feature"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-18",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Sync UI refresh - add debug logging, show actual counts, add delay before reload"
+        },
+        {
+          "area": "Gallery",
+          "text": "Replace upsert with explicit insert/update to fix sync for new photos"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add error logging to sync upsert to diagnose sync issues"
+        },
+        {
+          "area": "Gallery",
+          "text": "Await loadGalleryStats after sync to ensure UI refresh"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix Google Auth Credential flow and logic"
+        },
+        {
+          "area": "Accounts",
+          "text": "Force explicit localhost redirect and clear auth state before login"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix process reference error in client-side auth code"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix Google Auth redirect origin to support localhost:3000 dynamic port"
+        },
+        {
+          "area": "Gallery",
+          "text": "Force clean URL reload on gallery login success"
+        },
+        {
+          "area": "Booking",
+          "text": "Add verbose logging to AuthContext for troubleshooting session persistence"
+        },
+        {
+          "area": "Accounts",
+          "text": "Allow redirectUrl in signInWithGoogle and update AuthContext"
+        },
+        {
+          "area": "Accounts",
+          "text": "Pass current URL as redirect target for Google Sign In"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix AuthModal success logic and prevent redirect on gallery login"
+        },
+        {
+          "area": "Gallery",
+          "text": "Enhance gallery invite API with detailed status reporting"
+        },
+        {
+          "area": "Gallery",
+          "text": "Style private gallery login button to transparent"
+        },
+        {
+          "area": "Accounts",
+          "text": "Fix logout: use global scope and force clear auth storage"
+        },
+        {
+          "area": "Design",
+          "text": "Align sticky header to navbar and reduce gaps"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix private gallery login prompt, remove AuthModal borders, fix header wrapping"
+        },
+        {
+          "area": "Gallery",
+          "text": "Improve private gallery empty state with login prompt for owners"
+        },
+        {
+          "area": "Design",
+          "text": "Increase scroll margin for back to top button to show date header"
+        },
+        {
+          "area": "Gallery",
+          "text": "Remove rounded corners from lightbox view"
+        },
+        {
+          "area": "Platform",
+          "text": "Reduce gap above storefront/assets toggle section"
+        },
+        {
+          "area": "Gallery",
+          "text": "Link last-night gallery to Drive folder and support fallback folder ID"
+        },
+        {
+          "area": "Gallery",
+          "text": "Refine mobile gallery UI, fix card flip interaction, standardized button sizes, and update interaction hints. Fix sync errors and dashboard chart dimensions."
+        },
+        {
+          "area": "Gallery",
+          "text": "Change gallery countdown from 11:11 PM to 11:11 AM"
+        },
+        {
+          "area": "Dashboard",
+          "text": "TypeScript errors in App.tsx and DashboardCharts.tsx"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add local gallery sync endpoint"
+        },
+        {
+          "area": "Accounts",
+          "text": "Improve Google private key parsing for Vercel env vars"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-17",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Inline syncGalleryPhotos to fix Vercel serverless bundling"
+        },
+        {
+          "area": "Gallery",
+          "text": "Show meaningful error messages when Test Connection sync fails"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix gallery grid layout, mobile responsiveness, countdown logic optimization, and Admin Dashboard UI fixes"
+        },
+        {
+          "area": "Gallery",
+          "text": "Gallery UI updates - countdown to 11:11 PM, uniform card layout, no borders"
+        },
+        {
+          "area": "Platform",
+          "text": "Add SPA rewrite rules for client-side routing on Vercel"
+        },
+        {
+          "area": "Design",
+          "text": "Left-align site header and mobile selection tray text"
+        },
+        {
+          "area": "Gallery",
+          "text": "Use dynamic import for syncGalleryPhotos to prevent cold start failures"
+        },
+        {
+          "area": "Accounts",
+          "text": "Sanitize google service account credentials and trim folder id"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-16",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Add gallery sync on connection test and restore action buttons visibility"
+        },
+        {
+          "area": "Gallery",
+          "text": "Restore permanent visibility of admin gallery action buttons"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve fileId scoping lint error in stream handler"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add gallery client invitations and fix production paypal/stream errors"
+        },
+        {
+          "area": "Billing",
+          "text": "Show actual capture errors on payment success page"
+        },
+        {
+          "area": "Platform",
+          "text": "Apply credential trimming and enhanced logging to capture handler"
+        },
+        {
+          "area": "Gallery",
+          "text": "Robustly trim paypal env vars and fix sync script newline bug"
+        },
+        {
+          "area": "Billing",
+          "text": "Add missing librarySlug to checkout handler scope"
+        },
+        {
+          "area": "Billing",
+          "text": "Re-apply database-backed checkout and entitlement generation logic"
+        },
+        {
+          "area": "Gallery",
+          "text": "Update checkout payload to match api expectations (photoIds)"
+        },
+        {
+          "area": "Platform",
+          "text": "Resolve undefined variable in debug response"
+        },
+        {
+          "area": "Platform",
+          "text": "Robustly handle vercel path parameters including ...path"
+        },
+        {
+          "area": "Gallery",
+          "text": "Normalize gallery routes handler to fix 404s and improve debugging"
+        },
+        {
+          "area": "Gallery",
+          "text": "Inline zoho email utils into gallery api handler to fix vercel module resolution"
+        },
+        {
+          "area": "Email",
+          "text": "Copy zoho-email-utils to api directory for Vercel bundling"
+        },
+        {
+          "area": "Billing",
+          "text": "Fix checkout API: add better error handling for PayPal responses"
+        },
+        {
+          "area": "Gallery",
+          "text": "Improve mobile UX: full-screen menu, 3x3 gallery grid, back-to-top button, pricing layout refinements"
+        },
+        {
+          "area": "Shop",
+          "text": "Prepare for production - hide sandbox banners and ensure live mode readiness"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-15",
+      "entries": [
+        {
+          "area": "Gallery",
+          "text": "Finalize dynamic pricing engine and sync with checkout API"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix gallery subroute 404 by using explicit path"
+        },
+        {
+          "area": "Gallery",
+          "text": "Allow admin access to private galleries in Gallery page"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add visual separator between THE GALLERY and THE LOST ARCHIVES"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add THE GALLERY to navigation menu"
+        },
+        {
+          "area": "Platform",
+          "text": "Add file-saver dependency for DownloadPortal"
+        },
+        {
+          "area": "Platform",
+          "text": "Add jszip dependency for DownloadPortal"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add watermark overlay protection to gallery photos"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add /gallery and /download routes to enable photo gallery access"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add photo gallery page and admin management"
+        },
+        {
+          "area": "Gallery",
+          "text": "Refactor Platform Report with meaningful blog KPIs and revenue data validation"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-12",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Implement selection persistence and idempotent payment capture"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add 25-photo Elite Bundle at .50 per photo"
+        },
+        {
+          "area": "Billing",
+          "text": "Robust PayPal capture and final cleanup"
+        },
+        {
+          "area": "Billing",
+          "text": "Update PayPal diagnostic to check for whitespace and prefixes"
+        },
+        {
+          "area": "Billing",
+          "text": "Cleanup diagnostic tools after identifying PayPal shadowing"
+        },
+        {
+          "area": "Billing",
+          "text": "Refactor PayPal credential selection and update diagnostics"
+        },
+        {
+          "area": "Gallery",
+          "text": "Add PayPal diagnostic test and fix lightbox UI"
+        },
+        {
+          "area": "Billing",
+          "text": "Expose detailed checkout errors for diagnostics"
+        },
+        {
+          "area": "Platform",
+          "text": "Remove diagnostic health check after verification"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix lightbox UI: Ensure close button overlays image using w-fit wrapper"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix lightbox UI: Overlay close button on photo & fix z-index"
+        },
+        {
+          "area": "Gallery",
+          "text": "Fix lightbox UI: shrink image and float close button"
+        },
+        {
+          "area": "Billing",
+          "text": "Fix checkout 500 error: Enforce usage of Service Role Key to bypass RLS"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-11",
+      "entries": [
+        {
+          "area": "Billing",
+          "text": "Fix PayPal 500 error: Refactor checkout flow to handle unlimited items by storing order in DB first"
+        },
+        {
+          "area": "Platform",
+          "text": "Handle missing supabase environment variables safely"
+        },
+        {
+          "area": "Billing",
+          "text": "Improve paypal error handling to debug checkout failures"
+        },
+        {
+          "area": "Gallery",
+          "text": "Group photos by date with sticky headers"
+        },
+        {
+          "area": "Gallery",
+          "text": "Sort by filename (date proxy) and add automatic cleanup of missing drive photos"
+        },
+        {
+          "area": "Platform",
+          "text": "Add missing semicolons to prevent TS call error"
+        },
+        {
+          "area": "Gallery",
+          "text": "Setup photo marketplace gallery, checkout api, and proxy config"
+        }
+      ]
+    },
+    {
+      "date": "2026-01-05",
+      "entries": [
+        {
+          "area": "Blog",
+          "text": "Fix Book Club categorization logic on the archives page to prevent non-book posts from appearing there"
+        },
+        {
+          "area": "Blog",
+          "text": "Fix blog category filtering, broken links via unescaping, and implement automatic book linking"
+        }
+      ]
+    },
+    {
+      "date": "2025-12-28",
+      "entries": [
+        {
+          "area": "Email",
+          "text": "Update Zoho mail handler with all stub functions"
+        },
+        {
+          "area": "Email",
+          "text": "Fix Zoho mail API handler and /api/mail/folders endpoint"
+        },
+        {
+          "area": "Email",
+          "text": "Fix Zoho Mail handler: inline email template and add getFolders"
+        },
+        {
+          "area": "Email",
+          "text": "Inline email template to fix Zoho mail 500 error"
+        }
+      ]
+    },
+    {
+      "date": "2025-12-27",
+      "entries": [
+        {
+          "area": "Design",
+          "text": "Refine brand bolding consistency and fix footer hover states"
+        }
+      ]
+    }
+  ]
+}

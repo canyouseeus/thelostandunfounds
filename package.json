@@ -4,6 +4,8 @@
   "description": "THE LOST+UNFOUNDS - SCOT33 CLASSIC - Modern web application",
   "type": "module",
   "scripts": {
+    "changelog": "node scripts/generate-changelog.mjs",
+    "changelog:check": "node scripts/generate-changelog.mjs --check",
     "dev": "npm run dev:full",
     "dev:fast": "concurrently \"vite\" \"node local-server.js\"",
     "dev:api": "vercel dev",
