@@ -85,6 +85,7 @@ import KattitudeDashboard from './templates/kattitude/KattitudeDashboard'
 import FadeboxLanding from './templates/fadebox/FadeboxLanding'
 import FadeboxProposal from './templates/fadebox/FadeboxProposal'
 import FadeboxDashboard from './templates/fadebox/FadeboxDashboard'
+import KioskDemo from './pages/KioskDemo'
 
 
 
@@ -251,6 +252,12 @@ function App() {
               <Route path="/fadebox-preview" element={<FadeboxLanding />} />
               <Route path="/fadebox-preview/proposal" element={<FadeboxProposal />} />
               <Route path="/fadebox-preview/dashboard" element={<FadeboxDashboard />} />
+
+              {/* Interactive Kiosk Build — public service demo + design brief.
+                  Standalone (no Layout) because it prints to Letter as a PDF a
+                  client can forward. Launches the two live demos rather than
+                  describing them. */}
+              <Route path="/kiosk-demo" element={<KioskDemo />} />
 
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
