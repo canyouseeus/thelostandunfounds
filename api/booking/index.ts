@@ -24,6 +24,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleGetAvailability(req, res)
         }
 
+        // Express booking: look up the client behind a personal booking link
+        if (req.method === 'GET' && action === 'client') {
+            return await handleGetClient(req, res)
+        }
+
         // Public: get booked time slots for a specific date (for conflict UI)
         if (req.method === 'GET' && action === 'slots') {
             return await handleGetSlots(req, res)
@@ -82,6 +87,41 @@ async function handleGetAvailability(req: VercelRequest, res: VercelResponse) {
     // bookings can exist on the same day (different time slots / types).
     return res.status(200).json({
         blockedDates: (blocked || []).map(b => b.date)
+    })
+}
+
+/**
+ * Resolve a client for the express booking modal.
+ *
+ * Keyed on the client's row id, which we only ever put in a link sent to that
+ * client. Returns the minimum the modal needs to greet them and prefill the
+ * booking — name, email, business — and nothing else on the record.
+ */
+async function handleGetClient(req: VercelRequest, res: VercelResponse) {
+    const id = (req.query.id as string | undefined) || ''
+    if (!/^[0-9a-f-]{36}$/i.test(id)) {
+        return res.status(400).json({ error: 'valid client id required' })
+    }
+    const supabase = getSupabase(true)
+    const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, email, business')
+        .eq('id', id)
+        .maybeSingle()
+
+    if (error) {
+        console.error('[Client lookup] Query error:', error)
+        return res.status(500).json({ error: 'Failed to look up client' })
+    }
+    if (!data) return res.status(404).json({ error: 'Client not found' })
+
+    return res.status(200).json({
+        client: {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            business: data.business,
+        },
     })
 }
 

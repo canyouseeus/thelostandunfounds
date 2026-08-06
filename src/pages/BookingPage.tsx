@@ -15,6 +15,7 @@ import {
     CheckCircleIcon,
     BoltIcon,
 } from '@heroicons/react/24/outline';
+import ExpressBookingModal from '../components/booking/ExpressBookingModal';
 
 // ── Service data ──────────────────────────────────────────────────────────────
 
@@ -511,6 +512,9 @@ const BookingPage: React.FC = () => {
     const [expressMode, setExpressMode] = useState(false);
     // Arrived via ?service= — the visitor asked for the calendar, not the pitch.
     const [deepLinked, setDeepLinked] = useState(false);
+    // ?client=<crm id> — a personal link. The modal resolves them from the CRM.
+    const [expressClientId, setExpressClientId] = useState<string | null>(null);
+    const [expressOpen, setExpressOpen] = useState(false);
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -538,6 +542,12 @@ const BookingPage: React.FC = () => {
                 business_name: pBiz || prev.business_name,
             }));
             setExpressMode(true);
+        }
+
+        const cid = (params.get('client') || '').trim();
+        if (/^[0-9a-f-]{36}$/i.test(cid)) {
+            setExpressClientId(cid);
+            setExpressOpen(true);
         }
 
         const beds = Number(params.get('beds') || params.get('bedrooms'));
@@ -616,6 +626,17 @@ const BookingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-black text-white">
+
+            {expressClientId && expressOpen && (
+                <ExpressBookingModal
+                    clientId={expressClientId}
+                    eventType={form.event_type || 'Airbnb / Short-Term Rental'}
+                    promoCode={promoCode || undefined}
+                    discountPct={promoCode ? 10 : 0}
+                    initialBedrooms={form.bedrooms}
+                    onClose={() => setExpressOpen(false)}
+                />
+            )}
 
             {/* Everything above the scheduler is the pitch. A client who followed a
                 booking link from an email has already been sold — showing them the
