@@ -391,6 +391,7 @@ const MOCK_AUTH = {
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signInWithGoogle: async () => ({ error: null }),
+  signInWithMagicLink: async () => ({ error: null }),
   signOut: async () => ({ error: null }),
   refreshAuth: async () => {},
   clearAuthStorage: async () => {},

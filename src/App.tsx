@@ -58,6 +58,7 @@ import PhotoSuccessPage from './pages/PhotoSuccessPage'
 import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
 import ClientUpload from './pages/ClientUpload'
+import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
@@ -348,6 +349,9 @@ function App() {
               <Route path="/gallery/:slug" element={<Layout />}>
                 <Route index element={<Gallery />} />
               </Route>
+              {/* Invited-client sign-in. Its own page, outside Layout: the
+                  visitor here has one job, and the site chrome is not it. */}
+              <Route path="/gallery/:slug/access" element={<GalleryAccess />} />
               {/* Client asset intake — the token is the credential, so no
                   Layout chrome and no auth gate. */}
               <Route path="/upload/:token" element={<ClientUpload />} />
