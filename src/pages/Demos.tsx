@@ -32,7 +32,7 @@ const DEMOS: Demo[] = [
     title: 'Flash Kiosk + Studio Dashboard',
     blurb:
       'A touchscreen on the shop wall showing the work, and the phone tool the shop uses to keep it current. An artist publishes from their phone and it is on the wall — no export, no sync step, nobody has to be at the shop. Both links below are the real software running, not a video.',
-    price: 'Starting at $2,500',
+    price: 'Per project · from $2,500',
     links: [
       { label: 'Design brief (2 pages, prints to PDF)', href: '/kiosk-demo' },
       {

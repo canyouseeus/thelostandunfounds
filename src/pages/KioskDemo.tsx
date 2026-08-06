@@ -296,21 +296,27 @@ export default function KioskDemo() {
             <div>
               <h2>Investment</h2>
               <div className="price">
-                <span className="u" style={{ letterSpacing: '.14em' }}>Starting at</span>
+                <span className="u" style={{ letterSpacing: '.14em' }}>From</span>
                 <span className="n">$2,500</span>
               </div>
               <p className="note">
-                Software build and setup. The final number moves with the shop &mdash; how
-                many artists, how many screens, and how much of the catalog needs
-                bringing across. Hardware is separate and bought at cost: the panel, the
-                mount and the machine behind it are yours, not a rental. Hosting is
-                minimal and quoted with the build.
+                <b>Quoted per project.</b> One-time, for the software build,
+                installation and setup &mdash; not a subscription and not a per-seat
+                licence. The software does not cost more because you run more artists,
+                more categories or a bigger catalog; that part is the same work either way.
+              </p>
+              <p className="note">
+                What moves the number is <b>the room</b>: how many touchscreens, what
+                size, and what it takes to get them mounted and running. One panel behind
+                the counter and four across a wall are different jobs. Hardware is bought
+                at cost and is yours, not a rental. Hosting is minimal and quoted with
+                the build.
               </p>
               <h2 style={{ marginTop: 22 }}>Next</h2>
               <p className="spec">
-                Press both demos. If the shape is right, the build is scoped against
-                your roster, your categories and your wall &mdash; nothing here is
-                template work.
+                Press both demos. If the shape is right, the next step is a walk-through
+                of the space &mdash; how many screens, where they hang, what goes behind
+                them &mdash; and a quote for that project. Nothing here is template work.
               </p>
             </div>
           </div>
