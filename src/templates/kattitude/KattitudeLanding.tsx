@@ -20,7 +20,12 @@ import {
 } from '@heroicons/react/24/outline';
 
 const PINK = '#E91E8C';
-const GOLD = '#B8860B';
+/* The logo's yellow, sampled from assets/brand/kattitude-logo.png in the
+ * kiosk's styles.css, where it is the canonical --yellow / --gold.
+ * Was #B8860B (CSS DarkGoldenrod) — a brown-gold that is not this
+ * brand's yellow and never was. Both Kattitude templates share this
+ * token, so the site and the console cannot drift apart again. */
+const GOLD = '#FDE446';
 const LEOPARD_BTN: React.CSSProperties = {
   backgroundImage: 'linear-gradient(rgba(0,0,0,0.38), rgba(0,0,0,0.38)), url(/leopard-texture.jpg)',
   backgroundSize: 'cover',

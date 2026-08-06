@@ -21,7 +21,12 @@ import { cn } from '@/components/ui/utils';
 // ─── Brand ───────────────────────────────────────────────────────────────────
 
 const PINK = '#E91E8C';
-const GOLD = '#B8860B';
+/* The logo's yellow, sampled from assets/brand/kattitude-logo.png in the
+ * kiosk's styles.css, where it is the canonical --yellow / --gold.
+ * Was #B8860B (CSS DarkGoldenrod) — a brown-gold that is not this
+ * brand's yellow and never was. Both Kattitude templates share this
+ * token, so the site and the console cannot drift apart again. */
+const GOLD = '#FDE446';
 const BEE  = 'https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png';
 const tooltipStyle = { backgroundColor: '#111111', border: 'none', borderRadius: 0, color: '#fff', fontSize: 11 };
 
