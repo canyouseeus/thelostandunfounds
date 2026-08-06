@@ -265,6 +265,32 @@ function extractPromoCode(notes: string | null | undefined): string | null {
   return m ? m[1].toUpperCase() : null
 }
 
+
+/**
+ * Test bookings must never reach a client.
+ *
+ * A run through the express modal with a real client link created a real
+ * booking, a real invoice and a live Stripe payment link, and emailed all of it
+ * to the client — because nothing in the flow distinguishes a rehearsal from a
+ * real booking. The client received a quote for a shoot that did not exist.
+ *
+ * A booking is treated as a test when the request says so (?test=1 or
+ * test: true) or when the details are obviously placeholder. Test bookings are
+ * still recorded — so the flow can be exercised end to end — but they are
+ * marked, no invoice is generated, no Stripe link is created, and nothing is
+ * emailed to the client.
+ */
+const PLACEHOLDER_LOCATION = /^(test|testing|asdf|xxx|123|n\/a|na|dummy|placeholder)\b/i
+
+function isTestBooking(req: VercelRequest, body: any): boolean {
+    if (body?.test === true) return true
+    const q = String(req.query.test || '')
+    if (q === '1' || q.toLowerCase() === 'true') return true
+    if (typeof body?.location === 'string' && PLACEHOLDER_LOCATION.test(body.location.trim())) return true
+    if (typeof body?.name === 'string' && /^test\b/i.test(body.name.trim())) return true
+    return false
+}
+
 async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
     try {
         return await handleBookingRequestInner(req, res)
@@ -347,6 +373,8 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         }
     }
 
+    const isTest = isTestBooking(req, req.body)
+
     const { data, error } = await supabase
         .from('bookings')
         .insert({
@@ -361,7 +389,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
             location: location?.trim() || null,
             notes: notes?.trim() || null,
             retainer: retainer === true,
-            status: 'pending'
+            status: isTest ? 'test' : 'pending'
         })
         .select('id')
         .single()
@@ -379,7 +407,11 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     // Best-effort: a booking that saved is not failed by a quoting problem —
     // the quote can be raised from the admin endpoint afterwards.
     let quote: { created: boolean; invoiceNumber?: string; total?: number; error?: string } = { created: false }
-    const pricing = resolvePhotoPrice(event_type.trim(), bedrooms)
+    const pricing = isTest ? null : resolvePhotoPrice(event_type.trim(), bedrooms)
+    if (isTest) {
+        console.log('[BookingRequest] TEST booking — no invoice, no Stripe link, no client email:', data.id)
+        quote = { created: false, error: 'test booking — quoting skipped' }
+    }
     if (pricing) {
         try {
             const claimed = extractPromoCode(notes)
@@ -432,6 +464,10 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     // FUNCTION_INVOCATION_FAILED.
     let notify: { sent: boolean; error?: string } = { sent: false }
     try {
+        if (isTest) {
+            notify = { sent: false, error: 'test booking — notifications suppressed' }
+            return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote })
+        }
         await sendBookingNotification(data.id as string, supabase)
         notify = { sent: true }
     } catch (notifyErr: any) {

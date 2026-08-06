@@ -274,6 +274,8 @@ export async function sendBookingPaymentEmail(args: {
   const result = await sendZohoEmail({
     auth: { ...auth, fromEmail: FROM_EMAIL },
     to: args.to,
+    // Client billing correspondence stays on the business record.
+    cc: FROM_EMAIL,
     subject,
     htmlContent,
   })
