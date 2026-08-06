@@ -115,6 +115,9 @@ export default function AdminAuthGate({ children }: { children: ReactNode }) {
         <AuthModal
           isOpen={authModalOpen}
           onClose={() => setAuthModalOpen(false)}
+          googleOnly
+          title="Admin Sign In"
+          message="Sign in with the admin Google account."
         />
       </>
     )

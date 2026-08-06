@@ -15,9 +15,13 @@ interface AuthModalProps {
   onLoginSuccess?: () => void;
   required?: boolean;
   intent?: string; // e.g. 'affiliate' — passed through auth so dashboard can act on it
+  // Google OAuth only. The admin gate uses this: the owner signs in with the
+  // Google account the admin allowlist is keyed on, so an email/password form
+  // and a "Sign up" link on /admin are dead options on a restricted route.
+  googleOnly?: boolean;
 }
 
-export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent, googleOnly = false }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -184,6 +188,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
             </div>
           )}
 
+          {!googleOnly && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
@@ -230,8 +235,16 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
           </form>
+          )}
 
-          <div className="mt-6">
+          {googleOnly && error && (
+            <div className="px-4 py-2 bg-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className={googleOnly ? '' : 'mt-6'}>
+            {!googleOnly && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/20"></div>
@@ -240,6 +253,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
                 <span className="px-2 bg-black text-white/60">OR</span>
               </div>
             </div>
+            )}
 
             <button
               onClick={handleGoogleSignIn}
@@ -256,6 +270,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
             </button>
           </div>
 
+          {!googleOnly && (
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
@@ -264,6 +279,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
+          )}
         </div>
       </div>
     </>
