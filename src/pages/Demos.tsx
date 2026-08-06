@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import AffiliateBanner from '../components/affiliate/AffiliateBanner';
+import { initAffiliateTracking } from '../utils/affiliate-tracking';
 
 /* ============================================================
    THE LOST+UNFOUNDS — Demo index. Route: /demos
@@ -174,6 +176,16 @@ const css = `
 `;
 
 export default function Demos() {
+  /* Affiliates hand this page out as their pitch asset, so ?ref=CODE has to
+     stick here. Everywhere else that happens in <Layout>, and /demos renders
+     outside it — without this the referral tag on a shared /demos?ref=CODE
+     link is silently dropped and the affiliate never gets credited. The cookie
+     it sets is path=/, so the tag survives the click through to a demo, the
+     shop, or a booking. */
+  useEffect(() => {
+    initAffiliateTracking();
+  }, []);
+
   return (
     <>
       <Helmet>
