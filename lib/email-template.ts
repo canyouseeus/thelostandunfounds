@@ -10,18 +10,12 @@ export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://www.thelostandunfounds.com/brand/banner.png',
   website: 'https://www.thelostandunfounds.com',
-  // The banner is a black block with white type; the message body below it is
-  // white with black text. Mail clients routinely refuse a dark body palette
-  // and re-render it light — Gmail was already serving these emails as white
-  // with black text regardless of what the template asked for. Specifying the
-  // light palette outright means every client renders the same thing instead
-  // of each one guessing.
   colors: {
-    background: '#ffffff',
-    text: '#000000',
-    textMuted: '#666666',
-    border: '#e5e5e5',
-    link: '#000000',
+    background: '#000000',
+    text: '#ffffff',
+    textMuted: '#999999',
+    border: '#1a1a1a',
+    link: '#eeeeee',
   },
 };
 
@@ -71,8 +65,8 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <style>
     :root {
       color-scheme: light dark;
@@ -94,26 +88,6 @@ export function wrapEmailContent(
       line-height: 100%;
       outline: none;
       text-decoration: none;
-    }
-    /* Gmail (Android/iOS) applies its dark theme by rewriting the message with
-       data-ogsc / data-ogsb attributes and recolouring anything it thinks is
-       unstyled. Restate the palette under those selectors so the email keeps
-       its own colours instead of being inverted. Anchors are deliberately left
-       out: buttons carry their own inline colours and must stay black-on-white
-       type. */
-    [data-ogsc] body, [data-ogsb] body,
-    [data-ogsc] table, [data-ogsb] table,
-    [data-ogsc] td, [data-ogsb] td {
-      background-color: #ffffff !important;
-    }
-    [data-ogsc] p, [data-ogsb] p,
-    [data-ogsc] h1, [data-ogsb] h1,
-    [data-ogsc] h2, [data-ogsb] h2,
-    [data-ogsc] h3, [data-ogsb] h3,
-    [data-ogsc] li, [data-ogsb] li,
-    [data-ogsc] ul, [data-ogsb] ul,
-    [data-ogsc] ol, [data-ogsb] ol {
-      color: #000000 !important;
     }
     /* Brand styles */
     body {
@@ -275,10 +249,10 @@ export const EMAIL_STYLES = {
   heading3: `color: ${BRAND.colors.text} !important; font-size: 20px; font-weight: bold; margin: 25px 0 15px 0;`,
   paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
   link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
-  // Solid black fill, white type, no outline. The old rule filled the button
-  // with the page colour and relied on a 2px border to make it visible, which
-  // is why CTAs read as empty outlined boxes.
-  button: `display: inline-block; padding: 14px 28px; background-color: #000000 !important; color: #ffffff !important; text-decoration: none; font-weight: bold; font-size: 16px; mso-padding-alt: 0;`,
+  // Solid white fill with black type. The button must never be filled with
+  // the page colour and made visible by a border — that renders as an empty
+  // outlined box. See brand-email-manager.
+  button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
   divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
   muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };

@@ -70,43 +70,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const dashboardUrl = `https://www.thelostandunfounds.com/admin?tab=blog&subdomain=${subdomain}`
 
     const content = `
-      <h2 style="color: #000000; margin:0 0 16px 0;font-size:24px;">New blog contributor detected</h2>
-      <p style="color: #000000; margin:0 0 16px 0;font-size:16px;line-height:1.5;">
+      <h2 style="color: #ffffff; margin:0 0 16px 0;font-size:24px;">New blog contributor detected</h2>
+      <p style="color: #ffffff; margin:0 0 16px 0;font-size:16px;line-height:1.5;">
         ${contributorName} just configured a blog subdomain on THE LOST ARCHIVES.
       </p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 24px 0;">
         <tbody>
           <tr>
             <td style="padding:8px 0;color:#aaaaaa;">User</td>
-            <td style="padding:8px 0;color: #000000;">${contributorName} (${contributorEmail})</td>
+            <td style="padding:8px 0;color:#ffffff;">${contributorName} (${contributorEmail})</td>
           </tr>
           <tr>
             <td style="padding:8px 0;color:#aaaaaa;">Subdomain</td>
-            <td style="padding:8px 0;color: #000000;">${subdomain}</td>
+            <td style="padding:8px 0;color:#ffffff;">${subdomain}</td>
           </tr>
           ${
             subdomainInfo
               ? `<tr>
                   <td style="padding:8px 0;color:#aaaaaa;">Blog Title</td>
-                  <td style="padding:8px 0;color: #000000;">${
+                  <td style="padding:8px 0;color:#ffffff;">${
                     subdomainInfo.blog_title_display || subdomainInfo.blog_title || 'N/A'
                   }</td>
                 </tr>
                 <tr>
                   <td style="padding:8px 0;color:#aaaaaa;">Author Name</td>
-                  <td style="padding:8px 0;color: #000000;">${subdomainInfo.author_name || 'N/A'}</td>
+                  <td style="padding:8px 0;color:#ffffff;">${subdomainInfo.author_name || 'N/A'}</td>
                 </tr>`
               : ''
           }
         </tbody>
       </table>
       <p style="margin:0 0 8px 0;">
-        <a href="${blogUrl}" style="color: #000000;text-decoration:underline;">View draft blog &rarr;</a>
+        <a href="${blogUrl}" style="color:#ffffff;text-decoration:underline;">View draft blog &rarr;</a>
       </p>
       <p style="margin:0;">
-        <a href="${dashboardUrl}" style="color: #000000;text-decoration:underline;">Open Admin dashboard &rarr;</a>
+        <a href="${dashboardUrl}" style="color:#ffffff;text-decoration:underline;">Open Admin dashboard &rarr;</a>
       </p>
-      <hr style="border:none;border-top: 1px solid rgba(0, 0, 0, 0.15);margin:32px 0;" />
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;" />
       <p style="font-size:12px;color:#aaaaaa;margin:0;">
         Blog contributor notification &bull; THE LOST+UNFOUNDS
       </p>

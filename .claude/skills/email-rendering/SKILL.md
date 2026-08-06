@@ -1,117 +1,109 @@
 ---
 name: email-rendering
-description: How THE LOST+UNFOUNDS emails actually render in mail clients — colour scheme, dark-mode inversion, bulletproof buttons, and the test protocol. Use whenever changing email colours, the email template shell, buttons, or when an email "looks wrong" in someone's inbox. Triggers on "email looks wrong", "dark mode", "email background", "email button", "white text", "inverted", "Gmail", "Apple Mail".
+description: How THE LOST+UNFOUNDS emails actually render in mail clients, and why the inbox is not evidence of the template. Use whenever changing email colours, the email shell or buttons, or when an email "looks wrong" in someone's inbox. Triggers on "email looks wrong", "dark mode", "email background", "email button", "white text", "inverted", "outlined box", "Gmail", "Apple Mail", "Outlook".
 ---
 
 # Email Rendering
 
-`brand-email-manager` owns *what the brand is*. `email-delivery` owns *how mail is sent*.
-**This skill owns what the recipient's client actually draws on screen** — which is not the
-same as what the template specifies.
+`brand-email-manager` owns **what the brand is**. `email-delivery` owns **how mail is sent**.
+This skill exists for one reason: **what you see in an inbox is not what the template says**,
+and changing the brand to chase a screenshot has already caused one production-wide mistake.
 
-## The palette (authoritative)
-
-- Banner: black block with white type (an image — `https://www.thelostandunfounds.com/brand/banner.png`)
-- Body: **white background `#ffffff`, black text `#000000`**
-- Buttons: **solid black fill `#000000`, white text `#ffffff`, no border**
-- Muted text: `#666666`
-
-## RULE 1 — `color-scheme` must be `light dark`, never a single value
-
-```html
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
-```
-
-**Declaring a single scheme causes clients to invert the email.** This is the single most
-expensive mistake in this codebase's email history, and it has now happened in both directions:
-
-| Template declared | Gmail rendered |
-|---|---|
-| `content="dark"` + CSS `light dark` | **light** (inverted the dark body to white) |
-| `content="light"` + CSS `light` | **dark** (inverted the white body to grey) |
-
-Declaring **both** schemes tells the client the message manages its own colours, so it leaves
-them alone. Do not "tidy" this to a single value to match the palette — it looks correct and
-produces the opposite result.
-
-## RULE 2 — restate the palette under Gmail's dark-theme attributes
-
-Gmail on Android/iOS applies dark theme by **rewriting the DOM**, adding `data-ogsc`
-(original-styles-colour) and `data-ogsb` (original-styles-background) attributes and
-recolouring anything it believes is unstyled. The template restates the palette under those
-selectors:
-
-```css
-[data-ogsc] body, [data-ogsb] body,
-[data-ogsc] table, [data-ogsb] table,
-[data-ogsc] td, [data-ogsb] td { background-color: #ffffff !important; }
-[data-ogsc] p, [data-ogsb] p, /* h1-h3, ul, ol, li … */ { color: #000000 !important; }
-```
-
-**Anchors are deliberately excluded.** Buttons carry their own inline colours and must not be
-swept up by a blanket text rule, or every CTA turns black-on-black.
-
-## RULE 3 — buttons need `!important` on the fill, not just the text
+## RULE 1 — The brand is a BLACK email. Do not change it because an inbox looks white.
 
 ```
-background-color: #000000 !important; color: #ffffff !important;
+Background: #000000
+Text:       #ffffff
 ```
 
-Inline `!important` beats a stylesheet injected by the client, so the fill survives dark-theme
-processing. Without it, Gmail can flip a black button to white while the white text stays
-white — an invisible CTA.
+Every branded email is authored this way — `lib/email-template.ts`, `api/email-template.ts`,
+the newsletter template in `_newsletter-send-handler.ts`, the welcome email. This is
+consistent and deliberate.
 
-### ❌ Never make a button visible with a border
+**Gmail on iOS inverts it.** A black email is displayed as white with black text. That
+inverted rendering looks like a white-background brand, and it is not one.
 
-The historical button filled itself with the *page* colour and relied on `border: 2px solid`
-to be seen. On a black body that rendered as an empty outlined box. A button is a solid fill.
-See `brand-email-manager` for the brand rule; this is why it exists.
+This actually happened: a screenshot of a white-looking email was taken as proof that the
+brand was white-on-black-banner, the whole palette was flipped to `#ffffff` across two
+templates and fourteen handlers, and Gmail then inverted *that* — showing a dark email and
+producing the exact opposite of the intent. **Both directions were "verified" by screenshot
+and both were wrong.**
 
-## RULE 4 — check contrast mechanically, never by eye
-
-A blanket find-and-replace across email colours **will** produce invisible text. It has:
-a sweep once turned two client-facing buttons black-on-black and an amount-due panel
-black-on-black, all of which looked fine in the diff.
-
-After any colour change, run a contrast audit over `lib/api-handlers/*.ts`,
-`lib/email-template.ts` and `api/email-template.ts`:
-
-- flag any element setting a black background with black-ish text (and the white/white case)
-- check **multi-line** too — `background-color` and `color` are often on different lines of the
-  same rule, which a line-based grep misses
-- check translucent colours: `rgba(255,255,255,…)` text and `border-top` dividers are invisible
-  on white and are easy to forget
-
-## RULE 5 — some files that look like email are not
-
-`_newsletter-unsubscribe-handler.ts` renders **browser pages** (it has `<title>` tags and sends
-no mail). The site is black; those pages must stay dark. Before recolouring a handler, check:
+Before concluding the palette is wrong, check what the template actually contains:
 
 ```bash
-grep -c "<title>" <file>     # >0 → it renders a page, not an email
+grep -n "background: '#" lib/email-template.ts api/email-template.ts
+git show <commit>:lib/api-handlers/_newsletter-send-handler.ts | grep "background-color"
+```
+
+If those say `#000000`, the brand is black and the inbox is inverting. That is not a bug to fix.
+
+## RULE 2 — You cannot opt out of dark-mode inversion
+
+- `color-scheme: light` does **not** prevent it — declaring a single scheme is what invites a
+  client to convert the message.
+- `color-scheme: light dark` says "this email handles dark mode itself", which also permits
+  conversion.
+- `[data-ogsc]` / `[data-ogsb]` overrides are **Gmail Android only**. They are inert on Gmail
+  iOS, which is where this was being tested.
+- Inline `!important` protects a specific declaration, not the client's whole-message transform.
+
+Design so the email is correct as authored. Do not add machinery that tries to defeat a
+client's dark mode; it will not work and it obscures the real palette.
+
+## RULE 3 — A button is a solid fill, never an outline
+
+On a black body the button is a **solid white fill with black text**:
+
+```
+background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important;
+```
+
+### ❌ Never fill a button with the page colour and add a border
+
+The historical `lib` button was `background-color: <page black>` + `border: 2px solid <white>`.
+The fill was invisible, so the border was the only thing making the button visible — it
+rendered as an empty outlined box, which is not the brand and violates the no-border rule.
+
+Note the two templates previously derived the button from `colors.background` / `colors.text`
+in **opposite orders**, producing two different buttons from identical constant names. They
+now state it identically. **If you change one, change both.**
+
+## RULE 4 — Verify contrast mechanically, never by eye
+
+A find-and-replace across email colours **will** produce invisible text. It has: one sweep
+turned two client-facing buttons black-on-black and an amount-due panel black-on-black, none
+of which was obvious in the diff.
+
+After any colour change, audit `lib/api-handlers/*.ts`, `lib/email-template.ts` and
+`api/email-template.ts` for:
+
+- black background with black-ish text, and the white/white case
+- **multi-line** rules — `background-color` and `color` are usually on different lines, which a
+  line-based grep misses
+- translucent colours — `rgba(255,255,255,…)` text and `border-top` dividers vanish on white
+- buttons specifically, since they legitimately invert the body palette
+
+## RULE 5 — Some files that look like email are not
+
+`_newsletter-unsubscribe-handler.ts` renders **browser pages** — it has `<title>` tags and
+sends no mail. The site is black, so those pages must stay dark. Recolouring them as if they
+were email makes them black-on-black.
+
+```bash
+grep -c "<title>" <file>   # >0 → browser page, not email
 grep -c "sendEmail\|sendZohoEmail\|wrapEmailContent\|generateTransactional" <file>
 ```
 
-## Testing protocol — a render is not verified until it is seen
+## Testing protocol
 
-1. Render the HTML locally and assert the palette in the output (banner present, no `<title>`,
-   no SVG data URI, button `#000000` fill + `#ffffff` text, body `#ffffff`).
-2. **Send a real test to `thelostandunfounds@gmail.com`** with a `[TEST]` subject prefix. Do not
-   CC `media@` or a subcontractor on a test.
-3. **Open it on a phone in dark mode.** Desktop light mode hides every problem in this document.
+1. Render locally and assert the palette: banner present, no `<title>`, no SVG data URI,
+   body `#000000`, text `#ffffff`, button white fill with black text.
+2. Send a `[TEST]`-prefixed message to `thelostandunfounds@gmail.com`. Never CC `media@` or a
+   subcontractor on a test.
+3. When judging a screenshot, **state which client and whether dark mode is on** before drawing
+   any conclusion about the template. A dark-mode phone shows the inverse of the truth.
 4. Only then send to a client.
 
-Local assertions prove the template. They prove nothing about the client. Every rendering bug
-here was invisible to local checks and obvious in a phone screenshot.
-
-## Which template am I editing?
-
-Two exist and must stay in step:
-
-- `lib/email-template.ts` — used by most handlers and by anything composing mail locally
-- `api/email-template.ts` — used by the booking payment path via `_booking-payment-utils.ts`
-
-They previously derived the button from `colors.background` / `colors.text` in **opposite
-orders**, producing two different buttons from the same constant names. Both now state button
-colours literally. If you change one, change both.
+A local assertion proves the template. A screenshot proves one client's rendering. Neither
+proves the other.

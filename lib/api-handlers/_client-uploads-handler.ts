@@ -417,25 +417,25 @@ async function notifyAdminOfUploads(
         .map(u => {
             const name = escapeHtml(u.file_name);
             return u.drive_view_url
-                ? `<li style="margin-bottom:6px;"><a href="${u.drive_view_url}" style="color: rgba(0, 0, 0, 0.9);">${name}</a></li>`
-                : `<li style="margin-bottom:6px;">${name} <span style="color: rgba(0, 0, 0, 0.5);">(in storage, Drive mirror pending)</span></li>`;
+                ? `<li style="margin-bottom:6px;"><a href="${u.drive_view_url}" style="color:rgba(255,255,255,0.9);">${name}</a></li>`
+                : `<li style="margin-bottom:6px;">${name} <span style="color:rgba(255,255,255,0.5);">(in storage, Drive mirror pending)</span></li>`;
         })
         .join('');
 
     const content = `
-        <h1 style="color: #000000;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">NEW UPLOADS RECEIVED</h1>
-        <p style="color: #000000;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
+        <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">NEW UPLOADS RECEIVED</h1>
+        <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
           <strong>${escapeHtml(label)}</strong> sent ${uploads.length} file${uploads.length === 1 ? '' : 's'}.
         </p>
-        ${note ? `<p style="color: #000000;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">“${escapeHtml(note)}”</p>` : ''}
+        ${note ? `<p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">“${escapeHtml(note)}”</p>` : ''}
         <p style="margin:0 0 24px 0;">
-          <a href="${folderUrl}" style="display:inline-block;padding:14px 28px;background-color: #000000;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;">OPEN THE DRIVE FOLDER</a>
+          <a href="${folderUrl}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">OPEN THE DRIVE FOLDER</a>
         </p>
         <p style="margin:0 0 24px 0;">
-          <a href="${SITE}/admin?panel=clientuploads&link=${link.id}" style="color: rgba(0, 0, 0, 0.9);text-decoration:underline;">Review them in the dashboard →</a>
+          <a href="${SITE}/admin?panel=clientuploads&link=${link.id}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
         </p>
-        <ul style="color: #000000;font-size:15px;line-height:1.6;padding-left:20px;margin:0 0 24px 0;">${fileList}</ul>
-        ${failed.length ? `<p style="color: #000000;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage — retry the mirror from the dashboard.</p>` : ''}
+        <ul style="color:#ffffff;font-size:15px;line-height:1.6;padding-left:20px;margin:0 0 24px 0;">${fileList}</ul>
+        ${failed.length ? `<p style="color:#ffffff;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage — retry the mirror from the dashboard.</p>` : ''}
     `;
 
     const result = await sendTransactionalEmail({
@@ -468,19 +468,19 @@ export async function sendInvite(
     const url = uploadUrlFor(link.token);
     const custom = (body.message || '').trim();
     const expiryLine = link.expires_at
-        ? `<p style="color: rgba(0, 0, 0, 0.6);font-size:14px;line-height:1.5;">This link works until ${new Date(link.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.</p>`
+        ? `<p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.5;">This link works until ${new Date(link.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.</p>`
         : '';
 
     const content = `
-        <h1 style="color: #000000;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SEND US YOUR CONTENT</h1>
-        <p style="color: #000000;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${escapeHtml(link.client_name)},</p>
-        <p style="color: #000000;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
+        <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SEND US YOUR CONTENT</h1>
+        <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${escapeHtml(link.client_name)},</p>
+        <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
           ${custom ? escapeHtml(custom).replace(/\n/g, '<br>') : `Click the link below to send your content over — no account, no sign-in, just drop the files in. Photos, logos, a mood board, brand colors, anything you already have.<br><br>And if there's content sitting on your phone or a hard drive that has never made it onto a website, send that too. We can work it into the build.`}
         </p>
         <p style="margin:0 0 24px 0;">
-          <a href="${url}" style="display:inline-block;padding:14px 28px;background-color: #000000;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;">SEND YOUR CONTENT</a>
+          <a href="${url}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">SEND YOUR CONTENT</a>
         </p>
-        <p style="color: rgba(0, 0, 0, 0.6);font-size:14px;line-height:1.5;">Or paste this into your browser: ${url}</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.5;">Or paste this into your browser: ${url}</p>
         ${expiryLine}
     `;
 

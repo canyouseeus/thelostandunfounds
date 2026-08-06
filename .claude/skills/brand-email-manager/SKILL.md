@@ -30,6 +30,17 @@ const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
 ### ❌ Never call `ensureBannerHtml` directly from a new handler
 `ensureBannerHtml` in `_zoho-email-utils.ts` is a safety net for legacy handlers, not an API. New code must go through `generateTransactionalEmail` or `generateNewsletterEmail` — these call `wrapEmailContent` which already includes the correct banner `<img>` tag.
 
+### ❌ Never give a button a border
+
+The button is a **solid white fill with black text** on the black body:
+
+```
+background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important;
+```
+
+Filling it with the page colour and adding `border: 2px solid` renders an empty outlined box.
+If you see a border in a button style, delete it and set a solid fill.
+
 ### ❌ Never add a `<title>` tag to email HTML
 Many email clients render `<title>` content as visible preheader text above the banner. The template in `lib/email-template.ts` deliberately omits `<title>`. Do not add it.
 
@@ -90,29 +101,14 @@ When reviewing any file that sends email, check for:
 
 ## Palette
 
-The banner is a black block with white type. **The message body below it is
-white with black text** — the banner is the only dark region in the email.
-
-- Body background: `#ffffff`
-- Body text: `#000000`
-- Muted text: `#666666`
-- Buttons: **black fill `#000000`, white text `#ffffff`, no border**
+- Background: `#000000`
+- Text: `#ffffff`
 
 The template already applies these. Only restate them if you are hand-authoring a section that sits outside `wrapEmailContent`.
 
-### ❌ Never give a button a border
+## Rendering vs. the template
 
-A button is a solid black fill with white type. It never carries an outline.
-
-Historically the button was filled with the page colour and made visible by a
-`2px solid #ffffff` border — on a black body that rendered as an empty outlined
-box, which is not the brand. If you see `border: 2px solid` in any button
-style, delete it and set `background-color: #000000; color: #ffffff`.
-
-### ❌ Never reintroduce the dark body
-
-Body background is white. Mail clients routinely refuse a dark body palette and
-re-render it light — Gmail was already serving these emails as white with black
-text no matter what the template asked for, so clients disagreed with each
-other. `color-scheme` and `supported-color-schemes` are both `light`; leave them
-that way. Do not "restore" `#000000` as the body background.
+The palette above is what the template *sends*. Gmail on iOS inverts a black email and
+displays it white — that inverted view is not evidence the brand is white. Do not change this
+palette on the strength of an inbox screenshot. See the `email-rendering` skill before
+touching any email colour.

@@ -9,54 +9,54 @@ function generateWelcomeHtml(email: string): string {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body { background-color: #ffffff !important; margin: 0 !important; padding: 0 !important; }
-        table { background-color: #ffffff !important; }
-        td { background-color: #ffffff !important; }
+        body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+        table { background-color: #000000 !important; }
+        td { background-color: #000000 !important; }
       </style>
     </head>
-    <body style="margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; font-family: Arial, sans-serif;">
-      <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; margin: 0 !important; padding: 0 !important;">
+    <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+      <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
         <tr>
-          <td align="center" style="padding: 40px 20px !important; background-color: #ffffff !important;">
-            <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; margin: 0 auto !important;">
+          <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+            <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
               <!-- Branding Header -->
               <tr>
-                <td align="left" style="padding: 0 0 30px 0; background-color: #ffffff !important;">
+                <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
                   <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
                 </td>
               </tr>
               <!-- Main Content -->
               <tr>
-                <td style="padding: 0 !important; color: #000000 !important; background-color: #ffffff !important;">
-                  <h1 style="color: #000000 !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #ffffff !important;">
+                <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
+                  <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #000000 !important;">
                     CAN YOU SEE US?
                   </h1>
-                  <h2 style="color: #000000 !important; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center; background-color: #ffffff !important;">
+                  <h2 style="color: #ffffff !important; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
                     Thanks for subscribing!
                   </h2>
-                  <p style="color: #000000 !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center; background-color: #ffffff !important;">
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
                     We're excited to have you join THE LOST+UNFOUNDS community.
                   </p>
-                  <p style="color: #000000 !important; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center; background-color: #ffffff !important;">
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center; background-color: #000000 !important;">
                     You'll receive updates about:
                   </p>
-                  <ul style="color: #000000 !important; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center; background-color: #ffffff !important;">
-                    <li style="margin: 10px 0; color: #000000 !important; background-color: #ffffff !important;">New tools and features</li>
-                    <li style="margin: 10px 0; color: #000000 !important; background-color: #ffffff !important;">Platform updates</li>
-                    <li style="margin: 10px 0; color: #000000 !important; background-color: #ffffff !important;">Special announcements</li>
+                  <ul style="color: #ffffff !important; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center; background-color: #000000 !important;">
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">New tools and features</li>
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Platform updates</li>
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Special announcements</li>
                   </ul>
-                  <p style="color: #000000 !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #ffffff !important;">
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #000000 !important;">
                     Stay tuned for what's coming next!
                   </p>
-                  <hr style="border: none; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 30px 0; background-color: #ffffff !important;">
-                  <p style="color: rgba(0, 0, 0, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #ffffff !important;">
+                  <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
+                  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                     If you didn't sign up for this newsletter, you can safely ignore this email.
                   </p>
-  <p style="color: rgba(0, 0, 0, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #ffffff !important;">
+  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
     © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
   </p>
-  <p style="color: rgba(0, 0, 0, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #ffffff !important;">
-    <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(0, 0, 0, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
+  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
+    <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
   </p>
                 </td>
               </tr>

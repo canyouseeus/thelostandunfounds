@@ -70,7 +70,7 @@ const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
 
 function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #ffffff !important; text-align: left;">
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
   <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
     <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
   </a>
@@ -78,7 +78,7 @@ function ensureBannerHtml(htmlContent: string): string {
 
   const ensureShell = (html: string) => {
     if (/<html[\s>]/i.test(html)) return html
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color: #ffffff; font-family: Arial, sans-serif;">${html}</body></html>`
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
   }
 
   const insertAfterBody = (html: string) => {
@@ -130,17 +130,17 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { background-color: #ffffff !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
-    table { background-color: #ffffff !important; border-collapse: collapse !important; }
-    td { background-color: #ffffff !important; }
-    a { color: rgba(0, 0, 0, 0.9); }
+    body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
+    table { background-color: #000000 !important; border-collapse: collapse !important; }
+    td { background-color: #000000 !important; }
+    a { color: rgba(255, 255, 255, 0.9); }
   </style>
 </head>
-<body style="margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; font-family: Arial, sans-serif;">
-  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; margin: 0 !important; padding: 0 !important;">
+<body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
     <tr>
-      <td align="left" style="padding: 40px 20px !important; background-color: #ffffff !important;">
-        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #ffffff !important; margin: 0 !important;">
+      <td align="left" style="padding: 40px 20px !important; background-color: #000000 !important;">
+        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #000000 !important; margin: 0 !important;">
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
               <a href="https://www.thelostandunfounds.com" target="_blank">
@@ -149,14 +149,14 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
             </td>
           </tr>
           <tr>
-            <td style="padding: 0 !important; color: #000000 !important;">
-              ${bodyHtml || '<p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">Stay tuned for updates from THE LOST+UNFOUNDS.</p>'}
-              <hr style="border: none; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 30px 0;">
-              <p style="color: rgba(0, 0, 0, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
+            <td style="padding: 0 !important; color: #ffffff !important;">
+              ${bodyHtml || '<p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">Stay tuned for updates from THE LOST+UNFOUNDS.</p>'}
+              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
               </p>
-              <p style="color: rgba(0, 0, 0, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
-                <a href="${unsubscribeUrl}" style="color: rgba(0, 0, 0, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
+                <a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
               </p>
             </td>
           </tr>
