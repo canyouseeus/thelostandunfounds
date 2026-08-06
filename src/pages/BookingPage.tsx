@@ -204,6 +204,7 @@ const EVENT_TYPES = [
 interface TimeSlot { label: string; start: string; end: string; display: string }
 
 const TIME_SLOTS: TimeSlot[] = [
+    { label: 'Early Morning', start: '06:00', end: '08:00', display: '6AM – 8AM' },
     { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM – 12PM' },
     { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
     { label: 'Evening',   start: '17:00', end: '20:00', display: '5PM – 8PM' },
@@ -427,17 +428,23 @@ const BookingPage: React.FC = () => {
     const [contextOpen, setContextOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
     const [conflictingEvents, setConflictingEvents] = useState<Array<{ id: string; title: string; location: string | null }>>([]);
+    // Slot labels bookable on the selected date. null = no restriction on file,
+    // so every slot stays open (the behaviour before per-date windows existed).
+    const [allowedSlots, setAllowedSlots] = useState<string[] | null>(null);
     const wizardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!form.event_date) { setBookedSlots([]); setConflictingEvents([]); return; }
+        if (!form.event_date) {
+            setBookedSlots([]); setConflictingEvents([]); setAllowedSlots(null); return;
+        }
         fetch(`/api/booking?action=slots&date=${form.event_date}`)
-            .then(r => r.ok ? r.json() : { slots: [], events: [] })
+            .then(r => r.ok ? r.json() : { slots: [], events: [], allowedSlots: null })
             .then(d => {
                 setBookedSlots(d.slots || []);
                 setConflictingEvents(d.events || []);
+                setAllowedSlots(Array.isArray(d.allowedSlots) ? d.allowedSlots : null);
             })
-            .catch(() => { setBookedSlots([]); setConflictingEvents([]); });
+            .catch(() => { setBookedSlots([]); setConflictingEvents([]); setAllowedSlots(null); });
     }, [form.event_date]);
 
     useEffect(() => {
@@ -962,7 +969,10 @@ const BookingPage: React.FC = () => {
                                             </div>
                                         )}
                                         <div className="grid grid-cols-1 gap-2">
-                                            {TIME_SLOTS.filter(slot => !isSlotBlocked(slot, bookedSlots)).map(slot => {
+                                            {TIME_SLOTS
+                                                .filter(slot => !allowedSlots || allowedSlots.includes(slot.label))
+                                                .filter(slot => !isSlotBlocked(slot, bookedSlots))
+                                                .map(slot => {
                                                 const selected = form.start_time === slot.start && form.end_time === slot.end;
                                                 return (
                                                     <button
