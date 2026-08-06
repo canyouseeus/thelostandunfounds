@@ -509,6 +509,8 @@ const BookingPage: React.FC = () => {
     // them, so the wizard's identity steps are pure friction. Express mode asks
     // only for what we cannot know: when, where, and how to get in.
     const [expressMode, setExpressMode] = useState(false);
+    // Arrived via ?service= — the visitor asked for the calendar, not the pitch.
+    const [deepLinked, setDeepLinked] = useState(false);
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -518,9 +520,10 @@ const BookingPage: React.FC = () => {
                 .find(s => s.id === svc);
             if (match) {
                 setForm(prev => ({ ...prev, event_type: match.eventType }));
-                requestAnimationFrame(() => {
-                    scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
+                // No scrolling. The pitch above the scheduler is hidden for a
+                // deep link, so the calendar is already the top of the page —
+                // nothing to travel to, nothing to jump.
+                setDeepLinked(true);
             }
         }
 
@@ -614,6 +617,12 @@ const BookingPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-black text-white">
 
+            {/* Everything above the scheduler is the pitch. A client who followed a
+                booking link from an email has already been sold — showing them the
+                pitch first means the page must scroll to reach the calendar, and
+                any scroll on arrival reads as a jump. Hide it so the scheduler is
+                simply the top of the page. */}
+            {!deepLinked && (<>
             {/* ── Hero ──────────────────────────────────────────────── */}
             <div className="px-4 md:px-8 pt-16 md:pt-24 pb-20 md:pb-28">
                 <div className="max-w-5xl mx-auto">
@@ -772,6 +781,8 @@ const BookingPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            </>)}
 
             {/* ── Schedule a Session ────────────────────────────────── */}
             <div ref={scheduleRef} className="px-4 md:px-8 pt-16 md:pt-20 pb-32">
