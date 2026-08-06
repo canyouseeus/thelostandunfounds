@@ -84,52 +84,72 @@ const DEMOS: Demo[] = [
 ];
 
 const css = `
-  :root{
-    --paper:#ffffff;
-    --ink:#0a0a0a;
-    --soft:#3a3a3a;
-    --muted:#7a7a7a;
-    --rule-soft:#d8d8d8;
-    --pink:#E91E8C;
+  /* NOIR. The Lost+Unfounds' own identity, not a client's.
+   * noir-design: background ALWAYS #000000, text #ffffff, NO BORDERS, NO
+   * SHADOWS, and "separation comes from surface tone, never from an outline".
+   * So every divider here is a change of surface, not a rule.
+   *
+   * The first build of this page used white paper and Kattitude pink — that is
+   * the CLIENT's brand. A page selling our work has to be ours. */
+  .dmx{
+    --base:#000000;      /* page */
+    --raised:#0a0a0a;    /* section chrome */
+    --subtle:rgba(255,255,255,0.05);   /* cards, secondary buttons */
+    --inter:rgba(255,255,255,0.10);    /* hover on a subtle surface */
+    --ink:#ffffff;
+    --dim:rgba(255,255,255,0.87);
+    --mute:rgba(255,255,255,0.55);
   }
-  @page { size: Letter; margin: 0; }
-  .dmx *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
-  .dmx{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  .dmx *{box-sizing:border-box;}
+  .dmx{margin:0;padding:0;min-height:100vh;
+    background:var(--base);color:var(--ink);
     font-family:'Inter','Helvetica Neue',Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;min-height:100vh;}
+    -webkit-font-smoothing:antialiased;}
 
-  .dmx .page{width:100%;max-width:8.5in;margin:0 auto;padding:0.7in 0.75in 0.6in;}
+  .dmx .page{width:100%;max-width:1040px;margin:0 auto;padding:64px 24px 72px;}
 
-  .dmx .eyebrow{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);}
-  .dmx h1{font-size:40px;line-height:1.02;letter-spacing:-.02em;margin:10px 0 0;
-    text-transform:uppercase;font-weight:800;}
-  .dmx .lede{font-size:15px;line-height:1.6;color:var(--soft);margin:16px 0 0;max-width:56ch;}
-  .dmx .rule{height:2px;background:var(--ink);margin:26px 0;}
+  .dmx .eyebrow{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--mute);}
+  .dmx h1{font-size:clamp(38px,7vw,68px);line-height:0.98;letter-spacing:-.02em;
+    margin:14px 0 0;text-transform:uppercase;font-weight:800;color:var(--ink);}
+  .dmx .lede{font-size:16px;line-height:1.62;color:var(--dim);margin:20px 0 0;
+    max-width:62ch;text-align:left;}
 
-  .dmx .item{padding:26px 0;}
-  .dmx .item + .item{border-top:1px solid var(--rule-soft);}
-  .dmx .kind{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
-  .dmx .item h2{font-size:22px;font-weight:800;letter-spacing:-.015em;margin:7px 0 0;}
-  .dmx .price{display:inline-block;margin-top:8px;font-size:10px;letter-spacing:.14em;
-    text-transform:uppercase;font-weight:700;background:var(--ink);color:#fff;padding:5px 9px;}
-  .dmx .blurb{font-size:13px;line-height:1.6;color:var(--soft);margin:11px 0 0;max-width:60ch;}
+  /* Each demo is a raised surface on black. Tone separates them; there is no
+     rule between them and no outline around them. */
+  .dmx .item{background:var(--subtle);padding:30px 28px;margin-top:16px;border-radius:0;}
+  .dmx .item:first-of-type{margin-top:40px;}
+  .dmx .kind{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);}
+  .dmx .item h2{font-size:clamp(20px,3vw,27px);font-weight:800;letter-spacing:-.015em;
+    margin:9px 0 0;text-transform:uppercase;color:var(--ink);}
+  .dmx .price{display:inline-block;margin-top:12px;padding:6px 11px;
+    font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+    background:var(--ink);color:#000;border-radius:0;}
+  .dmx .blurb{font-size:14px;line-height:1.65;color:var(--dim);margin:14px 0 0;
+    max-width:66ch;text-align:left;}
 
-  .dmx .links{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px;}
-  .dmx .lk{display:block;text-decoration:none;color:#fff;background:var(--ink);
-    padding:11px 13px;min-width:190px;}
-  .dmx .lk .l{font-size:12.5px;font-weight:700;line-height:1.25;}
-  .dmx .lk .n{font-size:10.5px;line-height:1.35;color:rgba(255,255,255,.7);margin-top:4px;}
-  .dmx .lk.alt{background:var(--pink);}
+  .dmx .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+  /* Primary = inverted, per the surface ladder. Secondary = white/10 on the
+     raised surface, so it reads without an outline. */
+  .dmx .lk{display:block;text-decoration:none;padding:13px 15px;min-width:210px;
+    background:var(--inter);color:var(--ink);border-radius:0;
+    transition:background .12s ease,color .12s ease;}
+  .dmx .lk:hover{background:var(--ink);color:#000;}
+  .dmx .lk.alt{background:var(--ink);color:#000;}
+  .dmx .lk.alt:hover{background:var(--inter);color:var(--ink);}
+  .dmx .lk .l{display:block;font-size:12.5px;font-weight:700;line-height:1.25;
+    text-transform:uppercase;letter-spacing:.04em;}
+  .dmx .lk .n{display:block;font-size:10.5px;line-height:1.4;margin-top:5px;opacity:.72;}
 
-  .dmx .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule-soft);
-    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
-    font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .dmx .note{font-size:12px;line-height:1.6;color:var(--mute);margin-top:34px;
+    max-width:70ch;text-align:left;}
 
-  .dmx .note{font-size:11.5px;line-height:1.55;color:var(--muted);margin-top:12px;}
+  .dmx .foot{margin-top:20px;background:var(--raised);padding:18px 24px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);}
 
   @media (max-width:760px){
-    .dmx .page{padding:28px 20px 40px;}
-    .dmx h1{font-size:30px;}
+    .dmx .page{padding:38px 18px 48px;}
+    .dmx .item{padding:22px 18px;}
     .dmx .lk{min-width:0;width:100%;}
   }
 `;
@@ -160,8 +180,6 @@ export default function Demos() {
             walkthrough video. Open one, or send this whole page &mdash; every link here
             also works on its own.
           </p>
-
-          <div className="rule" />
 
           {DEMOS.map((d) => (
             <div className="item" key={d.title}>

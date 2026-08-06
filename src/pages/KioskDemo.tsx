@@ -91,14 +91,18 @@ const TABS: Brief[] = [
 ];
 
 const css = `
-  :root{
-    --paper:#ffffff;
-    --ink:#0a0a0a;
-    --soft:#3a3a3a;
-    --muted:#7a7a7a;
-    --rule:#0a0a0a;
-    --rule-soft:#d8d8d8;
-    --pink:#E91E8C;
+  /* NOIR — ours, not the client's. noir-design: background ALWAYS #000000,
+   * text #ffffff, NO BORDERS, NO SHADOWS, separation by surface tone only.
+   * The first cut of this page was white paper with Kattitude's pink on it,
+   * which is the wrong company's identity on a page selling our work. */
+  .kdemo{
+    --paper:#000000;
+    --ink:#ffffff;
+    --soft:rgba(255,255,255,0.87);
+    --muted:rgba(255,255,255,0.55);
+    --raised:#0a0a0a;
+    --subtle:rgba(255,255,255,0.05);
+    --inter:rgba(255,255,255,0.10);
   }
   @page { size: Letter; margin: 0; }
   .kdemo *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
@@ -116,25 +120,28 @@ const css = `
   .kdemo h1{font-size:40px;line-height:1.02;letter-spacing:-.02em;margin:10px 0 0;text-transform:uppercase;font-weight:800;}
   .kdemo h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 14px;font-weight:700;}
   .kdemo .lede{font-size:15px;line-height:1.6;color:var(--soft);margin:16px 0 0;max-width:52ch;}
-  .kdemo .rule{height:2px;background:var(--rule);margin:26px 0;}
-  .kdemo .rule-soft{height:1px;background:var(--rule-soft);margin:18px 0;}
+  .kdemo .rule{height:0;margin:34px 0 0;}
+  .kdemo .rule-soft{height:0;margin:20px 0 0;}
 
   /* ── Launcher ───────────────────────────────────────────── */
   .kdemo .demos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0 0;}
   .kdemo .demo{
-    display:block;text-decoration:none;color:inherit;
-    background:#0a0a0a;color:#fff;padding:22px 20px;
+    display:block;text-decoration:none;
+    background:var(--subtle);color:var(--ink);padding:24px 22px;
+    transition:background .12s ease;
   }
-  .kdemo .demo .k{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);}
+  .kdemo .demo:hover{background:var(--inter);}
+  .kdemo .demo .k{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
   .kdemo .demo .t{font-size:20px;font-weight:800;margin:8px 0 6px;letter-spacing:-.01em;}
-  .kdemo .demo .d{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.78);}
+  .kdemo .demo .d{font-size:12.5px;line-height:1.55;color:var(--soft);text-align:left;}
   .kdemo .demo .go{display:inline-block;margin-top:14px;font-size:11px;letter-spacing:.14em;
-    text-transform:uppercase;font-weight:700;color:#fff;background:var(--pink);padding:8px 12px;}
+    text-transform:uppercase;font-weight:700;color:#000;background:var(--ink);padding:9px 13px;}
 
   /* ── Brief table ────────────────────────────────────────── */
   .kdemo .brief{margin-top:6px;}
-  .kdemo .row{display:grid;grid-template-columns:1.35in 1fr;gap:16px;padding:14px 0;}
-  .kdemo .row + .row{border-top:1px solid var(--rule-soft);}
+  .kdemo .row{display:grid;grid-template-columns:150px 1fr;gap:16px;}
+  /* Rows separate by sitting on their own surface, never by a rule. */
+  .kdemo .row{background:var(--subtle);padding:16px 18px;margin-top:8px;}
   .kdemo .row .tab{font-size:14px;font-weight:800;letter-spacing:-.01em;}
   .kdemo .row .who{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
   .kdemo .row .line{font-size:13.5px;font-weight:700;margin:0 0 5px;}
@@ -151,7 +158,8 @@ const css = `
   .kdemo .price .u{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
 
   .kdemo .foot{position:absolute;left:0.75in;right:0.75in;bottom:0.42in;
-    display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.12em;
+    background:var(--raised);padding:14px 18px;
+    display:flex;justify-content:space-between;gap:10px;font-size:9.5px;letter-spacing:.12em;
     text-transform:uppercase;color:var(--muted);}
 
   .kdemo .note{font-size:11.5px;line-height:1.55;color:var(--muted);margin-top:10px;}
