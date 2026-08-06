@@ -294,7 +294,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
     const [searchModalOpen, setSearchModalOpen] = useState(false);
     // Floating console tray — only one card open at a time (bento-design "Platform Console Tray")
-    const [openCard, setOpenCard] = useState<'filter' | 'view' | null>(null);
+    const [openCard, setOpenCard] = useState<'filter' | null>(null);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
@@ -1010,7 +1010,10 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         return (
                             <div className="space-y-3 max-w-sm">
                                 <div className="inline-flex items-baseline gap-3">
-                                    <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
+                                    {/* Money is green-400 across the platform (admin revenue
+                                        tiles, CHART_ACCENTS revenue). The headline price and the
+                                        tray total are the same number, so they match. */}
+                                    <span className="text-4xl md:text-5xl font-black text-green-400 tracking-tighter leading-none">
                                         ${headlinePrice.toFixed(0)}
                                     </span>
                                     <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
@@ -1334,14 +1337,19 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
             {/* Floating console tray — the customer-facing counterpart to the admin gallery's
                 tray in AdminPhotosBrowse.tsx. Frosted glass (bg-white/10 backdrop-blur-md
-                rounded-full), fixed at bottom-24 so it stays reachable while the grid scrolls
-                underneath, exactly like the back-to-top button it absorbs. When the checkout
-                SelectionTray is up (fixed bottom-0), the tray lifts clear of it.
+                rounded-full), fixed so it stays reachable while the grid scrolls underneath.
+                It absorbs the old back-to-top button.
+
+                DELIBERATELY NOT bottom-24, which is what Variant B specifies and what the
+                back-to-top button used: on a phone that lands a third of the way up the
+                screen, well clear of the browser chrome, and it read as floating in the
+                middle of the photos. bottom-6 sits it where a bottom bar belongs. When the
+                checkout SelectionTray is up (fixed bottom-0), the tray lifts clear of it.
                 See "Platform Console Tray — Variant B" in the bento-design skill. */}
             <div
                 className={cn(
                     "fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300",
-                    selectedPhotos.length > 0 ? "bottom-[10.5rem] md:bottom-32" : "bottom-24"
+                    selectedPhotos.length > 0 ? "bottom-[8.5rem] md:bottom-28" : "bottom-6"
                 )}
             >
                 <AnimatePresence>
@@ -1381,30 +1389,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 </>
                             )}
 
-                            {openCard === 'view' && (
-                                <>
-                                    <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">View</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {([
-                                            { id: 'grid', label: 'Grid' },
-                                            { id: 'single', label: 'Single' },
-                                            { id: 'map', label: 'Map' },
-                                        ] as const).map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => { setViewMode(opt.id); setOpenCard(null); }}
-                                                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${viewMode === opt.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-                                            >{opt.label}</button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
                     {([
+                        {
+                            // Far-left, and it cycles grid -> single -> map on tap. No card, no
+                            // labels: the icon IS the state, so a view change is one tap and
+                            // never a menu to read.
+                            id: 'view',
+                            icon: viewMode === 'map' ? MapPinIcon : viewMode === 'single' ? StopIcon : Squares2X2Icon,
+                            label: 'View',
+                            active: viewMode !== 'grid',
+                            onClick: () => {
+                                setOpenCard(null);
+                                setViewMode(m => m === 'grid' ? 'single' : m === 'single' ? 'map' : 'grid');
+                            },
+                        },
                         {
                             id: 'search',
                             icon: MagnifyingGlassIcon,
@@ -1435,13 +1438,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     setShowCalendar(true);
                                 }
                             },
-                        },
-                        {
-                            id: 'view',
-                            icon: viewMode === 'map' ? MapPinIcon : viewMode === 'single' ? StopIcon : Squares2X2Icon,
-                            label: 'View',
-                            active: openCard === 'view' || viewMode !== 'grid',
-                            onClick: () => setOpenCard(c => c === 'view' ? null : 'view'),
                         },
                         {
                             id: 'cart',
@@ -1500,9 +1496,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         {btn.badge}
                                     </span>
                                 ) : null}
-                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                                    {btn.label}
-                                </span>
                             </button>
                         ))}
                 </div>
