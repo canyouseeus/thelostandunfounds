@@ -438,3 +438,75 @@ export async function createQuoteForBooking(args: {
     emailError,
   }
 }
+
+/**
+ * Confirm a paid deposit to the client.
+ *
+ * Paying the deposit used to be silent: the webhook advanced the booking to
+ * deposit_paid and sent nothing, so a client paid and heard back only when
+ * someone got round to it. This closes the loop and sets the expectation that
+ * the balance is collected on the day of the shoot.
+ */
+export async function sendDepositConfirmationEmail(args: {
+  to: string
+  clientName?: string | null
+  invoiceNumber: string
+  eventType?: string | null
+  eventDate?: string | null
+  startTime?: string | null
+  location?: string | null
+  depositPaid: number
+  balanceDue: number
+}): Promise<void> {
+  const fmt = (n: number) => `$${n.toFixed(2)}`
+  const when = args.eventDate
+    ? new Date(`${args.eventDate}T00:00:00`).toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+      })
+    : 'your scheduled date'
+  const time = args.startTime ? String(args.startTime).slice(0, 5) : null
+
+  const row = (label: string, value: string) => `
+    <p style="color: ${BRAND.colors.text}; font-size: 15px; line-height: 1.6; margin: 0 0 6px 0; text-align: left;">
+      <strong>${label}:</strong> ${value}
+    </p>`
+
+  const bodyHtml = `
+    <h1 style="color: ${BRAND.colors.text}; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; letter-spacing: 0.1em;">DEPOSIT RECEIVED</h1>
+    <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+      ${args.clientName ? `Hi ${args.clientName},` : 'Hi,'}
+    </p>
+    <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+      Thank you for booking with us — we've received your deposit of <strong>${fmt(args.depositPaid)}</strong>
+      against ${args.invoiceNumber}. Your shoot is confirmed.
+    </p>
+    ${row('Shoot', args.eventType || 'Photography')}
+    ${row('Date', when)}
+    ${time ? row('Time', time) : ''}
+    ${args.location ? row('Location', args.location) : ''}
+    <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
+    <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+      <strong>Remaining balance: ${fmt(args.balanceDue)}</strong>, collected on the day of the shoot
+      once it's complete. We'll send the final invoice and payment link then — nothing to do before that.
+    </p>
+    <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+      If anything about the date, time or access changes, just reply to this email.
+    </p>
+    <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+      &mdash; Joshua<br />THE LOST+UNFOUNDS
+    </p>`
+
+  const htmlContent = wrapEmailContent(bodyHtml, {
+    includeUnsubscribe: false,
+    includeFooter: true,
+  })
+
+  const auth = await getZohoAuthContext()
+  await sendZohoEmail({
+    auth,
+    to: args.to,
+    cc: FROM_EMAIL,
+    subject: `Deposit received — your shoot is confirmed (${args.invoiceNumber})`,
+    htmlContent,
+  })
+}

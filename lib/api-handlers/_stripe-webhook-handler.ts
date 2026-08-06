@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
+import { sendDepositConfirmationEmail } from './_booking-payment-utils.js'
 
 /**
  * Stripe Webhook Handler
@@ -732,7 +733,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
 
     const { data: invoice } = await supabase
         .from('invoices')
-        .select('id, booking_id, invoice_type, status, total')
+        .select('id, invoice_number, booking_id, invoice_type, status, total')
         .eq('stripe_payment_link_id', paymentLinkId)
         .maybeSingle()
 
@@ -775,7 +776,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
 
     const { data: booking } = await supabase
         .from('bookings')
-        .select('id, email, status, total_amount_cents, affiliate_code')
+        .select('id, name, email, status, event_type, event_date, start_time, location, total_amount_cents, deposit_amount_cents, affiliate_code')
         .eq('id', invoice.booking_id)
         .single()
 
@@ -819,6 +820,29 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
                 .eq('id', booking.id)
         }
         console.log('✅ Booking deposit paid:', booking.id)
+
+        // Confirm to the client and set the expectation that the balance is
+        // collected on the day. Best-effort: a mail failure must not fail the
+        // webhook, or Stripe retries a payment we have already recorded.
+        try {
+            if (booking.email) {
+                const total = (Number(booking.total_amount_cents) || 0) / 100
+                const deposit = (Number(booking.deposit_amount_cents) || 0) / 100
+                await sendDepositConfirmationEmail({
+                    to: booking.email,
+                    clientName: booking.name,
+                    invoiceNumber: invoice.invoice_number,
+                    eventType: booking.event_type,
+                    eventDate: booking.event_date,
+                    startTime: booking.start_time,
+                    location: booking.location,
+                    depositPaid: deposit,
+                    balanceDue: Math.max(0, Math.round((total - deposit) * 100) / 100),
+                })
+            }
+        } catch (mailErr: any) {
+            console.warn('⚠️ Deposit confirmation email failed:', mailErr?.message)
+        }
     }
 }
 

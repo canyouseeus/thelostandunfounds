@@ -246,6 +246,7 @@ interface FormData {
     notes: string;
     retainer: boolean;
     bedrooms?: number;
+    access_notes?: string;
 }
 
 const EMPTY_FORM: FormData = {
@@ -504,6 +505,10 @@ const BookingPage: React.FC = () => {
     // automated discount engine for bookings, so the code travels in the notes
     // and is honoured when the invoice is raised.
     const [promoCode, setPromoCode] = useState('');
+    // A client we already know — their name and email ride in the link we sent
+    // them, so the wizard's identity steps are pure friction. Express mode asks
+    // only for what we cannot know: when, where, and how to get in.
+    const [expressMode, setExpressMode] = useState(false);
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -517,6 +522,24 @@ const BookingPage: React.FC = () => {
                     scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             }
+        }
+
+        const pName = (params.get('name') || params.get('n') || '').trim();
+        const pEmail = (params.get('email') || params.get('e') || '').trim();
+        const pBiz = (params.get('business') || params.get('b') || '').trim();
+        if (pName && pEmail.includes('@')) {
+            setForm(prev => ({
+                ...prev,
+                name: pName,
+                email: pEmail,
+                business_name: pBiz || prev.business_name,
+            }));
+            setExpressMode(true);
+        }
+
+        const beds = Number(params.get('beds') || params.get('bedrooms'));
+        if (Number.isFinite(beds) && beds > 0) {
+            setForm(prev => ({ ...prev, bedrooms: beds }));
         }
 
         const promo = (params.get('promo') || '').trim();
@@ -545,6 +568,8 @@ const BookingPage: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...form,
+                    notes: [form.notes, form.access_notes && `Access: ${form.access_notes}`]
+                        .filter(Boolean).join('\n\n'),
                     retainer: form.event_type === 'Retainer (Monthly)',
                 }),
             });
@@ -855,11 +880,13 @@ const BookingPage: React.FC = () => {
                                             {new Date(form.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </span>
                                     </button>
-                                    <div className="flex-1 flex items-center gap-1">
-                                        {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
-                                            <div key={s} className={`h-1 flex-1 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
-                                        ))}
-                                    </div>
+                                    {!expressMode && (
+                                        <div className="flex-1 flex items-center gap-1">
+                                            {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
+                                                <div key={s} className={`h-1 flex-1 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {contextOpen && (
@@ -877,7 +904,93 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {detailsStep === 0 && (
+
+                                {expressMode && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <CameraIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-white">Confirm your shoot</h3>
+                                                <p className="text-white/40 text-sm">
+                                                    {form.name ? `${form.name} — ` : ''}we have the rest on file
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white/5 p-4 mb-6">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1">Booking</p>
+                                            <p className="text-sm font-bold text-white">
+                                                {form.event_type}
+                                                {form.bedrooms ? ` · ${AIRBNB_BEDROOM_OPTIONS.find(o => o.value === form.bedrooms)?.label}` : ''}
+                                            </p>
+                                            <p className="text-white/40 text-xs mt-1">{formatDate(form.event_date)}</p>
+                                        </div>
+
+                                        <p className="text-white text-sm font-bold mb-1">Pick a time</p>
+                                        <p className="text-white/40 text-xs mb-3">These are the windows we can cover.</p>
+                                        <div className="grid grid-cols-1 gap-2 mb-6">
+                                            {TIME_SLOTS
+                                                .filter(slot => !allowedSlots || allowedSlots.includes(slot.label))
+                                                .filter(slot => !isSlotBlocked(slot, bookedSlots))
+                                                .map(slot => {
+                                                    const selected = form.start_time === slot.start && form.end_time === slot.end;
+                                                    return (
+                                                        <button
+                                                            key={slot.label}
+                                                            type="button"
+                                                            onClick={() => { set('start_time', slot.start); set('end_time', slot.end); }}
+                                                            className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${selected ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                                        >
+                                                            <span className="font-black uppercase tracking-wider text-sm">{slot.label}</span>
+                                                            <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : 'text-white/40'}`}>{slot.display}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                        </div>
+
+                                        <p className="text-white text-sm font-bold mb-1">Where is it?</p>
+                                        <p className="text-white/40 text-xs mb-3">Full address of the unit.</p>
+                                        <input
+                                            type="text"
+                                            value={form.location}
+                                            onChange={e => set('location', e.target.value)}
+                                            placeholder="Street address, unit number, city"
+                                            className="w-full bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:bg-white/10 transition-colors rounded-none mb-6"
+                                        />
+
+                                        <p className="text-white text-sm font-bold mb-1">How do we get in?</p>
+                                        <p className="text-white/40 text-xs mb-3">
+                                            Lockbox code, gate code, parking, who to call — anything the photographer needs on the day.
+                                        </p>
+                                        <textarea
+                                            value={form.access_notes || ''}
+                                            onChange={e => set('access_notes', e.target.value)}
+                                            rows={4}
+                                            placeholder="e.g. Gate code 4821, unit 204, lockbox on the door — code 1105. Parking in visitor spots out front."
+                                            className="w-full bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:bg-white/10 transition-colors rounded-none mb-6 resize-none"
+                                        />
+
+                                        {error && (
+                                            <p className="text-white/80 text-sm mb-4">{error}</p>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmit as any}
+                                            disabled={submitting || !form.start_time || !form.location.trim()}
+                                            className="w-full px-6 py-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            {submitting ? 'Generating…' : 'Generate invoice'}
+                                        </button>
+                                        <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest text-center mt-3">
+                                            Your invoice and deposit link arrive by email
+                                        </p>
+                                    </div>
+                                )}
+
+                                {!expressMode && detailsStep === 0 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
@@ -906,7 +1019,7 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {detailsStep === 1 && (
+                                {!expressMode && detailsStep === 1 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
@@ -935,7 +1048,7 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {detailsStep === 2 && (
+                                {!expressMode && detailsStep === 2 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
@@ -982,7 +1095,7 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {detailsStep === 3 && (
+                                {!expressMode && detailsStep === 3 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
@@ -1034,7 +1147,7 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {detailsStep === 4 && (
+                                {!expressMode && detailsStep === 4 && (
                                     isWebDevEventType(form.event_type) ? (
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
