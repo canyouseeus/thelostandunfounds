@@ -87,6 +87,26 @@ export function wrapEmailContent(
       outline: none;
       text-decoration: none;
     }
+    /* Gmail (Android/iOS) applies its dark theme by rewriting the message with
+       data-ogsc / data-ogsb attributes and recolouring anything it thinks is
+       unstyled. Restate the palette under those selectors so the email keeps
+       its own colours instead of being inverted. Anchors are deliberately left
+       out: buttons carry their own inline colours and must stay black-on-white
+       type. */
+    [data-ogsc] body, [data-ogsb] body,
+    [data-ogsc] table, [data-ogsb] table,
+    [data-ogsc] td, [data-ogsb] td {
+      background-color: #ffffff !important;
+    }
+    [data-ogsc] p, [data-ogsb] p,
+    [data-ogsc] h1, [data-ogsb] h1,
+    [data-ogsc] h2, [data-ogsb] h2,
+    [data-ogsc] h3, [data-ogsb] h3,
+    [data-ogsc] li, [data-ogsb] li,
+    [data-ogsc] ul, [data-ogsb] ul,
+    [data-ogsc] ol, [data-ogsb] ol {
+      color: #000000 !important;
+    }
     /* Brand styles */
     body {
       background-color: ${BRAND.colors.background} !important;
@@ -234,7 +254,7 @@ export const EMAIL_STYLES = {
   // Stated literally rather than via the palette constants: the two templates
   // previously derived the button from background/text in opposite orders and
   // produced two different buttons from the same names.
-  button: `display: inline-block; padding: 14px 28px; background-color: #000000; color: #ffffff !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
+  button: `display: inline-block; padding: 14px 28px; background-color: #000000 !important; color: #ffffff !important; text-decoration: none; font-weight: bold; font-size: 16px; mso-padding-alt: 0;`,
   divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
   muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };
