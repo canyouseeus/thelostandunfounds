@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { logSignupEvent } from '../../utils/signupTelemetry';
+import { getAffiliateRef } from '../../utils/affiliate-tracking';
 
 interface AffiliateSignupWizardProps {
     isOpen: boolean;
@@ -131,6 +132,10 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                     first_name: firstName.trim(),
                     last_name: lastName.trim(),
                     phone_number: phone.trim(),
+                    // Whoever referred them, captured from ?ref= on arrival.
+                    // Without this the upline is never recorded and the MLM
+                    // commission logic has nothing to pay out against.
+                    referred_by_code: getAffiliateRef() || undefined,
                 }),
             });
             const data = await response.json();

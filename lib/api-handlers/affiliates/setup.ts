@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { user_id, code, first_name, last_name, phone_number } = req.body;
+  const { user_id, code, first_name, last_name, phone_number, referred_by_code } = req.body;
 
   if (!user_id || !code) {
     return res.status(400).json({ error: 'User ID and code are required' });
@@ -73,6 +73,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Resolve the referring affiliate, if the signup arrived through a ref
+    // link. Stored as referred_by so calculate-commission.ts can walk the
+    // upline — it reads this column at three levels and previously always
+    // found null, because nothing ever wrote it.
+    let referredBy: string | null = null
+    if (referred_by_code && typeof referred_by_code === 'string') {
+        const { data: referrer } = await supabase
+            .from('affiliates')
+            .select('id, user_id')
+            .eq('code', referred_by_code.toUpperCase())
+            .maybeSingle()
+        // Ignore a self-referral — landing on your own link must not make you
+        // your own upline.
+        if (referrer && referrer.user_id !== user_id) {
+            referredBy = referrer.id
+        }
+    }
+
     // Create affiliate account
     const { data: affiliate, error: createError } = await supabase
       .from('affiliates')
@@ -87,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ...(first_name && { first_name }),
         ...(last_name  && { last_name }),
         ...(phone_number && { phone_number }),
+        ...(referredBy && { referred_by: referredBy }),
       })
       .select()
       .single();
