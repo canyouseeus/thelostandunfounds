@@ -16,7 +16,6 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: (redirectUrl?: string) => Promise<{ error: Error | null }>;
-  signInWithMagicLink: (email: string, redirectUrl?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
   refreshAuth: () => Promise<void>;
   clearAuthStorage: () => Promise<void>;
@@ -350,14 +349,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signInWithMagicLink = async (email: string, redirectUrl?: string) => {
-    try {
-      return await authService.signInWithMagicLink(email, redirectUrl);
-    } catch (error) {
-      return { error: error as Error };
-    }
-  };
-
   const signInWithGoogle = async (redirectUrl?: string) => {
     try {
       const { url, error } = await authService.signInWithGoogle(redirectUrl);
@@ -428,7 +419,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signIn,
         signInWithGoogle,
-        signInWithMagicLink,
         signOut,
         refreshAuth,
         clearAuthStorage,
