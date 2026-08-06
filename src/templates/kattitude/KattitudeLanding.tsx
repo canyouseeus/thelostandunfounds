@@ -608,10 +608,10 @@ function BookingCTA({ dark }: { dark: boolean }) {
                 <option>Any Artist Best Fit</option>
                 <option>Kat (@Kattitudetattoo) — Return Clients Only</option>
                 <option>Barbie (@delicatelyscripted) — Senior · Single Needle, Micro Realism, Florals</option>
-                <option>Alena (@Alenanobodytattoo) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
-                <option>Miranda (@mirandaink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
-                <option>Jen (@inkedByjennin) — Junior · 3 Needle, Single Needle</option>
-                <option>Naomi (@Paratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
+                <option>Alena (@Alenanebotattoos) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
+                <option>Miranda (@mirandaiink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
+                <option>Jen (@inkedbyjemini) — Junior · 3 Needle, Single Needle</option>
+                <option>Naomi (@Puratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
               </select>
             </div>
           </div>
