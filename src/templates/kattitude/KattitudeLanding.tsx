@@ -55,7 +55,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
   const [open, setOpen] = useState(false);
   const links = ['Styles', 'How It Works', 'Artists', 'Testimonials'];
 
-  const bg = dark ? 'rgba(10,10,10,0.96)' : 'rgba(255,255,255,0.96)';
+  const bg = dark ? 'rgba(0,0,0,0.96)' : 'rgba(255,255,255,0.96)';
   const logoText = dark ? '#ffffff' : '#0a0a0a';
   const linkColor = dark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
   const linkHover = dark ? '#ffffff' : '#0a0a0a';
@@ -105,7 +105,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
       </div>
 
       {open && (
-        <div className="md:hidden px-4 py-4 space-y-1" style={{ background: dark ? '#0a0a0a' : '#ffffff' }}>
+        <div className="md:hidden px-4 py-4 space-y-1" style={{ background: dark ? '#000000' : '#ffffff' }}>
           {links.map(link => (
             <a key={link} href={`#${link.toLowerCase().replace(/\s+/g, '-')}`}
               onClick={() => setOpen(false)}
@@ -130,10 +130,10 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
 }
 
 function Hero({ dark }: { dark: boolean }) {
-  const bg = dark ? '#0a0a0a' : '#ffffff';
+  const bg = dark ? '#000000' : '#ffffff';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
-  const cardBg = dark ? '#111111' : '#f5f5f5';
+  const cardBg = dark ? 'rgba(255,255,255,0.05)' : '#f5f5f5';
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16" style={{ background: bg }}>
@@ -192,8 +192,8 @@ function Hero({ dark }: { dark: boolean }) {
 }
 
 function Styles({ dark }: { dark: boolean }) {
-  const bg = dark ? '#0a0a0a' : '#ffffff';
-  const cardBg = dark ? '#111111' : '#f5f5f5';
+  const bg = dark ? '#000000' : '#ffffff';
+  const cardBg = dark ? 'rgba(255,255,255,0.05)' : '#f5f5f5';
   const cardHover = dark ? '#191919' : '#ebebeb';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
@@ -259,7 +259,7 @@ function Styles({ dark }: { dark: boolean }) {
               onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = cardHover}
               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = cardBg}>
               <div className="flex items-start justify-between mb-5">
-                <div style={{ color: textFaint }}>{s.icon}</div>
+                <div style={{ color: dark ? GOLD : PINK }}>{s.icon}</div>
                 <span className="text-[9px] tracking-[0.2em] uppercase px-2 py-1"
                   style={{ color: dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}>
                   {s.tag}
@@ -284,8 +284,8 @@ function Styles({ dark }: { dark: boolean }) {
 }
 
 function HowItWorks({ dark }: { dark: boolean }) {
-  const bg = dark ? '#111111' : '#f5f5f5';
-  const cardBg = dark ? '#0a0a0a' : '#ffffff';
+  const bg = dark ? '#000000' : '#f5f5f5';
+  const cardBg = dark ? 'rgba(255,255,255,0.05)' : '#ffffff';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
   const textFaint = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)';
@@ -331,11 +331,11 @@ function HowItWorks({ dark }: { dark: boolean }) {
           {steps.map(s => (
             <div key={s.step} className="p-6" style={{ background: cardBg }}>
               <div className="flex items-start justify-between mb-4">
-                <div style={{ color: textFaint }}>{s.icon}</div>
+                <div style={{ color: dark ? GOLD : PINK }}>{s.icon}</div>
                 <div className="flex flex-col items-end gap-1">
                   <span className="text-4xl font-black select-none leading-none" style={{ color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' }}>{s.step}</span>
                   {s.phase2 && (
-                    <span className="text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 font-bold" style={{ color: PINK, background: `${PINK}18` }}>Phase 2</span>
+                    <span className="text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5 font-bold" style={{ color: '#ffffff', background: PINK }}>Phase 2</span>
                   )}
                 </div>
               </div>
@@ -345,7 +345,7 @@ function HowItWorks({ dark }: { dark: boolean }) {
           ))}
         </div>
 
-        <div className="mt-8 p-6" style={{ background: `${PINK}0d` }}>
+        <div className="mt-8 p-6" style={{ background: `${PINK}38` }}>
           <div className="flex items-start gap-3">
             <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: PINK }} />
             <div>
@@ -362,8 +362,8 @@ function HowItWorks({ dark }: { dark: boolean }) {
 }
 
 function Artists({ dark }: { dark: boolean }) {
-  const bg = dark ? '#0a0a0a' : '#ffffff';
-  const cardBg = dark ? '#111111' : '#f5f5f5';
+  const bg = dark ? '#000000' : '#ffffff';
+  const cardBg = dark ? 'rgba(255,255,255,0.05)' : '#f5f5f5';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
   const textFaint = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)';
@@ -444,7 +444,7 @@ function Artists({ dark }: { dark: boolean }) {
             <div key={artist.name} className="p-6 flex flex-col" style={{ background: cardBg }}>
               <div className="flex items-start gap-4 mb-5">
                 <div className="w-14 h-14 flex items-center justify-center flex-shrink-0 font-black text-lg"
-                  style={{ background: `${PINK}18`, color: PINK }}>
+                  style={{ background: PINK, color: '#ffffff' }}>
                   {artist.initials}
                 </div>
                 <div>
@@ -482,8 +482,8 @@ function Artists({ dark }: { dark: boolean }) {
 }
 
 function Testimonials({ dark }: { dark: boolean }) {
-  const bg = dark ? '#111111' : '#f5f5f5';
-  const cardBg = dark ? '#0a0a0a' : '#ffffff';
+  const bg = dark ? '#000000' : '#f5f5f5';
+  const cardBg = dark ? 'rgba(255,255,255,0.05)' : '#ffffff';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)';
   const textFaint = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)';
@@ -533,7 +533,7 @@ function Testimonials({ dark }: { dark: boolean }) {
 }
 
 function BookingCTA({ dark }: { dark: boolean }) {
-  const bg = dark ? '#0a0a0a' : '#ffffff';
+  const bg = dark ? '#000000' : '#ffffff';
   const formBg = dark ? '#111111' : '#f5f5f5';
   const inputBg = dark ? '#0a0a0a' : '#ffffff';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
@@ -545,7 +545,7 @@ function BookingCTA({ dark }: { dark: boolean }) {
   return (
     <section id="book" className="py-24 px-4 sm:px-6" style={{ background: bg }}>
       <div className="max-w-3xl mx-auto text-center">
-        <SparklesIcon className="w-7 h-7 mx-auto mb-6" style={{ color: textFaint }} />
+        <SparklesIcon className="w-7 h-7 mx-auto mb-6" style={{ color: dark ? GOLD : PINK }} />
         <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight mb-6" style={{ color: PINK }}>
           Ready to Book?
         </h2>
@@ -630,7 +630,7 @@ function BookingCTA({ dark }: { dark: boolean }) {
 }
 
 function Footer({ dark }: { dark: boolean }) {
-  const bg = dark ? '#111111' : '#f5f5f5';
+  const bg = dark ? '#000000' : '#f5f5f5';
   const textPrimary = dark ? '#ffffff' : '#0a0a0a';
   const textFaint = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)';
   const textLink = dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)';
@@ -699,7 +699,7 @@ export default function KattitudeLanding() {
   const [dark, toggleDark] = useLocalDark();
 
   return (
-    <div className="min-h-screen font-sans" style={{ background: dark ? '#0a0a0a' : '#ffffff' }}>
+    <div className="min-h-screen font-sans" style={{ background: dark ? '#000000' : '#ffffff' }}>
       <Navbar dark={dark} toggleDark={toggleDark} />
       <main>
         <Hero dark={dark} />
