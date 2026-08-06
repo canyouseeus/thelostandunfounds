@@ -248,5 +248,177 @@ export async function handleAnalyticsSiteStats(req: VercelRequest, res: VercelRe
 }
 
 /**
+ * Analytics Blog Stats Handler — per-post performance for Blog Management.
+ *
+ * Two event streams feed this:
+ *   - `page_view`          recorded by Layout.tsx on every route change, keyed by pathname
+ *   - `read_article`       recorded by BlogPost.tsx once a reader passes 80% scroll depth
+ *   - `article_engagement` recorded by BlogPost.tsx on unmount, carrying dwell seconds
+ *
+ * A post's events are matched by slug: `page_view` rows carry the pathname
+ * (/thelostarchives/<slug>), the article events carry the bare slug. Counting
+ * views from pathname only is deliberate — BlogPost's own unmount event would
+ * otherwise double-count every visit that lasted more than five seconds.
+ */
+export async function handleAnalyticsBlogStats(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+
+    const days = Math.min(365, Math.max(1, parseInt(String(req.query.days || '30'), 10) || 30))
+    const since = new Date()
+    since.setDate(since.getDate() - days)
+
+    const [{ data: postRows, error: postError }, { data: eventRows, error: eventError }] = await Promise.all([
+      supabase
+        .from('blog_posts')
+        .select('id, title, slug, published, status, published_at, created_at, blog_column'),
+      supabase
+        .from('user_analytics')
+        .select('event_type, resource_id, metadata, duration, created_at')
+        .gte('created_at', since.toISOString())
+        .in('event_type', ['page_view', 'read_article', 'article_engagement'])
+        .order('created_at', { ascending: false })
+        .limit(20000),
+    ])
+
+    if (postError) throw postError
+    if (eventError) {
+      if (eventError.code === '42P01') {
+        return res.status(200).json({ success: true, empty: true, days, posts: [], totals: null, trend: [], sources: [] })
+      }
+      throw eventError
+    }
+
+    const posts = postRows || []
+    const events = eventRows || []
+
+    // slug -> accumulator
+    const bySlug = new Map<string, {
+      views: number
+      visitors: Set<string>
+      reads: number
+      dwellTotal: number
+      dwellSamples: number
+    }>()
+    for (const post of posts) {
+      bySlug.set(post.slug, { views: 0, visitors: new Set(), reads: 0, dwellTotal: 0, dwellSamples: 0 })
+    }
+
+    /** Resolve an event's resource_id to a known post slug, or null. */
+    const slugFor = (resourceId: string | null): string | null => {
+      if (!resourceId) return null
+      if (bySlug.has(resourceId)) return resourceId
+      const tail = resourceId.split('?')[0].replace(/\/$/, '').split('/').pop() || ''
+      return bySlug.has(tail) ? tail : null
+    }
+
+    const isBlogPath = (resourceId: string | null) =>
+      !!resourceId && (resourceId.includes('/thelostarchives/') || resourceId.startsWith('/blog/'))
+
+    const trendMap = new Map<string, number>()
+    const trendDays: string[] = []
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().slice(0, 10)
+      trendDays.push(key)
+      trendMap.set(key, 0)
+    }
+
+    const sourceCounts = new Map<string, number>()
+    const allVisitors = new Set<string>()
+    let totalViews = 0
+    let totalReads = 0
+
+    for (const row of events) {
+      const slug = slugFor(row.resource_id)
+      if (!slug) continue
+      const bucket = bySlug.get(slug)!
+      const visitorId = row.metadata?.visitor_id || null
+
+      if (row.event_type === 'page_view') {
+        // Only pathname-keyed page views count as a view (see the note above).
+        if (!isBlogPath(row.resource_id)) continue
+        bucket.views += 1
+        totalViews += 1
+        if (visitorId) {
+          bucket.visitors.add(visitorId)
+          allVisitors.add(visitorId)
+        }
+        const dayKey = (row.created_at || '').slice(0, 10)
+        if (trendMap.has(dayKey)) trendMap.set(dayKey, (trendMap.get(dayKey) || 0) + 1)
+
+        const referrer: string = row.metadata?.referrer || ''
+        let source = 'Direct'
+        if (referrer) {
+          if (/google|bing|duckduckgo|yahoo/i.test(referrer)) source = 'Search'
+          else if (/facebook|instagram|twitter|x\.com|reddit|linkedin|tiktok|pinterest/i.test(referrer)) source = 'Social'
+          else if (!referrer.includes('thelostandunfounds')) source = 'Referral'
+        }
+        sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1)
+      } else if (row.event_type === 'read_article') {
+        bucket.reads += 1
+        totalReads += 1
+      } else if (row.event_type === 'article_engagement') {
+        if (typeof row.duration === 'number' && row.duration > 0) {
+          bucket.dwellTotal += row.duration
+          bucket.dwellSamples += 1
+        }
+      }
+    }
+
+    const postStats = posts
+      .map((post) => {
+        const bucket = bySlug.get(post.slug)!
+        return {
+          id: post.id,
+          slug: post.slug,
+          title: post.title,
+          published: post.published ?? post.status === 'published',
+          blog_column: post.blog_column || 'main',
+          published_at: post.published_at || post.created_at,
+          views: bucket.views,
+          uniqueVisitors: bucket.visitors.size,
+          reads: bucket.reads,
+          readRate: bucket.views > 0 ? Math.min(100, (bucket.reads / bucket.views) * 100) : 0,
+          avgSeconds: bucket.dwellSamples > 0 ? Math.round(bucket.dwellTotal / bucket.dwellSamples) : 0,
+        }
+      })
+      .sort((a, b) => b.views - a.views)
+
+    return res.status(200).json({
+      success: true,
+      days,
+      totals: {
+        views: totalViews,
+        uniqueVisitors: allVisitors.size,
+        reads: totalReads,
+        readRate: totalViews > 0 ? (totalReads / totalViews) * 100 : 0,
+        avgSeconds: (() => {
+          const samples = postStats.filter((p) => p.avgSeconds > 0)
+          return samples.length
+            ? Math.round(samples.reduce((sum, p) => sum + p.avgSeconds, 0) / samples.length)
+            : 0
+        })(),
+      },
+      trend: trendDays.map((date) => ({ date, count: trendMap.get(date) || 0 })),
+      sources: [...sourceCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([source, count]) => ({ source, count })),
+      posts: postStats,
+    })
+  } catch (error: any) {
+    console.error('[Analytics Blog Stats] Error:', error)
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+/**
  * Sync Library Handler
  */
