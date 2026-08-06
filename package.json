@@ -70,6 +70,7 @@
     "nostr-tools": "^2.23.3",
     "onnxruntime-web": "^1.21.0",
     "pdfkit": "^0.15.2",
+    "qrcode-generator": "^2.0.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
