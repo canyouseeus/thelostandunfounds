@@ -134,8 +134,13 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'kiosk-build',
         name: 'Kiosk Build',
         category: 'kiosk',
+        /* A STARTING price, not a fixed one. The final number moves with the
+         * shop — artist count, screen count, and how much existing catalog has
+         * to be brought across — so anywhere this is shown to a customer it
+         * must read "starting at". See /kiosk-demo, which says so in words.
+         * Hardware is quoted separately and bought at cost. */
         price: 2500,
         priceType: 'one_time',
-        description: 'Interactive kiosk software build and setup (service only — hardware billed separately).',
+        description: 'Interactive kiosk software build and setup, starting at $2,500 (service only — hardware billed separately, final quote varies by shop).',
     },
 ]
