@@ -33,6 +33,31 @@ export class UnifiedAuthService {
   }
 
   /**
+   * Send a magic sign-in link by email.
+   *
+   * Used only by the gallery access page. A client we emailed a private
+   * gallery link is gated on photo_libraries.invited_emails, matched against
+   * the signed-in user's email — so proving the address is the whole of what
+   * access requires, and a password is a step that only loses them.
+   * shouldCreateUser is true because an invited client has no account yet.
+   */
+  async signInWithMagicLink(email: string, redirectTo?: string): Promise<{ error: Error | null }> {
+    try {
+      const { supabase } = await import('../lib/supabase');
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo || window.location.href,
+          shouldCreateUser: true,
+        },
+      });
+      return { error: (error as Error) || null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  }
+
+  /**
    * Sign in with Google OAuth
    */
   async signInWithGoogle(redirectTo?: string): Promise<{ url: string | null; error: Error | null }> {

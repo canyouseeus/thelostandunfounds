@@ -50,8 +50,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const [applicationModalOpen, setApplicationModalOpen] = useState(false);
     const isMounted = useRef(true);
 
-    const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
-
     // Newsletter modal — shown to visitors after a delay
     const [newsletterBarVisible, setNewsletterBarVisible] = useState(false);
     const [newsletterBarDismissed, setNewsletterBarDismissed] = useState(false);
@@ -142,11 +140,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     }
 
     const handleGalleryClick = (library: PhotoLibrary) => {
+        // A signed-out visitor clicking a private gallery is almost always an
+        // invited client, so send them to that gallery's access page rather than
+        // the site-wide sign-in modal.
         if (library.is_private && !user && !userIsAdmin && !authLoading) {
-            setAuthMessage(
-                "This gallery is private. Please log in if you are the owner. To request access, please contact us at media@thelostandunfounds.com."
-            );
-            setAuthModalOpen(true);
+            navigate(`/gallery/${library.slug}/access`);
             return;
         }
         if (isHomepage) {
@@ -412,10 +410,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                             isOpen={authModalOpen}
                             onClose={() => {
                                 setAuthModalOpen(false);
-                                setAuthMessage(undefined);
                             }}
-                            message={authMessage}
-                            title={authMessage ? "Private Access" : undefined}
                         />
 
                         <PhotographerApplicationModal

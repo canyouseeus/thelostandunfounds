@@ -177,6 +177,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'access-info') {
+            return await handleAccessInfo(req, res);
+        }
+
         if (route === 'sync') {
             return await handleSync(req, res);
         }
@@ -498,7 +502,11 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
+        // Point at the access page, not the gallery itself. An invited client has
+        // no session yet, so the bare gallery URL used to drop them on the site's
+        // sign-in modal and ask them to invent a password. /access emails them a
+        // link instead and lands them in the gallery.
+        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}/access`;
         const auth = await getZohoAuthContext();
 
         const results = {
@@ -560,6 +568,45 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         });
     } catch (err: any) {
         console.error('Invite handler error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+/**
+ * Public, pre-auth metadata for the gallery access page: the gallery's name and
+ * whether it is private. Nothing else — no photos, no invited_emails, no owner.
+ *
+ * The access page needs to say WHICH gallery it is letting someone into before
+ * anyone is signed in, and every other gallery read requires a session. Naming
+ * a published gallery discloses nothing the invite email did not already say.
+ * It deliberately does not confirm whether a given email is on the invite list:
+ * that would turn this into an invitee oracle for anyone with the slug.
+ */
+async function handleAccessInfo(req: VercelRequest, res: VercelResponse) {
+    try {
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : null;
+        if (!slug) return res.status(400).json({ error: 'Missing slug' });
+
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY;
+        if (!SUPABASE_URL || !svcKey) return res.status(500).json({ error: 'Server configuration error' });
+
+        const supabase = createClient(SUPABASE_URL, svcKey);
+        const { data: library, error } = await supabase
+            .from('photo_libraries')
+            .select('name, slug, is_private')
+            .eq('slug', slug)
+            .eq('published', true)
+            .single();
+
+        if (error || !library) return res.status(404).json({ error: 'Gallery not found' });
+
+        return res.status(200).json({
+            name: library.name,
+            slug: library.slug,
+            isPrivate: !!library.is_private,
+        });
+    } catch (err: any) {
+        console.error('Access info handler error:', err);
         return res.status(500).json({ error: err.message });
     }
 }
