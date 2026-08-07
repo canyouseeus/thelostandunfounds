@@ -71,6 +71,25 @@ curl -X POST … -d '{"affiliateId":"<uuid>","force":true}'
 **Always send yourself the `testEmail` preview before a first real send.** Rendering is not
 evidence of delivery.
 
+### Previewing without the secret
+
+The same handler is mounted on the (ungated) admin router as
+`/api/admin/affiliate-stripe-reminders`. There, a `testEmail` addressed to an **owner address**
+(`thelostandunfounds@gmail.com`, `media@thelostandunfounds.com`) is allowed without
+`CRON_SECRET` — an anonymous caller can at most mail the owner a copy of our own template.
+Everything that touches a real affiliate still needs the secret, and an unauthenticated preview
+may not pass `affiliateId`: it always renders from the recipient's own affiliate row, so the
+live button in the preview can never create a *different* affiliate's Stripe account.
+
+```bash
+curl -X POST https://www.thelostandunfounds.com/api/admin/affiliate-stripe-reminders \
+  -H 'Content-Type: application/json' \
+  -d '{"testEmail":"thelostandunfounds@gmail.com"}'
+```
+
+A preview sent from a Vercel preview build points its button at that preview deployment, so the
+link is clickable before the change reaches production.
+
 ## Verifying a change
 
 1. `dryRun` and read the `results[]` — every entry states a reason.

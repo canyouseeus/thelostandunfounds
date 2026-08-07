@@ -44,6 +44,18 @@ interface SweepAffiliate {
   stripe_payouts_enabled: boolean | null;
 }
 
+/**
+ * Addresses that may receive a `testEmail` preview without CRON_SECRET.
+ * This is what makes the email previewable from the (ungated) admin router
+ * without turning the endpoint into an open relay: an unauthenticated caller
+ * can, at most, mail the owner a copy of our own template. Everything that
+ * touches a real affiliate still requires the secret.
+ */
+const OWNER_ADDRESSES = new Set([
+  'thelostandunfounds@gmail.com',
+  'media@thelostandunfounds.com',
+]);
+
 function isAuthorized(req: VercelRequest): boolean {
   const expected = process.env.CRON_SECRET;
   if (!expected) return process.env.NODE_ENV !== 'production';
@@ -69,14 +81,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!isAuthorized(req)) {
+  const body = (req.method === 'POST' ? req.body : {}) || {};
+  const testEmail: string | undefined = typeof body.testEmail === 'string' ? body.testEmail : undefined;
+
+  const isOwnerPreview = !!testEmail && OWNER_ADDRESSES.has(testEmail.trim().toLowerCase());
+  if (!isAuthorized(req) && !isOwnerPreview) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const body = (req.method === 'POST' ? req.body : {}) || {};
-  const testEmail: string | undefined = typeof body.testEmail === 'string' ? body.testEmail : undefined;
+  // An unauthenticated owner-preview may not choose whose row it renders from:
+  // that would let an anonymous caller mint a live onboarding link for any
+  // affiliate. Without the secret, the preview is always the recipient's own.
   const onlyAffiliateId: string | undefined =
-    typeof body.affiliateId === 'string' ? body.affiliateId : undefined;
+    isAuthorized(req) && typeof body.affiliateId === 'string' ? body.affiliateId : undefined;
   const force = body.force === true;
   const dryRun = body.dryRun === true;
 
@@ -90,20 +107,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ---- preview mode: render the real template to one address, log nothing ----
   if (testEmail) {
-    let sampleQuery = supabase
-      .from('affiliates')
-      .select('id, code, affiliate_code, first_name')
-      .limit(1);
-    sampleQuery = onlyAffiliateId
-      ? sampleQuery.eq('id', onlyAffiliateId)
-      : sampleQuery.or('stripe_payouts_enabled.is.null,stripe_payouts_enabled.eq.false');
+    // Render from the recipient's own affiliate row when they have one. The
+    // preview's button is a live link — pointing it at someone else's account
+    // would create *their* Stripe account when the previewer clicks it.
+    let sample: { id: string; code: string | null; affiliate_code: string | null; first_name: string | null } | null = null;
 
-    const { data: sample } = await sampleQuery.maybeSingle();
+    if (onlyAffiliateId) {
+      const { data } = await supabase
+        .from('affiliates')
+        .select('id, code, affiliate_code, first_name')
+        .eq('id', onlyAffiliateId)
+        .maybeSingle();
+      sample = data as any;
+    } else {
+      const { data: all } = await supabase
+        .from('affiliates')
+        .select('id, user_id, code, affiliate_code, first_name');
+      const wanted = testEmail.trim().toLowerCase();
+      for (const row of all || []) {
+        const email = await getUserEmail(supabase, (row as any).user_id);
+        if (email && email.toLowerCase() === wanted) {
+          sample = row as any;
+          break;
+        }
+      }
+      if (!sample) {
+        return res.status(400).json({
+          error:
+            'No affiliate account matches that address. Pass affiliateId to choose whose row the preview renders from.',
+        });
+      }
+    }
 
     const affiliateId = sample?.id;
     if (!affiliateId) {
       return res.status(404).json({ error: 'No affiliate available to render a preview from' });
     }
+
+    // Point the preview's button at the deployment serving this request, so a
+    // preview sent from a Vercel preview build is actually clickable there
+    // rather than aimed at production, where the route may not exist yet.
+    const host = req.headers.host as string | undefined;
+    const proto = (req.headers['x-forwarded-proto'] as string | undefined) || 'https';
+    const previewOrigin = host ? `${proto}://${host}` : SITE_URL;
 
     const result = await sendAffiliateEmail({
       type: 'stripe_reminder',
@@ -115,13 +161,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: {
         code: sample?.code || sample?.affiliate_code || '',
         firstName: sample?.first_name || '',
-        resumeUrl: buildOnboardingResumeUrl(SITE_URL, affiliateId),
+        resumeUrl: buildOnboardingResumeUrl(previewOrigin, affiliateId),
         pendingEarnings: await pendingEarnings(supabase, affiliateId),
       },
     });
 
     return res.status(result.sent ? 200 : 500).json({
       preview: true,
+      resumeOrigin: previewOrigin,
       to: testEmail,
       renderedFrom: affiliateId,
       sent: result.sent,
