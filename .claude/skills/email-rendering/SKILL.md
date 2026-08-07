@@ -131,6 +131,35 @@ curl -sS -X POST https://www.thelostandunfounds.com/api/mail/send \
 
 Then name the one thing that test can actually settle.
 
+## RULE 7 — A bare URL in an email body is styled by the mail client, not by us
+
+Dropping a raw `https://…` into email text hands the styling to the recipient's client. It
+auto-links it and paints it in **its own default blue with an underline** — the one colour the
+brand never uses. The template is not consulted. This reached a client on QUO-002: a Stripe
+deposit URL was passed as plain text in the `message` field of `/api/invoices/send`, and iOS
+Mail rendered it as blue link text where the brand calls for a solid black-fill button.
+
+Any URL a recipient is meant to click is an anchor carrying `EMAIL_STYLES.button`:
+
+```ts
+`<a href="${url}" style="${EMAIL_STYLES.button}">PAY DEPOSIT — $150</a>`
+```
+
+Per RULE 3 that resolves to a solid fill with inverted text — on the black body, white fill and
+black text. Never a bare URL, and never a bare URL *plus* a button: the client will still
+auto-link the loose one and the email ends up with two competing CTAs in two different colours.
+
+**The trap in `/api/invoices/send`:** its `message` parameter is rendered by
+`buildPersonalMessageBody()`, which runs the text through `escapeHtml()` and wraps it in `<p>`
+tags. It cannot emit an anchor — any markup passed in comes out as visible literal text. So the
+payment button must come from the body builder, not from the caller's message. The payment link
+also lives in the attached PDF (`generateInvoicePdf` takes `paymentUrl`), which is why this
+defect still *worked* and was easy to miss: the client could pay, it just looked wrong.
+
+`buildBookingPaymentEmailBody()` in `_booking-payment-utils.ts` already does this correctly and
+is the reference. If a payment email needs a button, route it through a body builder that has
+one rather than typing a URL into a message field.
+
 ## Testing protocol
 
 1. Render locally and assert the palette: banner present, no `<title>`, no SVG data URI,

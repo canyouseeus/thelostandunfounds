@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { conflictsWithBuffer } from '../../lib/booking-buffer';
 import {
     CameraIcon,
     ComputerDesktopIcon,
@@ -221,17 +222,11 @@ const TIME_SLOTS: TimeSlot[] = [
     { label: 'Night',     start: '20:00', end: '23:00', display: '8PM – 11PM' },
 ];
 
-function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
-    return aStart < bEnd && bStart < aEnd;
-}
-
+// A booked shoot reserves its window plus travel time either side, so a slot
+// that merely fails to overlap is not necessarily free. The arithmetic lives in
+// lib/booking-buffer.ts and is shared with the server, which enforces it.
 function isSlotBlocked(slot: TimeSlot, taken: Array<{ start_time: string | null; end_time: string | null }>): boolean {
-    return taken.some(t => {
-        if (!t.start_time || !t.end_time) return false;
-        const bs = t.start_time.slice(0, 5);
-        const be = t.end_time.slice(0, 5);
-        return rangesOverlap(slot.start, slot.end, bs, be);
-    });
+    return conflictsWithBuffer(slot.start, slot.end, taken);
 }
 
 interface FormData {
