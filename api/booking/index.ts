@@ -2,7 +2,12 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
-import { createQuoteForBooking, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
+import {
+    createQuoteForBooking,
+    siteOrigin,
+    getDefaultPhotographer,
+    sendPhotographerAssignment,
+} from '../../lib/api-handlers/_booking-payment-utils.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -461,6 +466,41 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
                 origin: siteOrigin(req),
             })
             quote = { created: true, invoiceNumber: result.invoiceNumber, total: result.total }
+
+            // Tell the photographer they have a job. Previously a booking could
+            // land with nobody assigned and nobody told — the shoot was passed
+            // on by hand, or not at all. Best-effort: the booking and invoice
+            // stand whether or not this email gets through.
+            try {
+                const photographer = await getDefaultPhotographer(supabase as any)
+                if (photographer) {
+                    await sendPhotographerAssignment({
+                        photographer,
+                        clientName: name.trim(),
+                        eventType: event_type.trim(),
+                        eventDate: event_date,
+                        startTime: start_time || null,
+                        endTime: end_time || null,
+                        location: location?.trim() || null,
+                        accessNotes: (notes || '').match(/Access:\s*([^\n]+)/i)?.[1] || null,
+                        jobTotal: result.total,
+                        invoiceNumber: result.invoiceNumber,
+                    })
+                    // Record who is covering it and what they earn, so the split
+                    // is on the invoice rather than in someone's memory.
+                    await supabase
+                        .from('invoices')
+                        .update({
+                            contractor_name: photographer.name,
+                            contractor_payout: String(
+                                Math.round(result.total * (photographer.payout_pct / 100) * 100) / 100,
+                            ),
+                        })
+                        .eq('invoice_number', result.invoiceNumber)
+                }
+            } catch (assignErr: any) {
+                console.warn('[BookingRequest] photographer assignment failed:', assignErr?.message)
+            }
 
             // Burn a single-use code only once the quote actually exists, so a
             // failed quote does not consume the client's discount.

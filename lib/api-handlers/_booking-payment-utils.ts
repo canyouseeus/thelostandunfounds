@@ -512,3 +512,100 @@ export async function sendDepositConfirmationEmail(args: {
     htmlContent,
   })
 }
+
+/**
+ * House commission on subcontracted work.
+ *
+ * The house takes 20% for booking the session; the photographer keeps the rest.
+ * This is the standing arrangement for every photography subcontractor, not a
+ * per-person deal — photographers.payout_pct defaults to 80 and exists only so
+ * an individual arrangement can differ if one is ever agreed.
+ */
+export const HOUSE_COMMISSION_PCT = 20
+
+export interface AssignedPhotographer {
+  id: string
+  name: string
+  email: string
+  payout_pct: number
+}
+
+/** The photographer a new booking goes to. */
+export async function getDefaultPhotographer(
+  supabase: SupabaseClient,
+): Promise<AssignedPhotographer | null> {
+  const { data } = await supabase
+    .from('photographers')
+    .select('id, name, email, payout_pct')
+    .eq('active', true)
+    .eq('is_default', true)
+    .maybeSingle()
+  return (data as AssignedPhotographer) || null
+}
+
+/**
+ * Tell the photographer they have a job.
+ *
+ * Everything they need to turn up and get in — date, window, address, access —
+ * plus what the job pays them, so the split is never a conversation after the
+ * fact. Never sent to the client: it carries the payout.
+ */
+export async function sendPhotographerAssignment(args: {
+  photographer: AssignedPhotographer
+  clientName: string
+  eventType: string
+  eventDate: string | null
+  startTime: string | null
+  endTime: string | null
+  location: string | null
+  accessNotes: string | null
+  jobTotal: number
+  invoiceNumber?: string | null
+}): Promise<void> {
+  const payout = Math.round(args.jobTotal * (args.photographer.payout_pct / 100) * 100) / 100
+  const fmt = (n: number) => `$${n.toFixed(2)}`
+  const hhmm = (t: string | null) => (t ? String(t).slice(0, 5) : null)
+
+  const when = args.eventDate
+    ? new Date(`${args.eventDate}T00:00:00`).toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+      })
+    : 'TBC'
+  const window = [hhmm(args.startTime), hhmm(args.endTime)].filter(Boolean).join(' – ') || 'TBC'
+
+  const row = (label: string, value: string) => `
+    <p style="color:${BRAND.colors.text};font-size:15px;line-height:1.6;margin:0 0 8px 0;text-align:left;">
+      <strong>${label}:</strong> ${value}
+    </p>`
+
+  const bodyHtml = `
+    <h1 style="color:${BRAND.colors.text};font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SHOOT ASSIGNED</h1>
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${args.photographer.name.split(' ')[0]}, you're booked for this one.</p>
+    ${row('Date', when)}
+    ${row('Time', window)}
+    ${row('Location', args.location || 'TBC — will confirm')}
+    ${row('Access', args.accessNotes || 'None supplied — check before the day')}
+    ${row('Client', args.clientName)}
+    ${row('Shoot', args.eventType)}
+    <hr style="border:none;border-top:1px solid ${BRAND.colors.border};margin:30px 0;">
+    ${row('Job total', fmt(args.jobTotal))}
+    ${row('Your payout', `<strong>${fmt(payout)}</strong> (${args.photographer.payout_pct}%)`)}
+    <p style="color:${BRAND.colors.textMuted};font-size:14px;line-height:1.5;margin:0 0 20px 0;">
+      The house takes ${HOUSE_COMMISSION_PCT}% for booking the session. Paid out after the client settles.
+    </p>
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
+      If the date, time or access doesn't work, reply here and we'll sort it with the client.
+    </p>
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">&mdash; Joshua<br />THE LOST+UNFOUNDS</p>`
+
+  const htmlContent = wrapEmailContent(bodyHtml, { includeUnsubscribe: false, includeFooter: true })
+
+  const auth = await getZohoAuthContext()
+  await sendZohoEmail({
+    auth,
+    to: args.photographer.email,
+    cc: FROM_EMAIL,
+    subject: `Shoot assigned — ${when}${window !== 'TBC' ? `, ${window.split(' – ')[0]}` : ''}${args.location ? ` — ${args.location}` : ''}`,
+    htmlContent,
+  })
+}
