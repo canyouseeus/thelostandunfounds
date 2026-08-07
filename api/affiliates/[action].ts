@@ -24,7 +24,9 @@ import {
   trackCustomer,
   updateCode,
   useDiscount,
-  products
+  products,
+  stripeResume,
+  stripeReminders
 } from '../../lib/api-handlers/affiliates/index.js';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
@@ -53,6 +55,8 @@ const handlerMap: Record<string, HandlerFn> = {
   'update-code': updateCode,
   'use-discount': useDiscount,
   'products': products,
+  'stripe-resume': stripeResume,
+  'stripe-reminders': stripeReminders,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

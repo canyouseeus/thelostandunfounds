@@ -49,6 +49,10 @@
     {
       "path": "/api/cron/affiliate-weekly-summary",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/affiliate-stripe-reminder",
+      "schedule": "0 16 * * *"
     }
   ],
   "redirects": [
