@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { conflictsWithBuffer } from '../../../lib/booking-buffer';
 
 /**
  * Express booking for a client we already have on file.
@@ -60,6 +61,7 @@ export default function ExpressBookingModal({
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const [date, setDate] = useState('');
     const [allowedSlots, setAllowedSlots] = useState<string[] | null>(null);
+    const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
     const [slot, setSlot] = useState<TimeSlot | null>(null);
     const [bedrooms, setBedrooms] = useState<number | undefined>(initialBedrooms);
     const [location, setLocation] = useState('');
@@ -100,15 +102,25 @@ export default function ExpressBookingModal({
     }, [blockedDates]);
 
     useEffect(() => {
-        if (!date) { setAllowedSlots(null); setSlot(null); return; }
+        if (!date) { setAllowedSlots(null); setBookedSlots([]); setSlot(null); return; }
         setSlot(null);
         fetch(`/api/booking?action=slots&date=${date}`)
-            .then(r => r.ok ? r.json() : { allowedSlots: null })
-            .then(d => setAllowedSlots(Array.isArray(d.allowedSlots) ? d.allowedSlots : null))
-            .catch(() => setAllowedSlots(null));
+            .then(r => r.ok ? r.json() : { allowedSlots: null, slots: [] })
+            .then(d => {
+                setAllowedSlots(Array.isArray(d.allowedSlots) ? d.allowedSlots : null);
+                // The endpoint has always returned the day's bookings; this
+                // modal used to discard them and offer slots already taken.
+                setBookedSlots(Array.isArray(d.slots) ? d.slots : []);
+            })
+            .catch(() => { setAllowedSlots(null); setBookedSlots([]); });
     }, [date]);
 
-    const openSlots = TIME_SLOTS.filter(s => !allowedSlots || allowedSlots.includes(s.label));
+    // Same rule the booking page and the server apply: a shoot reserves its
+    // window plus travel time either side.
+    const openSlots = TIME_SLOTS.filter(s =>
+        (!allowedSlots || allowedSlots.includes(s.label)) &&
+        !conflictsWithBuffer(s.start, s.end, bookedSlots)
+    );
 
     const basePrice = isAirbnb
         ? BEDROOM_OPTIONS.find(o => o.value === bedrooms)?.price

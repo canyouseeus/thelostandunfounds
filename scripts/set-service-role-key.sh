@@ -1,6 +1,6 @@
 #!/bin/bash
 # Safely update SUPABASE_SERVICE_ROLE_KEY in .env.local
-# Get the key from: https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb/settings/api
+# Get the key from: https://supabase.com/dashboard/project/cxpyqjxhbvuygnxyukli/settings/api
 
 ENV_FILE="$(dirname "$0")/../.env.local"
 

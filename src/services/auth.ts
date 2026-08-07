@@ -3,7 +3,6 @@
 
 import * as authTools from '../servers/auth/index';
 import type { User, AuthSession } from '../servers/auth/index';
-import { supabase } from '../lib/supabase';
 
 // Re-export types
 export type { User, AuthSession };
@@ -36,15 +35,15 @@ export class UnifiedAuthService {
   /**
    * Send a magic sign-in link by email.
    *
-   * Client galleries are gated on photo_libraries.invited_emails, which is
-   * matched against the signed-in user's email. Asking a client to invent a
-   * password just to view photos we sent them is the step they abandon, so
-   * the delivery path uses a one-click link instead. shouldCreateUser is true:
-   * an invited client has no account yet, and requiring signup first would
-   * reintroduce the wall this removes.
+   * Used only by the gallery access page. A client we emailed a private
+   * gallery link is gated on photo_libraries.invited_emails, matched against
+   * the signed-in user's email — so proving the address is the whole of what
+   * access requires, and a password is a step that only loses them.
+   * shouldCreateUser is true because an invited client has no account yet.
    */
   async signInWithMagicLink(email: string, redirectTo?: string): Promise<{ error: Error | null }> {
     try {
+      const { supabase } = await import('../lib/supabase');
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {

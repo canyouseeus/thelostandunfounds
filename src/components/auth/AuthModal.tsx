@@ -15,9 +15,13 @@ interface AuthModalProps {
   onLoginSuccess?: () => void;
   required?: boolean;
   intent?: string; // e.g. 'affiliate' — passed through auth so dashboard can act on it
+  // Google OAuth only. The admin gate uses this: the owner signs in with the
+  // Google account the admin allowlist is keyed on, so an email/password form
+  // and a "Sign up" link on /admin are dead options on a restricted route.
+  googleOnly?: boolean;
 }
 
-export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent, googleOnly = false }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,9 +30,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   const [justSignedIn, setJustSignedIn] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
 
-  const [magicSent, setMagicSent] = useState(false);
-
-  const { signUp, signIn, signInWithGoogle, signInWithMagicLink, user } = useAuth();
+  const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
@@ -89,33 +91,6 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   };
 
   if (!isOpen) return null;
-
-  // Passwordless entry. A client who was emailed a private gallery link should
-  // not have to invent a password to see photos we already sent them — the
-  // gallery is gated on their email address, so proving the address is enough.
-  // Returns them to the exact page they were on, gallery slug included.
-  const handleMagicLink = async () => {
-    if (!email.trim() || !email.includes('@')) {
-      setError('Enter your email address first.');
-      return;
-    }
-    setError(null);
-    setLoading(true);
-    try {
-      const { error } = await signInWithMagicLink(email.trim(), window.location.href);
-      if (error) {
-        setError(error.message);
-        showError(error.message);
-      } else {
-        setMagicSent(true);
-        success('Check your email for a sign-in link.');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Could not send the sign-in link.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,6 +188,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
             </div>
           )}
 
+          {!googleOnly && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
@@ -259,27 +235,16 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
           </form>
-
-          {magicSent ? (
-            <div className="mt-4 bg-white/10 px-4 py-4">
-              <p className="text-white text-sm font-bold mb-1">CHECK YOUR EMAIL</p>
-              <p className="text-white/60 text-xs">
-                We sent a sign-in link to {email}. Open it on this device and
-                you'll land right back here — no password needed.
-              </p>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleMagicLink}
-              disabled={loading}
-              className="mt-3 w-full px-4 py-2 bg-white/5 text-white font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              EMAIL ME A SIGN-IN LINK
-            </button>
           )}
 
-          <div className="mt-6">
+          {googleOnly && error && (
+            <div className="px-4 py-2 bg-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className={googleOnly ? '' : 'mt-6'}>
+            {!googleOnly && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/20"></div>
@@ -288,6 +253,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
                 <span className="px-2 bg-black text-white/60">OR</span>
               </div>
             </div>
+            )}
 
             <button
               onClick={handleGoogleSignIn}
@@ -304,6 +270,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
             </button>
           </div>
 
+          {!googleOnly && (
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
@@ -312,6 +279,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
+          )}
         </div>
       </div>
     </>

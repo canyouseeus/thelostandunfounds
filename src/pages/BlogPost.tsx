@@ -99,11 +99,14 @@ export default function BlogPost() {
         // Track time on page on unmount
         const duration = Math.round((Date.now() - startTime) / 1000);
         if (duration > 5) { // Only record if stayed > 5 seconds
+          // 'article_engagement', not 'page_view': Layout.tsx already records a
+          // page_view for this route, and emitting a second one here counted
+          // every reader twice in the blog analytics.
           fetch('/api/admin/analytics/record', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              event_type: 'page_view',
+              event_type: 'article_engagement',
               resource_id: slug,
               metadata: { title: post?.title, subdomain, visitor_id: visitorId, referrer: document.referrer },
               duration

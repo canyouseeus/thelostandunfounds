@@ -208,8 +208,15 @@ export async function sendTransactionalEmail(params: {
   content: string;
   from?: string;
   replyTo?: string;
+  // CC is the business record: client and booking correspondence copies
+  // media@thelostandunfounds.com so the thread stays on file. Both providers
+  // accept it (Zoho ccAddress, Resend cc) and it was simply never plumbed
+  // through here, so callers that passed one had it silently dropped.
+  cc?: string | string[];
 }): Promise<{ success: boolean; id?: string; error?: string; provider?: 'zoho' | 'resend' }> {
   const html = generateTransactionalEmail(params.content);
+
+  const ccList = params.cc ? (Array.isArray(params.cc) ? params.cc : [params.cc]) : [];
 
   const zohoEligible = typeof params.to === 'string' && !params.replyTo;
   if (zohoEligible) {
@@ -218,6 +225,7 @@ export async function sendTransactionalEmail(params: {
       const zoho = await sendZohoEmail({
         auth,
         to: params.to as string,
+        cc: ccList.length ? ccList.join(',') : undefined,
         subject: params.subject,
         htmlContent: html,
       });
@@ -234,6 +242,7 @@ export async function sendTransactionalEmail(params: {
     html,
     from: params.from,
     replyTo: params.replyTo,
+    cc: ccList.length ? ccList : undefined,
   });
   return { ...resend, provider: 'resend' };
 }

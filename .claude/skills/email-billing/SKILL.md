@@ -248,3 +248,36 @@ shown publicly — those buy something back.
   remembering it at invoicing time.
 - **Booking with no price** — `create-quote` requires `totalPrice`, and the form captured no
   property size, so nothing could be quoted automatically until the tier was collected.
+
+## RULE 7 — Nothing is confirmed, and nobody is dispatched, until the deposit clears
+
+A booking with no deposit is a request, not a job. Until `deposit_paid_at` is set, **no email may
+tell anyone — client or subcontractor — that the shoot is happening.**
+
+This failed on booking `81e3b35c`. The request came in unpaid and a subcontractor was sent
+"Shoot assigned — Tue Aug 11, 6AM" the same hour. The deposit never arrived, the slot then had to
+move for an unrelated conflict, and the photographer was left holding a call time for a job that
+was never secured. The client-facing acknowledgement was worded correctly — *"nothing is
+finalized until… the 50% deposit"* — but the dispatch email behind it contradicted that.
+
+Gate on the money, not on the request existing:
+
+```ts
+if (!booking.deposit_paid_at) return   // no assignment mail, no confirmation mail
+```
+
+| Event | Safe before deposit? |
+|---|---|
+| "We got your request" to client | Yes — as long as it does not state the date is held |
+| Quote + deposit link to client | Yes — that is the ask for money |
+| Internal inquiry alert to `media@` | Yes — internal |
+| **"Shoot assigned" to subcontractor** | **No** |
+| **"Booking confirmed" to client** | **No** |
+
+The deposit-paid webhook is the natural trigger for both. A date that someone has been told to
+show up for, without a deposit behind it, is a commitment made on the client's behalf that the
+client has not made.
+
+Rescheduling has the same constraint in reverse: when a time moves, everyone already told the old
+time must be re-notified. The booking row is the source of truth for the time — mail already
+delivered does not update itself.

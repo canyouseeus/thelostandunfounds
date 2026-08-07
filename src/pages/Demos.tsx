@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import AffiliateBanner from '../components/affiliate/AffiliateBanner';
+import { initAffiliateTracking } from '../utils/affiliate-tracking';
 
 /* ============================================================
    THE LOST+UNFOUNDS — Demo index. Route: /demos
@@ -115,7 +118,16 @@ const css = `
     font-family:'Inter','Helvetica Neue',Arial,sans-serif;
     -webkit-font-smoothing:antialiased;}
 
-  .dmx .page{width:100%;max-width:1040px;margin:0 auto;padding:64px 24px 72px;}
+  /* Masthead — the logo sits centered exactly as it does in <Layout>'s header,
+     and it is the way back to the homepage from this page. /demos renders
+     outside <Layout>, so without this there is no exit. */
+  .dmx .mast{display:flex;justify-content:center;padding:22px 24px 0;}
+  .dmx .mast a{display:block;transition:opacity .12s ease;}
+  .dmx .mast a:hover{opacity:.7;}
+  .dmx .mast img{height:84px;width:auto;display:block;}
+  @media (max-width:760px){.dmx .mast img{height:63px;}}
+
+  .dmx .page{width:100%;max-width:1040px;margin:0 auto;padding:40px 24px 72px;}
 
   .dmx .eyebrow{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--mute);}
   .dmx h1{font-size:clamp(38px,7vw,68px);line-height:0.98;letter-spacing:-.02em;
@@ -164,6 +176,16 @@ const css = `
 `;
 
 export default function Demos() {
+  /* Affiliates hand this page out as their pitch asset, so ?ref=CODE has to
+     stick here. Everywhere else that happens in <Layout>, and /demos renders
+     outside it — without this the referral tag on a shared /demos?ref=CODE
+     link is silently dropped and the affiliate never gets credited. The cookie
+     it sets is path=/, so the tag survives the click through to a demo, the
+     shop, or a booking. */
+  useEffect(() => {
+    initAffiliateTracking();
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -180,6 +202,17 @@ export default function Demos() {
 
       <div className="dmx">
         <style>{css}</style>
+
+        {/* Affiliate program banner — the same strip the homepage runs above its
+            nav. /demos renders outside <Layout>, so it has to be placed here
+            explicitly; noMargin keeps it flush to the top of the page. */}
+        <AffiliateBanner noMargin />
+
+        <div className="mast">
+          <Link to="/" aria-label="THE LOST+UNFOUNDS — home">
+            <img src="/logo.png" alt="THE LOST+UNFOUNDS" />
+          </Link>
+        </div>
 
         <div className="page">
           <div className="eyebrow">The Lost+Unfounds</div>

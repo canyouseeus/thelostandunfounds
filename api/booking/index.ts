@@ -8,6 +8,7 @@ import {
     getDefaultPhotographer,
     sendPhotographerAssignment,
 } from '../../lib/api-handlers/_booking-payment-utils.js'
+import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -342,12 +343,10 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         return res.status(400).json({ error: 'Invalid email' })
     }
 
-    // Respect admin-blocked dates only. We intentionally do NOT treat other
-    // pending/confirmed bookings as a hard block on the date — multiple shoots
-    // per day are common (a morning portrait + an evening show, etc.), and
-    // the admin will handle scheduling conflicts manually through the
-    // dashboard. Dates only become unselectable when explicitly blocked in
-    // booking_availability.
+    // Dates can be closed outright in booking_availability, and a shoot
+    // already on the books reserves its window plus a travel buffer (see the
+    // buffer check below). Multiple shoots a day are still fine — they just
+    // have to be far enough apart for one photographer to make both.
     const { data: availRow } = await supabase
         .from('booking_availability')
         .select('is_blocked, allowed_slots')
@@ -379,6 +378,33 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         if (permitted.length > 0 && !permitted.includes(requested)) {
             return res.status(409).json({
                 error: 'That time is not available on this date. Please pick another slot.'
+            })
+        }
+    }
+
+    // A shoot reserves its window plus travel time on each side. The forms grey
+    // out slots that collide, but the endpoint is reachable directly, so the
+    // real guard has to be here — this is what stops one photographer being
+    // committed to two jobs that cannot both be reached.
+    if (start_time) {
+        const { data: sameDay, error: sameDayErr } = await supabase
+            .from('bookings')
+            .select('start_time, end_time')
+            .eq('event_date', event_date)
+            .in('status', ['pending', 'confirmed'])
+        if (sameDayErr) {
+            // Fail closed: without the day's bookings we cannot prove the slot
+            // is clear, and a double-booked photographer is worse than a
+            // client retrying.
+            console.error('[BookingRequest] conflict lookup failed:', sameDayErr)
+            return res.status(503).json({
+                error: 'Could not verify availability just now. Please try again in a moment.'
+            })
+        }
+        const conflict = findBufferConflict(start_time, end_time || null, sameDay || [])
+        if (conflict) {
+            return res.status(409).json({
+                error: `That time is too close to another shoot that day. We need ${BUFFER_MINUTES / 60} hours either side of a booking for setup and travel — please pick another slot.`
             })
         }
     }

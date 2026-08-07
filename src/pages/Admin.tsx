@@ -1722,19 +1722,18 @@ export default function Admin() {
             Every widget is a cell here — clock and weather included — so they
             all pack against each other with nothing left over. Shapes and order
             come from the saved layout; the editor below writes to it. */}
-        <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
-            {layout.editing && (
-              <>
-                {layout.units} units — {layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'},{' '}
-                {layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}
-                {' · '}
-                {layout.syncing ? 'saving' : layout.syncedRemotely ? 'synced to your account' : 'this device only'}
-              </>
-            )}
-          </span>
-          <div className="flex items-center gap-2">
-            {layout.editing && (
+        {/* Nothing sits between the chart and the board in the resting state —
+            the edit toggle lives in the Platform Console dock below. This strip
+            only appears once you're editing, where it's part of the tool. */}
+        {layout.editing && (
+          <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+              {layout.units} units — {layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'},{' '}
+              {layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}
+              {' · '}
+              {layout.syncing ? 'saving' : layout.syncedRemotely ? 'synced to your account' : 'this device only'}
+            </span>
+            <div className="flex items-center gap-2">
               <span className="px-2 py-2 text-[10px] font-black uppercase tracking-widest tabular-nums text-white/40">
                 {layout.units % 4 === 0 && layout.units % 8 === 0
                   ? 'Fills — phone & desktop'
@@ -1742,8 +1741,6 @@ export default function Admin() {
                     ? `${4 - (layout.units % 4)}u short on phone`
                     : `${8 - (layout.units % 8)}u short on desktop`}
               </span>
-            )}
-            {layout.editing && (
               <button
                 onClick={layout.reset}
                 className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
@@ -1751,20 +1748,16 @@ export default function Admin() {
               >
                 Reset
               </button>
-            )}
-            <button
-              onClick={() => layout.setEditing(!layout.editing)}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors',
-                layout.editing ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white hover:text-black',
-              )}
-              style={{ borderRadius: 0 }}
-            >
-              <Squares2X2Icon className="w-3 h-3" />
-              {layout.editing ? 'Done' : 'Edit layout'}
-            </button>
+              <button
+                onClick={() => layout.setEditing(false)}
+                className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white text-black transition-colors"
+                style={{ borderRadius: 0 }}
+              >
+                Done
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <style>{`
           #dashboard-widgets {
@@ -2023,6 +2016,22 @@ export default function Admin() {
                   </span>
                 </button>
               ))}
+
+              {/* Arranging the board is a console tool like any other, so it
+                  docks here rather than floating above the grid. */}
+              <button
+                onClick={() => layout.setEditing(!layout.editing)}
+                className={cn(
+                  "relative p-3 transition-all duration-300 rounded-full group/btn",
+                  layout.editing ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                )}
+                title={layout.editing ? 'Done editing layout' : 'Edit layout'}
+              >
+                <Squares2X2Icon className="w-5 h-5" />
+                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  {layout.editing ? 'Done' : 'Edit Layout'}
+                </span>
+              </button>
             </div>
           </div>
         </div>
