@@ -33,32 +33,41 @@ export interface ClaptropMeta {
 // Naming convention version. Bump when the wire format changes — any structural
 // change MUST be accompanied by a one-shot migration over all files atomically.
 //   v1 = "@tlau_"                            (legacy, pre-SEO)
-//   v2 = "@tlau.photos_thelostandunfounds_"  (current)
-export const NAME_VERSION = 2;
+//   v2 = "@tlau.photos_thelostandunfounds_"  (superseded — handle retired)
+//   v3 = "@tlau.media_thelostandunfounds_"   (current)
+export const NAME_VERSION = 3;
 
 // SEO-bearing prefix: Instagram handle + brand name baked into every filename.
 // Kept here as a constant so the rename + sync filters and the name builder
 // can't drift out of sync.
-export const NAME_PREFIX = '@tlau.photos_thelostandunfounds';
+//
+// The handle is not cosmetic here. The sync layer derives photos.title from the
+// Drive filename and updates it on every pass (_photo-sync-utils.ts), and that
+// title is the alt text on every gallery image. So the filename is the source
+// of truth: editing photos.title in the database is undone by the next sync,
+// which runs every two minutes. A handle change is a rename or it is nothing.
+export const NAME_PREFIX = '@tlau.media_thelostandunfounds';
 
 // Legacy v1 prefix. Retained for migration / upgrade-in-place logic only.
 export const LEGACY_NAME_PREFIX = '@tlau';
 
-// Recognizes both the new prefix and the legacy `@tlau_` prefix that
-// pre-dated the SEO update — used by the sync layer's filename location
-// parser. Anything that matches this is in some claptrop format, current
-// or legacy.
+// Recognizes every prefix generation — v3 `.media`, v2 `.photos`, and the bare
+// legacy `@tlau_` that pre-dated the SEO update. Used by the sync layer's
+// filename location parser. Anything matching this is in some claptrop format,
+// current or not. Older generations must keep matching: a file that stops being
+// recognised loses its parsed location and reads as a brand-new photo.
 export function isClaptropName(name: string | null | undefined): boolean {
   if (!name) return false;
-  return /^@tlau(?:\.photos_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_/.test(name);
+  return /^@tlau(?:\.(?:media|photos)_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
-// Strict check used by the retrograde rename: only the current SEO prefix
-// counts as "already done". Legacy `@tlau_` files match isClaptropName but
-// fail isCurrentName so they get upgraded on the next retrograde pass.
+// Strict check used by the retrograde rename: only the current prefix counts as
+// "already done". v1 and v2 files match isClaptropName but fail isCurrentName,
+// so the next retrograde pass upgrades them — which is exactly how the v1 → v2
+// migration ran, and how v2 → v3 will.
 export function isCurrentName(name: string | null | undefined): boolean {
   if (!name) return false;
-  return /^@tlau\.photos_thelostandunfounds_\d{4}-\d{2}-\d{2}_/.test(name);
+  return /^@tlau\.media_thelostandunfounds_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
 // Pull the claptrop tail (everything after whichever prefix variant is present).
@@ -69,7 +78,9 @@ export function isCurrentName(name: string | null | undefined): boolean {
 //   → both return "2026-05-06_austin_lucys_001.jpg"
 export function claptropTail(name: string | null | undefined): string | null {
   if (!name) return null;
-  let m = name.match(/^@tlau\.photos_thelostandunfounds_(.+)$/);
+  // Every generation must strip to the same tail, or upload dedup stops seeing
+  // a renamed file as the same photo and re-uploads the whole archive.
+  let m = name.match(/^@tlau\.(?:media|photos)_thelostandunfounds_(.+)$/);
   if (m) return m[1].toLowerCase();
   m = name.match(/^@tlau_(.+)$/);
   if (m) return m[1].toLowerCase();

@@ -50,7 +50,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose }) => {
                         <p className="text-white/40 text-[11px] leading-relaxed mb-6">
                             Photos are free — but if you love the work and want to show some
                             love back, a tip goes a long way. Follow{' '}
-                            <span className="text-white font-bold">@tlau.photos</span> on
+                            <span className="text-white font-bold">@tlau.media</span> on
                             Instagram too!
                         </p>
 
