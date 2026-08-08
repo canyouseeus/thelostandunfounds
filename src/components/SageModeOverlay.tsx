@@ -1,30 +1,24 @@
 /**
- * SAGE MODE Overlay — point at something on the live site, say what's wrong,
- * and it becomes a change request with the source file attached.
+ * SAGE MODE Overlay — tap something on the live site, say what should change,
+ * and it becomes a GitHub issue that names the source file.
  *
- * The previous version defined mouse handlers and an overlayRef but never
- * rendered the overlay, so nothing was ever wired up: the selector couldn't
- * select, drawings were stored but never painted, and the only red button was
- * "clear", which is why SAGE MODE could not be exited from its own panel.
+ * One tool, deliberately: the selector. The pen/circle/rectangle/text tools were
+ * removed because nothing downstream consumed a drawing — a shape on a screenshot
+ * can't tell a coding agent which file to open, and a source-stamped element can.
+ *
+ * Pointer events (not mouse events) so this works the same under touch, where
+ * there is no hover state to preview a selection with.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useSageMode, SageModeAnnotation } from '../contexts/SageModeContext';
+import { useSageMode } from '../contexts/SageModeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
-  PencilIcon,
-  StopIcon,
-  ChatBubbleBottomCenterTextIcon,
   CursorArrowRaysIcon,
-  TrashIcon,
-  CheckIcon,
-  LifebuoyIcon,
   XMarkIcon,
   PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
-
-type ToolType = 'pen' | 'circle' | 'rectangle' | 'text' | 'selector' | null;
 
 interface TargetInfo {
   source: string | null;
@@ -41,7 +35,7 @@ type SubmitState =
   | { status: 'sent'; url: string | null }
   | { status: 'error'; message: string };
 
-/** Walk up from the clicked node to the nearest element carrying a source stamp. */
+/** Walk up from the tapped node to the nearest element carrying a source stamp. */
 function describeTarget(el: HTMLElement): TargetInfo {
   let sourced: HTMLElement | null = el;
   while (sourced && !sourced.dataset?.tluSrc) {
@@ -62,15 +56,7 @@ export default function SageModeOverlay() {
   const { state, addAnnotation, toggleSageMode } = useSageMode();
   const { user } = useAuth();
 
-  const [activeTool, setActiveTool] = useState<ToolType>(null);
-  const [localAnnotations, setLocalAnnotations] = useState<SageModeAnnotation[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [endPos, setEndPos] = useState<{ x: number; y: number } | null>(null);
-  const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
-  const [textInput, setTextInput] = useState('');
-  const [textPosition, setTextPosition] = useState<{ x: number; y: number } | null>(null);
-
+  const [armed, setArmed] = useState(false);
   const [hovered, setHovered] = useState<TargetInfo | null>(null);
   const [target, setTarget] = useState<TargetInfo | null>(null);
   const [comment, setComment] = useState('');
@@ -79,10 +65,8 @@ export default function SageModeOverlay() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
-  const capturing = activeTool !== null;
-
   const exitSageMode = useCallback(() => {
-    setActiveTool(null);
+    setArmed(false);
     setTarget(null);
     setHovered(null);
     setComment('');
@@ -90,27 +74,26 @@ export default function SageModeOverlay() {
     toggleSageMode();
   }, [toggleSageMode]);
 
-  // Escape backs out one level at a time, then leaves SAGE MODE entirely.
+  // Escape backs out one level at a time, then leaves SAGE MODE.
   useEffect(() => {
     if (!state.enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (target) setTarget(null);
-      else if (activeTool) setActiveTool(null);
+      else if (armed) setArmed(false);
       else exitSageMode();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [state.enabled, target, activeTool, exitSageMode]);
+  }, [state.enabled, target, armed, exitSageMode]);
 
-  // Focus the box on selection so dictation lands without an extra click.
+  // Focus on selection so dictation lands without an extra tap.
   useEffect(() => {
     if (target) composerRef.current?.focus();
   }, [target]);
 
   if (!state.enabled) return null;
 
-  /** What is under the cursor, ignoring our own overlay chrome. */
   const elementUnder = (clientX: number, clientY: number): HTMLElement | null => {
     const found = document
       .elementsFromPoint(clientX, clientY)
@@ -125,128 +108,26 @@ export default function SageModeOverlay() {
     return (found as HTMLElement) || null;
   };
 
-  const localPoint = (e: React.MouseEvent) => {
-    const rect = overlayRef.current?.getBoundingClientRect();
-    if (!rect) return null;
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!activeTool) return;
-    const pt = localPoint(e);
-    if (!pt) return;
-
-    if (activeTool === 'selector') {
-      const el = elementUnder(e.clientX, e.clientY);
-      if (!el) return;
-      const info = describeTarget(el);
-      setTarget(info);
-      setSubmit({ status: 'idle' });
-      addAnnotation({
-        id: Date.now().toString(),
-        type: 'selector',
-        data: {
-          source: info.source,
-          elementTag: info.tag,
-          elementId: info.id,
-          elementClass: info.className,
-          elementText: info.text,
-          position: info.rect,
-        },
-        timestamp: new Date().toISOString(),
-        pageUrl: window.location.href,
-      });
-      return;
-    }
-
-    if (activeTool === 'pen') {
-      setIsDrawing(true);
-      setCurrentPath([pt]);
-    } else if (activeTool === 'circle' || activeTool === 'rectangle') {
-      setIsDrawing(true);
-      setStartPos(pt);
-      setEndPos(pt);
-    } else if (activeTool === 'text') {
-      setTextPosition(pt);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (activeTool === 'selector') {
-      if (target) return; // selection is frozen while the composer is open
-      const el = elementUnder(e.clientX, e.clientY);
-      setHovered(el ? describeTarget(el) : null);
-      return;
-    }
-    if (!isDrawing || !activeTool) return;
-    const pt = localPoint(e);
-    if (!pt) return;
-    if (activeTool === 'pen') setCurrentPath((prev) => [...prev, pt]);
-    else if (activeTool === 'circle' || activeTool === 'rectangle') setEndPos(pt);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDrawing || !activeTool) return;
-
-    if (activeTool === 'pen' && currentPath.length > 0) {
-      setLocalAnnotations((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: 'pen',
-          data: { path: currentPath },
-          timestamp: new Date().toISOString(),
-          pageUrl: window.location.href,
-        },
-      ]);
-      setCurrentPath([]);
-    } else if ((activeTool === 'circle' || activeTool === 'rectangle') && startPos && endPos) {
-      setLocalAnnotations((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: activeTool,
-          data: {
-            x: Math.min(startPos.x, endPos.x),
-            y: Math.min(startPos.y, endPos.y),
-            width: Math.abs(endPos.x - startPos.x),
-            height: Math.abs(endPos.y - startPos.y),
-          },
-          timestamp: new Date().toISOString(),
-          pageUrl: window.location.href,
-        },
-      ]);
-    }
-
-    setIsDrawing(false);
-    setStartPos(null);
-    setEndPos(null);
-  };
-
-  const handleTextSubmit = () => {
-    if (!textInput.trim() || !textPosition) return;
-    const annotation: SageModeAnnotation = {
+  const selectAt = (clientX: number, clientY: number) => {
+    const el = elementUnder(clientX, clientY);
+    if (!el) return;
+    const info = describeTarget(el);
+    setTarget(info);
+    setSubmit({ status: 'idle' });
+    addAnnotation({
       id: Date.now().toString(),
-      type: 'text',
-      data: { text: textInput, x: textPosition.x, y: textPosition.y },
+      type: 'selector',
+      data: {
+        source: info.source,
+        elementTag: info.tag,
+        elementId: info.id,
+        elementClass: info.className,
+        elementText: info.text,
+        position: info.rect,
+      },
       timestamp: new Date().toISOString(),
       pageUrl: window.location.href,
-    };
-    setLocalAnnotations((prev) => [...prev, annotation]);
-    addAnnotation(annotation);
-    setTextInput('');
-    setTextPosition(null);
-  };
-
-  const clearAnnotations = () => {
-    setLocalAnnotations([]);
-    setTarget(null);
-    setHovered(null);
-  };
-
-  const saveAnnotations = () => {
-    localAnnotations.forEach(addAnnotation);
-    setLocalAnnotations([]);
+    });
   };
 
   const sendRequest = async () => {
@@ -290,106 +171,30 @@ export default function SageModeOverlay() {
 
   return (
     <>
-      {/* Capture layer. Transparent to pointer events unless a tool is armed,
-          so SAGE MODE never blocks normal browsing. */}
+      {/* Capture layer. Inert unless armed, so SAGE MODE never blocks scrolling
+          or normal use of the page — which matters most on touch. */}
       <div
         ref={overlayRef}
         className="fixed inset-0 z-[99990]"
         style={{
-          pointerEvents: capturing && !target ? 'auto' : 'none',
-          cursor: activeTool === 'selector' ? 'crosshair' : activeTool ? 'crosshair' : 'default',
+          pointerEvents: armed && !target ? 'auto' : 'none',
+          touchAction: armed && !target ? 'none' : 'auto',
+          cursor: armed ? 'crosshair' : 'default',
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        <svg className="w-full h-full" style={{ pointerEvents: 'none' }}>
-          {localAnnotations.map((ann) => {
-            if (ann.type === 'pen') {
-              const d = (ann.data.path as { x: number; y: number }[])
-                .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-                .join(' ');
-              return <path key={ann.id} d={d} stroke="#FFD700" strokeWidth={2} fill="none" />;
-            }
-            if (ann.type === 'rectangle') {
-              return (
-                <rect
-                  key={ann.id}
-                  x={ann.data.x}
-                  y={ann.data.y}
-                  width={ann.data.width}
-                  height={ann.data.height}
-                  stroke="#FFD700"
-                  strokeWidth={2}
-                  fill="none"
-                />
-              );
-            }
-            if (ann.type === 'circle') {
-              return (
-                <ellipse
-                  key={ann.id}
-                  cx={ann.data.x + ann.data.width / 2}
-                  cy={ann.data.y + ann.data.height / 2}
-                  rx={ann.data.width / 2}
-                  ry={ann.data.height / 2}
-                  stroke="#FFD700"
-                  strokeWidth={2}
-                  fill="none"
-                />
-              );
-            }
-            if (ann.type === 'text') {
-              return (
-                <text key={ann.id} x={ann.data.x} y={ann.data.y} fill="#FFD700" fontSize={14}>
-                  {ann.data.text}
-                </text>
-              );
-            }
-            return null;
-          })}
+        onPointerDown={(e) => selectAt(e.clientX, e.clientY)}
+        onPointerMove={(e) => {
+          // Hover preview is a mouse affordance; touch has no hover, and
+          // previewing on drag would fight the tap.
+          if (e.pointerType !== 'mouse' || target) return;
+          const el = elementUnder(e.clientX, e.clientY);
+          setHovered(el ? describeTarget(el) : null);
+        }}
+        onPointerLeave={() => setHovered(null)}
+      />
 
-          {/* In-progress shapes */}
-          {isDrawing && activeTool === 'pen' && currentPath.length > 0 && (
-            <path
-              d={currentPath.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
-              stroke="#FFD700"
-              strokeWidth={2}
-              fill="none"
-            />
-          )}
-          {isDrawing && activeTool === 'rectangle' && startPos && endPos && (
-            <rect
-              x={Math.min(startPos.x, endPos.x)}
-              y={Math.min(startPos.y, endPos.y)}
-              width={Math.abs(endPos.x - startPos.x)}
-              height={Math.abs(endPos.y - startPos.y)}
-              stroke="#FFD700"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              fill="none"
-            />
-          )}
-          {isDrawing && activeTool === 'circle' && startPos && endPos && (
-            <ellipse
-              cx={(startPos.x + endPos.x) / 2}
-              cy={(startPos.y + endPos.y) / 2}
-              rx={Math.abs(endPos.x - startPos.x) / 2}
-              ry={Math.abs(endPos.y - startPos.y) / 2}
-              stroke="#FFD700"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              fill="none"
-            />
-          )}
-        </svg>
-      </div>
-
-      {/* Selection highlight — drawn as its own layer rather than mutating the
-          page element's inline styles, which the old version did and never
-          fully undid. */}
-      {activeTool === 'selector' && highlight && (
+      {/* Selection highlight, drawn as its own layer rather than mutating the
+          target element's inline styles. */}
+      {armed && highlight && (
         <div
           className="fixed z-[99991] pointer-events-none"
           style={{
@@ -402,38 +207,17 @@ export default function SageModeOverlay() {
             background: target ? 'rgba(255,215,0,0.08)' : 'transparent',
           }}
         >
-          <span className="absolute -top-6 left-0 whitespace-nowrap bg-yellow-400 px-2 py-0.5 text-[10px] font-mono text-black">
+          <span className="absolute -top-6 left-0 max-w-[90vw] truncate bg-yellow-400 px-2 py-0.5 text-[10px] font-mono text-black">
             {highlight.source || `<${highlight.tag}> — no source stamp`}
           </span>
         </div>
       )}
 
-      {/* Inline text-tool input */}
-      {textPosition && activeTool === 'text' && (
-        <div
-          data-sage-chrome
-          className="fixed z-[99999] bg-black/95 border border-yellow-400/50 p-2"
-          style={{ top: textPosition.y, left: textPosition.x }}
-        >
-          <input
-            autoFocus
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleTextSubmit();
-              if (e.key === 'Escape') setTextPosition(null);
-            }}
-            placeholder="Note…"
-            className="bg-transparent text-yellow-400 text-xs outline-none placeholder:text-white/30"
-          />
-        </div>
-      )}
-
-      {/* Composer — the actual point of the thing */}
+      {/* Composer */}
       {target && (
         <div
           data-sage-chrome
-          className="fixed bottom-4 right-4 z-[99999] w-[380px] bg-black/95 border border-yellow-400/50 p-4 shadow-lg"
+          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:w-[380px] z-[99999] bg-black/95 border border-yellow-400/50 p-4 shadow-lg"
         >
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="min-w-0">
@@ -478,11 +262,11 @@ export default function SageModeOverlay() {
           )}
 
           <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="text-white/30 text-[10px]">⌘↵ to send</span>
+            <span className="text-white/30 text-[10px] hidden sm:inline">⌘↵ to send</span>
             <button
               onClick={sendRequest}
               disabled={!comment.trim() || submit.status === 'sending'}
-              className="px-3 py-2 bg-yellow-400/20 hover:bg-yellow-400/30 disabled:opacity-40 disabled:hover:bg-yellow-400/20 border border-yellow-400/50 text-yellow-400 text-xs font-medium transition flex items-center gap-1"
+              className="ml-auto px-4 py-2 bg-yellow-400/20 hover:bg-yellow-400/30 disabled:opacity-40 disabled:hover:bg-yellow-400/20 border border-yellow-400/50 text-yellow-400 text-xs font-medium transition flex items-center gap-1"
             >
               <PaperAirplaneIcon className="w-3 h-3" />
               {submit.status === 'sending' ? 'Sending…' : 'Send'}
@@ -491,83 +275,49 @@ export default function SageModeOverlay() {
         </div>
       )}
 
-      {/* Control panel */}
-      <div
-        data-sage-chrome
-        className={`fixed right-4 z-[99999] bg-black/95 border border-yellow-400/50 p-4 shadow-lg transition-all ${
-          target ? 'bottom-[280px]' : 'bottom-4'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span className="text-yellow-400 font-bold text-sm">SAGE MODE ACTIVE</span>
-          </div>
-          <button
-            onClick={exitSageMode}
-            className="p-1 text-white/50 hover:text-white transition"
-            title="Exit SAGE MODE (Esc)"
-          >
-            <XMarkIcon className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Control panel — one tool, one exit. */}
+      {!target && (
+        <div
+          data-sage-chrome
+          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-[99999] bg-black/95 border border-yellow-400/50 px-4 py-3 shadow-lg"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shrink-0"></div>
+            <span className="text-yellow-400 font-bold text-xs whitespace-nowrap">
+              SAGE MODE
+            </span>
 
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {(
-            [
-              ['selector', CursorArrowRaysIcon, 'Select an element'],
-              ['pen', PencilIcon, 'Pen'],
-              ['circle', LifebuoyIcon, 'Circle'],
-              ['rectangle', StopIcon, 'Rectangle'],
-              ['text', ChatBubbleBottomCenterTextIcon, 'Text note'],
-            ] as [Exclude<ToolType, null>, typeof PencilIcon, string][]
-          ).map(([tool, Icon, label]) => (
             <button
-              key={tool}
               onClick={() => {
-                setActiveTool(activeTool === tool ? null : tool);
-                setTarget(null);
+                setArmed((a) => !a);
                 setHovered(null);
               }}
-              className={`p-2 border transition ${
-                activeTool === tool
+              className={`ml-auto flex items-center gap-2 px-3 py-2 border text-xs font-medium transition ${
+                armed
                   ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                   : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
               }`}
-              title={label}
             >
-              <Icon className="w-4 h-4" />
+              <CursorArrowRaysIcon className="w-4 h-4" />
+              {armed ? 'Selecting…' : 'Select'}
             </button>
-          ))}
-        </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={saveAnnotations}
-            className="flex-1 px-3 py-2 bg-yellow-400/20 hover:bg-yellow-400/30 border border-yellow-400/50 text-yellow-400 text-xs font-medium transition flex items-center justify-center gap-1"
-          >
-            <CheckIcon className="w-3 h-3" />
-            Save
-          </button>
-          <button
-            onClick={clearAnnotations}
-            className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 text-xs font-medium transition"
-            title="Clear annotations"
-          >
-            <TrashIcon className="w-3 h-3" />
-          </button>
-        </div>
+            <button
+              onClick={exitSageMode}
+              className="p-2 text-white/50 hover:text-white transition shrink-0"
+              title="Exit SAGE MODE (Esc)"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
 
-        <div className="mt-3 pt-3 border-t border-white/10">
-          <p className="text-white/60 text-xs">
-            {activeTool === 'selector' && !target
-              ? 'Click any element to describe a change.'
-              : activeTool
-              ? `Active: ${activeTool.charAt(0).toUpperCase() + activeTool.slice(1)} tool`
-              : 'Pick a tool to begin. Esc exits.'}
+          <p className="text-white/40 text-[10px] mt-2">
+            {armed
+              ? 'Tap any element to describe a change.'
+              : 'Tap Select, then pick an element.'}
           </p>
         </div>
-      </div>
+      )}
     </>
   );
 }
