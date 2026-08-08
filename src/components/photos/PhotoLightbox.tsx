@@ -1,16 +1,10 @@
+import type { Photo } from './types';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import DownloadEmailModal from '../DownloadEmailModal';
 import PrintOrderModal from './PrintOrderModal';
 
-interface Photo {
-    id: string;
-    title: string;
-    thumbnail_url: string;
-    google_drive_file_id: string;
-    metadata?: { width?: number; height?: number } | null;
-}
 
 interface PhotoLightboxProps {
     photo: Photo | null;
@@ -40,6 +34,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     const [printModalOpen, setPrintModalOpen] = useState(false);
 
     const triggerDownload = (email: string) => {
+        if (!photo) return;
         const fileId = photo.google_drive_file_id || photo.id;
         const url = `/api/gallery/stream?fileId=${fileId}&download=true&email=${encodeURIComponent(email)}`;
         window.open(url, '_blank');

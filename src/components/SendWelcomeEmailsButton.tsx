@@ -232,7 +232,7 @@ export default function SendWelcomeEmailsButton() {
             <div className="mb-4">
               <h5 className="text-yellow-400/80 text-sm font-bold mb-2">⚠️ Subdomains Without Emails Found:</h5>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {result.debug.subdomainsWithoutEmails.map((subdomain, index) => (
+                {result.debug.subdomainsWithoutEmails.map((subdomain: string, index: number) => (
                   <p key={index} className="text-yellow-400/60 text-xs">{subdomain}</p>
                 ))}
               </div>

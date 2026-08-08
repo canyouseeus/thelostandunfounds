@@ -3,7 +3,11 @@ import { sendAffiliateEmail } from './_emails.js';
 
 export interface CommissionTriggerInput {
   email: string;
-  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket';
+  /**
+   * Must stay in step with the affiliate_commissions_source_check
+   * constraint in Postgres, which permits exactly these values.
+   */
+  source: 'paypal' | 'fourthwall' | 'local' | 'stripe' | 'photo_order' | 'booking' | 'event_ticket' | 'prodigi_order';
   sourceId: string;
   grossAmount: number;
   userId?: string | null;

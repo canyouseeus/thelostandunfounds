@@ -670,7 +670,7 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                 <XAxis dataKey="week" tick={{fill:'rgba(255,255,255,0.25)',fontSize:9}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fill:'rgba(255,255,255,0.2)',fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v:number)=>[`$${v}`,'']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v?: number)=>[`$${v ?? 0}`,'']} />
                 <Bar dataKey="collected" fill={ICY} radius={[2,2,0,0]} name="Collected" />
                 <Bar dataKey="outstanding" fill="rgba(255,183,77,0.4)" radius={[2,2,0,0]} name="Outstanding" />
               </BarChart>
@@ -682,7 +682,7 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                 <XAxis type="number" tick={{fill:'rgba(255,255,255,0.2)',fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}`} />
                 <YAxis type="category" dataKey="bracket" tick={{fill:'rgba(255,255,255,0.35)',fontSize:9}} axisLine={false} tickLine={false} width={72} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v:number)=>[`$${v}`,'Amount']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v?: number)=>[`$${v ?? 0}`,'Amount']} />
                 <Bar dataKey="amount" radius={[0,2,2,0]}>{invoiceAging.map((_,i)=><Cell key={i} fill={[ICY,'#fff176','#ffb74d','#ef9a9a'][i]} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>

@@ -261,11 +261,7 @@ export function ProductShowcaseCard() {
               <ExpandableContent
                 preset="fade"
                 keepMounted={false}
-                animateIn={{
-                  initial: { opacity: 0, y: 20 },
-                  animate: { opacity: 1, y: 0 },
-                  transition: { type: "spring", stiffness: 300, damping: 20 },
-                }}
+                animateIn={{ ...{ opacity: 1, y: 0 }, transition: { type: "spring", stiffness: 300, damping: 20 } }}
               >
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-xs">
                   Experience crystal-clear audio with our latest
@@ -354,11 +350,7 @@ export function WeatherForecastCard() {
                   stagger
                   staggerChildren={0.1}
                   keepMounted={true}
-                  animateIn={{
-                    initial: { opacity: 0, y: 20, rotate: -5 },
-                    animate: { opacity: 1, y: 0, rotate: 0 },
-                    transition: { type: "spring", stiffness: 300, damping: 20 },
-                  }}
+                  animateIn={{ ...{ opacity: 1, y: 0, rotate: 0 }, transition: { type: "spring", stiffness: 300, damping: 20 } }}
                 >
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     High 78° / Low 65°
@@ -371,11 +363,7 @@ export function WeatherForecastCard() {
               stagger
               staggerChildren={0.1}
               keepMounted={true}
-              animateIn={{
-                initial: { opacity: 0, y: 20, rotate: -5 },
-                animate: { opacity: 1, y: 0, rotate: 0 },
-                transition: { type: "spring", stiffness: 300, damping: 20 },
-              }}
+              animateIn={{ ...{ opacity: 1, y: 0, rotate: 0 }, transition: { type: "spring", stiffness: 300, damping: 20 } }}
             >
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between items-center">
