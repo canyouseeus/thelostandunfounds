@@ -4,8 +4,11 @@ How THE LOST+UNFOUNDS platform gets rebranded and deployed for outside clients, 
 that work gets paid for.
 
 **Status:** planning. Client #1 is the pilot: **Four5 Culture** (Eric), a photography
-business. Currently has no owned domain and effectively no online presence, so the site is
-a new lead channel rather than a replacement for an existing one.
+business. No existing online presence, so the site is a new lead channel rather than a
+replacement for an existing one.
+
+Domain **`four5culture.com`** is purchased and owned by the client. Nothing is deployed to
+it yet — see the sequencing note in §4 before pointing it anywhere.
 
 ---
 
@@ -166,8 +169,29 @@ the relationship a year in.
 
 ## 4. Sequencing
 
-Phase 1 → 2 → 5 → 3 gets Eric live. Phase 4 before client #2. Phase 6 decided before
-Eric's site takes its first real payment, not after.
+Phase 1 → 2 → 5 → 3 gets Four5 Culture live. Phase 4 before client #2. Phase 6 decided
+before the site takes its first real payment, not after.
 
 Phase 1 is the long pole and the only part that is genuinely hard. Everything downstream
 is straightforward once the brand is a variable instead of a string literal in 140 files.
+
+### Do not deploy a branded fork before Phase 1 exists
+
+Owning the domain makes it tempting to stand the site up now by hand-editing the brand
+strings. Doing that produces a working site for one client and **no reusable system** —
+which is the entire point of the pilot. The next client would start from the same 140-file
+edit, and the two forks would already have diverged in ways that make a later config
+extraction harder, not easier.
+
+What can safely happen before Phase 1 lands, in parallel:
+
+- Register the sending domain / mailbox on `four5culture.com` and get SPF + DKIM verified
+  (DNS propagation and deliverability warm-up are slow; start them early)
+- Park a holding page on the domain
+- Client completes Stripe account setup and Connect onboarding
+- Create the empty Supabase and Vercel projects
+- Collect brand assets — logo, wordmark, accent colour, portfolio images, service list and
+  pricing — since these are the inputs `site.ts` will need on day one
+
+Point the apex domain at the fork only after `site.ts` exists and the feature flags are
+in place.
