@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { conflictsWithBuffer } from '../../lib/booking-buffer';
 import {
     CameraIcon,
+    VideoCameraIcon,
     ComputerDesktopIcon,
     RocketLaunchIcon,
     MapPinIcon,
@@ -146,6 +147,70 @@ const WEB_SERVICES = [
     },
 ];
 
+// Standalone video. Previously video existed only as reels bundled into the
+// photo content days, so /services/video advertised something that could not
+// be booked on its own.
+//
+// Priced against the Austin market (2026): freelance video runs $600–1,500 for
+// a half day and $1,200–3,000 for a full day; Austin single-camera branded
+// packages start around $1,400–2,200; agencies charge $1,500–5,000 for
+// short-form social alone; retainers of 4–8 videos/month run $1,000–2,500.
+// Austin sits 25–40% under LA/NYC for equivalent work. The ladder below enters
+// well beneath the agency floor with REEL PACK, then tracks the freelance band
+// — the same logic as the $195 Airbnb entry: undercut the mid-market at the
+// door, carry the margin further up.
+const VIDEO_SERVICES = [
+    {
+        id: 'reelpack',
+        label: 'REEL PACK',
+        price: '$450',
+        meta: '2 hours · On location',
+        eventType: 'Reel Pack',
+        features: [
+            '3 short-form reels, vertical',
+            '5-day delivery',
+            'Licensed for paid social',
+        ],
+    },
+    {
+        id: 'brandvideo',
+        label: 'BRAND VIDEO',
+        price: '$1,200',
+        meta: '4 hours · On location',
+        eventType: 'Brand Video',
+        features: [
+            'One 60–90s hero video',
+            '3 vertical cutdowns for social',
+            'Licensed music + captions',
+        ],
+        featured: true,
+    },
+    {
+        id: 'videoday',
+        label: 'VIDEO CONTENT DAY',
+        price: '$2,000',
+        meta: '8 hours · On location',
+        eventType: 'Video Content Day',
+        features: [
+            'Hero video plus 6–8 reels',
+            'Multi-location or multi-setup',
+            'A month of social in one day',
+        ],
+    },
+    {
+        id: 'reelretainer',
+        label: 'MONTHLY REEL RETAINER',
+        price: '$900/mo',
+        eventType: 'Retainer (Monthly)',
+        isConsultation: true,
+        features: [
+            '4 reels per month',
+            'One shoot day, batched',
+            'Priority turnaround',
+        ],
+    },
+];
+
 const BUNDLES = [
     {
         id: 'launch',
@@ -207,6 +272,9 @@ const EVENT_TYPES = [
     'Half-Day Content',
     'Full-Day Content',
     'Brand / Editorial',
+    'Reel Pack',
+    'Brand Video',
+    'Video Content Day',
     'Web Development',
     'Retainer (Monthly)',
     'Other',
@@ -442,7 +510,7 @@ const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = 
     },
     video: {
         h1: <>VIDEO<br />CONTENT</>,
-        copy: 'Short-form video for brands in Austin. Reels shot alongside stills on a half- or full-day content day, and event highlight reels delivered within 48 hours.',
+        copy: 'Short-form video for brands in Austin. Reel packs from $450, brand films from $1,200, and full video content days \u2014 plus reels shot alongside stills on any content day.',
     },
 };
 
@@ -541,7 +609,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
 
         const svc = (params.get('service') || '').toLowerCase();
         if (svc) {
-            const match = [...PHOTO_SERVICES, ...WEB_SERVICES, ...BUNDLES]
+            const match = [...PHOTO_SERVICES, ...VIDEO_SERVICES, ...WEB_SERVICES, ...BUNDLES]
                 .find(s => s.id === svc);
             if (match) {
                 setForm(prev => ({ ...prev, event_type: match.eventType }));
@@ -742,7 +810,27 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                         </div>
                     </div>
                 </div>
+            </div>            {/* ── Video Services ────────────────────────────────────── */}
+            <div className="px-4 md:px-8 py-16 md:py-20">
+                <div className="max-w-5xl mx-auto">
+                    <div className="flex items-center gap-4 mb-10">
+                        <VideoCameraIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">02</p>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                                VIDEO
+                            </h2>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {VIDEO_SERVICES.map(s => (
+                            <ServiceCard key={s.id} {...s} onBook={() => handleBookService(s.eventType)} />
+                        ))}
+                    </div>
+                </div>
             </div>
+
+
 
             {/* ── Web Development ───────────────────────────────────── */}
             <div className="px-4 md:px-8 py-16 md:py-20">
@@ -750,7 +838,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                     <div className="flex items-center gap-4 mb-10">
                         <ComputerDesktopIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
                         <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">02</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">03</p>
                             <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
                                 WEB DEVELOPMENT
                             </h2>
@@ -771,7 +859,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                     <div className="flex items-center gap-4 mb-10">
                         <RocketLaunchIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
                         <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">03</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">04</p>
                             <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
                                 BUNDLED PACKAGES
                             </h2>

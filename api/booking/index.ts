@@ -207,6 +207,12 @@ const FIXED_PHOTO_PRICES: Record<string, number> = {
   'Event Coverage': 600,
   'Half-Day Content': 800,
   'Full-Day Content': 1400,
+  // Standalone video. Mirrors VIDEO_SERVICES in src/pages/BookingPage.tsx —
+  // if a price changes there it must change here, or the booking quotes
+  // nothing and the client never receives an invoice.
+  'Reel Pack': 450,
+  'Brand Video': 1200,
+  'Video Content Day': 2000,
 }
 
 /**
