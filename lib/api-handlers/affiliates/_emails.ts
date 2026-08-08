@@ -6,7 +6,8 @@ type AffiliateEmailType =
   | 'commission_earned'
   | 'payout_sent'
   | 'payout_failed'
-  | 'weekly_summary';
+  | 'weekly_summary'
+  | 'stripe_reminder';
 
 export interface AffiliateEmailParams {
   type: AffiliateEmailType;
@@ -43,6 +44,18 @@ function getSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
+}
+
+/**
+ * Render an affiliate email's subject and inner body without sending it.
+ * Exported so previews use the exact markup a real send would — never a
+ * hand-copied duplicate that can drift.
+ */
+export function renderAffiliateEmail(
+  type: AffiliateEmailType,
+  data: Record<string, any>
+): { subject: string; content: string } {
+  return buildContent(type, data);
 }
 
 function buildContent(type: AffiliateEmailType, data: Record<string, any>): { subject: string; content: string } {
@@ -91,6 +104,85 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
           </table>
 
           ${onboardingBtn}
+        `,
+      };
+    }
+    case 'stripe_reminder': {
+      const code = escapeHtml(data.code || '');
+      const firstName = escapeHtml(data.firstName || '');
+      const resumeUrl = escapeHtml(data.resumeUrl || `${SITE_URL}/affiliate-dashboard`);
+      const pending = Number(data.pendingEarnings || 0);
+      const greeting = firstName ? `${firstName} — you're` : `You're`;
+      const pendingLine =
+        pending > 0
+          ? `<p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
+               You already have <b>${fmtUsd(pending)}</b> in commissions sitting in your balance. It stays
+               there until Stripe is connected — we have nowhere to send it.
+             </p>`
+          : '';
+      return {
+        subject: `For payment, are you ready to start earning?`,
+        content: `
+          <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;">YOU READY TO START EARNING?</h1>
+          <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
+
+          <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
+            ${greeting} signed up as an affiliate at THE LOST+UNFOUNDS, but you haven't connected your
+            Stripe account yet — and <b>you can't get paid until you do</b>. Your link still works and
+            your commissions still count; they just can't leave the account without somewhere to land.
+          </p>
+
+          ${pendingLine}
+
+          <p style="margin:0 0 32px 0;">
+            <a href="${resumeUrl}"
+               style="display:inline-block;padding:14px 28px;background:#fff;color:#000;font-weight:bold;font-size:14px;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">
+              Connect Stripe →
+            </a>
+          </p>
+          <p style="color:#666;font-size:11px;margin:-20px 0 32px 0;">
+            One tap — no dashboard, no login. Takes about 5 minutes.
+          </p>
+
+          <h2 style="color:#fff;font-size:15px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 12px 0;">So what is Stripe?</h2>
+          <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
+            Stripe is the payment company that moves the money. It's how nearly every modern business
+            online gets paid — <b>Amazon, Shopify, Lyft, DoorDash, Instacart, Slack, Zoom, Substack
+            and Kickstarter</b> all run payments through Stripe. It handles hundreds of billions of
+            dollars a year and is one of the most heavily regulated, audited payment processors there is.
+          </p>
+          <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
+            You're not signing up for anything new or paying anything. Connecting just tells Stripe
+            which bank account to deposit <i>your</i> commissions into. Stripe asks for your legal name,
+            address, date of birth and bank details — that's the same identity check any employer or
+            bank does before sending you money, and it's required by US law before a payout can be made.
+          </p>
+
+          <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Your details go to</span><br>
+                <span style="color:#fff;font-size:13px;">Stripe — not us. We never see your bank info or SSN.</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">What it costs you</span><br>
+                <span style="color:#fff;font-size:13px;">Nothing. No fees, no subscription.</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">You earn</span><br>
+                <span style="color:#fff;font-size:13px;">42% of profit per sale, for the lifetime of every customer you bring in.</span>
+              </td>
+            </tr>
+          </table>
+
+          <p style="color:#999;font-size:12px;line-height:1.6;margin:0;">
+            Rather do it from your dashboard?
+            <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;text-decoration:underline;">${SITE_URL}/affiliate-dashboard</a>
+          </p>
         `,
       };
     }

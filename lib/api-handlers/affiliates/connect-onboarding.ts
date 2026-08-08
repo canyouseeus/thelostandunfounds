@@ -1,7 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { getStripe, getSiteOrigin } from './_stripe-client.js';
 import { sendAffiliateEmail } from './_emails.js';
+import {
+  getSupabaseAdmin,
+  findAffiliateByUserId,
+  getUserEmail,
+  ensureStripeAccount,
+  createOnboardingLink,
+  sanitizePath,
+  computeStatus,
+  persistStatus,
+} from './_connect-account.js';
 
 /**
  * Stripe Connect onboarding for affiliates.
@@ -13,30 +23,10 @@ import { sendAffiliateEmail } from './_emails.js';
  *
  *  GET /api/affiliates/connect-onboarding?userId=...
  *  - Refreshes account status from Stripe and returns the latest fields.
+ *
+ * The account/link primitives live in _connect-account.ts so the email
+ * reminder's resume link (stripe-resume.ts) shares them.
  */
-
-function getSupabase(): SupabaseClient {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Supabase not configured');
-  return createClient(url, key, { auth: { persistSession: false } });
-}
-
-async function findAffiliate(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase
-    .from('affiliates')
-    .select('id, user_id, code, affiliate_code, stripe_account_id, stripe_account_status, status, total_earnings')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-async function getUserEmail(supabase: SupabaseClient, userId: string): Promise<string | null> {
-  const { data, error } = await supabase.auth.admin.getUserById(userId);
-  if (error || !data?.user?.email) return null;
-  return data.user.email;
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST' && req.method !== 'GET') {
@@ -55,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let supabase: SupabaseClient;
   try {
-    supabase = getSupabase();
+    supabase = getSupabaseAdmin();
   } catch (err: any) {
     console.error('[connect-onboarding] supabase init failed:', err?.message);
     return res.status(500).json({ error: 'Server configuration error' });
@@ -65,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
   try {
-    const affiliate = await findAffiliate(supabase, userId);
+    const affiliate = await findAffiliateByUserId(supabase, userId);
     if (!affiliate) return res.status(404).json({ error: 'Affiliate not found' });
 
     // GET → just refresh status from Stripe
@@ -97,81 +87,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // POST → ensure account, return onboarding link
-    const stripe = getStripe();
-    let accountId = affiliate.stripe_account_id;
-    let isNewAccount = false;
-
-    if (!accountId) {
-      const email = await getUserEmail(supabase, userId);
-      const account = await stripe.accounts.create({
-        type: 'express',
-        email: email || undefined,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: 'individual',
-        metadata: {
-          affiliate_id: affiliate.id,
-          affiliate_code: affiliate.code || affiliate.affiliate_code || '',
-          user_id: userId,
-        },
-      });
-      accountId = account.id;
-      isNewAccount = true;
-
-      const { error: updErr } = await supabase
-        .from('affiliates')
-        .update({
-          stripe_account_id: account.id,
-          stripe_account_status: 'pending',
-          stripe_charges_enabled: account.charges_enabled,
-          stripe_payouts_enabled: account.payouts_enabled,
-          stripe_details_submitted: account.details_submitted,
-        })
-        .eq('id', affiliate.id);
-      if (updErr) {
-        console.error('[connect-onboarding] failed to persist account id:', updErr);
-      }
-
-      // Mirror onto payout settings so payout requests can find the account.
-      // affiliate_payout_settings has a UNIQUE constraint on affiliate_id (not user_id),
-      // and paypal_email is still NOT NULL on legacy schemas — supply '' so the
-      // row can be created for Stripe-only affiliates.
-      await supabase
-        .from('affiliate_payout_settings')
-        .upsert(
-          {
-            affiliate_id: affiliate.id,
-            stripe_account_id: account.id,
-            payout_method: 'stripe',
-            payment_threshold: 10,
-            paypal_email: '',
-          },
-          { onConflict: 'affiliate_id' }
-        );
-    }
+    const { accountId, isNew } = await ensureStripeAccount(supabase, affiliate);
 
     const origin = getSiteOrigin(req.headers.host as string | undefined, req.headers['x-forwarded-proto'] as string | undefined);
     const returnPath = sanitizePath(req.body?.returnPath, '/affiliate-dashboard?stripe=connected');
     const refreshPath = sanitizePath(req.body?.refreshPath, '/affiliate-dashboard?stripe=refresh');
 
-    const link = await stripe.accountLinks.create({
-      account: accountId!,
-      refresh_url: `${origin}${refreshPath}`,
-      return_url: `${origin}${returnPath}`,
-      type: 'account_onboarding',
-    });
+    const link = await createOnboardingLink(accountId, origin, returnPath, refreshPath);
 
     // Best-effort welcome email on first account creation
-    if (isNewAccount) {
+    if (isNew) {
       try {
         const email = await getUserEmail(supabase, userId);
         if (email) {
           await sendAffiliateEmail({
             type: 'welcome',
             affiliateId: affiliate.id,
-            referenceId: accountId!,
+            referenceId: accountId,
             to: email,
             data: {
               code: affiliate.code || affiliate.affiliate_code || '',
@@ -189,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       stripe_account_id: accountId,
       onboarding_url: link.url,
       expires_at: link.expires_at,
-      is_new: isNewAccount,
+      is_new: isNew,
     });
   } catch (err: any) {
     console.error('[connect-onboarding] error:', err?.message || err);
@@ -199,37 +131,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: err?.message || 'Unknown error',
     });
   }
-}
-
-function sanitizePath(input: any, fallback: string): string {
-  if (typeof input !== 'string') return fallback;
-  if (!input.startsWith('/')) return fallback;
-  if (input.startsWith('//')) return fallback;
-  if (!/^\/[A-Za-z0-9/_\-?=&%.]*$/.test(input)) return fallback;
-  return input;
-}
-
-function computeStatus(account: any): 'pending' | 'restricted' | 'active' | 'rejected' {
-  if (account.requirements?.disabled_reason?.startsWith('rejected')) return 'rejected';
-  if (account.payouts_enabled && account.charges_enabled) return 'active';
-  if (account.details_submitted) return 'restricted';
-  return 'pending';
-}
-
-async function persistStatus(
-  supabase: SupabaseClient,
-  affiliateId: string,
-  account: any,
-  status: string
-) {
-  const updates: Record<string, any> = {
-    stripe_account_status: status,
-    stripe_charges_enabled: account.charges_enabled,
-    stripe_payouts_enabled: account.payouts_enabled,
-    stripe_details_submitted: account.details_submitted,
-  };
-  if (status === 'active' && account.payouts_enabled) {
-    updates.stripe_onboarded_at = new Date().toISOString();
-  }
-  await supabase.from('affiliates').update(updates).eq('id', affiliateId);
 }
