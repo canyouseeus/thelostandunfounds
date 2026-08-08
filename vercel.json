@@ -52,7 +52,7 @@
     },
     {
       "path": "/api/cron/affiliate-stripe-reminder",
-      "schedule": "0 16 * * *"
+      "schedule": "0 * * * *"
     }
   ],
   "redirects": [
