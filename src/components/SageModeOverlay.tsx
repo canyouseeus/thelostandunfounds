@@ -19,6 +19,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSageMode } from '../contexts/SageModeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -68,6 +69,9 @@ export default function SageModeOverlay() {
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const targetRef = useRef<TargetInfo | null>(null);
   targetRef.current = target;
+  // The live element, kept so the outline can be re-measured. A rect captured
+  // once goes stale the moment anything scrolls or reflows.
+  const targetElRef = useRef<HTMLElement | null>(null);
 
   const enabled = state.enabled;
 
@@ -132,6 +136,7 @@ export default function SageModeOverlay() {
       e.stopPropagation();
 
       const info = describeTarget(el);
+      targetElRef.current = el;
       setTarget(info);
       setSubmit({ status: 'idle' });
       addAnnotation({
@@ -177,6 +182,35 @@ export default function SageModeOverlay() {
     if (target) composerRef.current?.focus();
   }, [target]);
 
+  // Keep the outline on the element as things scroll or reflow. Opening the
+  // composer shifts layout on its own, so a rect measured at tap time is
+  // already wrong by the time it is painted.
+  useEffect(() => {
+    if (!target) return;
+    const remeasure = () => {
+      const el = targetElRef.current;
+      if (!el || !el.isConnected) return;
+      const r = el.getBoundingClientRect();
+      setTarget((prev) =>
+        prev &&
+        (prev.rect.top !== r.top ||
+          prev.rect.left !== r.left ||
+          prev.rect.width !== r.width ||
+          prev.rect.height !== r.height)
+          ? { ...prev, rect: { top: r.top, left: r.left, width: r.width, height: r.height } }
+          : prev
+      );
+    };
+    remeasure();
+    window.addEventListener('scroll', remeasure, true);
+    window.addEventListener('resize', remeasure);
+    return () => {
+      window.removeEventListener('scroll', remeasure, true);
+      window.removeEventListener('resize', remeasure);
+    };
+    // Only re-arm when a different element is picked, not on every rect update.
+  }, [target?.source, target?.tag, target?.text]);
+
   const sendRequest = async () => {
     if (!comment.trim() || !target) return;
     setSubmit({ status: 'sending' });
@@ -216,7 +250,15 @@ export default function SageModeOverlay() {
 
   const isAdmin = isAdminEmail(user?.email || '');
 
-  return (
+  // Everything below is portalled to <body>.
+  //
+  // Rendered in place, these sit inside whatever the current page wraps them
+  // in. Any ancestor with a transform (an animated expandable card, say)
+  // becomes the containing block for `position: fixed`, so viewport
+  // coordinates land offset, and it opens a stacking context that traps
+  // z-index no matter how high the value — which is how the composer ended up
+  // behind the card that triggered it. A body portal has no such ancestor.
+  return createPortal(
     <>
       {/* Always-present toggle. Selection swallows every tap while armed, so
           there has to be one control that never gets swallowed and never
@@ -328,6 +370,7 @@ export default function SageModeOverlay() {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
