@@ -1,3 +1,4 @@
+import RetrogradeRenameTool from './RetrogradeRenameTool';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
@@ -56,6 +57,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const { user } = useAuth(); // Get authenticated user
     const [stats, setStats] = useState<GalleryStats | null>(null);
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
+    // Which library's rename panel is open. Per-library, so a preview can
+    // never be shown for one gallery and applied to another.
+    const [renameFor, setRenameFor] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [verifying, setVerifying] = useState(false);
     const [healthStatus, setHealthStatus] = useState<'unknown' | 'healthy' | 'issues'>('unknown');
@@ -1455,6 +1459,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 <ArrowLeftIcon className="w-4 h-4 rotate-180" />
                                                             </a>
                                                             <button
+                                                                onClick={() => setRenameFor(renameFor === lib.slug ? null : lib.slug)}
+                                                                className={`p-2 hover:bg-white/20 ${renameFor === lib.slug ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'}`}
+                                                                title="Retrograde rename"
+                                                            >
+                                                                <TagIcon className="w-4 h-4" />
+                                                            </button>
+                                                            <button
                                                                 onClick={() => handleDeleteGallery(lib.id, lib.name)}
                                                                 className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400"
                                                                 title="Delete Gallery"
@@ -1463,6 +1474,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                             </button>
                                                         </div>
                                                     </div>
+                                                    {renameFor === lib.slug && (
+                                                        <div className="mt-2">
+                                                            <RetrogradeRenameTool librarySlug={lib.slug} libraryName={lib.name} />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })

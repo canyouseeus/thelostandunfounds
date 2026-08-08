@@ -29,7 +29,18 @@ export interface RetrogradeResult {
     remaining: number;
     dryRun: boolean;
     librariesProcessed: string[];
+    /**
+     * Sample of the renames a dry run would perform. The dry run used to
+     * compute each new name and discard it, so it could report "418 files
+     * would change" without showing a single one — which is not a preview
+     * anyone can approve. Capped so a large library can't return megabytes.
+     */
+    preview: Array<{ from: string; to: string }>;
+    /** Libraries refused because photographer_handle is NULL. */
+    skippedUnattributed: string[];
 }
+
+export const PREVIEW_LIMIT = 25;
 
 async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: string, newName: string): Promise<boolean> {
     try {
@@ -51,11 +62,12 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
 async function processLibrary(
     supabase: SupabaseClient,
     drive: ReturnType<typeof google.drive>,
-    library: { id: string; slug: string },
+    library: { id: string; slug: string; photographer_handle: string | null },
     stats: { renamed: number; skipped: number; failed: number; remaining: number },
     deadline: number,
     dryRun: boolean,
     hardPhotoCap: number | null,
+    preview: Array<{ from: string; to: string }>,
 ): Promise<void> {
     resetSeqs();
 
@@ -107,6 +119,7 @@ async function processLibrary(
                 lon,
                 subject: librarySubject,
                 existingNames,
+                handle: library.photographer_handle ?? undefined,
             });
             nameMeta = built.meta;
             log = built.log;
@@ -120,6 +133,9 @@ async function processLibrary(
         const newFilename = nameMeta.filename;
 
         if (dryRun) {
+            if (preview.length < PREVIEW_LIMIT) {
+                preview.push({ from: photo.title, to: newTitle });
+            }
             stats.skipped++;
             stats.remaining--;
             continue;
@@ -174,7 +190,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-    let q = supabase.from('photo_libraries').select('id, slug').order('name');
+    let q = supabase.from('photo_libraries').select('id, slug, photographer_handle').order('name');
     if (opts.librarySlug) q = q.eq('slug', opts.librarySlug) as typeof q;
     const { data: libraries, error } = await q;
     if (error || !libraries) throw new Error(`Failed to load libraries: ${error?.message}`);
@@ -182,10 +198,22 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     const deadline = Date.now() + ((opts.timeBudgetSeconds ?? 270) * 1000);
     const stats = { renamed: 0, skipped: 0, failed: 0, remaining: 0 };
     const librariesProcessed: string[] = [];
+    const preview: Array<{ from: string; to: string }> = [];
+    const skippedUnattributed: string[] = [];
 
-    for (const lib of libraries as Array<{ id: string; slug: string }>) {
+    for (const lib of libraries as Array<{ id: string; slug: string; photographer_handle: string | null }>) {
         if (Date.now() > deadline) break;
         if (opts.maxPhotos && stats.renamed >= opts.maxPhotos) break;
+
+        // The handle in a filename is a photographer credit, and the filename
+        // becomes the alt text search engines read. A library whose
+        // photographer is unknown must not be renamed: defaulting to the
+        // owner's handle would credit them for someone else's work. Set
+        // photo_libraries.photographer_handle first.
+        if (!lib.photographer_handle) {
+            skippedUnattributed.push(lib.slug);
+            continue;
+        }
         librariesProcessed.push(lib.slug);
         await processLibrary(
             supabase,
@@ -195,6 +223,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             deadline,
             opts.dryRun ?? false,
             opts.maxPhotos ?? null,
+            preview,
         );
     }
 
@@ -205,5 +234,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
         remaining: stats.remaining,
         dryRun: opts.dryRun ?? false,
         librariesProcessed,
+        preview,
+        skippedUnattributed,
     };
 }

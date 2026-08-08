@@ -289,6 +289,10 @@ const GENERIC_FOLDER = /^(\d{3}[_a-z][a-z0-9_]*|jpg|raf|mov|raw|dcim|photos?|vid
 // ─── Name Builder ─────────────────────────────────────────────────────────────
 
 export interface BuildNameOpts {
+  /** Photographer handle for this library, e.g. '@tlau.media'. Defaults to
+   *  NAME_PREFIX's handle when absent. Never guess it — see photo_libraries
+   *  .photographer_handle, which is NULL when attribution is unknown. */
+  handle?: string;
   originalName: string;   // original filename (with extension)
   filePath?: string;      // local path — used for EXIF reading + mtime fallback
   date?: Date;            // date override (e.g. from Drive metadata)
@@ -349,7 +353,11 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
 
   // Sequence + collision handling
   let seq      = nextSeq(dateStr, location, subject);
-  let stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
+  // The handle is the photographer credit. A library shot by someone else must
+  // carry their handle, or the filename — and therefore the alt text Google
+  // reads — credits the wrong person for their work.
+  const prefix = opts.handle ? `${opts.handle}_thelostandunfounds` : NAME_PREFIX;
+  let stem     = `${prefix}_${dateStr}_${location}_${subject}_${seq}`;
   let filename = `${stem}${ext}`;
 
   if (existingNames) {
