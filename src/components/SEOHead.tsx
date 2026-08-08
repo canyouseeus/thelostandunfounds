@@ -6,6 +6,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { SITE } from '../config/site';
 
 interface SEOHeadProps {
   /** Page title - will be prefixed with "THE LOST+UNFOUNDS | " unless noSuffix/noPrefix is true */
@@ -30,9 +31,9 @@ interface SEOHeadProps {
   structuredData?: Record<string, any>;
 }
 
-const SITE_NAME = 'THE LOST+UNFOUNDS';
-const SITE_URL = 'https://www.thelostandunfounds.com';
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+const SITE_NAME = SITE.brandName;
+const SITE_URL = SITE.origin;
+const DEFAULT_OG_IMAGE = SITE.brandAssets.ogImage;
 
 export default function SEOHead({
   title,

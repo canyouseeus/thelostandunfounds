@@ -73,10 +73,9 @@ matter — that is the point at which a real generator is worth building.
 
 **This is the whole product.** Everything else is deployment mechanics.
 
-Today a rebrand means hand-editing the 140 source files that hardcode
-`thelostandunfounds` — including `SEOHead.tsx`, `EmailSignup.tsx`, `Layout.tsx`, and every
-referral-link generator. There is no central config module (`src/config/` does not exist;
-`BrandName.tsx` is a display component, not a config source).
+Today a rebrand means hand-editing **168 source files / 499 occurrences** — the domain
+string and the `LOST+UNFOUNDS` display name, which are separate problems. Full breakdown
+and tiering in **[SITE_CONFIG_SCOPE.md](SITE_CONFIG_SCOPE.md)**.
 
 Create `src/config/site.ts` as the single source of truth:
 
@@ -90,7 +89,8 @@ Then sweep the 140 files to read from it. This is mechanical but it is not small
 as real work. **Do this on production first** — the config module is overdue at this size
 and benefits us regardless of whether the white-label program goes anywhere.
 
-Definition of done: `grep -ri "thelostandunfounds" src lib api` returns hits only inside
+Definition of done:
+`grep -rE "thelostandunfounds|LOST\+UNFOUNDS" src lib api` returns hits only inside
 `src/config/site.ts`.
 
 ### Phase 2 — Feature flags
