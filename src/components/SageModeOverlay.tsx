@@ -1,24 +1,25 @@
 /**
- * SAGE MODE Overlay — tap something on the live site, say what should change,
+ * SAGE MODE Overlay — tap anything on the live site, say what should change,
  * and it becomes a GitHub issue that names the source file.
  *
- * One tool, deliberately: the selector. The pen/circle/rectangle/text tools were
- * removed because nothing downstream consumed a drawing — a shape on a screenshot
- * can't tell a coding agent which file to open, and a source-stamped element can.
+ * There is no control panel. A floating box covers the page you are trying to
+ * look at, and it disappeared entirely on full-screen views. The only indicator
+ * is the site logo turning gold (see `.sage-brand` in index.css), which rides
+ * along with the header and is therefore always wherever the header is.
  *
- * Pointer events (not mouse events) so this works the same under touch, where
- * there is no hover state to preview a selection with.
+ * Selection is a document-level click listener in the capture phase rather than
+ * a full-screen overlay div. An overlay that swallows pointer events also
+ * swallows touch scrolling; a capture listener intercepts the tap and leaves
+ * scrolling completely untouched.
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSageMode } from '../contexts/SageModeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { isAdminEmail } from '../utils/admin';
 import { supabase } from '../lib/supabase';
-import {
-  CursorArrowRaysIcon,
-  XMarkIcon,
-  PaperAirplaneIcon,
-} from '@heroicons/react/24/outline';
+import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
 interface TargetInfo {
   source: string | null;
@@ -56,79 +57,115 @@ export default function SageModeOverlay() {
   const { state, addAnnotation, toggleSageMode } = useSageMode();
   const { user } = useAuth();
 
-  const [armed, setArmed] = useState(false);
-  const [hovered, setHovered] = useState<TargetInfo | null>(null);
   const [target, setTarget] = useState<TargetInfo | null>(null);
   const [comment, setComment] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
-
-  const overlayRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const targetRef = useRef<TargetInfo | null>(null);
+  targetRef.current = target;
 
-  const exitSageMode = useCallback(() => {
-    setArmed(false);
+  const enabled = state.enabled;
+
+  // Voice control, by way of the URL.
+  //
+  // `?sage=on` / `?sage=off` / `?sage=toggle` flips SAGE MODE, then strips the
+  // parameter so a refresh or a shared link doesn't re-fire it. This exists so
+  // an iOS Shortcut ("Hey Siri, sage mode") can open the URL and have the site
+  // act on it — the browser's own speech API cannot listen for a wake word in
+  // the background, but Siri can, and this gives it something to call.
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cmd = params.get('sage');
+    if (!cmd) return;
+
+    // Gate to admins: the composer is admin-only server-side anyway, and a
+    // stray link shouldn't put a visitor into a mode that eats their taps.
+    if (isAdminEmail(user?.email || '')) {
+      const want =
+        cmd === 'on' ? true : cmd === 'off' ? false : cmd === 'toggle' ? !enabled : null;
+      if (want !== null && want !== enabled) toggleSageMode();
+    }
+
+    params.delete('sage');
+    const qs = params.toString();
+    navigate(`${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`, { replace: true });
+  }, [location.search, location.pathname, location.hash, user?.email, enabled, toggleSageMode, navigate]);
+
+  // Paint the site gold while SAGE MODE is on. Done on <html> so it survives
+  // route changes and reaches the header from any layout.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (enabled) root.classList.add('sage-mode-on');
+    else root.classList.remove('sage-mode-on');
+    return () => root.classList.remove('sage-mode-on');
+  }, [enabled]);
+
+  // Intercept taps in the capture phase, before the page's own handlers run,
+  // so tapping a link selects it instead of navigating away.
+  useEffect(() => {
+    if (!enabled) return;
+
+    const onClick = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el) return;
+      // Never hijack our own composer, or the header — the header is how you
+      // reach the menu to switch SAGE MODE back off.
+      if (el.closest('[data-sage-chrome]')) return;
+      // While the composer is open, the next tap should land normally.
+      if (targetRef.current) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const info = describeTarget(el);
+      setTarget(info);
+      setSubmit({ status: 'idle' });
+      addAnnotation({
+        id: Date.now().toString(),
+        type: 'selector',
+        data: {
+          source: info.source,
+          elementTag: info.tag,
+          elementId: info.id,
+          elementClass: info.className,
+          elementText: info.text,
+          position: info.rect,
+        },
+        timestamp: new Date().toISOString(),
+        pageUrl: window.location.href,
+      });
+    };
+
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [enabled, addAnnotation]);
+
+  const closeComposer = useCallback(() => {
     setTarget(null);
-    setHovered(null);
     setComment('');
     setSubmit({ status: 'idle' });
-    toggleSageMode();
-  }, [toggleSageMode]);
+  }, []);
 
-  // Escape backs out one level at a time, then leaves SAGE MODE.
+  // Escape closes the composer, then leaves SAGE MODE.
   useEffect(() => {
-    if (!state.enabled) return;
+    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (target) setTarget(null);
-      else if (armed) setArmed(false);
-      else exitSageMode();
+      if (targetRef.current) closeComposer();
+      else toggleSageMode();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [state.enabled, target, armed, exitSageMode]);
+  }, [enabled, closeComposer, toggleSageMode]);
 
   // Focus on selection so dictation lands without an extra tap.
   useEffect(() => {
     if (target) composerRef.current?.focus();
   }, [target]);
 
-  if (!state.enabled) return null;
-
-  const elementUnder = (clientX: number, clientY: number): HTMLElement | null => {
-    const found = document
-      .elementsFromPoint(clientX, clientY)
-      .find(
-        (el) =>
-          el !== overlayRef.current &&
-          !overlayRef.current?.contains(el) &&
-          !el.closest('[data-sage-chrome]') &&
-          el !== document.body &&
-          el !== document.documentElement
-      );
-    return (found as HTMLElement) || null;
-  };
-
-  const selectAt = (clientX: number, clientY: number) => {
-    const el = elementUnder(clientX, clientY);
-    if (!el) return;
-    const info = describeTarget(el);
-    setTarget(info);
-    setSubmit({ status: 'idle' });
-    addAnnotation({
-      id: Date.now().toString(),
-      type: 'selector',
-      data: {
-        source: info.source,
-        elementTag: info.tag,
-        elementId: info.id,
-        elementClass: info.className,
-        elementText: info.text,
-        position: info.rect,
-      },
-      timestamp: new Date().toISOString(),
-      pageUrl: window.location.href,
-    });
-  };
+  if (!enabled) return null;
 
   const sendRequest = async () => {
     if (!comment.trim() || !target) return;
@@ -167,50 +204,22 @@ export default function SageModeOverlay() {
     }
   };
 
-  const highlight = target ?? hovered;
-
   return (
     <>
-      {/* Capture layer. Inert unless armed, so SAGE MODE never blocks scrolling
-          or normal use of the page — which matters most on touch. */}
-      <div
-        ref={overlayRef}
-        className="fixed inset-0 z-[99990]"
-        style={{
-          pointerEvents: armed && !target ? 'auto' : 'none',
-          touchAction: armed && !target ? 'none' : 'auto',
-          cursor: armed ? 'crosshair' : 'default',
-        }}
-        onPointerDown={(e) => selectAt(e.clientX, e.clientY)}
-        onPointerMove={(e) => {
-          // Hover preview is a mouse affordance; touch has no hover, and
-          // previewing on drag would fight the tap.
-          if (e.pointerType !== 'mouse' || target) return;
-          const el = elementUnder(e.clientX, e.clientY);
-          setHovered(el ? describeTarget(el) : null);
-        }}
-        onPointerLeave={() => setHovered(null)}
-      />
-
-      {/* Selection highlight, drawn as its own layer rather than mutating the
-          target element's inline styles. */}
-      {armed && highlight && (
+      {/* Outline of the selected element */}
+      {target && (
         <div
           className="fixed z-[99991] pointer-events-none"
           style={{
-            top: highlight.rect.top,
-            left: highlight.rect.left,
-            width: highlight.rect.width,
-            height: highlight.rect.height,
-            outline: `2px solid ${target ? '#FFD700' : 'rgba(255,215,0,0.55)'}`,
+            top: target.rect.top,
+            left: target.rect.left,
+            width: target.rect.width,
+            height: target.rect.height,
+            outline: '2px solid #FFD700',
             outlineOffset: 2,
-            background: target ? 'rgba(255,215,0,0.08)' : 'transparent',
+            background: 'rgba(255,215,0,0.08)',
           }}
-        >
-          <span className="absolute -top-6 left-0 max-w-[90vw] truncate bg-yellow-400 px-2 py-0.5 text-[10px] font-mono text-black">
-            {highlight.source || `<${highlight.tag}> — no source stamp`}
-          </span>
-        </div>
+        />
       )}
 
       {/* Composer */}
@@ -227,9 +236,9 @@ export default function SageModeOverlay() {
               </p>
             </div>
             <button
-              onClick={() => setTarget(null)}
+              onClick={closeComposer}
               className="p-1 text-white/50 hover:text-white shrink-0"
-              title="Pick a different element (Esc)"
+              title="Cancel (Esc)"
             >
               <XMarkIcon className="w-4 h-4" />
             </button>
@@ -272,50 +281,6 @@ export default function SageModeOverlay() {
               {submit.status === 'sending' ? 'Sending…' : 'Send'}
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Control panel — one tool, one exit. */}
-      {!target && (
-        <div
-          data-sage-chrome
-          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-[99999] bg-black/95 border border-yellow-400/50 px-4 py-3 shadow-lg"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shrink-0"></div>
-            <span className="text-yellow-400 font-bold text-xs whitespace-nowrap">
-              SAGE MODE
-            </span>
-
-            <button
-              onClick={() => {
-                setArmed((a) => !a);
-                setHovered(null);
-              }}
-              className={`ml-auto flex items-center gap-2 px-3 py-2 border text-xs font-medium transition ${
-                armed
-                  ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
-                  : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-              }`}
-            >
-              <CursorArrowRaysIcon className="w-4 h-4" />
-              {armed ? 'Selecting…' : 'Select'}
-            </button>
-
-            <button
-              onClick={exitSageMode}
-              className="p-2 text-white/50 hover:text-white transition shrink-0"
-              title="Exit SAGE MODE (Esc)"
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </button>
-          </div>
-
-          <p className="text-white/40 text-[10px] mt-2">
-            {armed
-              ? 'Tap any element to describe a change.'
-              : 'Tap Select, then pick an element.'}
-          </p>
         </div>
       )}
     </>

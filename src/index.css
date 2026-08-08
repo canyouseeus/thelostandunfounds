@@ -1008,3 +1008,28 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     transform: translateX(-50%);
   }
 }
+
+/* ── SAGE MODE ──────────────────────────────────────────────────────────────
+   When SAGE MODE is on, the site logo turns gold. That tint is the only
+   indicator — there is no floating panel, because a panel covers the very
+   page you are trying to look at.
+
+   The logo is a white PNG, so it cannot be recoloured with `color`. Instead the
+   link that wraps it is painted gold and masked to the artwork, and the image
+   itself is faded out — leaving the exact colour rather than an approximation
+   from a chained `filter` hack. */
+html.sage-mode-on .sage-brand {
+  background-color: #FFD700;
+  -webkit-mask-image: url('/logo.png');
+  mask-image: url('/logo.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+html.sage-mode-on .sage-brand img {
+  opacity: 0;
+}
