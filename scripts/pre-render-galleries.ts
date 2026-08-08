@@ -73,8 +73,17 @@ async function preRenderGalleries() {
 
       // SEO Tags
       html = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
-      html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${description}" />`);
-      html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${galleryUrl}" />`);
+      // Replace-or-insert. A bare .replace() is a silent no-op when the tag is
+      // not in the template — which is exactly what happened: every gallery
+      // page shipped with no description and no canonical.
+      const descTag = `<meta name="description" content="${description}" />`;
+      html = html.includes('name="description"')
+        ? html.replace(/<meta\s+name=["']description["'][^>]*>/i, descTag)
+        : html.replace('</head>', `  ${descTag}\n</head>`);
+      const canonTag = `<link rel="canonical" href="${galleryUrl}" />`;
+      html = html.includes('rel="canonical"')
+        ? html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, canonTag)
+        : html.replace('</head>', `  ${canonTag}\n</head>`);
 
       // OG Tags
       html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${title}" />`);
@@ -133,7 +142,7 @@ async function preRenderGalleries() {
       // Pre-render content
       const photosHtml = photos?.map(p => `
         <div style="margin-bottom: 8rem; text-align: center;">
-          <img src="${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&amp;size=1200" alt="${p.title}" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);" />
+          <img src="${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&amp;size=400" alt="${p.title}" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);" />
           <div style="margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
             <h3 style="color: white; font-size: 1.2rem; letter-spacing: 0.1em; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5rem;">${p.title}</h3>
             ${p.description ? `<p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 1rem;">${p.description}</p>` : ''}

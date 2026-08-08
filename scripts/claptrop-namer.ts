@@ -58,16 +58,27 @@ export const LEGACY_NAME_PREFIX = '@tlau';
 // recognised loses its parsed location and reads as a brand-new photo.
 export function isClaptropName(name: string | null | undefined): boolean {
   if (!name) return false;
-  return /^@tlau(?:\.(?:media|photos)_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_/.test(name);
+  // Any handle, not just ours: a library shot by another photographer carries
+  // their handle (photo_libraries.photographer_handle). Hardcoding @tlau here
+  // made every such file unrecognisable — location parsing silently lost.
+  return CLAPTROP_ANY_HANDLE.test(name) || /^@tlau_\d{4}-\d{2}-\d{2}_/.test(name);
 }
+
+/** `@<handle>_thelostandunfounds_YYYY-MM-DD_` for any handle. */
+export const CLAPTROP_ANY_HANDLE = /^@[a-z0-9._-]+_thelostandunfounds_\d{4}-\d{2}-\d{2}_/;
 
 // Strict check used by the retrograde rename: only the current prefix counts as
 // "already done". v1 and v2 files match isClaptropName but fail isCurrentName,
 // so the next retrograde pass upgrades them — which is exactly how the v1 → v2
 // migration ran, and how v2 → v3 will.
-export function isCurrentName(name: string | null | undefined): boolean {
+export function isCurrentName(name: string | null | undefined, handle?: string): boolean {
   if (!name) return false;
-  return /^@tlau\.media_thelostandunfounds_\d{4}-\d{2}-\d{2}_/.test(name);
+  // Must be checked against the library's own handle. Checking every file
+  // against @tlau.media means another photographer's correctly-named files
+  // never look current, so each pass renames them again and the sequence
+  // numbers climb forever.
+  const h = (handle || '@tlau.media').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${h}_thelostandunfounds_\\d{4}-\\d{2}-\\d{2}_`).test(name);
 }
 
 // Pull the claptrop tail (everything after whichever prefix variant is present).
@@ -80,7 +91,7 @@ export function claptropTail(name: string | null | undefined): string | null {
   if (!name) return null;
   // Every generation must strip to the same tail, or upload dedup stops seeing
   // a renamed file as the same photo and re-uploads the whole archive.
-  let m = name.match(/^@tlau\.(?:media|photos)_thelostandunfounds_(.+)$/);
+  let m = name.match(/^@[a-z0-9._-]+_thelostandunfounds_(.+)$/);
   if (m) return m[1].toLowerCase();
   m = name.match(/^@tlau_(.+)$/);
   if (m) return m[1].toLowerCase();
@@ -289,6 +300,10 @@ const GENERIC_FOLDER = /^(\d{3}[_a-z][a-z0-9_]*|jpg|raf|mov|raw|dcim|photos?|vid
 // ─── Name Builder ─────────────────────────────────────────────────────────────
 
 export interface BuildNameOpts {
+  /** Photographer handle for this library, e.g. '@tlau.media'. Defaults to
+   *  NAME_PREFIX's handle when absent. Never guess it — see photo_libraries
+   *  .photographer_handle, which is NULL when attribution is unknown. */
+  handle?: string;
   originalName: string;   // original filename (with extension)
   filePath?: string;      // local path — used for EXIF reading + mtime fallback
   date?: Date;            // date override (e.g. from Drive metadata)
@@ -349,7 +364,11 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
 
   // Sequence + collision handling
   let seq      = nextSeq(dateStr, location, subject);
-  let stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
+  // The handle is the photographer credit. A library shot by someone else must
+  // carry their handle, or the filename — and therefore the alt text Google
+  // reads — credits the wrong person for their work.
+  const prefix = opts.handle ? `${opts.handle}_thelostandunfounds` : NAME_PREFIX;
+  let stem     = `${prefix}_${dateStr}_${location}_${subject}_${seq}`;
   let filename = `${stem}${ext}`;
 
   if (existingNames) {

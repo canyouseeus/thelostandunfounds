@@ -291,7 +291,7 @@ function parseLocationFromClaptropTitle(title: string | null | undefined): strin
     //   @tlau.photos_thelostandunfounds_YYYY-MM-DD_{location}_{subject}_{###}  (v2)
     //   @tlau_YYYY-MM-DD_{location}_{subject}_{###}                            (v1)
     const m = title.match(
-        /^@tlau(?:\.(?:media|photos)_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/
+        /^@[a-z0-9._-]+?(?:_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/
     );
     if (!m) return null;
     const raw = m[1].replace(/_/g, ' ').trim();
