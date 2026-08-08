@@ -31,6 +31,12 @@ const CORE_PAGES = [
     // React state flag on the homepage, so the raw HTML at /?view=services was
     // byte-identical to the homepage and contained none of the copy below.
     { path: 'services', title: 'AUSTIN PHOTOGRAPHY & WEB DESIGN | THE LOST+UNFOUNDS', description: 'Austin photography and web design. Airbnb shoots from $195, event coverage from $600, small business websites from $1,500. Book online.' },
+    // One page per offer. A single page cannot rank for three unrelated
+    // searches, and "airbnb photographer austin" competes with a different set
+    // of results than "small business web design austin".
+    { path: 'services/airbnb-photography', title: 'AUSTIN AIRBNB PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.' },
+    { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $1,500 to custom builds with booking and payments.' },
+    { path: 'services/video', title: 'AUSTIN VIDEO CONTENT & BRAND REELS | THE LOST+UNFOUNDS', description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels in 48 hours.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
@@ -214,8 +220,17 @@ async function preRenderCorePages() {
             // Services pre-render. Mirrors PHOTO_SERVICES / WEB_SERVICES in
             // src/pages/BookingPage.tsx — display only. If a price or package
             // changes there, change it here too or the crawled page goes stale.
-            if (page.path === 'services') {
-                const offerings = [
+            if (page.path.startsWith('services')) {
+                // Each sub-page advertises only its own offer. Three pages
+                // listing all five services would be near-duplicates, and
+                // Google resolves duplicates by keeping one and dropping the
+                // rest — picking for itself which of the three survives.
+                const FOCUS: Record<string, string[]> = {
+                    'services/airbnb-photography': ['Airbnb & Short-Term Rental Photography'],
+                    'services/web-design': ['Small Business Website Design'],
+                    'services/video': ['Event Photography & Video', 'Brand Content Days'],
+                };
+                const allOfferings = [
                     {
                         name: 'Airbnb & Short-Term Rental Photography',
                         price: '195',
@@ -248,12 +263,23 @@ async function preRenderCorePages() {
                     },
                 ];
 
+                // /services keeps the full catalogue; each sub-page carries only
+                // its own offer, so the four pages are not near-duplicates.
+                const wanted = FOCUS[page.path];
+                const offerings = wanted
+                    ? allOfferings.filter((o) => wanted.includes(o.name))
+                    : allOfferings;
+                if (wanted && offerings.length !== wanted.length) {
+                    // A renamed offering would silently empty the page it backs.
+                    throw new Error(`Service focus for ${page.path} matched ${offerings.length} of ${wanted.length} offerings — check the names in FOCUS.`);
+                }
+
                 shadowSchema = {
                     "@context": "https://schema.org",
                     "@type": "ProfessionalService",
                     "name": "THE LOST+UNFOUNDS",
-                    "description": "Photography and web development for brands, artists, and businesses in Austin.",
-                    "url": "https://www.thelostandunfounds.com/services",
+                    "description": page.description,
+                    "url": `https://www.thelostandunfounds.com/${page.path}`,
                     "areaServed": { "@type": "City", "name": "Austin", "addressRegion": "TX", "addressCountry": "US" },
                     "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" },
                     "priceRange": "$195–$6,000+",
