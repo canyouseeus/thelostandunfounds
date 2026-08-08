@@ -24,6 +24,7 @@ try {
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
+import { EMAIL_STYLES } from '../../lib/email-template.js'
 import {
   tokensMatch,
   logContractEvent,
@@ -208,10 +209,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         to: BUSINESS_CC,
         subject: `Contract declined: ${contract.title}`,
         content:
-          `<p style="font-size:15px;">${escapeHtml(signer.name)} (${escapeHtml(signer.email)}) ` +
-          `declined <strong>${escapeHtml(contract.title)}</strong>.</p>` +
+          `<p style="${EMAIL_STYLES.paragraph}">${escapeHtml(signer.name)} ` +
+          `(${escapeHtml(signer.email)}) declined ` +
+          `<strong>${escapeHtml(contract.title)}</strong>.</p>` +
           (body.reason
-            ? `<p style="font-size:14px;color:#555;">Reason: ${escapeHtml(body.reason)}</p>`
+            ? `<p style="${EMAIL_STYLES.muted} margin:0;">Reason: ${escapeHtml(body.reason)}</p>`
             : ''),
       })
 
@@ -286,17 +288,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       to: signer.email,
       cc: BUSINESS_CC,
       subject: `Signed: ${contract.title}`,
+      // EMAIL_STYLES.button, not a hand-rolled fill: a #000 button on a black
+      // email is an invisible fill that renders as bare text. See
+      // `email-rendering` RULE 3.
       content:
-        `<p style="font-size:16px;">${escapeHtml(signer.name)},</p>` +
-        `<p style="font-size:15px;line-height:1.6;">Thank you — your signature on ` +
+        `<p style="${EMAIL_STYLES.paragraph}">${escapeHtml(signer.name)},</p>` +
+        `<p style="${EMAIL_STYLES.paragraph}">Thank you — your signature on ` +
         `<strong>${escapeHtml(contract.title)}</strong> has been recorded.</p>` +
         (pdfUrl
-          ? `<p style="margin:24px 0;"><a href="${escapeHtml(pdfUrl)}" ` +
-            `style="display:inline-block;background:#000;color:#fff;text-decoration:none;` +
-            `padding:14px 28px;font-size:14px;letter-spacing:1.5px;font-weight:bold;">` +
+          ? `<p style="margin:0 0 28px;"><a href="${escapeHtml(pdfUrl)}" ` +
+            `style="${EMAIL_STYLES.button} letter-spacing:1.5px;">` +
             `DOWNLOAD SIGNED PDF</a></p>`
           : '') +
-        `<p style="font-size:13px;color:#555;line-height:1.6;">A copy is on file with ` +
+        `<p style="${EMAIL_STYLES.muted} margin:0;">A copy is on file with ` +
         `THE LOST+UNFOUNDS. Reply to this email with any questions.</p>`,
     })
 

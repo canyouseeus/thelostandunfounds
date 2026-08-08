@@ -29,6 +29,7 @@ try {
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
+import { EMAIL_STYLES } from '../../lib/email-template.js'
 import {
   generateToken,
   renderTemplate,
@@ -64,7 +65,19 @@ function signingUrl(origin: string, token: string): string {
   return `${origin}/sign/${token}`
 }
 
-/** Invitation email sent to the party who needs to sign. */
+/**
+ * Invitation email sent to the party who needs to sign.
+ *
+ * Uses EMAIL_STYLES.button rather than a hand-rolled style. The first version
+ * filled the button with the page colour (#000 on a black email), so the fill
+ * was invisible and the CTA rendered as bare text — exactly the failure
+ * `email-rendering` RULE 3 warns about. The canonical button is a solid white
+ * fill with black type.
+ *
+ * The raw URL is deliberately not printed: a 43-character signing token
+ * wrapped across three lines dominates the message and reads as spam. The
+ * button carries the link.
+ */
 function buildInviteHtml(params: {
   signerName: string
   title: string
@@ -72,31 +85,25 @@ function buildInviteHtml(params: {
   expiresAt: string | null
 }): string {
   const expiryLine = params.expiresAt
-    ? `<p style="margin:0 0 16px;font-size:14px;color:#555;">This link expires on
+    ? `<p style="${EMAIL_STYLES.muted} margin:0 0 16px;">This link expires on
          ${escapeHtml(new Date(params.expiresAt).toLocaleDateString('en-US', {
            month: 'long', day: 'numeric', year: 'numeric',
          }))}.</p>`
     : ''
 
   return `
-    <p style="margin:0 0 16px;font-size:16px;">${escapeHtml(params.signerName)},</p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+    <p style="${EMAIL_STYLES.paragraph}">${escapeHtml(params.signerName)},</p>
+    <p style="${EMAIL_STYLES.paragraph}">
       You have a document ready to review and sign:
       <strong>${escapeHtml(params.title)}</strong>
     </p>
-    <p style="margin:0 0 24px;">
-      <a href="${escapeHtml(params.url)}"
-         style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;
-                padding:14px 28px;font-size:14px;letter-spacing:1.5px;font-weight:bold;">
+    <p style="margin:0 0 28px;">
+      <a href="${escapeHtml(params.url)}" style="${EMAIL_STYLES.button} letter-spacing:1.5px;">
         REVIEW &amp; SIGN
       </a>
     </p>
-    <p style="margin:0 0 16px;font-size:13px;color:#555;line-height:1.6;">
-      Or paste this link into your browser:<br>
-      <span style="word-break:break-all;">${escapeHtml(params.url)}</span>
-    </p>
     ${expiryLine}
-    <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">
+    <p style="${EMAIL_STYLES.muted} margin:0;">
       This link is unique to you — please don't forward it. Once signed, you'll get a
       PDF copy for your records.
     </p>
