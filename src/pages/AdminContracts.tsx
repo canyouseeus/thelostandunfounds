@@ -1,3 +1,4 @@
+import { adminFetch } from '../utils/adminAuth'
 /**
  * Admin contracts console — /admin/contracts
  *
@@ -79,9 +80,9 @@ export default function AdminContracts() {
   const [variables, setVariables] = useState<Record<string, string>>({})
 
   const api = useCallback(async (action: string, payload: Record<string, unknown> = {}) => {
-    const res = await fetch('/api/contracts/admin', {
+    const res = await adminFetch('/api/contracts/admin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-email': adminEmail },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, ...payload }),
     })
     const data = await res.json()

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { ClipboardIcon, CheckIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getEntries } from '../../lib/adminErrorLog';
 import { useAuth } from '../../contexts/AuthContext';
+import { adminFetch } from '../../utils/adminAuth'
 
 export default function CopyDebugReport() {
   const { user } = useAuth();
@@ -13,9 +14,8 @@ export default function CopyDebugReport() {
     // Fetch server logs
     let serverSection = '_VERCEL_ACCESS_TOKEN not configured — server logs unavailable_';
     try {
-      const r = await fetch('/api/admin/logs?since=' + (Date.now() - 30 * 60 * 1000), {
+      const r = await adminFetch('/api/admin/logs?since=' + (Date.now() - 30 * 60 * 1000), {
         headers: {
-          'X-Admin-Email': user?.email || '',
           'Content-Type': 'application/json'
         }
       });

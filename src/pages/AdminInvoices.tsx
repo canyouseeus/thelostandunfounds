@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
 import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { NewInvoiceForm } from '../components/admin/NewInvoiceForm';
+import { adminFetch } from '../utils/adminAuth'
 
 interface Client {
   id: string;
@@ -263,11 +264,10 @@ export default function AdminInvoices() {
     }
     setSendingId(inv.id);
     try {
-      const res = await fetch('/api/invoices/send', {
+      const res = await adminFetch('/api/invoices/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ invoice_id: inv.id, to_email }),
       });
