@@ -14,6 +14,7 @@ import {
   processEmailContent
 } from '../email-template.js';
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
+import { SITE } from '../../src/config/site'
 
 interface ResendEmailParams {
   to: string | string[];
@@ -45,7 +46,7 @@ export async function sendEmail(params: ResendEmailParams): Promise<{ success: b
     return { success: false, error: 'Resend API key not configured' };
   }
 
-  const fromEmail = params.from || process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com';
+  const fromEmail = params.from || process.env.RESEND_FROM_EMAIL || SITE.email.noreply;
 
   try {
     const response = await fetch(RESEND_API_URL, {
@@ -97,7 +98,7 @@ export async function sendBatchEmails(
     };
   }
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || SITE.email.noreply;
   const results: Array<{ to: string; success: boolean; id?: string; error?: string }> = [];
 
   // Resend batch API supports up to 100 emails per request

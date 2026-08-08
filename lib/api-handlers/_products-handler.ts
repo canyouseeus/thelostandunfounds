@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleFourthwallProducts } from '../fourthwall/handler.js'
 import { getProdigiShopProducts } from './_prodigi-products-handler.js'
+import { SITE } from '../../src/config/site'
 
 /**
  * Products Handler
@@ -51,7 +52,7 @@ export default async function handler(
         images: ['/logo.png'],
         handle: 'store-unavailable',
         available: true,
-        url: 'https://www.thelostandunfounds.com',
+        url: SITE.origin,
         category: 'notice',
         featured: true,
       },

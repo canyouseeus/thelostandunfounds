@@ -21,9 +21,10 @@ import { createClient } from '@supabase/supabase-js'
 import { wrapEmailContent, BRAND } from '../email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 import { generateInvoicePdf, InvoicePdfLineItem } from '../../lib/api-handlers/_invoice-pdf.js'
+import { SITE } from '../../src/config/site'
 
-const FROM_EMAIL = 'media@thelostandunfounds.com'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+const FROM_EMAIL = SITE.email.media
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 
 function isAdmin(req: VercelRequest): boolean {
   if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true

@@ -9,8 +9,9 @@ import {
     sendPhotographerAssignment,
 } from '../../lib/api-handlers/_booking-payment-utils.js'
 import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
+import { SITE } from '../../src/config/site'
 
-const NOTIFY_TO = 'media@thelostandunfounds.com'
+const NOTIFY_TO = SITE.email.media
 
 function getSupabase(serviceRole = false) {
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL

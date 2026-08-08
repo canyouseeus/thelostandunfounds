@@ -17,9 +17,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { SITE, siteUrl } from '../../src/config/site'
 
 // Admin email check
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin];
 
 function isAdminRequest(req: VercelRequest): boolean {
   const adminEmail = req.headers['x-admin-email'] as string;
@@ -325,7 +326,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'ZohoMail.messages.DELETE',
           'ZohoMail.messages.ALL'
         ].join(',');
-        const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
+        const redirectUri = siteUrl('/zoho/callback');
         const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${scopes}&client_id=${clientId}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=consent`;
 
         if (req.query.redirect === 'true') {
@@ -354,7 +355,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'Authorization code is required' });
         }
 
-        const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
+        const redirectUri = siteUrl('/zoho/callback');
 
         try {
           const response = await fetch('https://accounts.zoho.com/oauth/v2/token', {

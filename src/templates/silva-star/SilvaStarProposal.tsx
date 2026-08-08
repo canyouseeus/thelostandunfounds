@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { siteUrl, SITE } from '../../config/site'
 
 const css = `
   :root{
@@ -222,7 +223,7 @@ export default function SilvaStarProposal() {
 
           <div className="cover-body">
             <div className="cover-logo" aria-label="THE LOST+UNFOUNDS">
-              <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" />
+              <img src={siteUrl('/logo.png')} alt={SITE.brandName} />
             </div>
             <div className="cover-brand">THE LOST+UNFOUNDS</div>
             <div className="cover-tag">Can you see us?</div>

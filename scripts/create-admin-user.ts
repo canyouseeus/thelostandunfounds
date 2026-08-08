@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { SITE } from '../src/config/site'
 
 // Load environment variables
 dotenv.config({ path: join(__dirname, '../.env.local') });
@@ -33,7 +34,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 });
 
 async function createAdminUser() {
-  const adminEmail = 'admin@thelostandunfounds.com';
+  const adminEmail = SITE.email.admin;
   
   console.log(`\n🔐 Setting up admin user: ${adminEmail}\n`);
 

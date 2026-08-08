@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { siteUrl } from '../config/site'
 
 export default function BlogGettingStarted() {
   return (
@@ -7,7 +8,7 @@ export default function BlogGettingStarted() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | Contributor Getting Started Guide</title>
         <meta name="description" content="A guide for contributors to share thoughtful reflections, engage readers, and earn as Amazon affiliates on THE LOST ARCHIVES." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/blog/getting-started" />
+        <link rel="canonical" href={siteUrl('/blog/getting-started')} />
       </Helmet>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

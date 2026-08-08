@@ -29,6 +29,7 @@ import {
 import { Tooltip as TooltipRoot, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../components/ui/utils';
 import { FullCalendar as CustomFullCalendar } from '../calendar/FullCalendar';
+import { SITE } from '../../config/site'
 
 // --- Local time helpers (avoid UTC shifts from toISOString) ---
 function toLocalISOString(date: Date): string {
@@ -524,7 +525,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                         <p style="font-size: 16px; margin-bottom: 10px;"><strong>When:</strong> ${eventDateStr}</p>
                         <p style="font-size: 16px; margin-bottom: 20px;"><strong>Where:</strong> ${event.location}</p>
                         <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">${event.description?.replace(/\n/g, '<br/>') || ''}</p>
-                        <a href="https://www.thelostandunfounds.com/events#${event.id}" style="display: inline-block; background-color: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 16px;">View Event Details</a>
+                        <a href="${SITE.origin}/events#${event.id}" style="display: inline-block; background-color: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 16px;">View Event Details</a>
                     </div>
                 </div>
             `;

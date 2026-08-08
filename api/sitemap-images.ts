@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { SITE } from '../src/config/site'
 
-const SITE_URL = 'https://www.thelostandunfounds.com';
+const SITE_URL = SITE.origin;
 
 // Google allows up to 1,000 <image:image> entries per <url>
 const MAX_IMAGES_PER_LIBRARY = 1000;

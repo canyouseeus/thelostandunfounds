@@ -23,6 +23,7 @@ import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
 import AffiliateBanner from './affiliate/AffiliateBanner'
 import { useGallery } from '../contexts/GalleryContext'
+import { SITE } from '../config/site'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -380,7 +381,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
               >
                 <img
                   src="/logo.png"
-                  alt="THE LOST+UNFOUNDS"
+                  alt={SITE.brandName}
                   style={{ height: showHeaderMenu ? '63px' : '84px', width: 'auto', display: 'block' }}
                 />
               </Link>

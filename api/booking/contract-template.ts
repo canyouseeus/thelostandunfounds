@@ -1,3 +1,4 @@
+import { SITE, siteUrl } from '../../src/config/site'
 /**
  * Photography Services Contract Email Template
  *
@@ -5,10 +6,10 @@
  * The contract data is presented in a white card below the banner for legibility.
  */
 
-const BRAND_BANNER = 'https://www.thelostandunfounds.com/brand/banner.png'
-const WEBSITE = 'https://www.thelostandunfounds.com'
-const PHOTOGRAPHER_NAME = 'THE LOST+UNFOUNDS'
-const PHOTOGRAPHER_EMAIL = 'media@thelostandunfounds.com'
+const BRAND_BANNER = SITE.brandAssets.emailBanner
+const WEBSITE = SITE.origin
+const PHOTOGRAPHER_NAME = SITE.brandName
+const PHOTOGRAPHER_EMAIL = SITE.email.media
 const PHOTOGRAPHER_IG = '@tlau.photos'
 
 export interface ContractLocation {

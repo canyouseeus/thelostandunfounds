@@ -1,3 +1,4 @@
+import { SITE, siteUrl } from '../src/config/site'
 /**
  * Build-time Blog Post Pre-renderer
  * Generates static HTML files for blog posts so bots can read them
@@ -83,8 +84,8 @@ async function preRenderBlogPosts() {
           categoryName = post.subdomain.replace(/-/g, ' ').toUpperCase();
         }
 
-        // Keep title under 60 chars: "Article Title | THE LOST+UNFOUNDS"
-        const fullTitle = `${cleanTitle} | THE LOST+UNFOUNDS`;
+        // Keep title under 60 chars: `Article Title | ${SITE.brandName}`
+        const fullTitle = `${cleanTitle} | ${SITE.brandName}`;
 
         let description = post.seo_description || post.excerpt ||
           post.content.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\n/g, ' ').trim();
@@ -97,7 +98,7 @@ async function preRenderBlogPosts() {
         const ogImage = post.og_image_url || post.featured_image;
         const publishedDate = post.published_at || post.created_at;
         const modifiedDate = post.updated_at || post.published_at || post.created_at;
-        const postUrl = `https://www.thelostandunfounds.com${fullUrlPath}`;
+        const postUrl = `${SITE.origin}${fullUrlPath}`;
 
         // Escape HTML for attributes
         const escapeAttr = (str: string) => {
@@ -182,16 +183,16 @@ async function preRenderBlogPosts() {
           "dateModified": modifiedDate ? new Date(modifiedDate).toISOString() : undefined,
           "author": {
             "@type": "Organization",
-            "name": "THE LOST+UNFOUNDS",
-            "url": "https://www.thelostandunfounds.com"
+            "name": SITE.brandName,
+            "url": SITE.origin
           },
           "publisher": {
             "@type": "Organization",
-            "name": "THE LOST+UNFOUNDS",
-            "url": "https://www.thelostandunfounds.com",
+            "name": SITE.brandName,
+            "url": SITE.origin,
             "logo": {
               "@type": "ImageObject",
-              "url": "https://www.thelostandunfounds.com/logo.png",
+              "url": siteUrl('/logo.png'),
               "width": 512,
               "height": 512
             }
@@ -209,13 +210,13 @@ async function preRenderBlogPosts() {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thelostandunfounds.com"
+              "item": SITE.origin
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": categoryName,
-              "item": `https://www.thelostandunfounds.com/${folderPath}`
+              "item": `${SITE.origin}/${folderPath}`
             },
             {
               "@type": "ListItem",
@@ -273,7 +274,7 @@ async function preRenderBlogPosts() {
               <span style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: bold;">${categoryName}</span>
               <h1 style="font-size: 3.5rem; margin-top: 1rem; margin-bottom: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;">${escapeAttr(post.title)}</h1>
               <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; font-weight: 500; display: flex; gap: 1rem; align-items: center;">
-                <span>BY THE LOST+UNFOUNDS</span>
+                <span>BY ${SITE.brandName}</span>
                 <span style="width: 4px; height: 4px; background: rgba(255,255,255,0.2); rounded-full;"></span>
                 <time datetime="${publishedDate}">${new Date(publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
               </div>
@@ -289,7 +290,7 @@ async function preRenderBlogPosts() {
             <footer style="margin-top: 6rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 3rem; text-align: center;">
               ${recentArticlesHtml}
               <p style="margin-top: 4rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8); font-size: 1.1rem;">
-                Explore more from <a href="https://www.thelostandunfounds.com" style="color: white; text-decoration: underline; font-weight: bold;">THE LOST+UNFOUNDS</a>
+                Explore more from <a href="https://www.thelostandunfounds.com" style="color: white; text-decoration: underline; font-weight: bold;">${SITE.brandName}</a>
               </p>
               <a href="${postUrl}" style="display: inline-block; background: white; color: black; padding: 1rem 2rem; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.9rem;">Back to Full Experience</a>
             </footer>

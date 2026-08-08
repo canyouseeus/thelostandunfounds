@@ -1,3 +1,4 @@
+import { SITE, siteUrl } from '../src/config/site'
 /**
  * Build-time Gallery Pre-renderer
  * Generates static HTML for public photo galleries
@@ -56,7 +57,7 @@ async function preRenderGalleries() {
       const slug = lib.slug;
       const title = `${lib.name} | The Gallery | THE LOST+UNFOUNDS`;
       const description = lib.description || `Examine the findings in the ${lib.name} collection.`;
-      const galleryUrl = `https://www.thelostandunfounds.com/gallery/${slug}`;
+      const galleryUrl = `${SITE.origin}/gallery/${slug}`;
 
       let html = htmlTemplate;
 
@@ -99,8 +100,8 @@ async function preRenderGalleries() {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.thelostandunfounds.com" },
-          { "@type": "ListItem", "position": 2, "name": "The Gallery", "item": "https://www.thelostandunfounds.com/gallery" },
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE.origin },
+          { "@type": "ListItem", "position": 2, "name": "The Gallery", "item": siteUrl('/gallery') },
           { "@type": "ListItem", "position": 3, "name": lib.name, "item": galleryUrl }
         ]
       };

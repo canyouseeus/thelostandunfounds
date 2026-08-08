@@ -1,3 +1,4 @@
+import { SITE } from '../config/site'
 /**
  * Storefront Registration Modal
  * Collects Amazon storefront ID after subdomain is created
@@ -173,7 +174,7 @@ export default function StorefrontRegistration({
   if (!isOpen) return null;
 
   // Generate blog URL in path-based format (NOT subdomain)
-  const blogUrl = subdomain ? `https://www.thelostandunfounds.com/blog/${subdomain}` : '';
+  const blogUrl = subdomain ? `${SITE.origin}/blog/${subdomain}` : '';
 
   return (
     <div

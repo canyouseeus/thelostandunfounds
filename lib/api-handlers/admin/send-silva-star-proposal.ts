@@ -1,11 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { EMAIL_STYLES } from '../../email-template.js'
 import { sendTransactionalEmail } from '../_resend-email-handler.js'
+import { siteUrl } from '../../../src/config/site'
 
 const CLIENT_EMAIL = 'danielsilvaatx@gmail.com'
 const TEST_EMAIL = 'thelostandunfounds@gmail.com'
 const SUBJECT = 'YOUR PROPOSAL IS READY | SILVA STAR WATER SOLUTIONS × THE LOST+UNFOUNDS'
-const PROPOSAL_URL = 'https://www.thelostandunfounds.com/silva-star/proposal'
+const PROPOSAL_URL = siteUrl('/silva-star/proposal')
 
 const bodyContent = `
   <h1 style="${EMAIL_STYLES.heading1}">YOUR PROPOSAL IS READY</h1>

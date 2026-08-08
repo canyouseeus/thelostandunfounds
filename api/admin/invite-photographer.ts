@@ -1,3 +1,4 @@
+import { SITE } from '../../src/config/site'
 // @ts-nocheck
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
@@ -51,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 3. Send Email using standard transactional email handler
-        const inviteUrl = `https://www.thelostandunfounds.com/setup?token=${token}`;
+        const inviteUrl = `${SITE.origin}/setup?token=${token}`;
 
         const content = `
             <h1 style="color: #ffffff; margin-bottom: 20px;">Welcome to THE LOST+UNFOUNDS</h1>

@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * All Articles Page - Shows all blog posts
  */
@@ -175,11 +176,11 @@ export default function AllArticles() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | The Lost Archives | All Articles</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives/all" />
+        <link rel="canonical" href={siteUrl('/thelostarchives/all')} />
         <meta name="description" content={blogDescription} />
         <meta property="og:title" content="THE LOST+UNFOUNDS | The Lost Archives | All Articles" />
         <meta property="og:description" content={blogDescription} />
-        <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives/all" />
+        <meta property="og:url" content={siteUrl('/thelostarchives/all')} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS" />

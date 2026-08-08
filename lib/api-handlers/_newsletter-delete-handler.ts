@@ -5,9 +5,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 // Admin emails that are allowed to delete campaigns
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 
 function isAdminRequest(req: VercelRequest): boolean {
   const adminEmail = req.headers['x-admin-email'] as string

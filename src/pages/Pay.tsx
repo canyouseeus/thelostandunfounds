@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * Pay Page
  *
@@ -74,7 +75,7 @@ export default function Pay() {
           name="description"
           content="Support THE LOST+UNFOUNDS or settle an invoice. Pay any amount securely by card through Stripe."
         />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/pay" />
+        <link rel="canonical" href={siteUrl('/pay')} />
       </Helmet>
 
       <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

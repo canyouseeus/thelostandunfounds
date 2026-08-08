@@ -1,3 +1,4 @@
+import { SITE } from '../config/site'
 /**
  * Subdomain Registration Modal
  * Allows users to set their custom subdomain once during signup
@@ -36,7 +37,7 @@ export default function SubdomainRegistration({
 
   // Generate blog URL in path-based format (NOT subdomain)
   const blogUrl = subdomain && subdomain.length >= 3
-    ? `https://www.thelostandunfounds.com/blog/${subdomain}`
+    ? `${SITE.origin}/blog/${subdomain}`
     : '';
 
   useEffect(() => {

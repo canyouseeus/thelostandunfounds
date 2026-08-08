@@ -14,6 +14,7 @@ import {
 import { cn } from '../components/ui/utils';
 import { LoadingOverlay } from '../components/Loading';
 import { Helmet } from 'react-helmet-async';
+import { siteUrl } from '../config/site'
 
 interface FormField {
     id: string;
@@ -265,7 +266,7 @@ export default function Events() {
             <Helmet>
                 <title>THE LOST+UNFOUNDS | Upcoming Events</title>
                 <meta name="description" content="Join THE LOST+UNFOUNDS for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events." />
-                <link rel="canonical" href="https://www.thelostandunfounds.com/events" />
+                <link rel="canonical" href={siteUrl('/events')} />
             </Helmet>
             <div className="min-h-screen bg-black text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto space-y-12">

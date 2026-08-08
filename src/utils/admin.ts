@@ -4,8 +4,9 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { SITE } from '../config/site'
 
-export const ADMIN_EMAIL = 'admin@thelostandunfounds.com';
+export const ADMIN_EMAIL = SITE.email.admin;
 export const ADMIN_EMAIL_ALT = 'thelostandunfounds@gmail.com';
 
 export interface AdminUser {

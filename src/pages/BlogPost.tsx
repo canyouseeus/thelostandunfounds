@@ -1,3 +1,4 @@
+import { SITE, siteUrl } from '../config/site'
 /**
  * Blog Post Detail Page
  */
@@ -496,12 +497,12 @@ export default function BlogPost() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | {title.split(' | ')[0].trim()}</title>
-        <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
+        <link rel="canonical" href={post.subdomain ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}` : `${SITE.origin}/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}
         <meta property="og:title" content={title.split(' | ')[0].trim()} />
         <meta property="og:description" content={description} />
-        <meta property="og:url" content={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
+        <meta property="og:url" content={post.subdomain ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}` : `${SITE.origin}/thelostarchives/${post.slug}`} />
         <meta property="og:type" content="article" />
         {ogImage && <meta property="og:image" content={ogImage} />}
         <meta name="twitter:card" content="summary" />
@@ -511,8 +512,8 @@ export default function BlogPost() {
         <script type="application/ld+json">
           {JSON.stringify((() => {
             const canonicalUrl = post.subdomain
-              ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}`
-              : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`;
+              ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}`
+              : `${SITE.origin}/thelostarchives/${post.slug}`;
             const cleanTitle = title.split(' | ')[0].trim();
             const structuredData: any = {
               "@context": "https://schema.org",
@@ -525,15 +526,15 @@ export default function BlogPost() {
               "author": {
                 "@type": "Organization",
                 "name": "THE LOST+UNFOUNDS",
-                "url": "https://www.thelostandunfounds.com"
+                "url": SITE.origin
               },
               "publisher": {
                 "@type": "Organization",
                 "name": "THE LOST+UNFOUNDS",
-                "url": "https://www.thelostandunfounds.com",
+                "url": SITE.origin,
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://www.thelostandunfounds.com/logo.png",
+                  "url": siteUrl('/logo.png'),
                   "width": 512,
                   "height": 512
                 }

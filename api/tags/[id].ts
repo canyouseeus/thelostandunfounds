@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createServiceSupabaseClient } from '../../lib/api-handlers/_supabase-admin-client';
+import { SITE } from '../../src/config/site'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin];
 
 async function requireAdmin(req: VercelRequest) {
     const token = req.headers.authorization?.replace('Bearer ', '');

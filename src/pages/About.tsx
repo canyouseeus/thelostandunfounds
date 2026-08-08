@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * About Page
  */
@@ -243,7 +244,7 @@ export default function About() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | About</title>
         <meta name="description" content="Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/about" />
+        <link rel="canonical" href={siteUrl('/about')} />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div ref={containerRef} style={{ width: '100%', boxSizing: 'border-box' }}>

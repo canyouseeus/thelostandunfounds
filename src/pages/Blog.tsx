@@ -1,3 +1,4 @@
+import { siteUrl, SITE } from '../config/site'
 /**
  * Blog Listing Page - THE LOST ARCHIVES
  */
@@ -209,7 +210,7 @@ export default function Blog() {
         <meta name="description" content={blogDescription} />
         <meta property="og:title" content="THE LOST+UNFOUNDS | The Lost Archives" />
         <meta property="og:description" content={blogDescription} />
-        <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives" />
+        <meta property="og:url" content={siteUrl('/thelostarchives')} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
@@ -220,11 +221,11 @@ export default function Blog() {
             "@type": "Blog",
             "name": "THE LOST ARCHIVES",
             "description": blogDescription,
-            "url": "https://www.thelostandunfounds.com/thelostarchives",
+            "url": siteUrl('/thelostarchives'),
             "publisher": {
               "@type": "Organization",
               "name": "THE LOST+UNFOUNDS",
-              "url": "https://www.thelostandunfounds.com"
+              "url": SITE.origin
             }
           })}
         </script>
@@ -299,7 +300,7 @@ export default function Blog() {
                     <img
                       key={i}
                       src="/logo.png"
-                      alt="THE LOST+UNFOUNDS"
+                      alt={SITE.brandName}
                       className="h-40 w-auto object-contain"
                     />
                   ))}

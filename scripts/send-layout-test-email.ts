@@ -3,6 +3,7 @@ import 'dotenv/config';
 import * as dotenv from 'dotenv';
 import { wrapEmailContent } from '../lib/email-template';
 import { ensureBannerHtml } from '../lib/api-handlers/_zoho-email-utils';
+import { SITE } from '../src/config/site'
 
 // Load .env.local
 dotenv.config({ path: '.env.local' });
@@ -29,7 +30,7 @@ async function main() {
             The logo should be clickable and lead to the website.
         </p>
         <div style="margin-top: 30px;">
-            <a href="https://www.thelostandunfounds.com" style="display: inline-block; padding: 12px 24px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; border-radius: 4px;">VERIFY LINK</a>
+            <a href="${SITE.origin}" style="display: inline-block; padding: 12px 24px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; border-radius: 4px;">VERIFY LINK</a>
         </div>
     `;
 

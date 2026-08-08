@@ -15,8 +15,9 @@ import Stripe from 'stripe'
 import crypto from 'crypto'
 import { wrapEmailContent, BRAND } from '../../api/email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js'
+import { SITE } from '../../src/config/site'
 
-const FROM_EMAIL = 'media@thelostandunfounds.com'
+const FROM_EMAIL = SITE.email.media
 
 export const BOOKING_PAYMENT_SOURCE = 'tlau-booking'
 
@@ -47,7 +48,7 @@ export function siteOrigin(req?: { headers: Record<string, any> }): string {
   const proto = req?.headers['x-forwarded-proto']
   const host = req?.headers['host']
   if (proto && host) return `${proto}://${host}`.replace(/\/$/, '')
-  return 'https://www.thelostandunfounds.com'
+  return SITE.origin
 }
 
 export function randomToken(): string {

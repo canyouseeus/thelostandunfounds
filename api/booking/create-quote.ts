@@ -1,3 +1,4 @@
+import { SITE } from '../../src/config/site'
 /**
  * POST /api/booking/create-quote
  *
@@ -39,7 +40,7 @@ import {
   upsertClientForBooking,
 } from '../../lib/api-handlers/_booking-payment-utils.js'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 
 function isAdmin(req: VercelRequest): boolean {
   if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {

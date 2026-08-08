@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { EnvelopeIcon, PaperAirplaneIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../components/Toast';
 import { Helmet } from 'react-helmet-async';
+import { SITE, siteUrl } from '../config/site'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ export default function Contact() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | Contact</title>
         <meta name="description" content="Get in touch with THE LOST+UNFOUNDS. We'd love to hear from you and help with any questions, inquiries, or feedback you might have about our platform." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/contact" />
+        <link rel="canonical" href={siteUrl('/contact')} />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8 sm:mb-12 text-center">
@@ -58,7 +59,7 @@ export default function Contact() {
             <div className="bg-black/50 border border-white rounded-none p-6">
               <EnvelopeIcon className="w-6 h-6 text-white mb-3" />
               <h3 className="text-white font-semibold mb-2">Email</h3>
-              <a href="mailto:support@thelostandunfounds.com" className="text-white/70 hover:text-white transition">
+              <a href={`mailto:${SITE.email.support}`} className="text-white/70 hover:text-white transition">
                 support@thelostandunfounds.com
               </a>
             </div>

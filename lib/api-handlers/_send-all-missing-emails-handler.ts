@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { sendTransactionalEmail } from './_resend-email-handler.js'
+import { SITE, siteUrl } from '../../src/config/site'
 
 /**
  * Generate welcome email inner body HTML
@@ -71,7 +72,7 @@ function generateNewsletterConfirmationBody(subscriberEmail?: string): string {
       If you didn't sign up for this newsletter, you can safely ignore this email.
     </p>
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
-      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
+      <a href="${SITE.origin}/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
     </p>
   `
 }
@@ -208,7 +209,7 @@ export default async function handler(
       for (const user of usersWithEmails) {
         try {
           const userName = user.subdomain || user.email.split('@')[0] || 'Contributor'
-          const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
+          const gettingStartedUrl = siteUrl('/blog/getting-started')
           const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
           const content = generateWelcomeEmailBody(userName, gettingStartedUrl)
 
@@ -276,8 +277,8 @@ export default async function handler(
 
               const postNumber = Math.max(1, count || 1)
               const postUrl = post.subdomain
-                ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}`
-                : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`
+                ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}`
+                : `${SITE.origin}/thelostarchives/${post.slug}`
 
               const subject = `Congratulations! Your ${getOrdinalSuffix(postNumber)} Article Has Been Published: ${post.title}`
               const content = generatePublicationEmailBody(post.title, postUrl, matchingSubmission.author_name, postNumber)

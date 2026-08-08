@@ -1,8 +1,9 @@
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
 import { generateTransactionalEmail } from '../email-template.js';
+import { SITE } from '../../src/config/site'
 
 export async function sendPhotoDeliveryEmail(email: string, orderId: string, entitlements: any[]) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.thelostandunfounds.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || SITE.origin;
 
   const linksHtml = entitlements.map(e => {
     const downloadUrl = `${baseUrl}/api/photos/download?token=${e.token}`;
@@ -49,7 +50,7 @@ export async function sendAdminPurchaseNotification(customerEmail: string, order
           <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;">Order ID</td><td style="color:#fff;font-size:14px;font-family:monospace;padding:8px 0;">${orderId}</td></tr>
           <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;">Items</td><td style="color:#fff;font-size:14px;padding:8px 0;"><ul style="list-style:none;padding:0;margin:0;">${itemsHtml}</ul></td></tr>
         </table>
-        <p style="margin:24px 0 0;"><a href="https://www.thelostandunfounds.com/admin" style="color:#999;font-size:11px;text-transform:uppercase;text-decoration:none;letter-spacing:2px;">View Admin Dashboard →</a></p>
+        <p style="margin:24px 0 0;"><a href="${SITE.origin}/admin" style="color:#999;font-size:11px;text-transform:uppercase;text-decoration:none;letter-spacing:2px;">View Admin Dashboard →</a></p>
     `;
   const htmlContent = generateTransactionalEmail(body);
 

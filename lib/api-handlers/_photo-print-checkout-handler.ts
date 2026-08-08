@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { SITE } from '../../src/config/site'
 
 /**
  * POST /api/prodigi/photo-print-checkout
@@ -97,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             process.env.SITE_URL ||
             (req.headers['x-forwarded-proto'] && req.headers['host']
                 ? `${req.headers['x-forwarded-proto']}://${req.headers['host']}`
-                : 'https://www.thelostandunfounds.com')
+                : SITE.origin)
         ).replace(/\/$/, '')
 
         const assetUrl = `${origin}/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=4096`

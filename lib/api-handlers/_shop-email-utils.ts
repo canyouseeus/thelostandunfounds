@@ -1,5 +1,6 @@
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js'
 import { generateTransactionalEmail } from '../email-template.js'
+import { SITE } from '../../src/config/site'
 
 /**
  * Send a digital-product delivery email containing a time-limited download
@@ -14,7 +15,7 @@ export async function sendShopDigitalDeliveryEmail(args: {
     downloadExpiresAt: string
 }) {
     const { email, shopOrderId, downloadToken, downloadExpiresAt } = args
-    const baseUrl = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
+    const baseUrl = process.env.SITE_URL || SITE.origin
     const downloadUrl = `${baseUrl}/api/checkout/download?token=${encodeURIComponent(downloadToken)}`
 
     const expiresDate = new Date(downloadExpiresAt)

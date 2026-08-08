@@ -2,6 +2,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js';
+import { SITE } from '../../src/config/site'
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -71,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         <p style="color: #aaaaaa; font-size: 14px;">
                             Your content is being rotated across our Gallery, Shop, and Blog surfaces.
                         </p>
-                        <a href="https://www.thelostandunfounds.com" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a>
+                        <a href="${SITE.origin}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a>
                     `
                 });
 
@@ -111,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         <p style="color: #aaaaaa; font-size: 14px; margin-bottom: 25px;">
                             Don't lose your spot. Since you're already in the slot, we're offering you a <strong>33% discount</strong> to extend your campaign right now.
                         </p>
-                        <a href="https://www.thelostandunfounds.com/advertise?renew=${campaignId}&discount=IDLE33" style="display: inline-block; padding: 15px 30px; background-color: #f59e0b; color: #000000; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Claim Discount &amp; Renew</a>
+                        <a href="${SITE.origin}/advertise?renew=${campaignId}&discount=IDLE33" style="display: inline-block; padding: 15px 30px; background-color: #f59e0b; color: #000000; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Claim Discount &amp; Renew</a>
                     `
                 });
 
@@ -164,7 +165,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                 <p style="color: #aaaaaa; font-size: 14px; margin: 20px 0;">
                                     A new campaign has taken over the current time slot. If you'd like to return to the marketplace, you can purchase new slots at any time.
                                 </p>
-                                <a href="https://www.thelostandunfounds.com/advertise" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a>
+                                <a href="${SITE.origin}/advertise" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a>
                             `
                         });
 

@@ -17,34 +17,34 @@
   <!-- iOS-specific meta tags (kept for iOS Safari compatibility) -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="THE LOST+UNFOUNDS" />
+  <meta name="apple-mobile-web-app-title" content="%SITE_BRAND_NAME%" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.thelostandunfounds.com/" />
-  <meta property="og:title" content="THE LOST+UNFOUNDS" />
+  <meta property="og:title" content="%SITE_BRAND_NAME%" />
   <meta property="og:description" content="CAN YOU SEE US?" />
-  <meta property="og:image" content="https://www.thelostandunfounds.com/og-image.png" />
+  <meta property="og:image" content="%SITE_OG_IMAGE%" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="1200" />
   <meta property="og:image:type" content="image/png" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="THE LOST+UNFOUNDS" />
+  <meta name="twitter:title" content="%SITE_BRAND_NAME%" />
   <meta name="twitter:description" content="CAN YOU SEE US?" />
-  <meta name="twitter:image" content="https://www.thelostandunfounds.com/og-image.png" />
+  <meta name="twitter:image" content="%SITE_OG_IMAGE%" />
 
   <!-- Nostr -->
-  <meta name="nostr:nip05" content="media@thelostandunfounds.com">
-  <meta name="lightning" content="lnurlp:media@thelostandunfounds.com">
+  <meta name="nostr:nip05" content="%SITE_EMAIL_MEDIA%">
+  <meta name="lightning" content="lnurlp:%SITE_EMAIL_MEDIA%">
 
   <!-- SEO Meta Description -->
   <meta name="description"
     content="CAN YOU SEE US? THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information." />
-  <meta name="keywords" content="THE LOST+UNFOUNDS, development, AI, technology, blog, newsletter" />
+  <meta name="keywords" content="%SITE_BRAND_NAME%, development, AI, technology, blog, newsletter" />
 
-  <title>THE LOST+UNFOUNDS</title>
+  <title>%SITE_BRAND_NAME%</title>
   <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
 </head>
 
@@ -93,90 +93,8 @@
     }
   </script>
 
-  <!-- Structured Data: Local photography business + booking services -->
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": ["LocalBusiness", "Photographer"],
-      "name": "The Lost+Unfounds",
-      "alternateName": "@tlau.photos",
-      "url": "https://www.thelostandunfounds.com",
-      "logo": "https://www.thelostandunfounds.com/logo.png",
-      "image": "https://www.thelostandunfounds.com/og-image.png",
-      "email": "admin@thelostandunfounds.com",
-      "description": "Austin-based editorial and nightlife photographer. Available for concerts, events, portraits, brand work, and commercial shoots. High-resolution archives available for licensing.",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Austin",
-        "addressRegion": "TX",
-        "addressCountry": "US"
-      },
-      "areaServed": [
-        { "@type": "City",  "name": "Austin",       "sameAs": "https://www.wikidata.org/wiki/Q16559" },
-        { "@type": "State", "name": "Texas",         "sameAs": "https://www.wikidata.org/wiki/Q1439"  },
-        { "@type": "Country","name": "United States","sameAs": "https://www.wikidata.org/wiki/Q30"    }
-      ],
-      "sameAs": [
-        "https://www.instagram.com/tlau.photos"
-      ],
-      "priceRange": "$$",
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Photography Services",
-        "itemListElement": [
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Concert & Live Music Photography",
-              "description": "High-resolution concert and live performance photography for artists, venues, and promoters in Austin and beyond."
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Nightlife & Event Photography",
-              "description": "Editorial nightlife photography for clubs, bars, pop-ups, and Austin cultural events."
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Portrait & Lifestyle Photography",
-              "description": "Individual and brand portrait sessions — natural, editorial, and studio-style."
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Brand & Editorial Photography",
-              "description": "Commercial photography for brands, startups, and creative agencies. Austin and remote."
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Photo Archive Licensing",
-              "description": "License high-resolution photos from The Lost+Unfounds archive for editorial, commercial, and personal use."
-            }
-          }
-        ]
-      },
-      "potentialAction": {
-        "@type": "ReserveAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://www.thelostandunfounds.com/?view=booking",
-          "actionPlatform": ["http://schema.org/DesktopWebPlatform", "http://schema.org/MobileWebPlatform"]
-        },
-        "result": { "@type": "Reservation", "name": "Photography Booking" }
-      }
-    }
-  </script>
+  <!-- Structured Data: local business (generated from src/config/site.ts) -->
+  <script type="application/ld+json">%SITE_BUSINESS_JSONLD%</script>
 
   <div id="root">
     <!-- Pre-rendered content for bots; visually hidden for users so no flash -->

@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { SITE } from '../../src/config/site'
 
 /**
  * Create a Stripe Checkout Session for a one-time payment keyed by a
@@ -80,7 +81,7 @@ export default async function handler(
             process.env.SITE_URL ||
             (req.headers['x-forwarded-proto'] && req.headers['host']
                 ? `${req.headers['x-forwarded-proto']}://${req.headers['host']}`
-                : 'https://www.thelostandunfounds.com')
+                : SITE.origin)
         ).replace(/\/$/, '')
 
         const successUrl = `${origin}/shop/success?session_id={CHECKOUT_SESSION_ID}`

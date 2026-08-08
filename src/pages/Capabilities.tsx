@@ -8,6 +8,7 @@ import {
   ArrowTopRightOnSquareIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+import { siteUrl } from '../config/site'
 
 type Machine = {
   kicker: string;
@@ -226,7 +227,7 @@ export default function Capabilities() {
           name="description"
           content="Custom additive manufacturing — industrial FDM and 9K resin printing. Functional engineering-grade parts and micron-precise detail work. No minimum order, fast turnaround."
         />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/capabilities" />
+        <link rel="canonical" href={siteUrl('/capabilities')} />
       </Helmet>
 
       {/* Hero */}

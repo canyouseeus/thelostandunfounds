@@ -1,3 +1,4 @@
+import { siteUrl } from '../src/config/site'
 /**
  * One-shot script: send the Silva Star Water Solutions proposal email.
  * Recipient is the test address (thelostandunfounds@gmail.com).
@@ -16,7 +17,7 @@ import { sendTransactionalEmail } from '../lib/api-handlers/_resend-email-handle
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const PROPOSAL_URL = 'https://www.thelostandunfounds.com/silva-star/proposal';
+const PROPOSAL_URL = siteUrl('/silva-star/proposal');
 const TO_EMAIL = 'thelostandunfounds@gmail.com';
 const SUBJECT = 'YOUR PROPOSAL IS READY | SILVA STAR WATER SOLUTIONS × THE LOST+UNFOUNDS';
 

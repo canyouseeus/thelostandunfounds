@@ -4,6 +4,7 @@ import Stripe from 'stripe'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
 import { sendDepositConfirmationEmail } from './_booking-payment-utils.js'
+import { SITE } from '../../src/config/site'
 
 /**
  * Stripe Webhook Handler
@@ -505,7 +506,7 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
         .eq('id', order.id)
 
     try {
-        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
+        const origin = process.env.SITE_URL || SITE.origin
         const result = await createProdigiOrder({
             merchantReference: order.id,
             idempotencyKey: order.id,

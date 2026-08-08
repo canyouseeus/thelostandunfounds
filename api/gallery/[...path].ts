@@ -6,14 +6,15 @@ import dotenv from 'dotenv';
 import path from 'path';
 import sharp from 'sharp';
 import { getZohoAuthContext, sendZohoEmail, ensureBannerHtml } from '../../lib/api-handlers/_zoho-email-utils.js';
+import { SITE, siteUrl } from '../../src/config/site'
 // syncGalleryPhotos is dynamically imported inside handleSync to avoid loading
 // googleapis on every cold start (stream/checkout/capture don't need it)
 
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
     name: 'THE LOST+UNFOUNDS',
-    logo: 'https://www.thelostandunfounds.com/brand/banner.png',
-    website: 'https://www.thelostandunfounds.com',
+    logo: SITE.brandAssets.emailBanner,
+    website: SITE.origin,
     colors: {
         background: '#000000',
         text: '#ffffff',
@@ -446,7 +447,7 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'No matching items found' });
         }
 
-        const galleryUrl = `https://www.thelostandunfounds.com/photos/success?token=${orderId}`;
+        const galleryUrl = `${SITE.origin}/photos/success?token=${orderId}`;
         const auth = await getZohoAuthContext();
         await sendZohoEmail({
             auth,
@@ -517,7 +518,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         // no session yet, so the bare gallery URL used to drop them on the site's
         // sign-in modal and ask them to invent a password. /access emails them a
         // link instead and lands them in the gallery.
-        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}/access`;
+        const galleryUrl = `${SITE.origin}/gallery/${library.slug}/access`;
         const auth = await getZohoAuthContext();
 
         const results = {
@@ -554,7 +555,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     <p style="${EMAIL_STYLES.muted}">
                       GALLERY: ${library.name}<br>
                       INVITED: ${email}<br>
-                      Questions? Reply to this email or reach us at media@thelostandunfounds.com.
+                      Questions? Reply to this email or reach us at ${SITE.email.media}.
                     </p>
                 `;
 
@@ -562,7 +563,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     auth,
                     to: email,
                     // Business record — client correspondence stays on file.
-                    cc: 'media@thelostandunfounds.com',
+                    cc: SITE.email.media,
                     subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
                     htmlContent: generateTransactionalEmail(body)
                 });
@@ -780,7 +781,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
 
         // Enforce access for private galleries
         if (library.is_private) {
-            const adminEmails = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+            const adminEmails = ['thelostandunfounds@gmail.com', SITE.email.admin];
             const invitedList = (library.invited_emails || '')
                 .split(',')
                 .map((e: string) => e.trim().toLowerCase())

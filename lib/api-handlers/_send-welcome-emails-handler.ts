@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import { sendTransactionalEmail } from './_resend-email-handler.js'
+import { SITE, siteUrl } from '../../src/config/site'
 
 dotenv.config({ path: '.env.local' })
 
@@ -56,7 +57,7 @@ function generateWelcomeEmailBody(userName: string, gettingStartedUrl: string, u
     </p>
     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
-      <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+      <a href="${SITE.origin}/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
     </p>
   `
 }
@@ -126,7 +127,7 @@ export default async function handler(
     // Test mode: send to specific email
     if (testEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
       const userName = testEmail.split('@')[0] || 'Contributor'
-      const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
+      const gettingStartedUrl = siteUrl('/blog/getting-started')
       const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
       const content = generateWelcomeEmailBody(userName, gettingStartedUrl, testEmail)
 
@@ -405,7 +406,7 @@ export default async function handler(
     let emailsSent = 0
     let emailsFailed = 0
     const errors: string[] = []
-    const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
+    const gettingStartedUrl = siteUrl('/blog/getting-started')
 
     for (const user of usersWithEmails) {
       try {

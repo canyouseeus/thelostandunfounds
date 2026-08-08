@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 function generateWelcomeHtml(email: string): string {
   return `
@@ -22,7 +23,7 @@ function generateWelcomeHtml(email: string): string {
               <!-- Branding Header -->
               <tr>
                 <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                  <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                  <img src="${SITE.brandAssets.emailBanner}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block;">
                 </td>
               </tr>
               <!-- Main Content -->
@@ -56,7 +57,7 @@ function generateWelcomeHtml(email: string): string {
     © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
   </p>
   <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
-    <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
+    <a href="${SITE.origin}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
   </p>
                 </td>
               </tr>
@@ -313,7 +314,7 @@ export default async function handler(
       } catch (emailError: any) {
         // Fallback to Resend API when Zoho inevitably throttles due to hourly limits
         const resendApiKey = process.env.RESEND_API_KEY
-        const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com'
+        const resendFromEmail = process.env.RESEND_FROM_EMAIL || SITE.email.noreply
 
         if (resendApiKey) {
           console.log(`Zoho failed for ${email}. Falling back to Resend...`)

@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { SITE } from '../../../src/config/site'
 
 let cached: Stripe | null = null;
 
@@ -19,5 +20,5 @@ export function getSiteOrigin(reqHost?: string, proto?: string): string {
   const env = process.env.SITE_URL;
   if (env) return env.replace(/\/$/, '');
   if (reqHost && proto) return `${proto}://${reqHost}`.replace(/\/$/, '');
-  return 'https://www.thelostandunfounds.com';
+  return SITE.origin;
 }
