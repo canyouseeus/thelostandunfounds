@@ -146,6 +146,13 @@ function App() {
               </Route>
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/zoho/callback" element={<ZohoCallback />} />
+              {/* Services — same view as the homepage SERVICES tab, but at a real,
+                  crawlable URL so Google and LLM crawlers can index the offer.
+                  Renders Gallery directly rather than RootPage so an admin landing
+                  here gets the services view, not the brand intro animation. */}
+              <Route path="/services" element={<Layout />}>
+                <Route index element={<Gallery isHomepage />} />
+              </Route>
               <Route path="/about" element={<Layout />}>
                 <Route index element={<About />} />
               </Route>
