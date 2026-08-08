@@ -32,7 +32,7 @@ const DEFAULT_BANNER_HEIGHT = 166.7
  * big-endian uint32s at byte offset 16 — so parsing it directly is both typed
  * and dependency-free.
  */
-function pngSize(buf: Buffer): { width: number; height: number } | null {
+export function pngSize(buf: Buffer): { width: number; height: number } | null {
   // 8-byte signature + 4-byte length + 'IHDR' + 8 bytes of dimensions
   if (buf.length < 24) return null
   if (buf.readUInt32BE(0) !== 0x89504e47) return null // not a PNG
@@ -48,7 +48,7 @@ function pngSize(buf: Buffer): { width: number; height: number } | null {
  * Returns null (never throws) if neither disk nor network yields the image —
  * the caller logs that case rather than failing the whole PDF.
  */
-async function loadBannerBuffer(): Promise<Buffer | null> {
+export async function loadBannerBuffer(): Promise<Buffer | null> {
   if (cachedBanner !== undefined) return cachedBanner
 
   // Vercel's bundler and local dev resolve cwd differently; try both shapes.
