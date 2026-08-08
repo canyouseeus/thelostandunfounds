@@ -7,7 +7,8 @@ type AffiliateEmailType =
   | 'payout_sent'
   | 'payout_failed'
   | 'weekly_summary'
-  | 'stripe_reminder';
+  | 'stripe_reminder'
+  | 'admin_new_affiliate';
 
 export interface AffiliateEmailParams {
   type: AffiliateEmailType;
@@ -104,6 +105,44 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
           </table>
 
           ${onboardingBtn}
+        `,
+      };
+    }
+    case 'admin_new_affiliate': {
+      // Internal notification — goes to the admin address, never to the affiliate.
+      const code = escapeHtml(data.code || '');
+      const name = escapeHtml([data.firstName, data.lastName].filter(Boolean).join(' ')) || '—';
+      const email = escapeHtml(data.email || '—');
+      const phone = escapeHtml(data.phone || '—');
+      const referredBy = escapeHtml(data.referredByCode || '') || 'Direct signup';
+      const signedUpAt = escapeHtml(data.signedUpAt || '');
+      const row = (label: string, value: string, last = false) => `
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;${last ? 'border-bottom:1px solid #1a1a1a;' : ''}">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">${label}</span><br>
+                <span style="color:#fff;font-size:13px;word-break:break-word;">${value}</span>
+              </td>
+            </tr>`;
+      return {
+        subject: `New affiliate registration — ${code}`,
+        content: `
+          <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;">NEW AFFILIATE REGISTERED</h1>
+          <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
+
+          <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
+            ${row('Name', name)}
+            ${row('Email', email)}
+            ${row('Phone', phone)}
+            ${row('Referred by', referredBy)}
+            ${row('Signed up', signedUpAt || '—', true)}
+          </table>
+
+          <p style="margin:0;">
+            <a href="${SITE_URL}/admin/affiliates"
+               style="display:inline-block;padding:14px 28px;background:#fff;color:#000;font-weight:bold;font-size:14px;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">
+              Open Affiliates Admin →
+            </a>
+          </p>
         `,
       };
     }
