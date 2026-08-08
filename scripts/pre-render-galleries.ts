@@ -173,7 +173,7 @@ async function preRenderGalleries() {
       if (html.includes('id="pre-render"')) {
         html = html.replace(/<div id="pre-render"[^>]*>[\s\S]*?<\/div>/i, `<div id="pre-render">${preRenderContent}</div>`);
       } else {
-        html = html.replace('<div id="root">', `<div id="root">\n    <div id="pre-render">${preRenderContent}</div>`);
+        html = html.replace('<div id="root">', `<div id="pre-render">${preRenderContent}</div>\n  <div id="root">`);
       }
 
       const galleryDir = join(distPath, 'gallery', slug);

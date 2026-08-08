@@ -150,11 +150,14 @@ if (!rootElement) {
     )
     console.log('✅ React mounted successfully')
 
-    // Hide pre-render content when React mounts
-    const preRender = document.getElementById('pre-render')
-    if (preRender) {
-      preRender.style.display = 'none'
-    }
+    // Hide the pre-render once the app has actually PAINTED, not merely mounted.
+    //
+    // Mount fires before any data arrives, so hiding there left a crawler
+    // looking at a loading spinner where the real content used to be — the
+    // gallery pages were reporting Soft 404 in Search Console for exactly this.
+    // The pre-render lives outside #root (see index.html) so React no longer
+    // destroys it, and it stays on screen until there is something to replace it.
+    hidePreRenderWhenPainted()
   } catch (error) {
     console.error('❌ React mount failed:', error)
     rootElement.innerHTML = `
@@ -164,4 +167,36 @@ if (!rootElement) {
       </div>
     `
   }
+}
+
+/**
+ * Keep the pre-rendered content visible until the app paints something real.
+ *
+ * "Real" is deliberately crude — enough text in #root that a crawler snapshot
+ * would carry meaning. A spinner or an empty shell does not clear the bar, so
+ * a slow or failed data fetch leaves the pre-rendered content in place rather
+ * than replacing it with nothing.
+ *
+ * The timeout is the safety valve in the other direction: whatever happens, a
+ * human never ends up looking at both at once for more than a moment.
+ */
+function hidePreRenderWhenPainted() {
+  const preRender = document.getElementById('pre-render')
+  const root = document.getElementById('root')
+  if (!preRender || !root) return
+
+  const hide = () => { preRender.style.display = 'none' }
+  const painted = () => (root.textContent || '').trim().length > 120
+
+  if (painted()) { hide(); return }
+
+  const observer = new MutationObserver(() => {
+    if (!painted()) return
+    observer.disconnect()
+    clearTimeout(fallback)
+    hide()
+  })
+  observer.observe(root, { childList: true, subtree: true, characterData: true })
+
+  const fallback = setTimeout(() => { observer.disconnect(); hide() }, 8000)
 }

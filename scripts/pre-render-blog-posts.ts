@@ -303,9 +303,12 @@ async function preRenderBlogPosts() {
             `<div id="pre-render">${preRenderContent}</div>`
           );
         } else {
+          // Sibling of #root, never a child: React's createRoot().render()
+          // clears its container, destroying anything nested inside before a
+          // crawler's render snapshot is taken.
           html = html.replace(
             '<div id="root">',
-            `<div id="root">${preRenderContent}`
+            `<div id="pre-render">${preRenderContent}</div>\n  <div id="root">`
           );
         }
 
