@@ -42,6 +42,42 @@ Hot spots worth doing first, since they establish the patterns everything else f
 
 ---
 
+## The brand / copy split
+
+Not every brand mention is a token to parameterise. Of the 203 display-name occurrences:
+
+| | Count | Treatment |
+|---|---|---|
+| **Chrome** | ~55 | Config-driven. Header, page titles, `alt` text, email from-name and banner, invoice header. |
+| **Copy** | ~136 | **Left as literal prose.** Home hero, About, meta descriptions, Terms, client proposal templates. |
+| Comments | 11 | Cosmetic; lowest priority. |
+
+The copy is not a naming problem. `Learn about THE LOST+UNFOUNDS, a creative brand and
+mindset builder…` does not become correct by substituting a different name — the sentence
+is about this brand. A client needs their own words, so that text belongs to the per-client
+content layer, not to `site.ts`. Sweeping it into config would actively make the onboarding
+wizard harder to build.
+
+Blog posts, gallery photos and the newsletter archive are **database rows, not code**. A
+fork on a fresh Supabase project inherits none of them, so no work is required to keep
+this content out of a client site.
+
+### The three tokens that carry the rebrand
+
+Everything a client needs to see their own identity site-wide reduces to three values:
+
+| Token | Appears in |
+|---|---|
+| `SITE.brandName` | Header, nav, page titles, email from-name, contract signer, invoice header, `alt` text |
+| `SITE.brandAssets.logo` | Favicon, nav mark, 404 page, invoice |
+| `SITE.brandAssets.emailBanner` | Top strip of every email and invoice |
+
+All three now funnel through one module. When the onboarding wizard lands, it writes these
+to a settings row and the config reads from there — a change in one file, not 195. That
+ordering is the reason the sweep came before the wizard.
+
+---
+
 ## Tiering
 
 ### Tier 1 — mechanical (roughly 3/4 of occurrences)
@@ -132,23 +168,32 @@ Tier 1 by directory → Tier 2 → Tier 3 individually.
 
 - [x] `src/config/site.ts` created, holding current production values
 - [x] `SEOHead.tsx` converted as the reference implementation
-- [ ] Tier 1 sweep — `src/pages`
-- [ ] Tier 1 sweep — `src/components`
-- [ ] Tier 1 sweep — `lib/` and `api/`
+- [x] Tier 1 — email addresses (51 occurrences, 40 files)
+- [x] Tier 1 — absolute URLs (130 occurrences, 79 files)
+- [x] Tier 1 — brand chrome: logo alt, from-name, email banner (24)
+- [ ] Tier 2 — `index.html` business schema
+- [ ] Tier 2 — `scripts/` (26 files, 155 occurrences)
 - [ ] Tier 2 — `index.html` business schema, pre-render scripts, email templates, legal pages
 - [ ] Tier 3 — individually, admin-email identity first
 - [ ] Feature flags (Phase 2)
 
-**Definition of done for Phase 1:**
+**Definition of done for Phase 1 (revised):**
+
+The original "grep returns hits only in `site.ts`" is no longer the target, and keeping it
+would leave a check that can never pass. Roughly 136 display-name occurrences are prose
+that **should** stay literal (see the brand/copy split below). The meaningful check is:
 
 ```bash
 grep -rE "thelostandunfounds|LOST\+UNFOUNDS" src lib api scripts index.html \
-  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.html"
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.html" \
+  | grep -v "src/config/site.ts"
 ```
 
-returns hits only inside `src/config/site.ts`. Note this check must span `scripts/` and
-`index.html`, not just `src`/`lib`/`api` — restricting it to TypeScript sources is what
-hid a third of the work.
+returns only hits inside the known copy surfaces — the marketing pages, legal pages and
+one-off client proposal templates. Anything outside that list is a genuine leak.
+
+Note the check must span `scripts/` and `index.html`, not just `src`/`lib`/`api` —
+restricting it to TypeScript sources is what hid a third of the work.
 
 `index.html` cannot import the config at build time as-is; templating it needs either a
 Vite HTML transform or generation from `site.ts` in `prebuild`. Decide which before
