@@ -9,6 +9,17 @@ import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
+/**
+ * Every image URL emitted below must be on this domain, served through
+ * /api/gallery/stream — the proxy robots.txt allows so Googlebot can index
+ * published photos. Google credits an image to the domain that serves it, so
+ * pointing <img>, ImageObject.contentUrl or og:image straight at
+ * lh3.googleusercontent.com hands the entire gallery to Google's own CDN.
+ * That is what happened here: 1,418 correctly named, alt-tagged photos were
+ * live for months and none were attributed to this site.
+ */
+const SITE_URL = 'https://www.thelostandunfounds.com';
+
 async function preRenderGalleries() {
   console.log('🔄 Starting gallery pre-rendering...');
   const startTime = Date.now();
@@ -72,7 +83,9 @@ async function preRenderGalleries() {
 
       // Featured Image (first photo)
       if (photos && photos.length > 0) {
-        const featImg = `https://lh3.googleusercontent.com/d/${photos[0].google_drive_file_id}=s1200`;
+        // &amp; because this lands in an HTML attribute; the parser decodes it
+        // back to & before the URL is fetched. Raw & is invalid there.
+        const featImg = `${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(photos[0].google_drive_file_id)}&amp;size=1200`;
         html = html.replace(/<meta\s+property=["']og:image["'][^>]*>/i, `<meta property="og:image" content="${featImg}" />`);
       }
 
@@ -108,7 +121,7 @@ async function preRenderGalleries() {
       const imageSchemas = photos?.map(p => ({
         "@context": "https://schema.org",
         "@type": "ImageObject",
-        "contentUrl": `https://lh3.googleusercontent.com/d/${p.google_drive_file_id}=s0`,
+        "contentUrl": `${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=1600`,
         "name": p.title,
         "caption": p.description || p.title,
         "author": "THE LOST+UNFOUNDS"
@@ -120,7 +133,7 @@ async function preRenderGalleries() {
       // Pre-render content
       const photosHtml = photos?.map(p => `
         <div style="margin-bottom: 8rem; text-align: center;">
-          <img src="https://lh3.googleusercontent.com/d/${p.google_drive_file_id}=s1200" alt="${p.title}" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);" />
+          <img src="${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&amp;size=1200" alt="${p.title}" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);" />
           <div style="margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
             <h3 style="color: white; font-size: 1.2rem; letter-spacing: 0.1em; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5rem;">${p.title}</h3>
             ${p.description ? `<p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 1rem;">${p.description}</p>` : ''}

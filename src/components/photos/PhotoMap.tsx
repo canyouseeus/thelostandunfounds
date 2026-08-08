@@ -42,8 +42,11 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function thumbUrl(p: MapPhoto) {
+  // Serve through our own proxy, never lh3.googleusercontent.com directly —
+  // Google credits an image to whoever serves it, and every other surface on
+  // the site now routes through /api/gallery/stream for exactly that reason.
   if (p.google_drive_file_id)
-    return `https://lh3.googleusercontent.com/d/${p.google_drive_file_id}=s400`;
+    return `/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=400`;
   return p.thumbnail_url || '';
 }
 
