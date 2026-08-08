@@ -61,7 +61,7 @@ function describeTarget(el: HTMLElement): TargetInfo {
 
 export default function SageModeOverlay() {
   const { state, addAnnotation, toggleSageMode } = useSageMode();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [target, setTarget] = useState<TargetInfo | null>(null);
   const [comment, setComment] = useState('');
@@ -73,7 +73,21 @@ export default function SageModeOverlay() {
   // once goes stale the moment anything scrolls or reflows.
   const targetElRef = useRef<HTMLElement | null>(null);
 
-  const enabled = state.enabled;
+  const isAdmin = isAdminEmail(user?.email || '');
+
+  // SAGE MODE lives in localStorage, so signing out used to leave it armed —
+  // and armed means every tap is intercepted, including the "Sign in with
+  // Google" button. That locked the account out of its own site. Nothing is
+  // ever armed without a signed-in admin, and `enabled` below is the effective
+  // state rather than the stored one, so a stale flag can't eat a single tap
+  // even before the effect that clears it runs.
+  const enabled = state.enabled && isAdmin;
+
+  useEffect(() => {
+    // Wait for session restore, or a refresh would switch it off every time.
+    if (authLoading) return;
+    if (state.enabled && !isAdmin) toggleSageMode();
+  }, [authLoading, isAdmin, state.enabled, toggleSageMode]);
 
   // Voice control, by way of the URL.
   //
@@ -89,18 +103,22 @@ export default function SageModeOverlay() {
     const cmd = params.get('sage');
     if (!cmd) return;
 
-    // Gate to admins: the composer is admin-only server-side anyway, and a
-    // stray link shouldn't put a visitor into a mode that eats their taps.
-    if (isAdminEmail(user?.email || '')) {
-      const want =
-        cmd === 'on' ? true : cmd === 'off' ? false : cmd === 'toggle' ? !enabled : null;
+    // Turning it OFF is never gated. A kill switch that requires the thing it
+    // rescues you from is not a kill switch: with SAGE MODE armed and the
+    // session gone, an admin-only `?sage=off` refused to fire on the very page
+    // where the taps were being eaten. Turning it ON stays admin-only, so a
+    // stray link can't drop a visitor into a mode that swallows their taps.
+    if (cmd === 'off') {
+      if (state.enabled) toggleSageMode();
+    } else if (isAdmin) {
+      const want = cmd === 'on' ? true : cmd === 'toggle' ? !enabled : null;
       if (want !== null && want !== enabled) toggleSageMode();
     }
 
     params.delete('sage');
     const qs = params.toString();
     navigate(`${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`, { replace: true });
-  }, [location.search, location.pathname, location.hash, user?.email, enabled, toggleSageMode, navigate]);
+  }, [location.search, location.pathname, location.hash, isAdmin, enabled, state.enabled, toggleSageMode, navigate]);
 
   // Paint the site gold while SAGE MODE is on. Done on <html> so it survives
   // route changes and reaches the header from any layout.
@@ -247,8 +265,6 @@ export default function SageModeOverlay() {
       setSubmit({ status: 'error', message: err?.message || 'Something went wrong' });
     }
   };
-
-  const isAdmin = isAdminEmail(user?.email || '');
 
   // Everything below is portalled to <body>.
   //
