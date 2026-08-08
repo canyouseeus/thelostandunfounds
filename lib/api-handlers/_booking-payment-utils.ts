@@ -15,8 +15,9 @@ import Stripe from 'stripe'
 import crypto from 'crypto'
 import { wrapEmailContent, BRAND } from '../../api/email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js'
+import { SITE } from '../../src/config/site'
 
-const FROM_EMAIL = 'media@thelostandunfounds.com'
+const FROM_EMAIL = SITE.email.media
 
 export const BOOKING_PAYMENT_SOURCE = 'tlau-booking'
 

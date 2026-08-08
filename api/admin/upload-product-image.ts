@@ -1,8 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 const BUCKET = 'product-images'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 const CONTENT_TYPE_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',

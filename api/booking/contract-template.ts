@@ -1,3 +1,4 @@
+import { SITE } from '../../src/config/site'
 /**
  * Photography Services Contract Email Template
  *
@@ -8,7 +9,7 @@
 const BRAND_BANNER = 'https://www.thelostandunfounds.com/brand/banner.png'
 const WEBSITE = 'https://www.thelostandunfounds.com'
 const PHOTOGRAPHER_NAME = 'THE LOST+UNFOUNDS'
-const PHOTOGRAPHER_EMAIL = 'media@thelostandunfounds.com'
+const PHOTOGRAPHER_EMAIL = SITE.email.media
 const PHOTOGRAPHER_IG = '@tlau.photos'
 
 export interface ContractLocation {

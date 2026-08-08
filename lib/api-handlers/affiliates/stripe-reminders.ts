@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin, getUserEmail } from './_connect-account.js';
 import { buildOnboardingResumeUrl } from './_onboarding-token.js';
 import { sendAffiliateEmail } from './_emails.js';
+import { SITE } from '../../../src/config/site'
 
 /**
  * Stripe onboarding reminders.
@@ -53,7 +54,7 @@ interface SweepAffiliate {
  */
 const OWNER_ADDRESSES = new Set([
   'thelostandunfounds@gmail.com',
-  'media@thelostandunfounds.com',
+  SITE.email.media,
 ]);
 
 function isAuthorized(req: VercelRequest): boolean {

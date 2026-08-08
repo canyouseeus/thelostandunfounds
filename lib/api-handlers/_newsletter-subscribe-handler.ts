@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 function generateWelcomeHtml(email: string): string {
   return `
@@ -313,7 +314,7 @@ export default async function handler(
       } catch (emailError: any) {
         // Fallback to Resend API when Zoho inevitably throttles due to hourly limits
         const resendApiKey = process.env.RESEND_API_KEY
-        const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com'
+        const resendFromEmail = process.env.RESEND_FROM_EMAIL || SITE.email.noreply
 
         if (resendApiKey) {
           console.log(`Zoho failed for ${email}. Falling back to Resend...`)

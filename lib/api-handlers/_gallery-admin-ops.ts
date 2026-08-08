@@ -5,8 +5,9 @@
 // deletes photos from the fullscreen gallery grid.
 import type { VercelRequest } from '@vercel/node';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
+import { SITE } from '../../src/config/site'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin];
 
 export async function requireAdminUser(req: VercelRequest) {
     const token = req.headers.authorization?.replace('Bearer ', '');

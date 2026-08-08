@@ -16,11 +16,11 @@ import { randomBytes } from 'crypto';
 import { Readable } from 'stream';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { sendTransactionalEmail } from './_resend-email-handler.js';
+import { SITE } from '../../src/config/site'
 
 const BUCKET = 'client-uploads';
-const SITE = 'https://www.thelostandunfounds.com';
 const ADMIN_NOTIFY_EMAIL = 'thelostandunfounds@gmail.com';
-const MEDIA_EMAIL = 'media@thelostandunfounds.com';
+const MEDIA_EMAIL = SITE.email.media;
 
 // Deliberately broad — clients send phone photos, screenshots, PDFs of old
 // brand guides, and the occasional short video clip. Anything executable stays
@@ -56,7 +56,7 @@ export class HttpError extends Error {
     }
 }
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin];
 
 export async function requireAdmin(req: VercelRequest, supabase: ServiceSupabaseClient) {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -69,7 +69,7 @@ export async function requireAdmin(req: VercelRequest, supabase: ServiceSupabase
 }
 
 export function uploadUrlFor(token: string): string {
-    return `${SITE}/upload/${token}`;
+    return `${SITE.origin}/upload/${token}`;
 }
 
 function slugify(value: string): string {
@@ -410,7 +410,7 @@ async function notifyAdminOfUploads(
     note: string | null
 ): Promise<boolean> {
     const label = link.project_name ? `${link.client_name} — ${link.project_name}` : link.client_name;
-    const folderUrl = link.drive_folder_url || `${SITE}/admin`;
+    const folderUrl = link.drive_folder_url || `${SITE.origin}/admin`;
     const failed = uploads.filter(u => u.drive_status === 'failed');
 
     const fileList = uploads
@@ -432,7 +432,7 @@ async function notifyAdminOfUploads(
           <a href="${folderUrl}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">OPEN THE DRIVE FOLDER</a>
         </p>
         <p style="margin:0 0 24px 0;">
-          <a href="${SITE}/admin?panel=clientuploads&link=${link.id}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
+          <a href="${SITE.origin}/admin?panel=clientuploads&link=${link.id}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
         </p>
         <ul style="color:#ffffff;font-size:15px;line-height:1.6;padding-left:20px;margin:0 0 24px 0;">${fileList}</ul>
         ${failed.length ? `<p style="color:#ffffff;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage — retry the mirror from the dashboard.</p>` : ''}

@@ -22,8 +22,14 @@
 export interface SiteConfig {
     /** Display brand, as rendered in nav, page titles and email headers. */
     brandName: string
-    /** Legal/business name for invoices, contracts and legal pages. */
+    /**
+     * Registered legal entity, for invoices, contracts, proposals and legal
+     * pages. Deliberately distinct from brandName — signing blocks and Terms
+     * pages need the entity, not the display brand.
+     */
     legalName: string
+    /** Person who signs contracts and proposals on behalf of the entity. */
+    ownerName: string
     /** Bare apex domain, no scheme, no www. */
     domain: string
     /** Canonical origin including scheme and host, no trailing slash. */
@@ -90,7 +96,8 @@ export interface SiteConfig {
 
 export const SITE: SiteConfig = {
     brandName: 'THE LOST+UNFOUNDS',
-    legalName: 'THE LOST+UNFOUNDS',
+    legalName: 'THE LOST AND UNFOUNDS LLC.',
+    ownerName: 'Joshua Greene',
     domain: 'thelostandunfounds.com',
     origin: 'https://www.thelostandunfounds.com',
     tagline: 'A content platform and creative community.',

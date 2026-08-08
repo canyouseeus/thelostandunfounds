@@ -19,10 +19,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { generateContract } from './contract-template.js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
+import { SITE } from '../../src/config/site'
 
-const FROM_EMAIL = 'media@thelostandunfounds.com'
+const FROM_EMAIL = SITE.email.media
 const FROM_NAME = 'THE LOST+UNFOUNDS'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 
 function isAdmin(req: VercelRequest): boolean {
   if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import sharp from 'sharp';
 import { getZohoAuthContext, sendZohoEmail, ensureBannerHtml } from '../../lib/api-handlers/_zoho-email-utils.js';
+import { SITE } from '../../src/config/site'
 // syncGalleryPhotos is dynamically imported inside handleSync to avoid loading
 // googleapis on every cold start (stream/checkout/capture don't need it)
 
@@ -554,7 +555,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     <p style="${EMAIL_STYLES.muted}">
                       GALLERY: ${library.name}<br>
                       INVITED: ${email}<br>
-                      Questions? Reply to this email or reach us at media@thelostandunfounds.com.
+                      Questions? Reply to this email or reach us at ${SITE.email.media}.
                     </p>
                 `;
 
@@ -562,7 +563,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     auth,
                     to: email,
                     // Business record — client correspondence stays on file.
-                    cc: 'media@thelostandunfounds.com',
+                    cc: SITE.email.media,
                     subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
                     htmlContent: generateTransactionalEmail(body)
                 });
@@ -780,7 +781,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
 
         // Enforce access for private galleries
         if (library.is_private) {
-            const adminEmails = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+            const adminEmails = ['thelostandunfounds@gmail.com', SITE.email.admin];
             const invitedList = (library.invited_emails || '')
                 .split(',')
                 .map((e: string) => e.trim().toLowerCase())

@@ -12,6 +12,7 @@ import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expan
 import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
 import { LoadingSpinner } from '@/components/Loading';
 import { isAdminEmail } from '@/utils/admin';
+import { SITE } from '../../config/site'
 
 interface AdminGalleryViewProps {
     onBack: () => void;
@@ -662,8 +663,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             commercial_included: false,
         });
         setFilesData([]);
-        setInvitedEmails(['media@thelostandunfounds.com']);
-        setOriginalInvitedEmails(['media@thelostandunfounds.com']);
+        setInvitedEmails([SITE.email.media]);
+        setOriginalInvitedEmails([SITE.email.media]);
         setNewEmailInput('');
         setIsManaged(true);
     };
@@ -1007,7 +1008,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 <div
                                                     key={idx}
                                                     className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${
-                                                        email === 'media@thelostandunfounds.com'
+                                                        email === SITE.email.media
                                                             ? 'bg-white/10 text-white font-bold'
                                                             : originalInvitedEmails.includes(email)
                                                                 ? 'bg-white/10 text-white/60'
@@ -1015,7 +1016,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     }`}
                                                 >
                                                     <span>{email}</span>
-                                                    {!originalInvitedEmails.includes(email) && email !== 'media@thelostandunfounds.com' && (
+                                                    {!originalInvitedEmails.includes(email) && email !== SITE.email.media && (
                                                         <span className="text-[9px] uppercase ml-1 opacity-60">new</span>
                                                     )}
                                                     <button

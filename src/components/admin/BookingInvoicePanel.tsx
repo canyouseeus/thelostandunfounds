@@ -22,6 +22,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SITE } from '../../config/site'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -175,8 +176,8 @@ const EmailThread: React.FC<EmailThreadProps> = ({
           {
             messageId: `local-${Date.now()}`,
             subject,
-            from: 'media@thelostandunfounds.com',
-            fromAddress: 'media@thelostandunfounds.com',
+            from: SITE.email.media,
+            fromAddress: SITE.email.media,
             to: booking.email,
             sentDateInGMT: Date.now(),
             summary: compose.trim(),

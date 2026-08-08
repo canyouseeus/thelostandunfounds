@@ -118,6 +118,7 @@ import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import { installGlobalListeners } from '../lib/adminErrorLog';
+import { SITE } from '../config/site'
 
 interface DashboardStats {
   totalUsers: number;
@@ -1177,7 +1178,7 @@ export default function Admin() {
             }
 
             // Check admin email list
-            if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+            if (email === 'thelostandunfounds@gmail.com' || email === SITE.email.admin) {
               isAdmin = true;
             }
 
@@ -1224,7 +1225,7 @@ export default function Admin() {
                     }
                   }
 
-                  if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+                  if (email === 'thelostandunfounds@gmail.com' || email === SITE.email.admin) {
                     isAdmin = true;
                   }
                 } catch (e) {

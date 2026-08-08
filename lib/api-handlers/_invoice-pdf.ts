@@ -10,6 +10,7 @@
 import PDFDocument from 'pdfkit'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { SITE } from '../../src/config/site'
 
 /** Canonical banner location, used only as a fallback when disk lookup misses. */
 const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
@@ -118,7 +119,7 @@ const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   tagline: 'CAN YOU SEE US?',
   website: 'thelostandunfounds.com',
-  email: 'media@thelostandunfounds.com',
+  email: SITE.email.media,
 }
 
 const INK = '#000000'
