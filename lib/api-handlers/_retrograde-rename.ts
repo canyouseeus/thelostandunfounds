@@ -38,15 +38,42 @@ export interface RetrogradeResult {
     preview: Array<{ from: string; to: string }>;
     /** Libraries refused because photographer_handle is NULL. */
     skippedUnattributed: string[];
+    /**
+     * Set when the run stopped because Drive rejected the credentials. The
+     * counts alone cannot express this — "everything failed" and "the run was
+     * never authorised" look identical from the outside.
+     */
+    authError?: string;
 }
 
 export const PREVIEW_LIMIT = 25;
+
+/**
+ * Thrown when Drive rejects the credentials themselves. Not a per-file
+ * condition: retrying the next file cannot help, and doing so turns one bad
+ * secret into hundreds of identical failures with no stated cause. A run that
+ * hit this reported "FAILED 418" and nothing else — the reason was only
+ * visible in the platform logs.
+ */
+export class DriveAuthError extends Error {
+    constructor(public readonly reason: string) {
+        super(`Google rejected the credentials (${reason}). Check GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN — invalid_client means the three do not form a valid set, usually a rotated secret or a refresh token issued by a different OAuth client.`);
+        this.name = 'DriveAuthError';
+    }
+}
+
+const AUTH_FAILURES = ['invalid_client', 'invalid_grant', 'unauthorized_client', 'invalid_token'];
 
 async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: string, newName: string): Promise<boolean> {
     try {
         await drive.files.update({ fileId, requestBody: { name: newName } });
         return true;
     } catch (err: any) {
+        const msg = String(err?.message || '');
+        const authReason = AUTH_FAILURES.find(a => msg.includes(a));
+        if (authReason || err?.code === 401) {
+            throw new DriveAuthError(authReason || 'unauthorized');
+        }
         const code = err?.code || err?.response?.status;
         const reason = err?.errors?.[0]?.reason;
         if (code === 403 || code === 404) {
@@ -215,16 +242,31 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             continue;
         }
         librariesProcessed.push(lib.slug);
-        await processLibrary(
+        try {
+            await processLibrary(
             supabase,
             drive,
             lib,
             stats,
             deadline,
             opts.dryRun ?? false,
-            opts.maxPhotos ?? null,
-            preview,
-        );
+                opts.maxPhotos ?? null,
+                preview,
+            );
+        } catch (err) {
+            // One bad credential set is the whole run's problem, not this
+            // library's. Stop and report it rather than failing every
+            // remaining file the same way.
+            if (err instanceof DriveAuthError) {
+                return {
+                    renamed: stats.renamed, skipped: stats.skipped, failed: stats.failed,
+                    remaining: stats.remaining, dryRun: opts.dryRun ?? false,
+                    librariesProcessed, preview, skippedUnattributed,
+                    authError: err.message,
+                };
+            }
+            throw err;
+        }
     }
 
     return {

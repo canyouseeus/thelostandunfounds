@@ -29,6 +29,7 @@ interface RenameResult {
     librariesProcessed: string[];
     preview: Array<{ from: string; to: string }>;
     skippedUnattributed: string[];
+    authError?: string;
 }
 
 export default function RetrogradeRenameTool({ librarySlug, libraryName }: { librarySlug: string; libraryName: string }) {
@@ -103,6 +104,19 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                 <div className="flex items-start gap-2 bg-red-500/10 px-4 py-3 mb-4">
                     <ExclamationTriangleIcon className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                     <p className="text-red-400 text-xs">{error}</p>
+                </div>
+            )}
+
+            {result?.authError && (
+                <div className="flex items-start gap-2 bg-red-500/10 px-4 py-3 mb-4">
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">Google rejected the credentials</p>
+                        <p className="text-white/50 text-xs leading-relaxed">{result.authError}</p>
+                        <p className="text-white/30 text-[11px] leading-relaxed mt-2">
+                            Nothing was renamed. Fix the credentials, then preview again.
+                        </p>
+                    </div>
                 </div>
             )}
 
