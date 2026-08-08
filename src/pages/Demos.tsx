@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import AffiliateBanner from '../components/affiliate/AffiliateBanner';
 import { initAffiliateTracking } from '../utils/affiliate-tracking';
+import { SITE } from '../config/site'
 
 /* ============================================================
    THE LOST+UNFOUNDS — Demo index. Route: /demos
@@ -210,7 +211,7 @@ export default function Demos() {
 
         <div className="mast">
           <Link to="/" aria-label="THE LOST+UNFOUNDS — home">
-            <img src="/logo.png" alt="THE LOST+UNFOUNDS" />
+            <img src="/logo.png" alt={SITE.brandName} />
           </Link>
         </div>
 

@@ -22,7 +22,7 @@ import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-
 import { SITE } from '../../src/config/site'
 
 const FROM_EMAIL = SITE.email.media
-const FROM_NAME = 'THE LOST+UNFOUNDS'
+const FROM_NAME = SITE.brandName
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', SITE.email.admin]
 
 function isAdmin(req: VercelRequest): boolean {

@@ -9,7 +9,7 @@ import { siteUrl, SITE } from '../src/config/site'
 // Brand assets
 export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
-  logo: siteUrl('/brand/banner.png'),
+  logo: SITE.brandAssets.emailBanner,
   website: SITE.origin,
   colors: {
     background: '#000000',

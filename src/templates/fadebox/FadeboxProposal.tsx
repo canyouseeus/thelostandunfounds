@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { siteUrl } from '../../config/site'
+import { siteUrl, SITE } from '../../config/site'
 
 /* ============================================================
    THE LOST+UNFOUNDS — Proposal for Fadebox Barbershop
@@ -141,7 +141,7 @@ export default function FadeboxProposal() {
         <section className="page">
           {RUNHEAD}
           <div className="cover-body">
-            <div className="cover-logo"><img src={siteUrl('/logo.png')} alt="THE LOST+UNFOUNDS" /></div>
+            <div className="cover-logo"><img src={siteUrl('/logo.png')} alt={SITE.brandName} /></div>
             <div className="cover-brand">THE LOST+UNFOUNDS</div>
             <div className="cover-tag">Can you see us?</div>
 

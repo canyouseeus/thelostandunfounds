@@ -190,7 +190,7 @@ export default function Home() {
             >
               <img
                 src="/logo.png"
-                alt="THE LOST+UNFOUNDS Logo"
+                alt={`${SITE.brandName} Logo`}
                 style={{
                   maxWidth: 'min(570px, 80vw)',
                   width: 'auto',

@@ -6,9 +6,9 @@ import { SITE, siteUrl } from '../../src/config/site'
  * The contract data is presented in a white card below the banner for legibility.
  */
 
-const BRAND_BANNER = siteUrl('/brand/banner.png')
+const BRAND_BANNER = SITE.brandAssets.emailBanner
 const WEBSITE = SITE.origin
-const PHOTOGRAPHER_NAME = 'THE LOST+UNFOUNDS'
+const PHOTOGRAPHER_NAME = SITE.brandName
 const PHOTOGRAPHER_EMAIL = SITE.email.media
 const PHOTOGRAPHER_IG = '@tlau.photos'
 

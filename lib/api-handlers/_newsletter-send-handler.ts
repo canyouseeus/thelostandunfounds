@@ -67,13 +67,13 @@ async function sendResendEmail(
   }
 }
 
-const BANNER_URL = siteUrl('/brand/banner.png')
+const BANNER_URL = SITE.brandAssets.emailBanner
 
 function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
 <div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
   <a href="${SITE.origin}" style="text-decoration: none;">
-    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
+    <img src="${BANNER_URL}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block; margin: 0;" />
   </a>
 </div>`
 
@@ -145,7 +145,7 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
               <a href="${SITE.origin}" target="_blank">
-                <img src="${SITE.origin}/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                <img src="${SITE.brandAssets.emailBanner}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block;">
               </a>
             </td>
           </tr>

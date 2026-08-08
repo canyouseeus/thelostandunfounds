@@ -300,7 +300,7 @@ export default function Blog() {
                     <img
                       key={i}
                       src="/logo.png"
-                      alt="THE LOST+UNFOUNDS"
+                      alt={SITE.brandName}
                       className="h-40 w-auto object-contain"
                     />
                   ))}

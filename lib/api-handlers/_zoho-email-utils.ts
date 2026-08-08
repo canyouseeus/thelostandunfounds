@@ -60,7 +60,7 @@ interface ZohoTokenResponse {
 const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token'
 const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts'
 // Inline SVG banner to avoid remote fetch failures in email clients
-const BANNER_URL = siteUrl('/brand/banner.png')
+const BANNER_URL = SITE.brandAssets.emailBanner
 // Domains/paths used by the standard email template banner — if any are present
 // the email is already branded and ensureBannerHtml should not inject again.
 const BRAND_LOGO_DOMAINS = [
@@ -89,7 +89,7 @@ export function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
 <div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
   <a href="${SITE.origin}" style="text-decoration: none;">
-    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
+    <img src="${BANNER_URL}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block; margin: 0;" />
   </a>
 </div>`
 

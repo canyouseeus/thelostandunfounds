@@ -23,7 +23,7 @@ function generateWelcomeHtml(email: string): string {
               <!-- Branding Header -->
               <tr>
                 <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                  <img src="${SITE.origin}/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                  <img src="${SITE.brandAssets.emailBanner}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block;">
                 </td>
               </tr>
               <!-- Main Content -->

@@ -390,7 +390,7 @@ export default function NewsletterManagement() {
       </div>
     ` : '';
 
-    const bannerUrl = siteUrl('/brand/banner.png');
+    const bannerUrl = SITE.brandAssets.emailBanner;
 
     return `
       <!DOCTYPE html>
@@ -411,7 +411,7 @@ export default function NewsletterManagement() {
               <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important;">
                 <tr>
                   <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                    <img src="${bannerUrl}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;" />
+                    <img src="${bannerUrl}" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block;" />
                   </td>
                 </tr>
                 <tr>

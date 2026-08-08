@@ -13,7 +13,7 @@ import { join } from 'node:path'
 import { SITE, siteUrl } from '../../src/config/site'
 
 /** Canonical banner location, used only as a fallback when disk lookup misses. */
-const BANNER_URL = siteUrl('/brand/banner.png')
+const BANNER_URL = SITE.brandAssets.emailBanner
 
 /** Cached across invocations so a warm serverless container reads disk once. */
 let cachedBanner: Buffer | null | undefined

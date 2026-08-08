@@ -13,7 +13,7 @@ import { SITE, siteUrl } from '../../src/config/site'
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
     name: 'THE LOST+UNFOUNDS',
-    logo: siteUrl('/brand/banner.png'),
+    logo: SITE.brandAssets.emailBanner,
     website: SITE.origin,
     colors: {
         background: '#000000',
