@@ -81,13 +81,13 @@ async function processLibrary(
     // Anything not already in the current SEO prefix gets renamed — that
     // includes both raw camera filenames and legacy `@tlau_` files that
     // pre-dated the brand+IG prefix.
-    const toRename = (photos as any[]).filter(p => !isCurrentName(p.title));
+    const toRename = (photos as any[]).filter(p => !isCurrentName(p.title, library.photographer_handle ?? undefined));
     stats.remaining += toRename.length;
     if (toRename.length === 0) return;
 
     const existingNames = new Set(
         (photos as any[])
-            .filter(p => isCurrentName(p.title))
+            .filter(p => isCurrentName(p.title, library.photographer_handle ?? undefined))
             .map(p => `${p.title}.jpg`.toLowerCase())
     );
     const librarySubject = normalizeText(library.slug.replace(/-/g, '_'));
