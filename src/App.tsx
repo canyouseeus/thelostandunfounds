@@ -87,7 +87,6 @@ import SilvaStarProposal from './templates/silva-star/SilvaStarProposal'
 import KattitudeLanding from './templates/kattitude/KattitudeLanding'
 import KattitudeDashboard from './templates/kattitude/KattitudeDashboard'
 import FadeboxLanding from './templates/fadebox/FadeboxLanding'
-import FadeboxProposal from './templates/fadebox/FadeboxProposal'
 import FadeboxDashboard from './templates/fadebox/FadeboxDashboard'
 import KioskDemo from './pages/KioskDemo'
 import Demos from './pages/Demos'
@@ -276,7 +275,6 @@ function App() {
 
               {/* Fadebox Barbershop — redesign proposal preview (public, no auth) */}
               <Route path="/fadebox-preview" element={<FadeboxLanding />} />
-              <Route path="/fadebox-preview/proposal" element={<FadeboxProposal />} />
               <Route path="/fadebox-preview/dashboard" element={<FadeboxDashboard />} />
 
               {/* Interactive Kiosk Build — public service demo + design brief.

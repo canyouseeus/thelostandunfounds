@@ -90,7 +90,7 @@ const DEMOS: Demo[] = [
     links: [
       { label: 'The website', href: '/silva-star' },
       { label: 'The owner dashboard', href: '/silva-star/dashboard' },
-      { label: 'The proposal', href: '/silva-star/proposal', note: 'Prints to PDF' },
+      { label: 'The proposal', href: '/silva-star-proposal.pdf', external: true, note: 'PDF' },
     ],
   },
 ];

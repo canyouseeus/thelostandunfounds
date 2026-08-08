@@ -60,6 +60,11 @@
       "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
       "destination": "/bookclub/prompt",
       "permanent": false
+    },
+    {
+      "source": "/fadebox-preview/proposal",
+      "destination": "/fadebox-proposal.pdf",
+      "permanent": false
     }
   ],
   "rewrites": [
