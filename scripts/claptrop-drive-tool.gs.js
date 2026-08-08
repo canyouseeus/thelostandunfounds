@@ -24,7 +24,11 @@
 const ARCHIVE_FOLDER_ID     = '1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4';
 const NEW_UPLOADS_FOLDER_ID = '1NwQJFj9YYsQrfQgHMWqzLjGWZHL7B2Ym';
 
-const NAME_PREFIX  = '@tlau.photos_thelostandunfounds';
+const NAME_PREFIX  = '@tlau.media_thelostandunfounds';
+// v2. Files still carrying it are upgraded in place to NAME_PREFIX — same
+// rename path the legacy short prefix takes. Must stay here until no file in
+// Drive carries it, or those files read as unnamed and get renumbered.
+const PRIOR_PREFIX = '@tlau.photos_thelostandunfounds';
 const SHORT_PREFIX = '@tlau_';
 const DEFAULT_LOC  = 'austin';
 const CAMERA_TAG   = 'fuji';
@@ -176,6 +180,20 @@ function _processVenueFolder(folder, venue, dryRun, totals, start, log) {
         continue;
       }
 
+      // v2 prefix? Swap it for the current one and change nothing else.
+      if (_hasPrefix(name, PRIOR_PREFIX + '_')) {
+        const swapped = _upgradePriorPrefixName(name);
+        const finalName = _ensureUnique(swapped, folder, name);
+        if (finalName.toLowerCase() !== name.toLowerCase()) {
+          f.setName(finalName);
+          totals.renamed++;
+          log(`↻ ${name} → ${finalName}`);
+        } else {
+          totals.alreadyOk++;
+        }
+        continue;
+      }
+
       // Legacy short prefix? Upgrade in place (preserve original date/loc/venue/seq,
       // just swap prefix and inject _fuji_).
       if (_hasPrefix(name, SHORT_PREFIX)) {
@@ -306,11 +324,20 @@ function _normalize(s) {
 // Parse a canonical file name and return { date, seq } for sequence tracking.
 // Tolerant of the venue containing underscores (post-normalization).
 function _parseSeqFromCurrent(name) {
-  if (!_hasPrefix(name, NAME_PREFIX + '_')) return null;
+  if (!_hasPrefix(name, NAME_PREFIX + '_') && !_hasPrefix(name, PRIOR_PREFIX + '_')) return null;
   const dm = name.match(/_(\d{4}-\d{2}-\d{2})_/);
   const sm = name.match(/_(\d{3})\.jpe?g$/i);
   if (!dm || !sm) return null;
   return { date: dm[1], seq: parseInt(sm[1], 10) };
+}
+
+// Convert a v2 (.photos) file to the current prefix. Everything after the
+// prefix — date, location, venue, camera tag, sequence — is preserved exactly,
+// so the tail stays identical and upload dedup still matches the two as one
+// photo. A handle change must not renumber the archive.
+function _upgradePriorPrefixName(name) {
+  if (!_hasPrefix(name, PRIOR_PREFIX + '_')) return null;
+  return NAME_PREFIX + name.slice(PRIOR_PREFIX.length);
 }
 
 // Convert legacy short-prefix file to canonical.

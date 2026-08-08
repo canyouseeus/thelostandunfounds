@@ -948,7 +948,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     <meta name="twitter:title"       content={seoMeta.pageTitle} />
                     <meta name="twitter:description" content={seoMeta.pageDesc} />
                     <meta name="twitter:image"       content={seoMeta.coverUrl} />
-                    <meta name="twitter:site"        content="@tlau.photos" />
+                    <meta name="twitter:site"        content="@tlau.media" />
                     {/* Structured data */}
                     <script type="application/ld+json">
                         {JSON.stringify(seoMeta.structuredData)}

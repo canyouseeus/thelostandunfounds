@@ -1339,8 +1339,8 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                 )}
                                 <p className="text-white/30 text-xs">
                                     Follow{' '}
-                                    <a href="https://instagram.com/tlau.photos" target="_blank" rel="noopener noreferrer" className="text-white underline">
-                                        @tlau.photos
+                                    <a href="https://instagram.com/tlau.media" target="_blank" rel="noopener noreferrer" className="text-white underline">
+                                        @tlau.media
                                     </a>{' '}
                                     for the latest work.
                                 </p>
