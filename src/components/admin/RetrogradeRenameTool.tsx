@@ -67,6 +67,21 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
         }
     };
 
+    const [diag, setDiag] = useState<any>(null);
+    const diagnose = async () => {
+        setBusy('preview'); setError(null);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/admin/google-oauth-check', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+            });
+            setDiag(await res.json());
+        } catch (err: any) {
+            setError(err?.message || 'Diagnostic failed');
+        } finally { setBusy(null); }
+    };
+
     const canApply = previewedSlug === librarySlug && !!result?.dryRun && result.skipped > 0;
 
     return (
@@ -116,6 +131,18 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                         <p className="text-white/30 text-[11px] leading-relaxed mt-2">
                             Nothing was renamed. Fix the credentials, then preview again.
                         </p>
+                        <button
+                            onClick={diagnose}
+                            disabled={busy !== null}
+                            className="mt-3 px-3 py-2 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+                        >
+                            Diagnose credentials
+                        </button>
+                        {diag && (
+                            <pre className="mt-3 text-[10px] text-white/60 whitespace-pre-wrap break-all bg-black/40 p-3">
+{JSON.stringify(diag, null, 2)}
+                            </pre>
+                        )}
                     </div>
                 </div>
             )}
