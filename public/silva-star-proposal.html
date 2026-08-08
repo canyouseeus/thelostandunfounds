@@ -79,6 +79,28 @@
   }
   .page:last-child{page-break-after:auto;}
 
+  /* ── .page.dense ──────────────────────────────────────────────────
+     A page that runs a little past 11in gets tighter vertical rhythm
+     instead of losing a sentence. Type sizes never change — only the
+     space between blocks — so a dense page still reads as the same
+     document sitting beside a normal one.
+
+     Worth about 60–70px on a typical page. Past that, compressing
+     starts to show: split the page instead and renumber. Never reach
+     for this to cram a page that is 150px over. */
+  .page.dense .pagehead{margin-bottom:12px;}
+  .page.dense p.lede{margin-bottom:14px;}
+  .page.dense p.body{margin-bottom:11px;}
+  .page.dense .rule, .page.dense .rule-soft{margin:11px 0 15px;}
+  .page.dense .subhead{margin:4px 0 10px;}
+  .page.dense ul.list{margin-bottom:12px;}
+  .page.dense ul.list li{margin-bottom:5px;}
+  .page.dense .invest{margin-bottom:14px;}
+  .page.dense .invest th, .page.dense .invest td{padding:11px 0;}
+  .page.dense .compare{margin-bottom:14px;}
+  .page.dense .compare th, .page.dense .compare td{padding:8px 0;}
+  .page.dense .callout{padding:13px 18px;}
+
   .runhead{
     display:flex; justify-content:space-between; align-items:center;
     font-size:8.5px; letter-spacing:.28em; text-transform:uppercase;
@@ -283,7 +305,7 @@
       <span class="sep">·</span>
       <span>Silva Star Water Solutions Proposal</span>
     </div>
-    <div>Page 1 / 3</div>
+    <div>Page 1 / 4</div>
   </div>
 
   <div class="cover-body">
@@ -350,7 +372,7 @@
 
   <div class="runfoot">
     <div>YOUR FLEET. ONE DASHBOARD.</div>
-    <div>Page 1 / 3</div>
+    <div>Page 1 / 4</div>
   </div>
 </section>
 
@@ -362,7 +384,7 @@
       <span class="sep">·</span>
       <span>Silva Star Water Solutions Proposal</span>
     </div>
-    <div>Page 2 / 3</div>
+    <div>Page 2 / 4</div>
   </div>
 
   <div class="pagehead">
@@ -390,7 +412,27 @@
     <li><strong>Click-to-call everywhere</strong> — <span class="lite">(512) 967-2787 and danielsilvaatx@gmail.com prominently placed across the site.</span></li>
   </ul>
 
-  <div class="subhead">Also included</div>
+  <div class="runfoot">
+    <div>YOUR FLEET. ONE DASHBOARD.</div>
+    <div>Page 2 / 4</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 3 — ALSO INCLUDED ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Silva Star Water Solutions Proposal</span>
+    </div>
+    <div>Page 3 / 4</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">03 · Also Included</div>
+    <h2>The parts that come as standard.</h2>
+  </div>
   <ul class="list">
     <li>Platform console with webmail, newsletter, customer management, reports, and settings.</li>
     <li>Deployed to Vercel with a custom subdomain — <span class="lite">your own domain when ready.</span></li>
@@ -401,19 +443,19 @@
 
   <div class="runfoot">
     <div>YOUR FLEET. ONE DASHBOARD.</div>
-    <div>Page 2 / 3</div>
+    <div>Page 3 / 4</div>
   </div>
 </section>
 
 <!-- ====================== PAGE 3 — INVESTMENT + ACCEPTANCE ====================== -->
-<section class="page">
+<section class="page dense">
   <div class="runhead">
     <div class="left">
       <span>THE LOST+UNFOUNDS</span>
       <span class="sep">·</span>
       <span>Silva Star Water Solutions Proposal</span>
     </div>
-    <div>Page 3 / 3</div>
+    <div>Page 4 / 4</div>
   </div>
 
   <div class="pagehead">
@@ -489,7 +531,7 @@
 
   <div class="runfoot">
     <div>YOUR FLEET. ONE DASHBOARD.</div>
-    <div>Page 3 / 3</div>
+    <div>Page 4 / 4</div>
   </div>
 </section>
 
