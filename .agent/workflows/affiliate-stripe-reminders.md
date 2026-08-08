@@ -9,7 +9,7 @@ email.
 
 | Piece | File |
 |---|---|
-| Daily cron | `api/cron/affiliate-stripe-reminder.ts` → `/api/cron/affiliate-stripe-reminder`, `0 16 * * *` in `vercel.json` |
+| Hourly cron | `api/cron/affiliate-stripe-reminder.ts` → `/api/cron/affiliate-stripe-reminder`, `0 * * * *` in `vercel.json` |
 | Sweep + cadence logic | `lib/api-handlers/affiliates/stripe-reminders.ts` |
 | Email template (`stripe_reminder`) | `lib/api-handlers/affiliates/_emails.ts` |
 | One-click resume endpoint | `lib/api-handlers/affiliates/stripe-resume.ts` → `/api/affiliates/stripe-resume?token=…` |
