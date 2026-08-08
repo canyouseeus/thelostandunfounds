@@ -68,7 +68,14 @@
     margin:0 auto;
   }
   @media print{
-    .page{width:8.5in; height:11in; margin:0;}
+    /* min-height, NOT height, and overflow must stay visible.
+       A fixed 11in height combined with the overflow:hidden above does not
+       "fit" an overlong page — it silently deletes whatever sits past the
+       11in mark. That is how several proposals shipped with their signature
+       block missing from the PDF while the HTML looked complete.
+       With min-height an overlong page spills onto a second sheet instead:
+       visible, and a signal to edit the page down. Never restore height. */
+    .page{width:8.5in; min-height:11in; height:auto; overflow:visible; margin:0;}
   }
   .page:last-child{page-break-after:auto;}
 
