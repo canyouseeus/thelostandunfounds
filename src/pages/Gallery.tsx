@@ -80,9 +80,10 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         // subscribe prompt — which is what it did to a real client. Read the query
         // string directly rather than useSearchParams: this is a mount-time
         // decision, and the hook is declared further down the component.
-        // /services is the same arrival with intent, just as a path instead of a
-        // query param — a visitor landing there from search came to see pricing.
-        if (window.location.pathname.replace(/\/$/, '') === '/services') return;
+        // /services and every /services/<offer> page is the same arrival with
+        // intent, just as a path instead of a query param — a visitor landing
+        // there from search came to see pricing, not to be asked to subscribe.
+        if (/^\/services(\/|$)/.test(window.location.pathname)) return;
         if (new URLSearchParams(window.location.search).get('view')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
@@ -164,9 +165,31 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     // SERVICES nav link deep-links into the services tab on the homepage.
     const [searchParams] = useSearchParams();
     const location = useLocation();
-    // /services is the canonical, indexable URL for the services view. The
-    // ?view= params below are kept so existing links and emails still work.
-    const isServicesRoute = location.pathname.replace(/\/$/, '') === '/services';
+    // /services is the canonical, indexable URL for the services view, and each
+    // /services/<slug> below is the same view led by one offer, so a search for
+    // "airbnb photographer austin" lands on a page about that rather than a
+    // generic agency page. The ?view= params are kept so existing links and
+    // client emails still work.
+    const servicePath = location.pathname.replace(/\/$/, '');
+    const SERVICE_PAGES = {
+        '/services/airbnb-photography': {
+            focus: 'airbnb' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Airbnb & Short-Term Rental Photography',
+            description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos delivered in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.',
+        },
+        '/services/web-design': {
+            focus: 'web' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Small Business Web Design',
+            description: 'Website design and development for Austin small businesses, artists and brands. Five-page starter sites from $1,500 through full custom builds with booking and payments.',
+        },
+        '/services/video': {
+            focus: 'video' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Video Content & Brand Reels',
+            description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels within 48 hours.',
+        },
+    } as const;
+    const servicePage = SERVICE_PAGES[servicePath as keyof typeof SERVICE_PAGES];
+    const isServicesRoute = servicePath === '/services' || !!servicePage;
     const initialView = (() => {
         if (isServicesRoute) return 'services';
         const v = searchParams.get('view');
@@ -236,7 +259,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
-                {isServicesRoute ? (
+                {servicePage ? (
+                    <title>{servicePage.title}</title>
+                ) : isServicesRoute ? (
                     <title>THE LOST+UNFOUNDS | Austin Photography &amp; Web Design</title>
                 ) : isHomepage ? (
                     <title>THE LOST+UNFOUNDS</title>
@@ -245,13 +270,18 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 )}
                 <meta
                     name="description"
-                    content={isServicesRoute
+                    content={servicePage
+                        ? servicePage.description
+                        : isServicesRoute
                         ? "Austin photography and web design. Airbnb and short-term rental shoots from $195, event coverage from $600, and custom small business websites from $1,500."
                         : isHomepage
                         ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
                         : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}
                 />
-                <link rel="canonical" href={isServicesRoute ? 'https://www.thelostandunfounds.com/services' : isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
+                {/* Each service page is its own canonical. Pointing them all at
+                    /services would tell Google to drop the three specific pages
+                    and keep the generic one — the exact opposite of the split. */}
+                <link rel="canonical" href={servicePage ? `https://www.thelostandunfounds.com${servicePath}` : isServicesRoute ? 'https://www.thelostandunfounds.com/services' : isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
             {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
@@ -324,7 +354,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Services view — shown only when the services tab is active */}
             {isHomepage && viewMode === 'services' && (
-                <BookingPage />
+                <BookingPage focus={servicePage?.focus} />
             )}
 
             {/* Gallery view */}

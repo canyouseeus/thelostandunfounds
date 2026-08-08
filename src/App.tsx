@@ -152,6 +152,12 @@ function App() {
                   here gets the services view, not the brand intro animation. */}
               <Route path="/services" element={<Layout />}>
                 <Route index element={<Gallery isHomepage />} />
+                {/* One page per offer, so each can rank for its own search.
+                    Same view and same design — Gallery reads the path and
+                    leads the hero with that service. */}
+                <Route path="airbnb-photography" element={<Gallery isHomepage />} />
+                <Route path="web-design" element={<Gallery isHomepage />} />
+                <Route path="video" element={<Gallery isHomepage />} />
               </Route>
               <Route path="/about" element={<Layout />}>
                 <Route index element={<About />} />

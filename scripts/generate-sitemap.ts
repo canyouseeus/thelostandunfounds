@@ -156,6 +156,26 @@ async function generateSitemap() {
     <priority>0.9</priority>
   </url>
 
+  <!-- Service pages — one per offer, each ranking for its own search -->
+  <url>
+    <loc>${baseUrl}/services/airbnb-photography</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/services/web-design</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/services/video</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Capabilities -->
   <url>
     <loc>${baseUrl}/capabilities</loc>

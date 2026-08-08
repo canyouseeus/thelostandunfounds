@@ -420,7 +420,33 @@ const ServiceCard: React.FC<{
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const BookingPage: React.FC = () => {
+/**
+ * `focus` swaps the hero's heading and opening line so each service URL leads
+ * with what that visitor searched for. Everything below the hero is unchanged —
+ * a host who came for listing photography can still see the web packages.
+ *
+ * The point is that the three URLs are not the same document. Identical pages
+ * on three addresses get collapsed to one in search, and the two Google
+ * discards are the ones it decides are duplicates — not the one you'd choose.
+ */
+type ServiceFocus = 'airbnb' | 'web' | 'video';
+
+const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = {
+    airbnb: {
+        h1: <>AIRBNB<br />PHOTOGRAPHY</>,
+        copy: 'Listing photography for Austin short-term rentals. 25–35 edited photos, delivered in 24–72 hours, priced from $195.',
+    },
+    web: {
+        h1: <>WEB<br />DESIGN</>,
+        copy: 'Websites for Austin small businesses, artists, and brands. From a five-page starter site to a full custom build with booking and payments, from $1,500.',
+    },
+    video: {
+        h1: <>VIDEO<br />CONTENT</>,
+        copy: 'Short-form video for brands in Austin. Reels shot alongside stills on a half- or full-day content day, and event highlight reels delivered within 48 hours.',
+    },
+};
+
+const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
     const scheduleRef = useRef<HTMLDivElement>(null);
 
     // Booking wizard state
@@ -646,11 +672,12 @@ const BookingPage: React.FC = () => {
                         THE LOST+UNFOUNDS
                     </p>
                     <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tight leading-none text-white mb-6">
-                        CREATIVE<br />AGENCY
+                        {focus ? FOCUS_HERO[focus].h1 : <>CREATIVE<br />AGENCY</>}
                     </h1>
                     <p className="text-white/50 text-base md:text-lg max-w-xl leading-relaxed mb-10">
-                        Photography and web development for brands, artists, and businesses in Austin.
-                        Authentic moments, fast delivery, real results.
+                        {focus
+                            ? FOCUS_HERO[focus].copy
+                            : 'Photography and web development for brands, artists, and businesses in Austin. Authentic moments, fast delivery, real results.'}
                     </p>
                     <button
                         onClick={scrollToSchedule}
