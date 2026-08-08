@@ -72,6 +72,11 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
         const msg = String(err?.message || '');
         const authReason = AUTH_FAILURES.find(a => msg.includes(a));
         if (authReason || err?.code === 401) {
+            // Log before throwing. Converting these to an exception removed the
+            // per-file console.error that used to make the failure visible, so
+            // a run could come back 0/418/0 with nothing in the platform logs
+            // and nothing on screen for anyone on a cached bundle.
+            console.error(`[retrograde] auth failure (${authReason || err?.code}) renaming ${fileId} — aborting run`);
             throw new DriveAuthError(authReason || 'unauthorized');
         }
         const code = err?.code || err?.response?.status;
@@ -258,6 +263,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             // library's. Stop and report it rather than failing every
             // remaining file the same way.
             if (err instanceof DriveAuthError) {
+                console.error(`[retrograde] run aborted: ${err.message}`);
                 return {
                     renamed: stats.renamed, skipped: stats.skipped, failed: stats.failed,
                     remaining: stats.remaining, dryRun: opts.dryRun ?? false,

@@ -16,7 +16,7 @@
  * same library has returned, and any change to the selection clears that
  * permission — so "apply" can never act on a preview you didn't see.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -68,6 +68,18 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
     };
 
     const [diag, setDiag] = useState<any>(null);
+    // A run can occupy up to its full time budget with no network chatter, so
+    // without this the page looks frozen and there is no way to tell a working
+    // run from a hung one. Counting up is the only honest signal available:
+    // the request is a single call, so real per-file progress is not knowable
+    // client-side.
+    const [elapsed, setElapsed] = useState(0);
+    useEffect(() => {
+        if (!busy) { setElapsed(0); return; }
+        const t0 = Date.now();
+        const id = setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 1000);
+        return () => clearInterval(id);
+    }, [busy]);
     const diagnose = async () => {
         setBusy('preview'); setError(null);
         try {
@@ -114,6 +126,16 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                     {busy === 'apply' ? 'Renaming' : 'Apply Rename'}
                 </button>
             </div>
+
+            {busy && (
+                <div className="flex items-center gap-2 bg-white/[0.03] px-4 py-3 mb-4">
+                    <ArrowPathIcon className="w-4 h-4 text-white/40 animate-spin shrink-0" />
+                    <p className="text-white/60 text-xs">
+                        {busy === 'apply' ? 'Renaming' : 'Working'} — {elapsed}s elapsed.
+                        {busy === 'apply' && ' Each pass runs up to 50s, then reports back.'}
+                    </p>
+                </div>
+            )}
 
             {error && (
                 <div className="flex items-start gap-2 bg-red-500/10 px-4 py-3 mb-4">
