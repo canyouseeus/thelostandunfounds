@@ -2,6 +2,23 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { existsSync } from 'fs'
+import { applyHtmlTokens } from './src/config/site-html'
+
+/**
+ * index.html is static and cannot import src/config/site.ts, so substitute the
+ * brand tokens (%SITE_*%) at build time. This is what lets a client fork change
+ * the page title, contact metadata and — most importantly — the LocalBusiness
+ * structured data by editing the config alone.
+ */
+function siteConfigHtml() {
+  return {
+    name: 'site-config-html',
+    transformIndexHtml: {
+      order: 'pre' as const,
+      handler: (html: string) => applyHtmlTokens(html),
+    },
+  }
+}
 
 // Check if tools-registry exists (for local development)
 // Try multiple possible paths
@@ -17,6 +34,7 @@ const hasToolsRegistry = !!toolsRegistryPath
 export default defineConfig({
   plugins: [
     react(),
+    siteConfigHtml(),
   ],
   resolve: {
     alias: {

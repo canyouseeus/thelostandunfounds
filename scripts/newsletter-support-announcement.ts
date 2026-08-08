@@ -16,10 +16,11 @@
 
 import { writeFileSync } from 'node:fs'
 import { generateNewsletterEmail, EMAIL_STYLES } from '../lib/email-template.js'
+import { SITE, siteUrl } from '../src/config/site'
 
 export const SUBJECT = 'A direct way to support the work'
 
-const PAY_URL = 'https://www.thelostandunfounds.com/pay'
+const PAY_URL = siteUrl('/pay')
 
 export function buildBody(): string {
     return `
@@ -78,7 +79,7 @@ async function main() {
     const apiKey = process.env.RESEND_API_KEY
     const fromEmail =
         process.env.RESEND_FROM_EMAIL ||
-        'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
+        'THE LOST+UNFOUNDS <${SITE.email.noreply}>'
 
     if (!apiKey) {
         console.error(

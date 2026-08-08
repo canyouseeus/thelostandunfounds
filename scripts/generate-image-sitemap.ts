@@ -1,3 +1,4 @@
+import { SITE } from '../src/config/site'
 /**
  * Image Sitemap Generator
  * Creates image-sitemap.xml for Google Image Search indexing
@@ -60,7 +61,7 @@ async function generateImageSitemap() {
 
         // Add gallery photos
         for (const photo of publicPhotos) {
-            const pageUrl = `https://www.thelostandunfounds.com/gallery/${photo.photo_libraries.slug}`;
+            const pageUrl = `${SITE.origin}/gallery/${photo.photo_libraries.slug}`;
             if (!imagesByUrl[pageUrl]) imagesByUrl[pageUrl] = [];
 
             const imageUrl = photo.google_drive_file_id
@@ -80,8 +81,8 @@ async function generateImageSitemap() {
         if (posts) {
             for (const post of posts) {
                 const pageUrl = post.subdomain
-                    ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}`
-                    : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`;
+                    ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}`
+                    : `${SITE.origin}/thelostarchives/${post.slug}`;
 
                 if (!imagesByUrl[pageUrl]) imagesByUrl[pageUrl] = [];
 

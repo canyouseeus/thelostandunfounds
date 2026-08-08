@@ -1,3 +1,4 @@
+import { SITE } from '../src/config/site'
 /**
  * Sitemap Generator
  * Generates sitemap.xml for all published blog posts
@@ -60,7 +61,7 @@ async function generateSitemap() {
       return;
     }
 
-    const baseUrl = 'https://www.thelostandunfounds.com';
+    const baseUrl = SITE.origin;
     const currentDate = normalizeDate(new Date().toISOString());
 
     // Start building sitemap XML

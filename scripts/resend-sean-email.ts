@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fetch from 'node-fetch';
 import { generateTransactionalEmail, EMAIL_STYLES } from '../lib/email-template';
+import { SITE } from '../src/config/site'
 
 // Load envs
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -90,7 +91,7 @@ async function sendEmail() {
                     Thank you for your purchase. Your high-resolution photos are ready for download.
                 </p>
                 <div style="margin: 40px 0;">
-                    <a href="https://www.thelostandunfounds.com/photos/success?token=${orderId}" style="${EMAIL_STYLES.button}">DOWNLOAD PHOTOS</a>
+                    <a href="${SITE.origin}/photos/success?token=${orderId}" style="${EMAIL_STYLES.button}">DOWNLOAD PHOTOS</a>
                 </div>
                 <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
                     <p style="${EMAIL_STYLES.muted}">

@@ -1,3 +1,4 @@
+import { SITE } from '../src/config/site'
 /**
  * One-time script to send welcome emails to newsletter subscribers
  * who never received one (welcome_email_sent_at IS NULL).
@@ -145,7 +146,7 @@ async function sendResendEmail(
 
 function generateWelcomeHtml(email: string): string {
   const currentYear = new Date().getFullYear()
-  const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
+  const unsubscribeUrl = `${SITE.origin}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -165,7 +166,7 @@ function generateWelcomeHtml(email: string): string {
           <!-- Branding Header -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="${SITE.brandName}" style="max-width: 100%; height: auto; display: block;">
             </td>
           </tr>
           <!-- Main Content -->

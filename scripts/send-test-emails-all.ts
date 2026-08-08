@@ -1,3 +1,4 @@
+import { SITE } from '../src/config/site'
 /**
  * Send one test email per template type to thelostandunfounds@gmail.com.
  * Run: cd /Users/thelostunfounds/thelostandunfounds && npx tsx .claude/worktrees/sharp-visvesvaraya-51f43b/scripts/send-test-emails-all.ts
@@ -36,14 +37,14 @@ function blogHtml(greeting: string, body: string) {
 <tr><td align="left" style="padding:40px 20px;">
 <table role="presentation" style="max-width:600px;width:100%;border-collapse:collapse;background:#000;">
 <tr><td align="left" style="padding:0 0 30px 0;">
-  <img src="${SUPABASE_BANNER}" alt="THE LOST+UNFOUNDS" style="max-width:100%;height:auto;display:block;">
+  <img src="${SUPABASE_BANNER}" alt="${SITE.brandName}" style="max-width:100%;height:auto;display:block;">
 </td></tr>
 <tr><td style="padding:0;color:#fff;">
   <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">${greeting}</p>
   ${body}
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:30px 0;">
   <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;">© ${YEAR} THE LOST+UNFOUNDS. All rights reserved.</p>
-  <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:10px 0 0;"><a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(TO)}" style="color:rgba(255,255,255,0.6);text-decoration:underline;">Unsubscribe</a></p>
+  <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:10px 0 0;"><a href="${SITE.origin}/api/newsletter/unsubscribe?email=${encodeURIComponent(TO)}" style="color:rgba(255,255,255,0.6);text-decoration:underline;">Unsubscribe</a></p>
 </td></tr>
 </table></td></tr></table></body></html>`
 }
@@ -100,7 +101,7 @@ async function main() {
       <p style="color:#999;font-size:16px;margin:0 0 30px;">Thank you for your purchase. Your high-resolution files are available below.</p>
       <div style="margin-bottom:20px;padding:15px;border:1px solid #333;background:#111;">
         <p style="color:#fff;margin:0 0 10px;font-family:monospace;font-size:12px;">PHOTO ID: test-photo-001</p>
-        <a href="https://www.thelostandunfounds.com" style="${BTN}">Download High-Res</a>
+        <a href="${SITE.origin}" style="${BTN}">Download High-Res</a>
       </div>
       <p style="color:#666;font-size:12px;margin:20px 0 0;">Order ID: test-order-000</p>
     `))
@@ -114,7 +115,7 @@ async function main() {
         <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;white-space:nowrap;">Order ID</td><td style="color:#fff;font-size:14px;font-family:monospace;padding:8px 0;">test-order-000</td></tr>
         <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;white-space:nowrap;vertical-align:top;">Items</td><td style="color:#fff;font-size:14px;padding:8px 0;"><ul style="list-style:none;padding:0;margin:0;"><li style="margin-bottom:6px;font-family:monospace;"><strong>Urban Nights #42</strong> (ID: test-photo-001)</li></ul></td></tr>
       </table>
-      <p style="margin:24px 0 0;"><a href="https://www.thelostandunfounds.com/admin" style="color:#999;font-size:11px;text-transform:uppercase;text-decoration:none;letter-spacing:2px;">View Admin Dashboard →</a></p>
+      <p style="margin:24px 0 0;"><a href="${SITE.origin}/admin" style="color:#999;font-size:11px;text-transform:uppercase;text-decoration:none;letter-spacing:2px;">View Admin Dashboard →</a></p>
     `))
 
   // 5. Welcome email — custom HTML with Supabase banner (same as welcome handler)
@@ -123,8 +124,8 @@ async function main() {
 <table role="presentation" style="width:100%;border-collapse:collapse;background:#000;">
 <tr><td align="left" style="padding:40px 20px;">
 <table role="presentation" style="max-width:600px;width:100%;border-collapse:collapse;background:#000;margin:0;">
-<tr><td align="left" style="padding:0 0 30px 0;"><a href="https://www.thelostandunfounds.com" target="_blank">
-  <img src="${SUPABASE_BANNER}" alt="THE LOST+UNFOUNDS" style="max-width:100%;height:auto;display:block;">
+<tr><td align="left" style="padding:0 0 30px 0;"><a href="${SITE.origin}" target="_blank">
+  <img src="${SUPABASE_BANNER}" alt="${SITE.brandName}" style="max-width:100%;height:auto;display:block;">
 </a></td></tr>
 <tr><td style="padding:0;color:#fff;">
   <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">[TEST] Hello Jane,</p>
@@ -136,7 +137,7 @@ async function main() {
     <li>Earning as an Amazon affiliate</li>
   </ul>
   <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 30px;">
-    <tr><td align="left"><a href="https://www.thelostandunfounds.com" style="${BTN}">View Getting Started Guide →</a></td></tr>
+    <tr><td align="left"><a href="${SITE.origin}" style="${BTN}">View Getting Started Guide →</a></td></tr>
   </table>
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:30px 0;">
   <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;">© ${YEAR} THE LOST+UNFOUNDS. All rights reserved.</p>
@@ -197,7 +198,7 @@ async function main() {
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;"><strong>[TEST] The Art of Street Photography in 2026</strong></p>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">This is your 3rd published article. Keep it up!</p>
       <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 30px;">
-        <tr><td align="left"><a href="https://www.thelostandunfounds.com/blog/test" style="${BTN}">Read Your Article →</a></td></tr>
+        <tr><td align="left"><a href="${SITE.origin}/blog/test" style="${BTN}">Read Your Article →</a></td></tr>
       </table>`))
 
   // 12. Photography contract — brand banner + white card, via sendZohoEmail

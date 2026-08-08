@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import * as dotenv from 'dotenv';
+import { SITE } from '../src/config/site'
 
 // Load .env.local
 dotenv.config({ path: '.env.local' });
@@ -72,7 +73,7 @@ async function main() {
             </p>
             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #fff;">KATTITUDE TATTOO STUDIO</h2>
             <div style="margin: 40px 0;">
-                <a href="https://www.thelostandunfounds.com/photos/kattitude-tattoo" 
+                <a href="${SITE.origin}/photos/kattitude-tattoo" 
                    style="display: inline-block; padding: 14px 28px; background-color: #fff; color: #000; 
                           text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">
                     ENTER GALLERY

@@ -1,3 +1,4 @@
+import { SITE } from '../src/config/site'
 /**
  * Build-time Core Pages Pre-renderer
  * Generates static HTML folders for core routes so bots can read them immediately.
@@ -14,23 +15,23 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPA
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const CORE_PAGES = [
-    { path: 'about', title: 'ABOUT | THE LOST+UNFOUNDS', description: 'Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision.' },
-    { path: 'privacy', title: 'PRIVACY POLICY | THE LOST+UNFOUNDS', description: 'Review the Privacy Policy for THE LOST+UNFOUNDS. Learn how protecting your personal privacy is prioritized and how we securely handle your data.' },
-    { path: 'terms', title: 'TERMS OF SERVICE | THE LOST+UNFOUNDS', description: 'Review the Terms of Service for THE LOST+UNFOUNDS. Read our rules and regulations to understand your rights and responsibilities when using our platform.' },
-    { path: 'shop', title: 'SHOP | THE LOST+UNFOUNDS', description: 'Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door.' },
-    { path: 'events', title: 'EVENTS | THE LOST+UNFOUNDS', description: 'Join THE LOST+UNFOUNDS for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events.' },
-    { path: 'gallery', title: 'THE GALLERY | THE LOST+UNFOUNDS', description: 'Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration.' },
-    { path: 'contact', title: 'CONTACT | THE LOST+UNFOUNDS', description: 'Get in touch with THE LOST+UNFOUNDS. We\'d love to hear from you and help with any questions, inquiries, or feedback you might have about our platform.' },
-    { path: 'support', title: 'SUPPORT CENTER | THE LOST+UNFOUNDS', description: 'Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly.' },
-    { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
-    { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' },
+    { path: 'about', title: `ABOUT | ${SITE.brandName}`, description: 'Learn about ${SITE.brandName}, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision.' },
+    { path: 'privacy', title: `PRIVACY POLICY | ${SITE.brandName}`, description: 'Review the Privacy Policy for ${SITE.brandName}. Learn how protecting your personal privacy is prioritized and how we securely handle your data.' },
+    { path: 'terms', title: `TERMS OF SERVICE | ${SITE.brandName}`, description: 'Review the Terms of Service for ${SITE.brandName}. Read our rules and regulations to understand your rights and responsibilities when using our platform.' },
+    { path: 'shop', title: `SHOP | ${SITE.brandName}`, description: 'Shop exclusive ${SITE.brandName} apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door.' },
+    { path: 'events', title: `EVENTS | ${SITE.brandName}`, description: 'Join ${SITE.brandName} for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events.' },
+    { path: 'gallery', title: `THE GALLERY | ${SITE.brandName}`, description: 'Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration.' },
+    { path: 'contact', title: `CONTACT | ${SITE.brandName}`, description: 'Get in touch with ${SITE.brandName}. We\'d love to hear from you and help with any questions, inquiries, or feedback you might have about our platform.' },
+    { path: 'support', title: `SUPPORT CENTER | ${SITE.brandName}`, description: 'Get help and support for ${SITE.brandName}. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly.' },
+    { path: 'thelostarchives', title: `THE LOST ARCHIVES | ${SITE.brandName}`, description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
+    { path: 'advertise', title: `ADVERTISE | ${SITE.brandName}`, description: 'Partner with ${SITE.brandName}. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' },
     // Public routes that existed in the router but not here, so the Vercel
     // catch-all served them the noindex shell — telling Google not to index
     // real, public pages. Any new public route must be added to this list.
-    { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
-    { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
-    { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
-    { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' }
+    { path: 'capabilities', title: `CAPABILITIES | ${SITE.brandName}`, description: 'Fabrication, photography, and build capabilities from ${SITE.brandName}. See what we can produce, from editorial shoots to full web development.' },
+    { path: 'become-affiliate', title: `AFFILIATE PROGRAM | ${SITE.brandName}`, description: 'Earn up to 42% of profits with ${SITE.brandName} affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
+    { path: 'docs', title: `DOCUMENTATION | ${SITE.brandName}`, description: 'Guides and documentation for ${SITE.brandName} platform, including the photographer guide, gallery workflows, and contributor resources.' },
+    { path: 'king-midas-leaderboard', title: `KING MIDAS LEADERBOARD | ${SITE.brandName}`, description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' }
 ];
 
 async function preRenderCorePages() {
@@ -104,7 +105,7 @@ async function preRenderCorePages() {
                                         "@type": "Product",
                                         "name": p.title,
                                         "description": p.description,
-                                        "url": `https://www.thelostandunfounds.com/shop`,
+                                        "url": `${SITE.origin}/shop`,
                                         "image": p.images?.[0]?.url || p.images?.[0],
                                         "offers": {
                                             "@type": "Offer",
@@ -216,13 +217,13 @@ async function preRenderCorePages() {
                         "@type": "ListItem",
                         "position": 1,
                         "name": "Home",
-                        "item": "https://www.thelostandunfounds.com"
+                        "item": SITE.origin
                     },
                     {
                         "@type": "ListItem",
                         "position": 2,
                         "name": page.title.split(' | ')[0],
-                        "item": `https://www.thelostandunfounds.com/${page.path}`
+                        "item": `${SITE.origin}/${page.path}`
                     }
                 ]
             };
@@ -234,7 +235,7 @@ async function preRenderCorePages() {
             );
 
             // Add or update canonical URL
-            const pageUrl = `https://www.thelostandunfounds.com/${page.path}`;
+            const pageUrl = `${SITE.origin}/${page.path}`;
             const canonicalTag = `<link rel="canonical" href="${escapeAttr(pageUrl)}" />`;
             if (html.includes('rel="canonical"')) {
                 html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, canonicalTag);

@@ -71,6 +71,25 @@ export interface SiteConfig {
     }
 
     /**
+     * Local-business facts. These generate the LocalBusiness + Photographer
+     * JSON-LD in index.html, which is what earns local search placement — for a
+     * photography business it is among the highest-value markup on the site.
+     * A client fork MUST replace all of this; shipping it unchanged advertises
+     * someone else's city, services and prices.
+     */
+    business: {
+        description: string
+        locality: string
+        region: string
+        country: string
+        /** Schema.org priceRange, e.g. "$$". */
+        priceRange: string
+        services: { name: string; description: string }[]
+        /** Path on this site where a visitor starts a booking. */
+        bookingPath: string
+    }
+
+    /**
      * Prefix for browser storage keys and photo filename conventions.
      * Changing this on a live site orphans existing localStorage entries.
      */
@@ -126,6 +145,22 @@ export const SITE: SiteConfig = {
         emailBanner: 'https://www.thelostandunfounds.com/brand/banner.png',
         logo: 'https://www.thelostandunfounds.com/logo.png',
         ogImage: 'https://www.thelostandunfounds.com/og-image.png',
+    },
+
+    business: {
+        description: 'Austin-based editorial and nightlife photographer. Available for concerts, events, portraits, brand work, and commercial shoots. High-resolution archives available for licensing.',
+        locality: 'Austin',
+        region: 'TX',
+        country: 'US',
+        priceRange: '$$',
+        services: [
+            { name: 'Concert & Live Music Photography', description: 'High-resolution concert and live performance photography for artists, venues, and promoters in Austin and beyond.' },
+            { name: 'Nightlife & Event Photography', description: 'Editorial nightlife photography for clubs, bars, pop-ups, and Austin cultural events.' },
+            { name: 'Portrait & Lifestyle Photography', description: 'Individual and brand portrait sessions — natural, editorial, and studio-style.' },
+            { name: 'Brand & Editorial Photography', description: 'Commercial photography for brands, startups, and creative agencies. Austin and remote.' },
+            { name: 'Photo Archive Licensing', description: 'License high-resolution photos from the archive for editorial, commercial, and personal use.' },
+        ],
+        bookingPath: '/?view=booking',
     },
 
     storagePrefix: 'tlau',
