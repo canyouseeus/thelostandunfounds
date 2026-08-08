@@ -229,10 +229,15 @@ export default function SageModeOverlay() {
           aria-pressed={enabled}
           aria-label={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
           title={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
-          // Frosted tile above the transport bar, matching its dark glass.
-          className="fixed bottom-24 right-4 z-[100000] h-12 w-12 flex items-center justify-center bg-black/60 backdrop-blur-md shadow-lg transition-colors"
+          // Frosted circle above the transport bar. bg-white/10 + backdrop-blur-md
+          // are the floating-tray glass values from bento-design, which also
+          // forbids a shadow — separation comes from the blur, not elevation.
+          className="fixed bottom-24 right-4 z-[100000] h-12 w-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md transition-colors"
         >
-          {/* Triangle outline — gold when armed, white when idle. */}
+          {/* Triangle outline — gold when armed, white when idle. Points are
+              centred on the circle: the bounding box spans x 7–18, so it sits
+              a touch right of dead centre, which is how a pointing triangle
+              reads as optically centred inside a round button. */}
           <svg
             viewBox="0 0 24 24"
             className="w-5 h-5 transition-colors"
@@ -241,7 +246,7 @@ export default function SageModeOverlay() {
             strokeWidth={2}
             strokeLinejoin="round"
           >
-            <polygon points="8,5 19,12 8,19" />
+            <polygon points="7,5 18,12 7,19" />
           </svg>
         </button>
       )}
