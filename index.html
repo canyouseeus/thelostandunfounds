@@ -178,9 +178,12 @@
     }
   </script>
 
-  <div id="root">
-    <!-- Pre-rendered content for bots; visually hidden for users so no flash -->
-    <div id="pre-render"
+  <!-- Pre-rendered content, deliberately a SIBLING of #root rather than a child.
+       React's createRoot().render() clears its container, so a pre-render nested
+       inside #root is destroyed the moment the app mounts — before Googlebot
+       takes its render snapshot. Out here it survives, and main.tsx hides it once
+       the app has actually painted. -->
+  <div id="pre-render"
       style="background: black; color: black; opacity: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; pointer-events: none;">
       <h1 style="font-size: 3rem; margin-bottom: 2rem; font-weight: normal; display: block;">CAN YOU SEE US?</h1>
       <p style="font-size: 1.25rem; margin-bottom: 2rem; color: black;">
@@ -207,6 +210,7 @@
       </div>
     </div>
   </div>
+  <div id="root"></div>
   <script>
     // Global error storage for debug page
     window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
@@ -250,8 +254,10 @@
         const root = document.getElementById('root');
         const preRender = document.getElementById('pre-render');
 
-        if (root && root.querySelector('[data-reactroot]')) {
-          // React has mounted, hide pre-render
+        // React 18 does not emit [data-reactroot], so the old check here could
+        // never succeed. Test for painted content instead — and the same bar as
+        // main.tsx, so the two cannot disagree about when it is safe to hide.
+        if (root && (root.textContent || '').trim().length > 120) {
           if (preRender) {
             preRender.style.display = 'none';
           }
