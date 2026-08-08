@@ -58,6 +58,8 @@ import PhotoSuccessPage from './pages/PhotoSuccessPage'
 import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
 import ClientUpload from './pages/ClientUpload'
+import SignContract from './pages/SignContract'
+import AdminContracts from './pages/AdminContracts'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
@@ -241,6 +243,13 @@ function App() {
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />
+                <Route path="contracts" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminContracts />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
                 <Route path="invoices" element={<AdminInvoicesRedirect />} />
               </Route>
               {/* Silva Star white-label template */}
@@ -355,6 +364,8 @@ function App() {
               {/* Client asset intake — the token is the credential, so no
                   Layout chrome and no auth gate. */}
               <Route path="/upload/:token" element={<ClientUpload />} />
+              {/* Public contract signing — the token in the URL is the credential. */}
+              <Route path="/sign/:token" element={<SignContract />} />
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
               </Route>
