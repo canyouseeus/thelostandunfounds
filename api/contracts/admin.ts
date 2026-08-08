@@ -111,12 +111,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
-  const supabase = getSupabaseAdmin()
   const body = (req.body || {}) as Record<string, any>
   const action = String(body.action || '')
   const actor = String(req.headers['x-admin-email'] || 'admin')
 
   try {
+    // Inside the try so missing service credentials return a readable JSON
+    // error instead of an opaque FUNCTION_INVOCATION_FAILED crash.
+    const supabase = getSupabaseAdmin()
+
     switch (action) {
       // ── Templates ────────────────────────────────────────────────────────
       case 'list_templates': {

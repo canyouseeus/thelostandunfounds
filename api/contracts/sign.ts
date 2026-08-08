@@ -85,9 +85,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   ).trim()
   if (!token) return res.status(400).json({ error: 'Missing signing token.' })
 
-  const supabase = getSupabaseAdmin()
-
   try {
+    // Constructed inside the try: if the service credentials are missing this
+    // throws, and outside the try that surfaces to a signer as an opaque
+    // FUNCTION_INVOCATION_FAILED crash page rather than a readable message.
+    const supabase = getSupabaseAdmin()
+
     const loaded = await loadByToken(supabase, token)
     if ('error' in loaded) return res.status(loaded.code).json({ error: loaded.error })
     const { signer, contract, signers } = loaded
