@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template.js'
 import { delay } from './_zoho-email-utils.js'
+import { siteUrl, SITE } from '../../src/config/site'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -66,12 +67,12 @@ async function sendResendEmail(
   }
 }
 
-const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
+const BANNER_URL = siteUrl('/brand/banner.png')
 
 function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
 <div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
-  <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
+  <a href="${SITE.origin}" style="text-decoration: none;">
     <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
   </a>
 </div>`
@@ -122,7 +123,7 @@ function extractBodyContent(contentHtml: string): string {
 
 function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string): string {
   const currentYear = new Date().getFullYear()
-  const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`
+  const unsubscribeUrl = `${SITE.origin}/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`
 
   return `<!DOCTYPE html>
 <html>
@@ -143,8 +144,8 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
         <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #000000 !important; margin: 0 !important;">
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
-              <a href="https://www.thelostandunfounds.com" target="_blank">
-                <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              <a href="${SITE.origin}" target="_blank">
+                <img src="${SITE.origin}/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
               </a>
             </td>
           </tr>

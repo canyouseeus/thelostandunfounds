@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * SAGE MODE - UI Design Experimentation Interface
  */
@@ -69,7 +70,7 @@ export default function SageMode() {
         <title>THE LOST+UNFOUNDS | Admin | Sage Mode</title>
         <meta name="description" content="Internal admin observability surface. Not indexed." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/sagemode" />
+        <link rel="canonical" href={siteUrl('/sagemode')} />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

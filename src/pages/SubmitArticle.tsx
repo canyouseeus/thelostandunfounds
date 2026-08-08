@@ -1,3 +1,4 @@
+import { siteUrl, SITE } from '../config/site'
 /**
  * Article Submission Page for THE LOST ARCHIVES
  * Public form for submitting articles with Amazon affiliate links
@@ -677,7 +678,7 @@ export default function SubmitArticle() {
         <Helmet>
           <title>THE LOST+UNFOUNDS | Submit Article</title>
           <meta name="description" content="Submit your article to THE LOST ARCHIVES. Contribute your findings, research, and reflections to our expanding columns and earn as an Amazon Affiliate." />
-          <link rel="canonical" href="https://www.thelostandunfounds.com/submit-article" />
+          <link rel="canonical" href={siteUrl('/submit-article')} />
         </Helmet>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[60vh]">
           <div className="text-center mb-12">
@@ -723,7 +724,7 @@ export default function SubmitArticle() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | Submit to {config.name}</title>
         <meta name="description" content={config.description} />
-        <link rel="canonical" href={`https://www.thelostandunfounds.com/submit-article/${column}`} />
+        <link rel="canonical" href={`${SITE.origin}/submit-article/${column}`} />
       </Helmet>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <UserRegistration

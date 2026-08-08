@@ -33,7 +33,7 @@ const GRACE_HOURS = 24;
 const COOLDOWN_DAYS = 7;
 const MAX_REMINDERS = 4;
 
-const SITE_URL = (process.env.SITE_URL || 'https://www.thelostandunfounds.com').replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || SITE.origin).replace(/\/$/, '');
 
 interface SweepAffiliate {
   id: string;

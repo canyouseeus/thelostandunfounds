@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { createProdigiOrder } from './_prodigi-client.js'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
+import { SITE } from '../../src/config/site'
 
 const STRIKE_API_URL = 'https://api.strike.me'
 
@@ -144,7 +145,7 @@ async function finalizeProdigiStrikeOrder(supabase: any, invoiceId: string) {
         .eq('id', order.id)
 
     try {
-        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
+        const origin = process.env.SITE_URL || SITE.origin
         const result = await createProdigiOrder({
             merchantReference: order.id,
             idempotencyKey: order.id,

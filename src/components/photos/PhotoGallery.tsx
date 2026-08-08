@@ -27,6 +27,7 @@ import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import { SITE, siteUrl } from '../../config/site'
 
 // Gallery photos are loaded a page at a time to keep database egress low —
 // pulling the entire library on every (often bot-driven) page view was the
@@ -806,29 +807,29 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
         const coverPhoto  = photos[0];
         const coverUrl    = coverPhoto?.google_drive_file_id
-            ? `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(coverPhoto.google_drive_file_id)}&size=1200`
-            : 'https://www.thelostandunfounds.com/og-image.png';
+            ? `${SITE.origin}/api/gallery/stream?fileId=${encodeURIComponent(coverPhoto.google_drive_file_id)}&size=1200`
+            : siteUrl('/og-image.png');
 
         const pageTitle   = `${libName} — ${cityShort} Photography | The Lost+Unfounds`;
         const pageDesc    = `${libName} — ${cityShort} photography by The Lost+Unfounds. `
             + `High-resolution photos available for licensing and download. `
             + `Available for event, nightlife, and portrait bookings in ${cityShort} and beyond.`;
-        const canonicalUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
+        const canonicalUrl = `${SITE.origin}/gallery/${library.slug}`;
 
         const imageObjects = photos.slice(0, 10).map(p => ({
             '@type': 'ImageObject',
             name: (p.title || libName).replace(/\.[^.]+$/, ''),
-            contentUrl: `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=1200`,
-            thumbnailUrl: `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=400`,
+            contentUrl: `${SITE.origin}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=1200`,
+            thumbnailUrl: `${SITE.origin}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=400`,
             creator: {
                 '@type': 'Person',
                 name: 'Joshua Abram Greene',
-                url: 'https://www.thelostandunfounds.com',
+                url: SITE.origin,
             },
             copyrightHolder: {
                 '@type': 'Organization',
                 name: 'The Lost+Unfounds',
-                url: 'https://www.thelostandunfounds.com',
+                url: SITE.origin,
             },
             locationCreated: {
                 '@type': 'Place',
@@ -860,15 +861,15 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     author: {
                         '@type': 'Person',
                         name: 'Joshua Abram Greene',
-                        url: 'https://www.thelostandunfounds.com',
+                        url: SITE.origin,
                     },
                     hasPart: imageObjects,
                 },
                 {
                     '@type': 'BreadcrumbList',
                     itemListElement: [
-                        { '@type': 'ListItem', position: 1, name: 'Home',    item: 'https://www.thelostandunfounds.com/' },
-                        { '@type': 'ListItem', position: 2, name: 'Gallery', item: 'https://www.thelostandunfounds.com/gallery' },
+                        { '@type': 'ListItem', position: 1, name: 'Home',    item: SITE.origin },
+                        { '@type': 'ListItem', position: 2, name: 'Gallery', item: siteUrl('/gallery') },
                         { '@type': 'ListItem', position: 3, name: libName,   item: canonicalUrl },
                     ],
                 },

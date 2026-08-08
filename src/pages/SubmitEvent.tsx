@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import { CalendarIcon, MapPinIcon, CurrencyDollarIcon, UsersIcon, TrashIcon, PlusIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { LoadingSpinner } from '../components/Loading';
+import { siteUrl } from '../config/site'
 
 interface FormField {
     id: string;
@@ -137,7 +138,7 @@ export default function SubmitEvent() {
             <Helmet>
                 <title>THE LOST+UNFOUNDS | Submit Event</title>
                 <meta name="description" content="Submit your unique event to be featured on THE LOST+UNFOUNDS. We are looking for gatherings, workshops, and experiences from the frontier." />
-                <link rel="canonical" href="https://www.thelostandunfounds.com/submit-event" />
+                <link rel="canonical" href={siteUrl('/submit-event')} />
             </Helmet>
 
             <div className="min-h-screen bg-black text-white pt-24 pb-24 px-4 sm:px-6 lg:px-8">

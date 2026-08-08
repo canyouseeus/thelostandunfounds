@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import EmailSignup from '../components/EmailSignup'
+import { SITE } from '../config/site'
 
 export default function Home() {
   const text = "CAN YOU SEE US?"
@@ -163,12 +164,12 @@ export default function Home() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/" />
+        <link rel="canonical" href={SITE.origin} />
         <meta name="description" content="CAN YOU SEE US? THE LOST+UNFOUNDS - Findings from the frontier and beyond. Intel on development, AI, programming, and building in the age of information." />
         <meta property="og:title" content="THE LOST+UNFOUNDS" />
         <meta property="og:description" content="Thanks for stopping by. Sign-up for updates and news! Revealing findings from the frontier and beyond." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.thelostandunfounds.com/" />
+        <meta property="og:url" content={SITE.origin} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="THE LOST+UNFOUNDS" />
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />

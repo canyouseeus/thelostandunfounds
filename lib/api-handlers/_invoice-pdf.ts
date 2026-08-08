@@ -10,10 +10,10 @@
 import PDFDocument from 'pdfkit'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { SITE } from '../../src/config/site'
+import { SITE, siteUrl } from '../../src/config/site'
 
 /** Canonical banner location, used only as a fallback when disk lookup misses. */
-const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
+const BANNER_URL = siteUrl('/brand/banner.png')
 
 /** Cached across invocations so a warm serverless container reads disk once. */
 let cachedBanner: Buffer | null | undefined

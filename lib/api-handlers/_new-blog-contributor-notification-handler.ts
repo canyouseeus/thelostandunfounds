@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createServiceSupabaseClient } from './_supabase-admin-client'
 import { sendTransactionalEmail } from './_resend-email-handler.js'
+import { SITE } from '../../src/config/site'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -66,8 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subdomainInfo = bySlug.data
       }
     }
-    const blogUrl = `https://www.thelostandunfounds.com/thelostarchives/${subdomain}`
-    const dashboardUrl = `https://www.thelostandunfounds.com/admin?tab=blog&subdomain=${subdomain}`
+    const blogUrl = `${SITE.origin}/thelostarchives/${subdomain}`
+    const dashboardUrl = `${SITE.origin}/admin?tab=blog&subdomain=${subdomain}`
 
     const content = `
       <h2 style="color: #ffffff; margin:0 0 16px 0;font-size:24px;">New blog contributor detected</h2>

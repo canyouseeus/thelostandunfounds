@@ -1,3 +1,4 @@
+import { SITE } from '../../src/config/site'
 /**
  * POST /api/events/checkout
  *
@@ -146,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     process.env.SITE_URL ||
     (req.headers['x-forwarded-proto'] && req.headers['host']
       ? `${req.headers['x-forwarded-proto']}://${req.headers['host']}`
-      : 'https://www.thelostandunfounds.com')
+      : SITE.origin)
   ).replace(/\/$/, '')
 
   const tierLabel = tierId

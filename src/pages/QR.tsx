@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { QRCodeSVG } from 'qrcode.react'
 import { ArrowDownTrayIcon, LinkIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { SITE, siteUrl } from '../config/site'
 
-const LANDING_PAGE_URL = 'https://www.thelostandunfounds.com/'
+const LANDING_PAGE_URL = SITE.origin
 // Portrait dimensions for phone wallpaper (9:16 aspect ratio)
 const PORTRAIT_WIDTH = 1080
 const PORTRAIT_HEIGHT = 1920
@@ -420,7 +421,7 @@ export default function QR() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | QR Code Generator</title>
         <meta name="description" content="Generate custom high-resolution QR codes with background images and logos. Perfect for easy link sharing, marketing materials, and digital distribution." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/qr" />
+        <link rel="canonical" href={siteUrl('/qr')} />
       </Helmet>
       <div className="min-h-screen bg-black text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

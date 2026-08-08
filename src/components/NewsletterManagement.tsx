@@ -1,3 +1,4 @@
+import { siteUrl, SITE } from '../config/site'
 /**
  * Newsletter Management Component
  * Allows admins to compose and send newsletters to subscribers
@@ -378,7 +379,7 @@ export default function NewsletterManagement() {
       return lines.map(line => `<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; background-color: #000000 !important;">${line.trim()}</p>`).join('');
     });
 
-    const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started';
+    const gettingStartedUrl = siteUrl('/blog/getting-started');
     const hasGettingStarted = text.toLowerCase().includes('getting-started') || text.toLowerCase().includes('view the getting started guide');
 
     const ctaHtml = !hasGettingStarted ? `
@@ -389,7 +390,7 @@ export default function NewsletterManagement() {
       </div>
     ` : '';
 
-    const bannerUrl = "https://www.thelostandunfounds.com/brand/banner.png";
+    const bannerUrl = siteUrl('/brand/banner.png');
 
     return `
       <!DOCTYPE html>
@@ -422,7 +423,7 @@ export default function NewsletterManagement() {
                       © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
                     </p>
                     <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;">
-                      <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a>
+                      <a href="${SITE.origin}/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a>
                     </p>
                   </td>
                 </tr>

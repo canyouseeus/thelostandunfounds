@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from '../_resend-email-handler.js';
+import { SITE } from '../../../src/config/site'
 
 type AffiliateEmailType =
   | 'welcome'
@@ -22,7 +23,7 @@ export interface AffiliateEmailParams {
   data: Record<string, any>;
 }
 
-const SITE_URL = (process.env.SITE_URL || 'https://www.thelostandunfounds.com').replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || SITE.origin).replace(/\/$/, '');
 
 function fmtUsd(n: number): string {
   if (!Number.isFinite(n)) return '$0.00';

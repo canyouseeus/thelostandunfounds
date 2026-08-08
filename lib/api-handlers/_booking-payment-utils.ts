@@ -48,7 +48,7 @@ export function siteOrigin(req?: { headers: Record<string, any> }): string {
   const proto = req?.headers['x-forwarded-proto']
   const host = req?.headers['host']
   if (proto && host) return `${proto}://${host}`.replace(/\/$/, '')
-  return 'https://www.thelostandunfounds.com'
+  return SITE.origin
 }
 
 export function randomToken(): string {

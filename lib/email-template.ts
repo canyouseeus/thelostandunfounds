@@ -1,3 +1,4 @@
+import { siteUrl, SITE } from '../src/config/site'
 /**
  * Standardized Email Template for THE LOST+UNFOUNDS
  * 
@@ -8,8 +9,8 @@
 // Brand assets
 export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
-  logo: 'https://www.thelostandunfounds.com/brand/banner.png',
-  website: 'https://www.thelostandunfounds.com',
+  logo: siteUrl('/brand/banner.png'),
+  website: SITE.origin,
   colors: {
     background: '#000000',
     text: '#ffffff',

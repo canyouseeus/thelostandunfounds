@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js';
+import { SITE } from '../../src/config/site'
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -55,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
                 <p style="color: #ffffff;"><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
                 <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;" />
-                <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
+                <a href="${SITE.origin}/admin" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
             `;
         } else if (action === 'approved') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });
@@ -67,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
                 <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
                 <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;" />
-                <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
+                <a href="${SITE.origin}/events" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
             `;
         } else if (action === 'rejected') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });

@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
+import { siteUrl } from '../config/site'
 
 export default function Advertise() {
     const formRef = useRef<HTMLDivElement>(null);
@@ -65,7 +66,7 @@ export default function Advertise() {
             <Helmet>
                 <title>THE LOST+UNFOUNDS | Advertise</title>
                 <meta name="description" content="Partner with THE LOST+UNFOUNDS. Your campaign sits above the navigation bar — the first impression for every visitor, every time." />
-                <link rel="canonical" href="https://www.thelostandunfounds.com/advertise" />
+                <link rel="canonical" href={siteUrl('/advertise')} />
             </Helmet>
 
             {/* Hero Section */}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckIcon, ClipboardIcon, ShareIcon, LinkIcon, LightBulbIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { AdminBentoCard } from '../ui/admin-bento-card';
+import { SITE } from '../../config/site'
 
 interface ReferralLinkProps {
   affiliateCode: string;
@@ -11,12 +12,12 @@ type LinkKey = 'customer' | 'affiliate' | 'demos';
 export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
   const [copiedKey, setCopiedKey] = useState<LinkKey | null>(null);
 
-  const customerLink = `https://thelostandunfounds.com/?ref=${affiliateCode}`;
-  const affiliateLink = `https://thelostandunfounds.com/become-affiliate?ref=${affiliateCode}`;
+  const customerLink = `${SITE.origin}/?ref=${affiliateCode}`;
+  const affiliateLink = `${SITE.origin}/become-affiliate?ref=${affiliateCode}`;
   // The demos page is the pitch asset affiliates send to prospective clients.
   // /demos calls initAffiliateTracking() itself (it renders outside <Layout>),
   // so ?ref= cookies the visitor to this affiliate the moment they land there.
-  const demosLink = `https://thelostandunfounds.com/demos?ref=${affiliateCode}`;
+  const demosLink = `${SITE.origin}/demos?ref=${affiliateCode}`;
 
   const copyToClipboard = async (text: string, key: LinkKey) => {
     try {

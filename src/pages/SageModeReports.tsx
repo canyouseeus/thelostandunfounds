@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * SAGE MODE Reports - View and manage design experiment reports
  */
@@ -46,7 +47,7 @@ export default function SageModeReports() {
         <title>THE LOST+UNFOUNDS | Admin | Sage Mode Reports</title>
         <meta name="description" content="Internal admin reports surface. Not indexed." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/sage-mode/reports" />
+        <link rel="canonical" href={siteUrl('/sage-mode/reports')} />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

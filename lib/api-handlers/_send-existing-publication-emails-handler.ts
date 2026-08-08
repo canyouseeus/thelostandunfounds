@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 interface PublishedPost {
   id: string
@@ -76,7 +77,7 @@ async function sendPublicationEmail(
       ? `https://${process.env.VERCEL_URL}` 
       : process.env.NEXT_PUBLIC_VERCEL_URL
         ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-        : 'https://www.thelostandunfounds.com'
+        : SITE.origin
     
     const response = await fetch(`${baseUrl}/api/blog/post-published`, {
       method: 'POST',
@@ -176,8 +177,8 @@ export default async function handler(
       if (matchingSubmission && post.author_name) {
         // Build post URL
         const postUrl = post.subdomain
-          ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}`
-          : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`
+          ? `${SITE.origin}/blog/${post.subdomain}/${post.slug}`
+          : `${SITE.origin}/thelostarchives/${post.slug}`
 
         postsToNotify.push({
           post,

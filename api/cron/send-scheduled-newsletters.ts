@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 /**
  * Cron job: Send scheduled newsletters
@@ -56,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Call the newsletter send endpoint internally
         const baseUrl = process.env.VERCEL_URL
             ? `https://${process.env.VERCEL_URL}`
-            : 'https://www.thelostandunfounds.com'
+            : SITE.origin
 
         const sendResponse = await fetch(`${baseUrl}/api/newsletter/send`, {
             method: 'POST',

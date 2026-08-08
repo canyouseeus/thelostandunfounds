@@ -6,15 +6,15 @@ import dotenv from 'dotenv';
 import path from 'path';
 import sharp from 'sharp';
 import { getZohoAuthContext, sendZohoEmail, ensureBannerHtml } from '../../lib/api-handlers/_zoho-email-utils.js';
-import { SITE } from '../../src/config/site'
+import { SITE, siteUrl } from '../../src/config/site'
 // syncGalleryPhotos is dynamically imported inside handleSync to avoid loading
 // googleapis on every cold start (stream/checkout/capture don't need it)
 
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
     name: 'THE LOST+UNFOUNDS',
-    logo: 'https://www.thelostandunfounds.com/brand/banner.png',
-    website: 'https://www.thelostandunfounds.com',
+    logo: siteUrl('/brand/banner.png'),
+    website: SITE.origin,
     colors: {
         background: '#000000',
         text: '#ffffff',
@@ -447,7 +447,7 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'No matching items found' });
         }
 
-        const galleryUrl = `https://www.thelostandunfounds.com/photos/success?token=${orderId}`;
+        const galleryUrl = `${SITE.origin}/photos/success?token=${orderId}`;
         const auth = await getZohoAuthContext();
         await sendZohoEmail({
             auth,
@@ -518,7 +518,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         // no session yet, so the bare gallery URL used to drop them on the site's
         // sign-in modal and ask them to invent a password. /access emails them a
         // link instead and lands them in the gallery.
-        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}/access`;
+        const galleryUrl = `${SITE.origin}/gallery/${library.slug}/access`;
         const auth = await getZohoAuthContext();
 
         const results = {

@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * Design System Preview - Shows proposed UI changes with real data
  */
@@ -150,7 +151,7 @@ export default function DesignSystemPreview() {
         <title>THE LOST+UNFOUNDS | Design System Preview</title>
         <meta name="description" content="Internal design system preview surface. Not indexed." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/designsystem/preview" />
+        <link rel="canonical" href={siteUrl('/designsystem/preview')} />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

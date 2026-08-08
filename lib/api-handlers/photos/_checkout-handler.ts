@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { SITE } from '../../../src/config/site'
 
 type PaymentMethod = 'stripe' | 'strike'
 
@@ -198,7 +199,7 @@ async function createStripeCheckout(args: {
     process.env.SITE_URL ||
     (req.headers['x-forwarded-proto'] && req.headers['host']
       ? `${req.headers['x-forwarded-proto']}://${req.headers['host']}`
-      : 'https://www.thelostandunfounds.com')
+      : SITE.origin)
   ).replace(/\/$/, '')
 
   // Pre-create the order row in pending state so the webhook only has to flip

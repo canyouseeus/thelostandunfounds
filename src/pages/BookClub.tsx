@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * Book Club Page - Collection of user-submitted articles
  * Shows all published articles from user blogs (subdomain blogs)
@@ -159,11 +160,11 @@ export default function BookClub() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | Book Club</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/book-club" />
+        <link rel="canonical" href={siteUrl('/book-club')} />
         <meta name="description" content={description} />
         <meta property="og:title" content="THE LOST+UNFOUNDS | Book Club" />
         <meta property="og:description" content={description} />
-        <meta property="og:url" content="https://www.thelostandunfounds.com/book-club" />
+        <meta property="og:url" content={siteUrl('/book-club')} />
         <meta property="og:type" content="website" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -15,7 +15,7 @@ import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import Shop from './Shop';
 import BookingPage from './BookingPage';
 import EmailSignup from '../components/EmailSignup';
-import { SITE } from '../config/site'
+import { SITE, siteUrl } from '../config/site'
 
 interface PhotoLibrary {
     id: string;
@@ -221,7 +221,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
                         : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}
                 />
-                <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
+                <link rel="canonical" href={isHomepage ? SITE.origin : siteUrl('/gallery')} />
             </Helmet>
 
             {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services

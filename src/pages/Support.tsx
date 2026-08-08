@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * Support Page
  */
@@ -20,7 +21,7 @@ export default function Support() {
       <Helmet>
         <title>THE LOST+UNFOUNDS | Support Center</title>
         <meta name="description" content="Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/support" />
+        <link rel="canonical" href={siteUrl('/support')} />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12 text-center">

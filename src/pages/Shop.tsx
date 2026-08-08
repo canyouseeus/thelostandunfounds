@@ -1,3 +1,4 @@
+import { siteUrl } from '../config/site'
 /**
  * Shop Page
  * Fetches native products from our database
@@ -214,7 +215,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
       <Helmet>
         <title>THE LOST+UNFOUNDS | Shop</title>
         <meta name="description" content="Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/shop" />
+        <link rel="canonical" href={siteUrl('/shop')} />
       </Helmet>
 
       {!hideBanner && <MarketplaceBanner surface="shop" />}

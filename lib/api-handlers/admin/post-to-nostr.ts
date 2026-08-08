@@ -2,8 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { finalizeEvent, nip19 } from 'nostr-tools'
 import WebSocket from 'ws'
+import { SITE } from '../../../src/config/site'
 
-const SITE_URL = 'https://thelostandunfounds.com'
+const SITE_URL = SITE.origin
 
 const RELAYS = [
   'wss://relay.damus.io',

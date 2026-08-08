@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { SITE } from '../../src/config/site'
 
 const STRIKE_API_URL = 'https://api.strike.me'
 
@@ -85,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const affiliateRef = getAffiliateRefFromRequest(req)
         const correlationId = `photo-print-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
-        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
+        const origin = process.env.SITE_URL || SITE.origin
         const assetUrl = `${origin.replace(/\/$/, '')}/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=4096`
 
         const invoiceResponse = await fetch(`${STRIKE_API_URL}/v1/invoices`, {
