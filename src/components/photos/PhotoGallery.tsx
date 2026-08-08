@@ -19,6 +19,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
+import type { Photo } from './types';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
@@ -33,27 +34,6 @@ import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 // cause of a large Supabase egress overage. Users load more on demand.
 const GALLERY_PAGE_SIZE = 150;
 
-interface Photo {
-    id: string;
-    title: string;
-    thumbnail_url: string;
-    google_drive_file_id: string;
-    created_at: string;
-    price?: number;
-    library_id: string;
-    metadata?: {
-        camera_make?: string;
-        camera_model?: string;
-        iso?: number;
-        focal_length?: number;
-        aperture?: number;
-        shutter_speed?: number;
-        date_taken?: string;
-        time?: string;
-        copyright?: string;
-        [key: string]: any;
-    };
-}
 
 interface PhotoLibrary {
     id: string;
@@ -1128,7 +1108,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     thumbnail_url: mapPhoto.thumbnail_url || '',
                                     created_at: '',
                                     library_id: mapPhoto.library_id,
-                                    metadata: mapPhoto.metadata,
+                                    // MapPhoto carries flat EXIF aliases, not the metadata
+                                    // JSONB — rebuild the subset the lightbox can use.
+                                    metadata: {
+                                        camera_model: mapPhoto.camera_model ?? undefined,
+                                        date_taken: mapPhoto.date_taken ?? undefined,
+                                    },
                                 });
                             }
                         }}

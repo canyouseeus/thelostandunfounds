@@ -27,7 +27,7 @@ import { Helmet } from 'react-helmet-async';
 
 const FOURTHWALL_BASE = 'https://storefront-api.fourthwall.com';
 
-interface Product {
+export interface Product {
   id: string;
   title: string;
   description: string;

@@ -293,6 +293,14 @@ class ErrorMonitor {
     }
   }
 
+  /**
+   * Public entry point for callers outside the monitor (e.g. ErrorBoundary)
+   * to record an error. Delegates to the internal logger.
+   */
+  public reportError(type: 'error' | 'warning' | 'unhandledrejection', args: any[]) {
+    this.logError(type, args)
+  }
+
   public getErrorLogs(): ErrorLog[] {
     return [...this.errorLogs];
   }

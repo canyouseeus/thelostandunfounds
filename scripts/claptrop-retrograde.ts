@@ -13,7 +13,7 @@
  */
 
 import { google } from 'googleapis';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -33,7 +33,8 @@ const LIBRARY_FILTER   = (() => { const i = args.indexOf('--library'); return i 
 const SUBJECT_OVERRIDE = (() => { const i = args.indexOf('--subject'); return i !== -1 ? args[i + 1] : undefined; })();
 
 // Clients are initialized lazily inside run() so this module is safe to import
-let supabase: ReturnType<typeof createClient>;
+// Untyped schema: without the generic args every row infers as `never`.
+let supabase: SupabaseClient<any, 'public', any>;
 let drive: ReturnType<typeof google.drive>;
 
 // ─── Log ─────────────────────────────────────────────────────────────────────

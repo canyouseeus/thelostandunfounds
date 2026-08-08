@@ -1,6 +1,7 @@
+import type { Product } from '../pages/Shop'
 // Test products used only in local development (import.meta.env.DEV)
 // Keeps the Shop page working when API routes aren't running.
-export const TEST_PRODUCTS = [
+export const TEST_PRODUCTS: Product[] = [
   {
     id: 'test-hoodie',
     title: 'TL+U Dev Hoodie',
@@ -84,7 +85,7 @@ export const TEST_PRODUCTS = [
     url: '#',
     category: 'prints',
     featured: true,
-    productKind: 'physical',
+    productKind: 'physical' as const,
     fulfillment: 'prodigi',
     prodigiProductId: 'dev-prodigi-product-id',
     prodigiSku: 'GLOBAL-CFPM-16X20',

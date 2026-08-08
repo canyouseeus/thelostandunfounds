@@ -48,7 +48,13 @@ function escapeHtml(s: unknown): string {
 }
 
 /** Load contract + all signers from a signing token, or explain the refusal. */
-async function loadByToken(supabase: ReturnType<typeof getSupabaseAdmin>, token: string) {
+type LoadFailure = { error: string; code: number }
+type LoadSuccess = { signer: any; contract: any; signers: any[] }
+
+async function loadByToken(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  token: string,
+): Promise<LoadFailure | LoadSuccess> {
   const { data: signer } = await supabase
     .from('contract_signers').select('*').eq('token', token).maybeSingle()
 
