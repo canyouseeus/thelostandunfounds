@@ -30,7 +30,7 @@ export async function findOrCreateSkill(
   for (const skill of existingSkills) {
     const skillOps = skill.tags || [];
     const matches = requiredOperations.some(op => 
-      skillOps.some(tag => tag.toLowerCase().includes(op.toLowerCase()))
+      skillOps.some((tag: string) => tag.toLowerCase().includes(op.toLowerCase()))
     );
     
     if (matches) {
@@ -172,7 +172,7 @@ export async function getSkillExample(skillNameOrAlias: string) {
   }
   
   const alias = metadata.aliases?.[0] || metadata.name;
-  const exampleParams = metadata.requiredParams?.reduce((acc, param) => {
+  const exampleParams = metadata.requiredParams?.reduce((acc: Record<string, any>, param: string) => {
     acc[param] = `"${param}-value"`;
     return acc;
   }, {} as Record<string, string>) || {};

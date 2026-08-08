@@ -568,7 +568,7 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="week" tick={{ fill: 'rgba(255,255,255,0.25)', fontSize: 10 }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fill: 'rgba(255,255,255,0.25)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v}`, '']} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v?: number) => [`$${v}`, '']} />
                   <Area type="monotone" dataKey="collected" stroke={PINK} strokeWidth={2} fill="url(#kCollected)" name="Revenue" />
                   <Area type="monotone" dataKey="deposits" stroke={GOLD} strokeWidth={1.5} fill="none" strokeDasharray="4 2" name="Deposits" />
                 </AreaChart>
@@ -1129,7 +1129,7 @@ function DepositsPanel({ deposits, onMarkPaid }: { deposits: Deposit[]; onMarkPa
               <BarChart data={depositAging} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
                 <XAxis dataKey="bracket" tick={{ fill: 'rgba(255,255,255,0.25)', fontSize: 9 }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fill: 'rgba(255,255,255,0.25)', fontSize: 9 }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v}`, '']} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v?: number) => [`$${v}`, '']} />
                 <Bar dataKey="amount" fill={GOLD} radius={[2,2,0,0]} name="Amount" />
               </BarChart>
             </ResponsiveContainer>

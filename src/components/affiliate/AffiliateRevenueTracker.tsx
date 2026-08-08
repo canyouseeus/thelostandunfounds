@@ -362,7 +362,7 @@ function Chart({
             <Tooltip
               contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: 0, fontSize: 12, padding: '8px 12px' }}
               itemStyle={{ color: cfg.color }}
-              formatter={(v: number) => [`${cfg.prefix}${tab === 'earnings' ? v.toFixed(2) : v}`, cfg.label.split(' ·')[0]]}
+              formatter={(v?: number) => [`${cfg.prefix}${tab === 'earnings' ? (v ?? 0).toFixed(2) : (v ?? 0)}`, cfg.label.split(' ·')[0]]}
               labelStyle={{ color: '#888', fontSize: 10, marginBottom: 4 }}
             />
             <Area
