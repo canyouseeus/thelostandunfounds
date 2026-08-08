@@ -18,7 +18,19 @@ grep -rlE "thelostandunfounds|LOST\+UNFOUNDS" src lib api --include="*.ts" --inc
 |---|---|---|
 | Domain `thelostandunfounds` | 140 | 296 |
 | Display name `LOST+UNFOUNDS` | 94 | 203 |
-| **Union** | **168** | **499** |
+| **Union, `src` + `lib` + `api`** | **168** | **499** |
+
+That grep was still too narrow — it only covered `.ts`/`.tsx`. The brand also lives
+outside TypeScript entirely:
+
+| Location | Files | Occurrences | Notes |
+|---|---|---|---|
+| `src` + `lib` + `api` (`.ts`/`.tsx`) | 168 | 499 | |
+| `index.html` | 1 | 21 | Static; includes the full JSON-LD business schema |
+| `scripts/` (`.ts`/`.js`) | 26 | 155 | Pre-render, sitemap, email and admin scripts |
+| **Code total** | **195** | **675** | |
+| `public/` | — | 118 | Mostly generated output + one-off client proposals |
+| `scripts/upload-history.json` | 1 | 3049 | Data log, not code — out of scope |
 
 Distribution of the union: `src/pages` is the largest surface, then `lib/api-handlers`,
 `src/components`, and `api/`.
@@ -50,8 +62,18 @@ Batchable. The risk here is volume and merge conflicts, not difficulty.
   cannot resolve relative URLs, so every link and the banner image must stay absolute.
   `brand/banner.png` appears 11 times. Governed by `brand-email-manager` and
   `email-rendering` skills — read both before touching.
-- **SEO and structured data.** `SEOHead.tsx` is done (reference implementation). The
-  pre-render scripts in `scripts/` also emit brand strings and need the same treatment.
+- **SEO and structured data.** `SEOHead.tsx` is done (reference implementation), but it
+  turns out to cover the smaller half of the site's SEO surface:
+  - **`index.html` (21 occurrences)** carries the `LocalBusiness` + `Photographer` JSON-LD
+    block — business name, `admin@` address, Austin TX locality, `areaServed`, the
+    five-service `hasOfferCatalog`, `priceRange`, Instagram `sameAs`, and a `ReserveAction`
+    booking entry point. It is static HTML and reads no config at all. For a client fork
+    this entire block is wrong, and it is probably the highest-SEO-value markup on the
+    site — a photographer's local-business schema is exactly what earns local search
+    placement. Templating it is a Phase 1 deliverable, not an afterthought.
+  - **`scripts/pre-render-core-pages.ts` (18)** and `pre-render-blog-posts.ts` (12) hold
+    their own copies of the brand. Verified: the pre-rendered `<title>` on `/about` comes
+    from these scripts, not from `SEOHead`.
 - **Legal pages** (`src/pages/docs/Terms.tsx` 7, `Privacy.tsx` 5). These need
   `SITE.legalName`, not `SITE.brandName` — a client's legal entity is not their display
   brand, and getting this wrong in a Terms page is a real problem rather than a cosmetic
@@ -113,9 +135,21 @@ Tier 1 by directory → Tier 2 → Tier 3 individually.
 - [ ] Tier 1 sweep — `src/pages`
 - [ ] Tier 1 sweep — `src/components`
 - [ ] Tier 1 sweep — `lib/` and `api/`
-- [ ] Tier 2 — email templates, pre-render scripts, legal pages
+- [ ] Tier 2 — `index.html` business schema, pre-render scripts, email templates, legal pages
 - [ ] Tier 3 — individually, admin-email identity first
 - [ ] Feature flags (Phase 2)
 
-**Definition of done for Phase 1:** the union grep returns hits only inside
-`src/config/site.ts`.
+**Definition of done for Phase 1:**
+
+```bash
+grep -rE "thelostandunfounds|LOST\+UNFOUNDS" src lib api scripts index.html \
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.html"
+```
+
+returns hits only inside `src/config/site.ts`. Note this check must span `scripts/` and
+`index.html`, not just `src`/`lib`/`api` — restricting it to TypeScript sources is what
+hid a third of the work.
+
+`index.html` cannot import the config at build time as-is; templating it needs either a
+Vite HTML transform or generation from `site.ts` in `prebuild`. Decide which before
+starting Tier 2.
