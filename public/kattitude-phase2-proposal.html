@@ -79,6 +79,28 @@
   }
   .page:last-child{page-break-after:auto;}
 
+  /* ── .page.dense ──────────────────────────────────────────────────
+     A page that runs a little past 11in gets tighter vertical rhythm
+     instead of losing a sentence. Type sizes never change — only the
+     space between blocks — so a dense page still reads as the same
+     document sitting beside a normal one.
+
+     Worth about 60–70px on a typical page. Past that, compressing
+     starts to show: split the page instead and renumber. Never reach
+     for this to cram a page that is 150px over. */
+  .page.dense .pagehead{margin-bottom:12px;}
+  .page.dense p.lede{margin-bottom:14px;}
+  .page.dense p.body{margin-bottom:11px;}
+  .page.dense .rule, .page.dense .rule-soft{margin:11px 0 15px;}
+  .page.dense .subhead{margin:4px 0 10px;}
+  .page.dense ul.list{margin-bottom:12px;}
+  .page.dense ul.list li{margin-bottom:5px;}
+  .page.dense .invest{margin-bottom:14px;}
+  .page.dense .invest th, .page.dense .invest td{padding:11px 0;}
+  .page.dense .compare{margin-bottom:14px;}
+  .page.dense .compare th, .page.dense .compare td{padding:8px 0;}
+  .page.dense .callout{padding:13px 18px;}
+
   .runhead{
     display:flex; justify-content:space-between; align-items:center;
     font-size:8.5px; letter-spacing:.28em; text-transform:uppercase;
@@ -294,6 +316,11 @@
   .flow-content{ padding:10px 14px; font-size:11.5px; line-height:1.6; }
   .flow-content strong{ font-weight:700; color:var(--ink); display:block; margin-bottom:1px; }
   .flow-content span{ color:var(--soft); }
+
+  /* Page 4 stacks three subhead + list groups. After .dense, the gaps between
+     those groups are the only slack left — close them rather than cut a bullet. */
+  .page.dense ul.list{ margin-bottom:9px; }
+  .page.dense ul.list + .subhead{ margin-top:0; }
 </style>
 </head>
 <body>
@@ -306,7 +333,7 @@
       <span class="sep">·</span>
       <span>Kattitude Tattoo Studio Proposal</span>
     </div>
-    <div>Page 1 / 5</div>
+    <div>Page 1 / 6</div>
   </div>
 
   <div class="cover-body">
@@ -379,7 +406,7 @@
 
   <div class="runfoot">
     <div>YOUR INK. YOUR SYSTEM.</div>
-    <div>Page 1 / 5</div>
+    <div>Page 1 / 6</div>
   </div>
 </section>
 
@@ -391,7 +418,7 @@
       <span class="sep">·</span>
       <span>Kattitude Tattoo Studio Proposal</span>
     </div>
-    <div>Page 2 / 5</div>
+    <div>Page 2 / 6</div>
   </div>
 
   <div class="pagehead">
@@ -440,7 +467,7 @@
 
   <div class="runfoot">
     <div>YOUR INK. YOUR SYSTEM.</div>
-    <div>Page 2 / 5</div>
+    <div>Page 2 / 6</div>
   </div>
 </section>
 
@@ -452,7 +479,7 @@
       <span class="sep">·</span>
       <span>Kattitude Tattoo Studio Proposal</span>
     </div>
-    <div>Page 3 / 5</div>
+    <div>Page 3 / 6</div>
   </div>
 
   <div class="pagehead">
@@ -520,19 +547,19 @@
 
   <div class="runfoot">
     <div>YOUR INK. YOUR SYSTEM.</div>
-    <div>Page 3 / 5</div>
+    <div>Page 3 / 6</div>
   </div>
 </section>
 
 <!-- ====================== PAGE 4 — THE ESTIMATION ENGINE ====================== -->
-<section class="page">
+<section class="page dense">
   <div class="runhead">
     <div class="left">
       <span>THE LOST+UNFOUNDS</span>
       <span class="sep">·</span>
       <span>Kattitude Tattoo Studio Proposal</span>
     </div>
-    <div>Page 4 / 5</div>
+    <div>Page 4 / 6</div>
   </div>
 
   <div class="pagehead">
@@ -569,7 +596,7 @@
 
   <div class="runfoot">
     <div>YOUR INK. YOUR SYSTEM.</div>
-    <div>Page 4 / 5</div>
+    <div>Page 4 / 6</div>
   </div>
 </section>
 
@@ -581,7 +608,7 @@
       <span class="sep">·</span>
       <span>Kattitude Tattoo Studio Proposal</span>
     </div>
-    <div>Page 5 / 5</div>
+    <div>Page 5 / 6</div>
   </div>
 
   <div class="pagehead">
@@ -631,7 +658,29 @@
     <div class="v"><strong>Phase 2 launches 4–6 weeks after Phase 1 is delivered and running.</strong> The exact scope and fixed price are confirmed after Phase 1 is live and 2–4 weeks of real usage data is flowing through the system. That window gives us real booking volume, artist pace data from the clock-in system, and a clear picture of scheduling complexity — all of which inform the Phase 2 build scope directly.</div>
   </div>
 
-  <div class="callout" style="margin-top:14px;">
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 5 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 6 — NEXT STEPS ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio Proposal</span>
+    </div>
+    <div>Page 6 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">05 · Next Steps</div>
+    <h2>Four steps, in order.</h2>
+  </div>
+
+  <div class="callout">
     <div class="k">Why a Range, and When It Becomes a Fixed Price</div>
     <div class="v">The $3,000–$5,000 range reflects differences in studio size, artist roster complexity, and booking volume. A studio with 2 artists and a predictable weekly schedule lands closer to $3,000. A multi-artist studio with variable availability and high booking volume sits closer to $5,000. Once Phase 1 is live, we spend two weeks reviewing real patterns together and scope Phase 2 precisely — with a fixed price and fixed timeline agreed before any work begins.</div>
   </div>
@@ -663,7 +712,7 @@
 
   <div class="runfoot">
     <div>YOUR INK. YOUR SYSTEM.</div>
-    <div>Page 5 / 5</div>
+    <div>Page 6 / 6</div>
   </div>
 </section>
 
