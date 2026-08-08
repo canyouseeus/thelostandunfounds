@@ -3,7 +3,9 @@
 How THE LOST+UNFOUNDS platform gets rebranded and deployed for outside clients, and how
 that work gets paid for.
 
-**Status:** planning. Client #1 (Eric, photographer) is the pilot.
+**Status:** planning. Client #1 is the pilot: **Four5 Culture** (Eric), a photography
+business. Currently has no owned domain and effectively no online presence, so the site is
+a new lead channel rather than a replacement for an existing one.
 
 ---
 
@@ -11,7 +13,7 @@ that work gets paid for.
 
 | Term | Value |
 |---|---|
-| Build fee | **$0** for client #1 only. Pilot pricing — the build is the R&D. |
+| Build fee | **$0** for Four5 Culture only. Pilot pricing — the build is the R&D. |
 | Revenue share | **5%** of platform-processed volume |
 | Step-down | Drops to **3%** after **$50,000 cumulative** platform volume |
 | Collection | Stripe Connect application fee — taken automatically at payment |
