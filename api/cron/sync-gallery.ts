@@ -1,11 +1,23 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
     listLibrarySubfolders,
     syncSingleSubfolder,
 } from '../../lib/api-handlers/_photo-sync-utils.js';
 
 const SUBFOLDER_TIME_BUDGET_SECONDS = 230;
+
+// How long a library goes between Google Drive folder listings. Discovery is the
+// expensive half of this job (one Drive round-trip per library), and it only finds
+// something when a folder was added, so it does not belong on the drain cadence.
+const DISCOVERY_INTERVAL_MINUTES = 30;
+
+// A row left in 'syncing' past this is assumed to be from an invocation that died
+// mid-flight — Vercel killed it, the process crashed, or a deploy cut it off. Without
+// this, such a row is invisible to the claim query and never syncs again.
+const STALE_SYNCING_MINUTES = 30;
+
+const ACTIONABLE_STATUSES = ['pending', 'error', 'syncing'];
 
 function isAuthorized(req: VercelRequest): boolean {
     if (process.env.NODE_ENV !== 'production') return true;
@@ -20,6 +32,100 @@ function getSupabase() {
     return createClient(url, key);
 }
 
+function minutesAgo(minutes: number): string {
+    return new Date(Date.now() - minutes * 60_000).toISOString();
+}
+
+type LibraryRow = {
+    slug: string;
+    google_drive_folder_id: string | null;
+    gdrive_folder_id: string | null;
+    last_discovery_at: string | null;
+};
+
+/**
+ * The next subfolder worth working on: anything pending or errored, plus anything
+ * stuck in 'syncing' long enough that its invocation is certainly gone.
+ */
+async function claimNextSubfolder(supabase: SupabaseClient, librarySlugs: string[]) {
+    const staleCutoff = minutesAgo(STALE_SYNCING_MINUTES);
+    const { data, error } = await supabase
+        .from('sync_progress')
+        .select('id, library_slug, subfolder_id, subfolder_name, status')
+        .in('library_slug', librarySlugs)
+        .or(`status.in.(pending,error),and(status.eq.syncing,updated_at.lt.${staleCutoff})`)
+        .order('library_slug', { ascending: true })
+        .order('subfolder_name', { ascending: true, nullsFirst: false })
+        .limit(1);
+    if (error) throw error;
+    return data?.[0] ?? null;
+}
+
+async function countRemaining(supabase: SupabaseClient, librarySlugs: string[]) {
+    const { count } = await supabase
+        .from('sync_progress')
+        .select('*', { count: 'exact', head: true })
+        .in('library_slug', librarySlugs)
+        .in('status', ACTIONABLE_STATUSES);
+    return count ?? 0;
+}
+
+/**
+ * List Drive subfolders for the given libraries and enqueue any that are new.
+ * Only called for libraries whose discovery window has elapsed.
+ */
+async function runDiscovery(supabase: SupabaseClient, libraries: LibraryRow[]) {
+    const report: Array<{ slug: string; error?: string; count: number }> = [];
+
+    for (const library of libraries) {
+        const slug = library.slug;
+        try {
+            const { subfolders, rootPhotoCount } = await listLibrarySubfolders(slug);
+            report.push({ slug, count: subfolders.length });
+
+            const rows = subfolders.map(s => ({
+                library_slug: slug,
+                subfolder_id: s.id,
+                subfolder_name: s.name,
+            }));
+
+            // When photos live at the root with no subfolders, enqueue a sentinel
+            // '__root__' row so they get picked up by the next sync tick.
+            if (rootPhotoCount > 0) {
+                rows.push({ library_slug: slug, subfolder_id: '__root__', subfolder_name: null });
+            }
+
+            if (rows.length > 0) {
+                const { error: upsertErr } = await supabase
+                    .from('sync_progress')
+                    .upsert(rows, {
+                        onConflict: 'library_slug,subfolder_id',
+                        ignoreDuplicates: true,
+                    });
+                if (upsertErr) {
+                    console.error(
+                        `[cron sync-gallery] upsert pending failed for ${slug}:`,
+                        upsertErr.message,
+                    );
+                }
+            }
+
+            // Stamp only on success, so a failed listing is retried next tick
+            // instead of being suppressed for the whole discovery window.
+            await supabase
+                .from('photo_libraries')
+                .update({ last_discovery_at: new Date().toISOString() })
+                .eq('slug', slug);
+        } catch (listErr: any) {
+            const message = listErr?.message || String(listErr);
+            console.error(`[cron sync-gallery] listing subfolders for ${slug} failed:`, message);
+            report.push({ slug, error: message, count: 0 });
+        }
+    }
+
+    return report;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!isAuthorized(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -30,13 +136,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const { data: libraries, error: libErr } = await supabase
             .from('photo_libraries')
-            .select('slug, google_drive_folder_id, gdrive_folder_id')
+            .select('slug, google_drive_folder_id, gdrive_folder_id, last_discovery_at')
             .order('slug', { ascending: true });
         if (libErr) throw libErr;
 
-        const librarySlugs = (libraries ?? [])
-            .filter(l => l.google_drive_folder_id || l.gdrive_folder_id)
-            .map(l => l.slug as string);
+        const syncable = ((libraries ?? []) as LibraryRow[]).filter(
+            l => l.google_drive_folder_id || l.gdrive_folder_id,
+        );
+        const librarySlugs = syncable.map(l => l.slug);
 
         if (librarySlugs.length === 0) {
             return res.status(200).json({
@@ -47,68 +154,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
         }
 
-        const listingReport: Array<{ slug: string; error?: string; count: number }> = [];
-        for (const slug of librarySlugs) {
-            try {
-                const { subfolders, rootPhotoCount } = await listLibrarySubfolders(slug);
-                listingReport.push({ slug, count: subfolders.length });
+        // Drain before discovering. While there is a backlog, discovery cannot tell us
+        // anything we are not already going to act on, so skip the Drive calls entirely.
+        let next = await claimNextSubfolder(supabase, librarySlugs);
+        let discovery: Array<{ slug: string; error?: string; count: number }> = [];
 
-                const rows: Array<{ library_slug: string; subfolder_id: string; subfolder_name: string | null }> = [];
+        if (!next) {
+            const discoveryCutoff = minutesAgo(DISCOVERY_INTERVAL_MINUTES);
+            const due = syncable.filter(
+                l => !l.last_discovery_at || l.last_discovery_at < discoveryCutoff,
+            );
 
-                if (subfolders.length > 0) {
-                    for (const s of subfolders) {
-                        rows.push({ library_slug: slug, subfolder_id: s.id, subfolder_name: s.name });
-                    }
-                }
-
-                // When photos live at the root with no subfolders, enqueue a sentinel
-                // '__root__' row so they get picked up by the next sync tick.
-                if (rootPhotoCount > 0) {
-                    rows.push({ library_slug: slug, subfolder_id: '__root__', subfolder_name: null });
-                }
-
-                if (rows.length === 0) continue;
-
-                const { error: upsertErr } = await supabase
-                    .from('sync_progress')
-                    .upsert(rows, {
-                        onConflict: 'library_slug,subfolder_id',
-                        ignoreDuplicates: true,
-                    });
-                if (upsertErr) {
-                    console.error(`[cron sync-gallery] upsert pending failed for ${slug}:`, upsertErr.message);
-                }
-            } catch (listErr: any) {
-                const message = listErr?.message || String(listErr);
-                console.error(`[cron sync-gallery] listing subfolders for ${slug} failed:`, message);
-                listingReport.push({ slug, error: message, count: 0 });
+            if (due.length === 0) {
+                // Steady state: two reads, no Drive traffic, no writes.
+                return res.status(200).json({
+                    status: 'idle',
+                    message: 'All subfolders synced; no library due for discovery',
+                    libraries_due: 0,
+                    remaining_count: 0,
+                });
             }
+
+            discovery = await runDiscovery(supabase, due);
+            next = await claimNextSubfolder(supabase, librarySlugs);
         }
-
-        const { count: totalCount } = await supabase
-            .from('sync_progress')
-            .select('*', { count: 'exact', head: true })
-            .in('library_slug', librarySlugs);
-
-        const { data: nextRows, error: nextErr } = await supabase
-            .from('sync_progress')
-            .select('id, library_slug, subfolder_id, subfolder_name, status')
-            .in('library_slug', librarySlugs)
-            .in('status', ['pending', 'error'])
-            .order('library_slug', { ascending: true })
-            .order('subfolder_name', { ascending: true, nullsFirst: false })
-            .limit(1);
-        if (nextErr) throw nextErr;
-
-        const next = nextRows?.[0];
 
         if (!next) {
             return res.status(200).json({
                 status: 'complete',
                 message: 'All subfolders synced',
-                total_count: totalCount ?? 0,
                 remaining_count: 0,
-                libraries: listingReport,
+                libraries: discovery,
             });
         }
 
@@ -144,12 +220,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 })
                 .eq('id', next.id);
 
-            const { count: remainingCount } = await supabase
-                .from('sync_progress')
-                .select('*', { count: 'exact', head: true })
-                .in('library_slug', librarySlugs)
-                .in('status', ['pending', 'error', 'syncing']);
-
             return res.status(200).json({
                 status: finalStatus === 'completed' ? 'ok' : 'timed_out',
                 subfolder_synced: {
@@ -161,8 +231,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     tags_created: result.tagsCreated,
                     timed_out: result.timedOut,
                 },
-                remaining_count: remainingCount ?? 0,
-                total_count: totalCount ?? 0,
+                remaining_count: await countRemaining(supabase, librarySlugs),
+                libraries: discovery,
             });
         } catch (syncErr: any) {
             const completedAt = new Date().toISOString();
@@ -181,12 +251,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 syncErr,
             );
 
-            const { count: remainingCount } = await supabase
-                .from('sync_progress')
-                .select('*', { count: 'exact', head: true })
-                .in('library_slug', librarySlugs)
-                .in('status', ['pending', 'error', 'syncing']);
-
             return res.status(200).json({
                 status: 'error',
                 subfolder_synced: {
@@ -195,8 +259,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     name: next.subfolder_name,
                     error: message,
                 },
-                remaining_count: remainingCount ?? 0,
-                total_count: totalCount ?? 0,
+                remaining_count: await countRemaining(supabase, librarySlugs),
+                libraries: discovery,
             });
         }
     } catch (error: any) {
