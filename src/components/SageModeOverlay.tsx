@@ -2,10 +2,15 @@
  * SAGE MODE Overlay — tap anything on the live site, say what should change,
  * and it becomes a GitHub issue that names the source file.
  *
- * There is no control panel. A floating box covers the page you are trying to
- * look at, and it disappeared entirely on full-screen views. The only indicator
- * is the site logo turning gold (see `.sage-brand` in index.css), which rides
- * along with the header and is therefore always wherever the header is.
+ * State shows two ways. The site logo turns gold (see `.sage-brand` in
+ * index.css), and a frosted tile holds a triangle that is gold when armed and
+ * white when idle. The tile is the only control, and it has to exist: while
+ * armed, selection swallows every tap, so without one guaranteed-unswallowed
+ * control there is no way back out — and no way to browse to the page you
+ * actually wanted to annotate.
+ *
+ * The earlier full control panel was removed because it covered the page you
+ * were trying to look at and vanished behind full-screen views.
  *
  * Selection is a document-level click listener in the capture phase rather than
  * a full-screen overlay div. An overlay that swallows pointer events also
@@ -97,8 +102,15 @@ export default function SageModeOverlay() {
   // route changes and reaches the header from any layout.
   useEffect(() => {
     const root = document.documentElement;
-    if (enabled) root.classList.add('sage-mode-on');
-    else root.classList.remove('sage-mode-on');
+    if (enabled) {
+      root.classList.add('sage-mode-on');
+    } else {
+      root.classList.remove('sage-mode-on');
+      // Switching off mid-compose shouldn't strand the composer on screen.
+      setTarget(null);
+      setComment('');
+      setSubmit({ status: 'idle' });
+    }
     return () => root.classList.remove('sage-mode-on');
   }, [enabled]);
 
@@ -165,8 +177,6 @@ export default function SageModeOverlay() {
     if (target) composerRef.current?.focus();
   }, [target]);
 
-  if (!enabled) return null;
-
   const sendRequest = async () => {
     if (!comment.trim() || !target) return;
     setSubmit({ status: 'sending' });
@@ -204,10 +214,40 @@ export default function SageModeOverlay() {
     }
   };
 
+  const isAdmin = isAdminEmail(user?.email || '');
+
   return (
     <>
+      {/* Always-present toggle. Selection swallows every tap while armed, so
+          there has to be one control that never gets swallowed and never
+          scrolls away — otherwise turning SAGE MODE off means hunting for a
+          menu that SAGE MODE has eaten. Admin-only; visitors never see it. */}
+      {isAdmin && !target && (
+        <button
+          data-sage-chrome
+          onClick={toggleSageMode}
+          aria-pressed={enabled}
+          aria-label={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
+          title={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
+          // Frosted tile above the transport bar, matching its dark glass.
+          className="fixed bottom-24 right-4 z-[100000] h-12 w-12 flex items-center justify-center bg-black/60 backdrop-blur-md shadow-lg transition-colors"
+        >
+          {/* Triangle outline — gold when armed, white when idle. */}
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 transition-colors"
+            fill="none"
+            stroke={enabled ? '#FFD700' : '#FFFFFF'}
+            strokeWidth={2}
+            strokeLinejoin="round"
+          >
+            <polygon points="8,5 19,12 8,19" />
+          </svg>
+        </button>
+      )}
+
       {/* Outline of the selected element */}
-      {target && (
+      {enabled && target && (
         <div
           className="fixed z-[99991] pointer-events-none"
           style={{
@@ -223,7 +263,7 @@ export default function SageModeOverlay() {
       )}
 
       {/* Composer */}
-      {target && (
+      {enabled && target && (
         <div
           data-sage-chrome
           className="fixed bottom-4 left-4 right-4 sm:left-auto sm:w-[380px] z-[99999] bg-black/95 border border-yellow-400/50 p-4 shadow-lg"
