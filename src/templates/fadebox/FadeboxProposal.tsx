@@ -30,9 +30,26 @@ const css = `
     display:flex; flex-direction:column;
     overflow:hidden;
     margin:0 auto;
-    border-bottom:1px solid #ededed;
+    border-bottom:1px solid var(--rule-soft);
   }
   @media print{ .fbprop .page{width:8.5in; height:11in; margin:0; border:0;} }
+
+  /* On a phone the Letter margins (0.95in a side) eat half the viewport and the
+     multi-column blocks collapse into single-word columns. Screen only — print
+     keeps the paper geometry above. */
+  @media screen and (max-width:760px){
+    .fbprop .page{ padding:26px 20px; min-height:0; }
+    .fbprop .cover-body{ padding-top:24px; }
+    .fbprop .cover-logo{ width:110px; height:110px; }
+    .fbprop .cover-tag{ margin-bottom:30px; }
+    .fbprop .cover-h1{ font-size:28px; }
+    .fbprop .cover-h1-sub{ margin-bottom:28px; }
+    .fbprop .cover-grid{ grid-template-columns:1fr; gap:22px; margin-bottom:28px; }
+    .fbprop .cover-dates{ flex-direction:column; gap:16px; }
+    .fbprop .pagehead h2{ font-size:24px; }
+    .fbprop .stat-row{ grid-template-columns:1fr 1fr; }
+    .fbprop .sign{ grid-template-columns:1fr; gap:26px; }
+  }
   .fbprop .page:last-child{page-break-after:auto;}
 
   .fbprop .runhead{
@@ -48,7 +65,9 @@ const css = `
     text-align:center; padding-top:0.5in;
   }
   .fbprop .cover-logo{ width:150px; height:150px; margin-bottom:22px; display:flex; align-items:center; justify-content:center; }
-  .fbprop .cover-logo img{ width:100%; height:100%; object-fit:contain; }
+  /* logo.png is white artwork — inverted so it reads on the white paper,
+     matching public/proposal.css. Without this the cover mark is invisible. */
+  .fbprop .cover-logo img{ width:100%; height:100%; object-fit:contain; filter:invert(1); }
   .fbprop .cover-brand{ font-size:13px; letter-spacing:.42em; text-transform:uppercase; font-weight:800; margin-bottom:4px; }
   .fbprop .cover-tag{ font-size:10px; letter-spacing:.32em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:50px; }
   .fbprop .cover-label{ font-size:9px; letter-spacing:.36em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:10px; }
@@ -160,9 +179,9 @@ export default function FadeboxProposal() {
             </div>
 
             <div className="cover-dates">
-              <div className="d">Proposal Date<span>July 19, 2026</span></div>
+              <div className="d">Proposal Date<span>August 8, 2026</span></div>
               <div className="d">Valid Through<span>November 30, 2026</span></div>
-              <div className="d">15% Early Rate<span>Commit by Aug 19</span></div>
+              <div className="d">15% Early Rate<span>Commit by Sept 8</span></div>
             </div>
           </div>
           <div className="runfoot"><div>Sharpest fades in Austin · Booked in house</div><div>Page 1 / 3</div></div>
@@ -197,7 +216,7 @@ export default function FadeboxProposal() {
             <li><strong>A custom black-and-white redesign</strong> — <span className="lite">your brand colors, done right: sharp, premium, mobile-first.</span></li>
             <li><strong>One booking system for every barber</strong> — <span className="lite">today it's a patchwork: some on Booksy, some on Squire, and Daniel through an Instagram link that's currently broken — a booked-out barber you can't reach online. One flow puts all 4 studios and every barber on your own site: no redirects, no dead links, no lost customers.</span></li>
             <li><strong>Google reviews — front and center, and growing</strong> — <span className="lite">a live marquee of your best reviews across the page, plus an automatic review request after every visit so each barber's Google presence keeps building — including the ones starting from zero today.</span></li>
-            <li><strong>All four studios, one flow</strong> — <span className="lite">Triangle, Off-5th, Box Boyz &amp; Studio in a single switcher — with San Antonio ready to flip on the day it opens.</span></li>
+            <li><strong>All four studios, one flow</strong> — <span className="lite">Triangle, Off-5th, Box Boyz &amp; Studio in a single switcher — with San Antonio ready to flip the day it opens, for a flat setup fee rather than another build.</span></li>
             <li><strong>Owner dashboard &amp; real analytics</strong> — <span className="lite">sales, bookings, barber leaderboard and chair utilization across every studio in one screen — the numbers you can't get while barbers are scattered across apps. Open another shop and it just appears.</span></li>
             <li><strong>Instant confirmations &amp; no-show protection</strong> — <span className="lite">text confirmations, card-on-file, easy rebooking — you keep the traffic, data, and brand.</span></li>
           </ul>
@@ -229,17 +248,24 @@ export default function FadeboxProposal() {
             <tbody>
               <tr>
                 <td className="item">Phase&nbsp;1 · Redesign + In-House Booking Build
-                  <small>Full black-and-white redesign, barber-first booking across all 4 studios (replaces Booksy), Google reviews integration, owner dashboard, San Antonio-ready, 30-day post-launch support.</small>
+                  <small>Full black-and-white redesign, barber-first booking across all 4 studios and 26 barbers (replaces Booksy and Squire), Google reviews integration, owner dashboard with per-studio reporting, 30-day post-launch support.</small>
                 </td>
                 <td className="freq">One-time</td>
-                <td className="price">$4,500<small>$3,825 if you commit by Aug 19</small></td>
+                <td className="price">$6,000<small>$5,100 if you commit by Sept 8</small></td>
               </tr>
               <tr>
                 <td className="item">Phase&nbsp;2 · Hosting &amp; Maintenance Retainer
-                  <small>Keeps the site and booking live, integrations healthy, and covers minor tweaks. Does NOT include new features.</small>
+                  <small>Keeps the site and booking live, integrations healthy, and covers minor tweaks. Billed per studio, so it tracks the business rather than a fixed guess. Does NOT include new features.</small>
                 </td>
                 <td className="freq">Monthly</td>
-                <td className="price">$400/mo<small>3-mo min · cancel anytime after</small></td>
+                <td className="price">$150/studio<small>$600/mo at 4 · 3-mo min</small></td>
+              </tr>
+              <tr>
+                <td className="item">New Studio Onboarding (San Antonio onward)
+                  <small>Stands a new location up inside the existing system — barbers, chairs, hours, services, reporting. No rebuild, no second platform: it's live the day you open the doors.</small>
+                </td>
+                <td className="freq">Per studio</td>
+                <td className="price">$500<small>from studio #5</small></td>
               </tr>
               <tr>
                 <td className="item">New Features (when you want them)
@@ -249,20 +275,20 @@ export default function FadeboxProposal() {
                 <td className="price">From $300<small>quoted before work starts</small></td>
               </tr>
               <tr className="total">
-                <td className="item">Move by Aug 19 — 15% off Phase 1</td>
+                <td className="item">Move by Sept 8 — 15% off Phase 1</td>
                 <td className="freq">Locked-in rate</td>
-                <td className="price">$3,825<small>was $4,500</small></td>
+                <td className="price">$5,100<small>was $6,000</small></td>
               </tr>
             </tbody>
           </table>
 
           <div className="callout">
             <div className="k">The 15% is yours if you move this month</div>
-            <div className="v">Say the word by <strong style={{ color: 'var(--ink)' }}>August 19</strong> and Phase&nbsp;1 holds at <strong style={{ color: 'var(--ink)' }}>$3,825</strong> — even if you'd rather we don't start building until San Antonio is open. From there it stays light on you: a short kickoff, one review before launch, and <strong style={{ color: 'var(--ink)' }}>you stay as involved as you feel you need to be</strong>. Lock the rate now, choose the kickoff date later.</div>
+            <div className="v">Say the word by <strong style={{ color: 'var(--ink)' }}>September 8</strong> and Phase&nbsp;1 holds at <strong style={{ color: 'var(--ink)' }}>$5,100</strong> — even if you'd rather we don't start building until San Antonio is open. From there it stays light on you: a short kickoff, one review before launch, and <strong style={{ color: 'var(--ink)' }}>you stay as involved as you feel you need to be</strong>. Lock the rate now, choose the kickoff date later.</div>
           </div>
 
           <p className="body" style={{ marginTop: '18px' }}>
-            <strong>Acceptance.</strong> No rush — this stands through <strong>November&nbsp;30</strong>, and with the opening on your plate we mean that. To hold the 15%, just reply <em>"approved"</em> by August&nbsp;19; we'll send the deposit and pencil in a kickoff for whenever you're ready. 50% starts the build, the balance is due at launch, and you're live within three weeks of kickoff. Fadebox owns the site, the code, and every bit of customer and booking data — export it any time.
+            <strong>Acceptance.</strong> No rush — this stands through <strong>November&nbsp;30</strong>, and with the opening on your plate we mean that. To hold the 15%, just reply <em>"approved"</em> by September&nbsp;8; we'll send the deposit and pencil in a kickoff for whenever you're ready. 50% starts the build, the balance is due at launch, and you're live within three weeks of kickoff. Fadebox owns the site, the code, and every bit of customer and booking data — export it any time.
           </p>
 
           <div className="sign">
@@ -270,7 +296,7 @@ export default function FadeboxProposal() {
               <div className="k">For THE LOST AND UNFOUNDS LLC.</div>
               <div className="line"></div>
               <div className="who">Joshua Greene</div>
-              <div className="role">Founder · July 19, 2026</div>
+              <div className="role">Founder · August 8, 2026</div>
             </div>
             <div className="col">
               <div className="k">For Fadebox Barbershop</div>
