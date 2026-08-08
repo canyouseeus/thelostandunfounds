@@ -30,9 +30,26 @@ const css = `
     display:flex; flex-direction:column;
     overflow:hidden;
     margin:0 auto;
-    border-bottom:1px solid #ededed;
+    border-bottom:1px solid var(--rule-soft);
   }
   @media print{ .fbprop .page{width:8.5in; height:11in; margin:0; border:0;} }
+
+  /* On a phone the Letter margins (0.95in a side) eat half the viewport and the
+     multi-column blocks collapse into single-word columns. Screen only — print
+     keeps the paper geometry above. */
+  @media screen and (max-width:760px){
+    .fbprop .page{ padding:26px 20px; min-height:0; }
+    .fbprop .cover-body{ padding-top:24px; }
+    .fbprop .cover-logo{ width:110px; height:110px; }
+    .fbprop .cover-tag{ margin-bottom:30px; }
+    .fbprop .cover-h1{ font-size:28px; }
+    .fbprop .cover-h1-sub{ margin-bottom:28px; }
+    .fbprop .cover-grid{ grid-template-columns:1fr; gap:22px; margin-bottom:28px; }
+    .fbprop .cover-dates{ flex-direction:column; gap:16px; }
+    .fbprop .pagehead h2{ font-size:24px; }
+    .fbprop .stat-row{ grid-template-columns:1fr 1fr; }
+    .fbprop .sign{ grid-template-columns:1fr; gap:26px; }
+  }
   .fbprop .page:last-child{page-break-after:auto;}
 
   .fbprop .runhead{
@@ -48,7 +65,9 @@ const css = `
     text-align:center; padding-top:0.5in;
   }
   .fbprop .cover-logo{ width:150px; height:150px; margin-bottom:22px; display:flex; align-items:center; justify-content:center; }
-  .fbprop .cover-logo img{ width:100%; height:100%; object-fit:contain; }
+  /* logo.png is white artwork — inverted so it reads on the white paper,
+     matching public/proposal.css. Without this the cover mark is invisible. */
+  .fbprop .cover-logo img{ width:100%; height:100%; object-fit:contain; filter:invert(1); }
   .fbprop .cover-brand{ font-size:13px; letter-spacing:.42em; text-transform:uppercase; font-weight:800; margin-bottom:4px; }
   .fbprop .cover-tag{ font-size:10px; letter-spacing:.32em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:50px; }
   .fbprop .cover-label{ font-size:9px; letter-spacing:.36em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:10px; }

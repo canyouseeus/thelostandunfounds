@@ -79,7 +79,7 @@ const DEMOS: Demo[] = [
     links: [
       { label: 'The website', href: '/fadebox-preview' },
       { label: 'The owner dashboard', href: '/fadebox-preview/dashboard' },
-      { label: 'The proposal', href: '/fadebox-preview/proposal', note: 'Prints to PDF' },
+      { label: 'The proposal', href: '/fadebox-proposal.pdf', external: true, note: 'PDF' },
     ],
   },
   {
