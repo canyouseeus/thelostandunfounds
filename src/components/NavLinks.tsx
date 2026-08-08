@@ -92,7 +92,7 @@ export default function NavLinks({
             <Link to="/events" className="menu-item" onClick={onLinkClick}>
                 EVENTS
             </Link>
-            <Link to="/?view=services" className="menu-item" onClick={onLinkClick}>
+            <Link to="/services" className="menu-item" onClick={onLinkClick}>
                 SERVICES
             </Link>
 

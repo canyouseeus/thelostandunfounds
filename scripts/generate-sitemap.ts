@@ -148,6 +148,14 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
+  <!-- Services — the hire-us page. Highest-priority commercial URL on the site. -->
+  <url>
+    <loc>${baseUrl}/services</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- Capabilities -->
   <url>
     <loc>${baseUrl}/capabilities</loc>

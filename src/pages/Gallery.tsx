@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -160,7 +160,12 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     // Read initial viewMode from `?view=shop|services|gallery`. This is how the
     // SERVICES nav link deep-links into the services tab on the homepage.
     const [searchParams] = useSearchParams();
+    const location = useLocation();
+    // /services is the canonical, indexable URL for the services view. The
+    // ?view= params below are kept so existing links and emails still work.
+    const isServicesRoute = location.pathname.replace(/\/$/, '') === '/services';
     const initialView = (() => {
+        if (isServicesRoute) return 'services';
         const v = searchParams.get('view');
         // support legacy ?view=booking so old links still work
         if (v === 'shop' || v === 'gallery') return v;
@@ -209,18 +214,22 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
-                {isHomepage ? (
+                {isServicesRoute ? (
+                    <title>THE LOST+UNFOUNDS | Austin Photography &amp; Web Design</title>
+                ) : isHomepage ? (
                     <title>THE LOST+UNFOUNDS</title>
                 ) : (
                     <title>THE LOST+UNFOUNDS | The Gallery</title>
                 )}
                 <meta
                     name="description"
-                    content={isHomepage
+                    content={isServicesRoute
+                        ? "Austin photography and web design. Airbnb and short-term rental shoots from $195, event coverage from $600, and custom small business websites from $1,500."
+                        : isHomepage
                         ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
                         : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}
                 />
-                <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
+                <link rel="canonical" href={isServicesRoute ? 'https://www.thelostandunfounds.com/services' : isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
             {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
