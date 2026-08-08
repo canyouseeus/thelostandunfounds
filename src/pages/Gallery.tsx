@@ -80,6 +80,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         // subscribe prompt — which is what it did to a real client. Read the query
         // string directly rather than useSearchParams: this is a mount-time
         // decision, and the hook is declared further down the component.
+        // /services is the same arrival with intent, just as a path instead of a
+        // query param — a visitor landing there from search came to see pricing.
+        if (window.location.pathname.replace(/\/$/, '') === '/services') return;
         if (new URLSearchParams(window.location.search).get('view')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
@@ -174,6 +177,25 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     })();
     const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'services'>(initialView);
 
+    // Tab clicks swap the view in place — they must never navigate, or the shop's
+    // silent preload is thrown away and the page remounts under the user. So the
+    // address bar is updated directly instead of through the router: replaceState
+    // leaves the router's own location untouched, so nothing re-renders.
+    //
+    // Each URL below reproduces exactly what is on screen if it is reloaded or
+    // shared — /?view=shop returns the embedded shop, not the standalone /shop
+    // page, which is a different layout.
+    //
+    // replace, not push: the back button keeps leaving the page as it does today
+    // rather than stepping back through tabs. A pushed entry would also desync,
+    // since popstate moves the router but not this component's state.
+    const selectView = (next: 'gallery' | 'shop' | 'services') => {
+        setViewMode(next);
+        if (!isHomepage) return;
+        const url = next === 'services' ? '/services' : next === 'shop' ? '/?view=shop' : '/';
+        window.history.replaceState(window.history.state, '', url);
+    };
+
     // Scroll to top when returning from an inline gallery back to the grid
     const prevActiveGallery = useRef<string | null>(null);
     useEffect(() => {
@@ -244,7 +266,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-center gap-8 sm:gap-12 pb-2 mb-0">
                             <button
-                                onClick={() => setViewMode('gallery')}
+                                onClick={() => selectView('gallery')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'gallery' ? "text-white" : "text-white/30 hover:text-white/60"
@@ -259,7 +281,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                 )}
                             </button>
                             <button
-                                onClick={() => setViewMode('shop')}
+                                onClick={() => selectView('shop')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'shop' ? "text-white" : "text-white/30 hover:text-white/60"
@@ -274,7 +296,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                 )}
                             </button>
                             <button
-                                onClick={() => setViewMode('services')}
+                                onClick={() => selectView('services')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'services' ? "text-white" : "text-white/30 hover:text-white/60"
