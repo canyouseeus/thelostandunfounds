@@ -228,7 +228,7 @@ async function preRenderCorePages() {
                 const FOCUS: Record<string, string[]> = {
                     'services/airbnb-photography': ['Airbnb & Short-Term Rental Photography'],
                     'services/web-design': ['Small Business Website Design'],
-                    'services/video': ['Event Photography & Video', 'Brand Content Days'],
+                    'services/video': ['Short-Form Video & Brand Reels', 'Event Photography & Video', 'Brand Content Days'],
                 };
                 const allOfferings = [
                     {
@@ -242,6 +242,12 @@ async function preRenderCorePages() {
                         price: '1500',
                         summary: 'Website design and development for Austin small businesses, artists, and brands. Mobile responsive, SEO optimized.',
                         detail: 'Starter $1,500 (5–8 pages) · Professional $3,500 (custom branding, admin dashboard, booking system, SEO) · Agency $6,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $150–300/mo.',
+                    },
+                    {
+                        name: 'Short-Form Video & Brand Reels',
+                        price: '450',
+                        summary: 'Standalone video for Austin brands — vertical reels, hero brand films, and full video content days.',
+                        detail: 'Reel Pack $450 (2 hrs, 3 reels, 5-day delivery) · Brand Video $1,200 (4 hrs, one 60-90s hero plus 3 cutdowns) · Video Content Day $2,000 (8 hrs, hero plus 6-8 reels) · Monthly Reel Retainer $900/mo for 4 reels.',
                     },
                     {
                         name: 'Event Photography & Video',
