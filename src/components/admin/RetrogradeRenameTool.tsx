@@ -16,7 +16,7 @@
  * same library has returned, and any change to the selection clears that
  * permission — so "apply" can never act on a preview you didn't see.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -32,34 +32,80 @@ interface RenameResult {
     authError?: string;
 }
 
-export default function RetrogradeRenameTool({ librarySlug, libraryName }: { librarySlug: string; libraryName: string }) {
+export default function RetrogradeRenameTool({ librarySlug, libraryName }: { librarySlug?: string; libraryName: string }) {
+    // No slug means every library. The endpoint already worked this way — it
+    // filters by slug only when one is given — but the UI only ever offered
+    // one gallery at a time, which turned a single job into eight.
+    const scopeKey = librarySlug ?? '__all__';
     const [busy, setBusy] = useState<'preview' | 'apply' | null>(null);
     const [result, setResult] = useState<RenameResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     // Set only by a completed dry run, and only for the library it ran against.
     const [previewedSlug, setPreviewedSlug] = useState<string | null>(null);
 
+    // Cumulative totals across passes, and a cancel flag the loop checks.
+    const [totalRenamed, setTotalRenamed] = useState(0);
+    const [passes, setPasses] = useState(0);
+    const cancelled = useRef(false);
+
+    /**
+     * vercel.json allows this function 300s. The UI was asking for 50, so every
+     * pass did a sixth of the work it could and handed the rest back to whoever
+     * was holding the phone. 270 leaves headroom under the platform limit.
+     */
+    const TIME_BUDGET_SECONDS = 270;
+    /** Backstop so a bug cannot spin forever against the Drive API. */
+    const MAX_PASSES = 60;
+
+    const callRename = async (dryRun: boolean): Promise<RenameResult> => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('Session expired — sign in again.');
+        const res = await fetch('/api/admin/retrograde-rename', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ ...(librarySlug ? { librarySlug } : {}), dryRun, timeBudgetSeconds: TIME_BUDGET_SECONDS }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`);
+        return json;
+    };
+
     const run = async (dryRun: boolean) => {
         setBusy(dryRun ? 'preview' : 'apply');
         setError(null);
+        cancelled.current = false;
+        if (!dryRun) { setTotalRenamed(0); setPasses(0); }
+
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) throw new Error('Session expired — sign in again.');
+            if (dryRun) {
+                const json = await callRename(true);
+                setResult(json);
+                setPreviewedSlug(scopeKey);
+                return;
+            }
 
-            const res = await fetch('/api/admin/retrograde-rename', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify({ librarySlug, dryRun, timeBudgetSeconds: 50 }),
-            });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`);
+            // Keep going until the library is done. A pass ends at the function's
+            // time budget, not at the end of the work, so stopping after one pass
+            // just moved the loop into the operator's thumb.
+            let carried = 0;
+            for (let i = 0; i < MAX_PASSES; i++) {
+                const json = await callRename(false);
+                carried += json.renamed;
+                setResult({ ...json, renamed: carried });
+                setTotalRenamed(carried);
+                setPasses(i + 1);
 
-            setResult(json);
-            if (dryRun) setPreviewedSlug(librarySlug);
-            else setPreviewedSlug(null); // a commit consumes its approval
+                if (json.authError) break;          // credentials — retrying cannot help
+                if (json.remaining === 0) break;    // done
+                if (cancelled.current) break;
+                // No progress and nothing failed means the run is stuck rather
+                // than slow; another identical pass would not change that.
+                if (json.renamed === 0 && json.failed === 0) break;
+            }
+            setPreviewedSlug(null); // a commit consumes its approval
         } catch (err: any) {
             setError(err?.message || 'Rename failed');
         } finally {
@@ -94,7 +140,7 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
         } finally { setBusy(null); }
     };
 
-    const canApply = previewedSlug === librarySlug && !!result?.dryRun && result.skipped > 0;
+    const canApply = previewedSlug === scopeKey && !!result?.dryRun && result.skipped > 0;
 
     return (
         <div className="bg-white/[0.03] p-6">
@@ -130,10 +176,26 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
             {busy && (
                 <div className="flex items-center gap-2 bg-white/[0.03] px-4 py-3 mb-4">
                     <ArrowPathIcon className="w-4 h-4 text-white/40 animate-spin shrink-0" />
-                    <p className="text-white/60 text-xs">
-                        {busy === 'apply' ? 'Renaming' : 'Working'} — {elapsed}s elapsed.
-                        {busy === 'apply' && ' Each pass runs up to 50s, then reports back.'}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-white/60 text-xs">
+                            {busy === 'apply'
+                                ? `Renaming — ${totalRenamed} done, pass ${passes + 1}, ${elapsed}s elapsed.`
+                                : `Working — ${elapsed}s elapsed.`}
+                        </p>
+                        {busy === 'apply' && (
+                            <p className="text-white/30 text-[11px] mt-1">
+                                Runs to completion on its own. A pass ends at the function's 270s limit, then the next one starts.
+                            </p>
+                        )}
+                    </div>
+                    {busy === 'apply' && (
+                        <button
+                            onClick={() => { cancelled.current = true; }}
+                            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors shrink-0"
+                        >
+                            Stop after this pass
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -169,20 +231,21 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                 </div>
             )}
 
-            {result?.skippedUnattributed?.includes(librarySlug) && (
+            {!!result?.skippedUnattributed?.length && (
                 <div className="flex items-start gap-2 bg-amber-500/10 px-4 py-3 mb-4">
                     <ExclamationTriangleIcon className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                     <div>
                         <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">No photographer set</p>
                         <p className="text-white/50 text-xs leading-relaxed">
-                            Refusing to rename. The handle in a filename is a photographer credit, and renaming
-                            without one would credit the wrong person. Set this library's photographer handle first.
+                            Refusing to rename {result?.skippedUnattributed?.join(', ')}. The handle in a filename is a
+                            photographer credit, and renaming without one would credit the wrong person. Set the
+                            photographer handle first. Any other library in this run was processed normally.
                         </p>
                     </div>
                 </div>
             )}
 
-            {result && !result.skippedUnattributed?.includes(librarySlug) && (
+            {result && !result.skippedUnattributed?.length && (
                 <div className="space-y-4">
                     <div className="flex flex-wrap gap-6">
                         <Stat label={result.dryRun ? 'Would rename' : 'Renamed'} value={result.dryRun ? result.skipped : result.renamed} />
