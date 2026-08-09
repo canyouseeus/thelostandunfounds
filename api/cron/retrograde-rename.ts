@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const done = result.remaining === 0;
         console.log(
-            `[cron/retrograde] renamed=${result.renamed} failed=${result.failed} remaining=${result.remaining}` +
+            `[cron/retrograde] renamed=${result.renamed} failed=${result.failed} blocked=${result.blocked} remaining=${result.remaining}` +
             (result.skippedUnattributed.length ? ` skippedUnattributed=${result.skippedUnattributed.join(',')}` : '') +
             (done ? ' — nothing left to do' : ''),
         );
