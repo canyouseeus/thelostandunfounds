@@ -25,6 +25,8 @@ export interface RetrogradeOptions {
 export interface RetrogradeResult {
     renamed: number;
     skipped: number;
+    /** Files Drive permanently refuses to let us rename. Excluded from future runs. */
+    blocked: number;
     failed: number;
     remaining: number;
     dryRun: boolean;
@@ -64,10 +66,19 @@ export class DriveAuthError extends Error {
 
 const AUTH_FAILURES = ['invalid_client', 'invalid_grant', 'unauthorized_client', 'invalid_token'];
 
-async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: string, newName: string): Promise<boolean> {
+/**
+ * `blocked` means Drive will never accept this write — the file is gone or the
+ * account has read-only access to it. Retrying it is not "retry-safe", it is an
+ * infinite loop: the file stays outside the current naming scheme, so it comes
+ * back in the next run's work set forever. `transient` is the genuinely
+ * retryable case.
+ */
+type RenameOutcome = 'ok' | 'blocked' | 'transient';
+
+async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: string, newName: string): Promise<RenameOutcome> {
     try {
         await drive.files.update({ fileId, requestBody: { name: newName } });
-        return true;
+        return 'ok';
     } catch (err: any) {
         const msg = String(err?.message || '');
         const authReason = AUTH_FAILURES.find(a => msg.includes(a));
@@ -83,11 +94,11 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
         const reason = err?.errors?.[0]?.reason;
         if (code === 403 || code === 404) {
             console.warn(`[retrograde] no write access ${fileId}: ${reason || code}`);
-            return false;
+            return 'blocked';
         }
         // Transient — let caller count as failed, retry-safe on next run
         console.error(`[retrograde] rename ${fileId} failed:`, err?.message);
-        return false;
+        return 'transient';
     }
 }
 
@@ -95,7 +106,7 @@ async function processLibrary(
     supabase: SupabaseClient,
     drive: ReturnType<typeof google.drive>,
     library: { id: string; slug: string; photographer_handle: string | null },
-    stats: { renamed: number; skipped: number; failed: number; remaining: number },
+    stats: { renamed: number; skipped: number; blocked: number; failed: number; remaining: number },
     deadline: number,
     dryRun: boolean,
     hardPhotoCap: number | null,
@@ -113,7 +124,14 @@ async function processLibrary(
     // Anything not already in the current SEO prefix gets renamed — that
     // includes both raw camera filenames and legacy `@tlau_` files that
     // pre-dated the brand+IG prefix.
-    const toRename = (photos as any[]).filter(p => !isCurrentName(p.title, library.photographer_handle ?? undefined));
+    // A file Drive has already refused to let us write is not pending work. It
+    // can never satisfy isCurrentName(), so without this it would be re-attempted
+    // on every single run for the life of the cron.
+    const toRename = (photos as any[]).filter(p =>
+        !isCurrentName(p.title, library.photographer_handle ?? undefined)
+        && !p.metadata?.rename_blocked
+    );
+    stats.blocked += (photos as any[]).filter(p => p.metadata?.rename_blocked).length;
     stats.remaining += toRename.length;
     if (toRename.length === 0) return;
 
@@ -173,8 +191,23 @@ async function processLibrary(
             continue;
         }
 
-        const driveOk = await renameInDrive(drive, photo.google_drive_file_id, newFilename);
-        if (!driveOk) {
+        const outcome = await renameInDrive(drive, photo.google_drive_file_id, newFilename);
+        if (outcome === 'blocked') {
+            // Persist the refusal so this file leaves the work set permanently.
+            // Stored on metadata rather than a new column so this needs no
+            // migration, and stays visible to anyone inspecting the row.
+            const { error: markErr } = await supabase
+                .from('photos')
+                .update({ metadata: { ...meta, rename_blocked: 'drive_no_write_access' } })
+                .eq('id', photo.id);
+            if (markErr) {
+                console.error(`[retrograde] could not mark ${photo.id} blocked:`, markErr.message);
+            }
+            stats.blocked++;
+            stats.remaining--;
+            continue;
+        }
+        if (outcome === 'transient') {
             stats.failed++;
             continue;
         }
@@ -228,7 +261,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     if (error || !libraries) throw new Error(`Failed to load libraries: ${error?.message}`);
 
     const deadline = Date.now() + ((opts.timeBudgetSeconds ?? 270) * 1000);
-    const stats = { renamed: 0, skipped: 0, failed: 0, remaining: 0 };
+    const stats = { renamed: 0, skipped: 0, blocked: 0, failed: 0, remaining: 0 };
     const librariesProcessed: string[] = [];
     const preview: Array<{ from: string; to: string }> = [];
     const skippedUnattributed: string[] = [];
@@ -265,7 +298,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             if (err instanceof DriveAuthError) {
                 console.error(`[retrograde] run aborted: ${err.message}`);
                 return {
-                    renamed: stats.renamed, skipped: stats.skipped, failed: stats.failed,
+                    renamed: stats.renamed, skipped: stats.skipped, blocked: stats.blocked, failed: stats.failed,
                     remaining: stats.remaining, dryRun: opts.dryRun ?? false,
                     librariesProcessed, preview, skippedUnattributed,
                     authError: err.message,
@@ -278,6 +311,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     return {
         renamed: stats.renamed,
         skipped: stats.skipped,
+        blocked: stats.blocked,
         failed: stats.failed,
         remaining: stats.remaining,
         dryRun: opts.dryRun ?? false,
