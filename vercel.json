@@ -43,7 +43,7 @@
     },
     {
       "path": "/api/cron/sync-gallery",
-      "schedule": "*/2 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/retrograde-rename",
