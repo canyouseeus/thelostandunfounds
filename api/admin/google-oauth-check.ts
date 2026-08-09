@@ -22,7 +22,18 @@ import { requireAdminUser } from '../../lib/api-handlers/_gallery-admin-ops.js';
 const EXPECTED_CLIENT_ID = '817758642642-j65tb1kscmmaiaocg5jg1qc4qbu4rsbt.apps.googleusercontent.com';
 
 const fingerprint = (v: string | undefined) =>
-    v ? { present: true, length: v.length, endsWith: v.slice(-4) } : { present: false, length: 0, endsWith: null };
+    v
+        ? {
+            present: true,
+            length: v.length,
+            // GOCSPX- is Google's public prefix for a client secret, not part of
+            // the entropy, so showing it is safe and tells us the value is the
+            // right shape rather than, say, a pasted client id.
+            startsWith: v.slice(0, 7),
+            endsWith: v.slice(-4),
+            hasWhitespace: v !== v.trim(),
+        }
+        : { present: false, length: 0, startsWith: null, endsWith: null, hasWhitespace: false };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST' && req.method !== 'GET') {
@@ -37,6 +48,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
     const report: Record<string, unknown> = {
+        // Which deployment answered, and which environment's variables it holds.
+        // A secret that "was updated" but still reads the same value means the
+        // function never received it — set on the wrong environment, or a
+        // redeploy that reused an earlier build's env snapshot. Without this
+        // the report cannot tell those apart from a genuinely wrong secret.
+        deployment: {
+            vercelEnv: process.env.VERCEL_ENV || null,
+            commitSha: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null,
+            deploymentId: process.env.VERCEL_DEPLOYMENT_ID || null,
+            region: process.env.VERCEL_REGION || null,
+        },
         clientId: clientId || null,
         clientIdMatchesRepoScript: clientId === EXPECTED_CLIENT_ID,
         expectedClientIdFromRepo: EXPECTED_CLIENT_ID,
