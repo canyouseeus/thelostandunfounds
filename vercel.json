@@ -23,6 +23,9 @@
     "api/cron/sync-gallery.ts": {
       "maxDuration": 250
     },
+    "api/cron/retrograde-rename.ts": {
+      "maxDuration": 300
+    },
     "api/admin/sync-library.ts": {
       "maxDuration": 300
     },
@@ -41,6 +44,10 @@
     {
       "path": "/api/cron/sync-gallery",
       "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/retrograde-rename",
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/send-scheduled-newsletters",
