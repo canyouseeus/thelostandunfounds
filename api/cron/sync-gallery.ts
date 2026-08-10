@@ -46,6 +46,12 @@ type LibraryRow = {
 /**
  * The next subfolder worth working on: anything pending or errored, plus anything
  * stuck in 'syncing' long enough that its invocation is certainly gone.
+ *
+ * Ordered least-recently-attempted first. Alphabetical order starves the queue:
+ * one row that fails every time keeps sorting to the front and is re-claimed on
+ * every run, so nothing behind it is ever reached. Ordering by updated_at means a
+ * failed row goes to the back — it still retries, but only after everything else
+ * has had a turn.
  */
 async function claimNextSubfolder(supabase: SupabaseClient, librarySlugs: string[]) {
     const staleCutoff = minutesAgo(STALE_SYNCING_MINUTES);
@@ -54,8 +60,8 @@ async function claimNextSubfolder(supabase: SupabaseClient, librarySlugs: string
         .select('id, library_slug, subfolder_id, subfolder_name, status')
         .in('library_slug', librarySlugs)
         .or(`status.in.(pending,error),and(status.eq.syncing,updated_at.lt.${staleCutoff})`)
-        .order('library_slug', { ascending: true })
-        .order('subfolder_name', { ascending: true, nullsFirst: false })
+        .order('updated_at', { ascending: true })
+        .order('id', { ascending: true })
         .limit(1);
     if (error) throw error;
     return data?.[0] ?? null;
