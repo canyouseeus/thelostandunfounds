@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSupabaseAdmin, isAdmin, toMoney, holdDays, resolveConnectAccount, PHOTOGRAPHER_SELECT, type PhotographerRow } from '../../lib/api-handlers/crew/_shared.js';
 import { runCrewPayouts } from '../../lib/api-handlers/crew/send-payouts.js';
+import { sendCrewPayoutNotification } from '../../lib/api-handlers/crew/_payout-notification.js';
 
 /**
  * Admin view and control of crew (job) payouts.
@@ -43,6 +44,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         dryRun: req.body?.dryRun === true,
       });
       return res.status(200).json({ success: true, ...summary });
+    }
+
+    if (action === 'test-notification') {
+      // Fire the real payout notification with sample values, so the template
+      // and the delivery path are proven before a live payout depends on them.
+      // Clearly marked as a test in the body it sends.
+      const result = await sendCrewPayoutNotification({
+        contractorName: req.body?.contractorName || 'TEST — not a real payout',
+        amount: Number(req.body?.amount) || 120,
+        description: 'TEST NOTIFICATION — no money moved. Verifying the payout email path.',
+        transferId: 'tr_test_no_money_moved',
+        destinationAccountId: req.body?.destination || 'acct_test',
+        remainingBalance: Number(req.body?.remainingBalance) || 0,
+      });
+      return res.status(result.success ? 200 : 500).json({
+        success: result.success,
+        provider: result.provider,
+        error: result.error,
+        note: 'No money moved. This only exercises the notification path.',
+      });
     }
 
     if (action === 'create') {
