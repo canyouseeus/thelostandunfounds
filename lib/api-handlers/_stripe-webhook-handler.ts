@@ -4,6 +4,7 @@ import Stripe from 'stripe'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
 import { sendDepositConfirmationEmail } from './_booking-payment-utils.js'
+import { accrueCrewPayout } from './crew/_shared.js'
 
 /**
  * Stripe Webhook Handler
@@ -748,16 +749,38 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
     const amountPaid = (session.amount_total || 0) / 100
     const paidAt = new Date().toISOString()
 
-    const { error: payErr } = await supabase.from('invoice_payments').insert({
-        invoice_id: invoice.id,
-        amount: amountPaid,
-        method: 'Stripe',
-        paid_at: paidAt,
-        notes: `Stripe Checkout ${session.id}`,
-    })
+    const { data: paymentRow, error: payErr } = await supabase
+        .from('invoice_payments')
+        .insert({
+            invoice_id: invoice.id,
+            amount: amountPaid,
+            method: 'Stripe',
+            paid_at: paidAt,
+            notes: `Stripe Checkout ${session.id}`,
+        })
+        .select('id')
+        .single()
     if (payErr) {
         console.error('❌ Failed to record invoice_payment:', payErr)
         return
+    }
+
+    // Accrue the contractor's share of what the client just paid. Best-effort:
+    // a ledger failure must not fail the webhook, or Stripe retries a payment
+    // we have already recorded. The row can be added by hand from the admin
+    // panel if this ever misses.
+    try {
+        const accrual = await accrueCrewPayout(supabase, {
+            invoiceId: invoice.id,
+            invoicePaymentId: paymentRow?.id || null,
+            amountPaid,
+            paidAt,
+        })
+        if (accrual.accrued) {
+            console.log('✅ Crew payout accrued:', { invoice: invoice.id, amount: accrual.amount })
+        }
+    } catch (crewErr: any) {
+        console.error('⚠️ Crew payout accrual failed:', crewErr?.message)
     }
 
     const { error: invErr } = await supabase
