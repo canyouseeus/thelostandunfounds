@@ -60,6 +60,10 @@
     {
       "path": "/api/cron/affiliate-stripe-reminder",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/crew-payouts",
+      "schedule": "0 * * * *"
     }
   ],
   "redirects": [
