@@ -146,6 +146,114 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    if (action === 'reverse-and-disconnect') {
+      // Take a payout back and detach the contractor's Stripe account, so they
+      // can onboard again from scratch.
+      //
+      // Needed because a Stripe-managed Express account will not let the
+      // platform edit its email ("This application is not authorized to edit
+      // the parameter 'email'"), so a contractor who onboarded with the wrong
+      // address cannot be fixed in place from here — the account has to go.
+      //
+      // Order matters. Reverse first: the funds must leave the connected
+      // account before it is detached, or they are stranded in an account
+      // nobody is going to log into. The reversal only works while the money
+      // is still in their Stripe balance — once Stripe pays it out to their
+      // bank, this route stops being available.
+      const { payoutId, skipReversal } = req.body || {};
+      if (!payoutId) return res.status(400).json({ error: 'payoutId is required' });
+
+      const { data: row } = await supabase
+        .from('crew_payouts')
+        .select('id, amount, status, stripe_transfer_id, stripe_account_id, photographer_id, description')
+        .eq('id', payoutId)
+        .maybeSingle();
+      if (!row) return res.status(404).json({ error: 'Payout not found' });
+
+      const stripe = getStripe();
+      const steps: Record<string, unknown> = {};
+
+      // 1. Reverse the transfer.
+      if (!skipReversal) {
+        if (row.status !== 'paid' || !row.stripe_transfer_id) {
+          return res.status(400).json({
+            error: `Payout is ${row.status} with transfer ${row.stripe_transfer_id || 'none'} — nothing to reverse.`,
+          });
+        }
+        try {
+          const reversal = await stripe.transfers.createReversal(row.stripe_transfer_id, {
+            description: 'Contractor requested account teardown; payout returned pending re-onboarding.',
+          });
+          steps.reversal = { id: reversal.id, amount: reversal.amount / 100 };
+        } catch (err: any) {
+          // Most likely cause: Stripe already paid it out to their bank.
+          return res.status(400).json({
+            error: 'Could not reverse the transfer.',
+            message: err?.message,
+            hint: 'If the funds already reached their bank, this cannot be undone from here.',
+          });
+        }
+
+        // Put the row back in the queue. Once they reconnect, the normal payer
+        // sends it again — no manual transfer, no second ledger entry.
+        await supabase
+          .from('crew_payouts')
+          .update({
+            status: 'pending',
+            stripe_transfer_id: null,
+            stripe_account_id: null,
+            paid_at: null,
+            available_at: new Date().toISOString(),
+            notes: `Reversed ${new Date().toISOString()} at contractor's request; re-pays automatically once they reconnect Stripe.`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', row.id);
+        steps.ledgerReset = true;
+      }
+
+      // 2. Detach the account everywhere we reference it, so the next
+      //    onboarding creates a fresh one instead of reusing the old id.
+      const accountId = row.stripe_account_id;
+      if (row.photographer_id) {
+        await supabase
+          .from('photographers')
+          .update({ stripe_account_id: null })
+          .eq('id', row.photographer_id);
+      }
+      if (accountId) {
+        await supabase
+          .from('affiliates')
+          .update({
+            stripe_account_id: null,
+            stripe_account_status: 'pending',
+            stripe_payouts_enabled: false,
+            stripe_charges_enabled: false,
+            stripe_details_submitted: false,
+          })
+          .eq('stripe_account_id', accountId);
+        await supabase
+          .from('affiliate_payout_settings')
+          .update({ stripe_account_id: null })
+          .eq('stripe_account_id', accountId);
+      }
+      steps.detached = accountId;
+
+      // 3. Delete the Stripe account itself. Best-effort and last: if Stripe
+      //    refuses, the platform references are already cleared, so the
+      //    contractor can still onboard fresh.
+      if (accountId) {
+        try {
+          const deleted = await stripe.accounts.del(accountId);
+          steps.stripeDeleted = deleted.deleted;
+        } catch (err: any) {
+          steps.stripeDeleted = false;
+          steps.stripeDeleteError = err?.message;
+        }
+      }
+
+      return res.status(200).json({ success: true, steps });
+    }
+
     if (action === 'create') {
       const { photographerId, amount, description, availableAt, notes } = req.body || {};
       const value = toMoney(amount);
