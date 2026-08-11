@@ -37,6 +37,29 @@ export function isCronAuthorized(req: VercelRequest): boolean {
   return auth === `Bearer ${expected}`;
 }
 
+/**
+ * Resolve the caller from a verified Supabase JWT.
+ *
+ * Every crew route that hands back access to someone's money must prove who is
+ * asking. The `x-admin-email` header the older admin routes use is
+ * caller-supplied and cannot do that, so these routes verify the session token
+ * with Supabase and look the contractor up from the returned user id only —
+ * never from a request body a caller controls.
+ */
+export async function resolveUserId(req: VercelRequest): Promise<string | null> {
+  const authHeader = (req.headers.authorization as string) || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) return null;
+
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+
+  const { data, error } = await createClient(url, key).auth.getUser(token);
+  if (error || !data.user?.id) return null;
+  return data.user.id;
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

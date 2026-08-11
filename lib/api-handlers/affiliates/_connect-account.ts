@@ -83,8 +83,13 @@ export async function ensureStripeAccount(
   const account = await stripe.accounts.create({
     type: 'express',
     email: email || undefined,
+    // Transfers only. `card_payments` is the capability for *accepting* card
+    // payments on the connected account, and Stripe gates it behind a much
+    // longer questionnaire (business URL, product description, statement
+    // descriptor, industry). Nothing here charges cards on a connected
+    // account — commissions and job pay are transfers off the platform
+    // balance — so requesting it only ever added forms to onboarding.
     capabilities: {
-      card_payments: { requested: true },
       transfers: { requested: true },
     },
     business_type: 'individual',
@@ -144,6 +149,11 @@ export async function createOnboardingLink(
     refresh_url: `${origin}${refreshPath}`,
     return_url: `${origin}${returnPath}`,
     type: 'account_onboarding',
+    // Collect only what Stripe needs to enable payouts now, instead of
+    // everything it will eventually want. Someone who already has a Stripe
+    // account and signs in during onboarding usually sees a confirmation
+    // screen and nothing else.
+    collection_options: { fields: 'currently_due' },
   });
   return { url: link.url, expires_at: link.expires_at };
 }
