@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getStripe } from '../affiliates/_stripe-client.js';
-import { sendCrewPayoutNotification } from './_payout-notification.js';
+import {
+  sendCrewPayoutNotification,
+  sendContractorPayoutNotification,
+} from './_payout-notification.js';
 import {
   getSupabaseAdmin,
   isAdmin,
@@ -39,17 +42,25 @@ interface PayoutRow {
   stripe_account_id: string | null;
   // PostgREST types an embedded relation as an array even when the FK makes it
   // at most one row, so accept both shapes rather than casting the difference away.
-  photographers?: { name: string | null } | { name: string | null }[] | null;
+  photographers?: PhotographerRel | PhotographerRel[] | null;
+}
+
+interface PhotographerRel {
+  name: string | null;
+  email: string | null;
+}
+
+function photographerRel(row: PayoutRow): PhotographerRel | null {
+  const rel = row.photographers;
+  return (Array.isArray(rel) ? rel[0] : rel) || null;
 }
 
 function contractorName(row: PayoutRow): string {
-  const rel = row.photographers;
-  const record = Array.isArray(rel) ? rel[0] : rel;
-  return record?.name || 'Contractor';
+  return photographerRel(row)?.name || 'Contractor';
 }
 
 const PAYOUT_SELECT =
-  'id, photographer_id, user_id, invoice_id, amount, description, stripe_account_id, photographers(name)';
+  'id, photographer_id, user_id, invoice_id, amount, description, stripe_account_id, photographers(name, email)';
 
 async function availablePlatformBalance(): Promise<number> {
   const stripe = getStripe();
@@ -178,11 +189,33 @@ export async function runCrewPayouts(options: { payoutId?: string; dryRun?: bool
         console.warn('[crew-payouts] payout notification failed:', row.id, notified.error);
       }
 
+      // And tell the person who actually did the work. Separate send rather
+      // than a CC: the owner's copy carries the platform balance, which is
+      // none of the contractor's business.
+      const contractorEmail = photographerRel(row)?.email;
+      let contractorNotified: boolean | null = null;
+      if (contractorEmail) {
+        const sent = await sendContractorPayoutNotification({
+          to: contractorEmail,
+          contractorName: contractorName(row),
+          amount,
+          description: row.description,
+          transferId: transfer.id,
+        });
+        contractorNotified = sent.success;
+        if (!sent.success) {
+          console.warn('[crew-payouts] contractor notification failed:', row.id, sent.error);
+        }
+      } else {
+        console.warn('[crew-payouts] no contractor email on file, skipping their notice:', row.id);
+      }
+
       results.push({
         id: row.id,
         amount,
         transfer: transfer.id,
         notified: notified.success,
+        contractorNotified,
       });
     } catch (err: any) {
       const message = err?.message || 'Stripe transfer failed';

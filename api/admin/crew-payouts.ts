@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSupabaseAdmin, isAdmin, toMoney, holdDays, resolveConnectAccount, PHOTOGRAPHER_SELECT, type PhotographerRow } from '../../lib/api-handlers/crew/_shared.js';
 import { runCrewPayouts } from '../../lib/api-handlers/crew/send-payouts.js';
-import { sendCrewPayoutNotification } from '../../lib/api-handlers/crew/_payout-notification.js';
+import {
+  sendCrewPayoutNotification,
+  sendContractorPayoutNotification,
+} from '../../lib/api-handlers/crew/_payout-notification.js';
 
 /**
  * Admin view and control of crew (job) payouts.
@@ -63,6 +66,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         provider: result.provider,
         error: result.error,
         note: 'No money moved. This only exercises the notification path.',
+      });
+    }
+
+    if (action === 'notify-contractor') {
+      // Send (or re-send) the contractor's "you've been paid" notice for a row
+      // that is already paid. Covers payouts made before contractors were
+      // notified at all, and a re-send when a mail attempt failed.
+      const { payoutId } = req.body || {};
+      if (!payoutId) return res.status(400).json({ error: 'payoutId is required' });
+
+      const { data: row } = await supabase
+        .from('crew_payouts')
+        .select('id, amount, description, status, stripe_transfer_id, photographers(name, email)')
+        .eq('id', payoutId)
+        .maybeSingle();
+      if (!row) return res.status(404).json({ error: 'Payout not found' });
+      if (row.status !== 'paid') {
+        return res.status(400).json({
+          error: `Payout is ${row.status}, not paid — nothing to notify about.`,
+        });
+      }
+
+      const rel: any = Array.isArray(row.photographers) ? row.photographers[0] : row.photographers;
+      if (!rel?.email) return res.status(400).json({ error: 'No contractor email on file' });
+
+      const sent = await sendContractorPayoutNotification({
+        to: rel.email,
+        contractorName: rel.name || 'Contractor',
+        amount: toMoney(row.amount),
+        description: row.description,
+        transferId: row.stripe_transfer_id || 'n/a',
+      });
+      return res.status(sent.success ? 200 : 500).json({
+        success: sent.success,
+        to: rel.email,
+        provider: sent.provider,
+        error: sent.error,
       });
     }
 
