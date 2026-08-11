@@ -41,6 +41,35 @@ export default function JobPayouts({ userId }: { userId: string }) {
     const [payouts, setPayouts] = useState<CrewPayout[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [openingStripe, setOpeningStripe] = useState(false);
+    const [stripeError, setStripeError] = useState<string | null>(null);
+
+    // Stripe login links are single-use and expire, so one is minted on click
+    // rather than held in state or embedded in an email.
+    const openStripeDashboard = async () => {
+        setOpeningStripe(true);
+        setStripeError(null);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/crew/stripe-dashboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session?.access_token || ''}`,
+                },
+            });
+            const body = await res.json();
+            if (!res.ok || !body.url) {
+                setStripeError(body.error || 'Could not open Stripe.');
+                return;
+            }
+            window.open(body.url, '_blank', 'noopener,noreferrer');
+        } catch (err: any) {
+            setStripeError(err?.message || 'Could not open Stripe.');
+        } finally {
+            setOpeningStripe(false);
+        }
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -86,6 +115,21 @@ export default function JobPayouts({ userId }: { userId: string }) {
                         <p className="text-2xl font-semibold text-amber-400">{money(upcoming)}</p>
                     </div>
                 </div>
+            </div>
+
+            <div className="mb-6">
+                <button
+                    onClick={openStripeDashboard}
+                    disabled={openingStripe}
+                    className="bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                    style={{ borderRadius: 0 }}
+                >
+                    {openingStripe ? 'Opening…' : 'Open my Stripe dashboard'}
+                </button>
+                <p className="text-xs text-zinc-500 mt-2">
+                    See your balance, the deposits we've sent, and when Stripe pays them out to your bank.
+                </p>
+                {stripeError && <p className="text-sm text-red-400 mt-2">{stripeError}</p>}
             </div>
 
             {loading && <p className="text-sm text-zinc-500">Loading your payouts…</p>}
