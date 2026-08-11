@@ -57,6 +57,12 @@ export async function sendContractorPayoutNotification(args: {
     <p style="${EMAIL_STYLES.paragraph}">
       <a href="https://www.thelostandunfounds.com/photographer-dashboard" style="${EMAIL_STYLES.button}">VIEW YOUR PAYOUTS</a>
     </p>
+    <p style="${EMAIL_STYLES.paragraph}">
+      From there you can open your own Stripe dashboard to see your balance and when it lands in
+      your bank. We link you through from the page rather than from this email, because Stripe's
+      dashboard links are single-use and expire — one sent by email would be dead before you
+      tapped it.
+    </p>
     <p style="${EMAIL_STYLES.muted}">
       Reference: ${args.transferId}<br />
       Questions about this payment? Just reply to this email.
