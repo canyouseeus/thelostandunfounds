@@ -53,6 +53,10 @@ export default function JobPayouts({ userId }: { userId: string }) {
     const [stripeError, setStripeError] = useState<string | null>(null);
     const [connect, setConnect] = useState<ConnectStatus | null>(null);
     const [connecting, setConnecting] = useState(false);
+    // Signed in, but not on the crew — someone who sells gallery photos and has
+    // never worked a booking. They have no job pay to show and nothing to
+    // connect for, and the Stripe buttons would only 404 at them.
+    const [notContractor, setNotContractor] = useState(false);
 
     const authHeaders = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -134,7 +138,12 @@ export default function JobPayouts({ userId }: { userId: string }) {
         (async () => {
             try {
                 const res = await fetch('/api/crew/connect', { headers: await authHeaders() });
-                if (cancelled || !res.ok) return;
+                if (cancelled) return;
+                if (res.status === 404) {
+                    setNotContractor(true);
+                    return;
+                }
+                if (!res.ok) return;
                 setConnect(await res.json());
             } catch {
                 // Leave the panel in its neutral state; the payout list below
@@ -151,6 +160,13 @@ export default function JobPayouts({ userId }: { userId: string }) {
 
     const paid = sum(['paid']);
     const upcoming = sum(['pending', 'approved']);
+
+    // Nothing to say to someone who isn't crew. Rendering an empty "Job
+    // Payouts" panel with a Stripe button that 404s reads as something broken,
+    // when the truth is simply that this section isn't theirs. The payout rows
+    // are still checked first — a ledger entry outlives a photographer record,
+    // and money owed must never be hidden by a missing row.
+    if (notContractor && !loading && payouts.length === 0) return null;
 
     return (
         <section className="mb-6 bg-white/5 p-6" style={{ borderRadius: 0 }}>
