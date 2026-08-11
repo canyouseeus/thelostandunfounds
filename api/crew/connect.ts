@@ -30,13 +30,14 @@ import {
  *  1. An affiliate account is reused rather than duplicated (via
  *     `resolveConnectAccount`), so crew who signed up as affiliates first are
  *     already done and never see an onboarding form.
- *  2. We request `transfers` only. `card_payments` — which the affiliate flow
- *     used to ask for as well — is the capability for *accepting* card
- *     payments, and Stripe gates it behind a much longer questionnaire
- *     (business URL, product description, statement descriptor, industry).
- *     Nothing on this platform charges cards on a connected account; every
- *     payout is a transfer from the platform balance. Asking for a capability
- *     we never use bought nothing and cost the contractor a form.
+ *  2. Signing in with an existing Stripe account reuses identity details
+ *     Stripe has already verified, so the form collapses to a confirmation.
+ *     The panel says so, because it is not obvious from Stripe's own page.
+ *
+ * The capabilities we request are deliberately unchanged from the affiliate
+ * flow — see the note on `ensureStripeAccount`. Requesting `transfers` alone
+ * looks leaner and is rejected outright by Stripe for platforms that have not
+ * been approved for it.
  *
  * The Account Link is created with `collection_options.fields: 'currently_due'`
  * so Stripe collects only what it needs to enable payouts now, rather than
@@ -109,7 +110,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const account = await getStripe().accounts.create({
         type: 'express',
         email: row.email || undefined,
-        capabilities: { transfers: { requested: true } },
+        // See the note in _connect-account.ts: Stripe rejects `transfers`
+        // without `card_payments` unless the platform is approved for it, and
+        // the rejection means the contractor cannot connect at all.
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
         business_type: 'individual',
         business_profile: {
           // Prefilled so Stripe stops asking the contractor to describe a
