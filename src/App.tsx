@@ -221,6 +221,15 @@ function App() {
                   <Affiliate />
                 </Layout>
               } />
+              {/* Contractors' own dashboard — galleries and job payouts. The
+                  component existed and was imported but was never given a
+                  route, so the page had no URL and the payout email linked to
+                  a 404. It guards itself: no session redirects home. */}
+              <Route path="/photographer-dashboard" element={
+                <Layout>
+                  <PhotographerDashboard />
+                </Layout>
+              } />
               <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/affiliate-dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/become-affiliate" element={<Layout />}>
