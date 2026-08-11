@@ -23,6 +23,59 @@ const BUSINESS_RECORD_CC = 'media@thelostandunfounds.com';
 const money = (value: number) =>
   `$${(Math.round(value * 100) / 100).toFixed(2)}`;
 
+/**
+ * Tell the contractor they were paid.
+ *
+ * The admin notification tells the owner the money moved; without this, the
+ * person who actually did the work is the only one not told. They would find
+ * out by opening Stripe, checking their bank, or happening to look at their
+ * dashboard — which is the same "go and check somewhere else" problem the
+ * automatic payer exists to remove, just pointed at them instead of the owner.
+ *
+ * Same best-effort contract as the admin notification: the transfer has already
+ * succeeded by the time this runs, so a mail failure is logged, not raised.
+ */
+export async function sendContractorPayoutNotification(args: {
+  to: string;
+  contractorName: string;
+  amount: number;
+  description: string | null;
+  transferId: string;
+}): Promise<{ success: boolean; provider?: string; error?: string }> {
+  const firstName = args.contractorName.trim().split(/\s+/)[0] || 'there';
+
+  const content = `
+    <h1 style="${EMAIL_STYLES.heading1}">YOU'VE BEEN PAID</h1>
+    <p style="${EMAIL_STYLES.paragraph}">
+      Hey ${firstName} — <strong>${money(args.amount)}</strong> is on its way to you for
+      ${args.description || 'your recent shoot'}.
+    </p>
+    <p style="${EMAIL_STYLES.paragraph}">
+      The transfer has landed in your connected Stripe account. Stripe pays it out to your bank
+      on their normal schedule, so give it a business day or two to show up there.
+    </p>
+    <p style="${EMAIL_STYLES.paragraph}">
+      <a href="https://www.thelostandunfounds.com/photographer-dashboard" style="${EMAIL_STYLES.button}">VIEW YOUR PAYOUTS</a>
+    </p>
+    <p style="${EMAIL_STYLES.muted}">
+      Reference: ${args.transferId}<br />
+      Questions about this payment? Just reply to this email.
+    </p>
+  `;
+
+  try {
+    const result = await sendTransactionalEmail({
+      to: args.to,
+      cc: BUSINESS_RECORD_CC,
+      subject: `You've been paid ${money(args.amount)}`,
+      content,
+    });
+    return { success: result.success, provider: result.provider, error: result.error };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'notification failed' };
+  }
+}
+
 export async function sendCrewPayoutNotification(args: {
   contractorName: string;
   amount: number;
