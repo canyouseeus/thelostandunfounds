@@ -83,8 +83,13 @@ export async function ensureStripeAccount(
   const account = await stripe.accounts.create({
     type: 'express',
     email: email || undefined,
+    // Transfers only. `card_payments` is the capability for *accepting* card
+    // payments on the connected account, and Stripe gates it behind a much
+    // longer questionnaire (business URL, product description, statement
+    // descriptor, industry). Nothing here charges cards on a connected
+    // account — commissions and job pay are transfers off the platform
+    // balance — so requesting it only ever added forms to onboarding.
     capabilities: {
-      card_payments: { requested: true },
       transfers: { requested: true },
     },
     business_type: 'individual',
@@ -144,6 +149,11 @@ export async function createOnboardingLink(
     refresh_url: `${origin}${refreshPath}`,
     return_url: `${origin}${returnPath}`,
     type: 'account_onboarding',
+    // Collect only what Stripe needs to enable payouts now, instead of
+    // everything it will eventually want. Someone who already has a Stripe
+    // account and signs in during onboarding usually sees a confirmation
+    // screen and nothing else.
+    collection_options: { fields: 'currently_due' },
   });
   return { url: link.url, expires_at: link.expires_at };
 }
@@ -156,11 +166,23 @@ export function sanitizePath(input: any, fallback: string): string {
   return input;
 }
 
+/**
+ * `active` means "we can pay this person" — nothing more.
+ *
+ * This used to also require `charges_enabled`, which was survivable only while
+ * we requested the `card_payments` capability. We no longer do: nothing on the
+ * platform charges cards on a connected account, and requesting it forced a
+ * long questionnaire onto every contractor. A transfers-only account has
+ * `charges_enabled: false` permanently and by design, so keeping it in this
+ * test would strand a fully-onboarded affiliate at `restricted` forever — a
+ * red badge on a dashboard, and `stripe_onboarded_at` never stamped, for
+ * someone Stripe is perfectly happy to pay.
+ */
 export function computeStatus(
   account: any
 ): 'pending' | 'restricted' | 'active' | 'rejected' {
   if (account.requirements?.disabled_reason?.startsWith('rejected')) return 'rejected';
-  if (account.payouts_enabled && account.charges_enabled) return 'active';
+  if (account.payouts_enabled) return 'active';
   if (account.details_submitted) return 'restricted';
   return 'pending';
 }
@@ -179,6 +201,12 @@ export async function persistStatus(
   };
   if (status === 'active' && account.payouts_enabled) {
     updates.stripe_onboarded_at = new Date().toISOString();
+  } else {
+    // Clear it when payouts are not enabled. Onboarding is not a one-way door:
+    // an account can be disconnected and rebuilt (someone who signed up under
+    // the wrong email, say), and a stamp that only ever gets written leaves the
+    // row claiming an onboarding date for an account that no longer exists.
+    updates.stripe_onboarded_at = null;
   }
   await supabase.from('affiliates').update(updates).eq('id', affiliateId);
 }

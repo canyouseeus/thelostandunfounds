@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { getStripe } from '../../lib/api-handlers/affiliates/_stripe-client.js';
-import { getSupabaseAdmin, resolveConnectAccount, PHOTOGRAPHER_SELECT, type PhotographerRow } from '../../lib/api-handlers/crew/_shared.js';
+import { getSupabaseAdmin, resolveUserId, resolveConnectAccount, PHOTOGRAPHER_SELECT, type PhotographerRow } from '../../lib/api-handlers/crew/_shared.js';
 
 /**
  * Mint a one-time link into the contractor's own Stripe Express dashboard,
@@ -17,21 +16,6 @@ import { getSupabaseAdmin, resolveConnectAccount, PHOTOGRAPHER_SELECT, type Phot
  * this is a button that mints one on demand rather than a URL baked into an
  * email that would be dead by the time it was opened.
  */
-
-async function resolveUserId(req: VercelRequest): Promise<string | null> {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  if (!token) return null;
-
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-
-  const supabase = createClient(url, key);
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user?.id) return null;
-  return data.user.id;
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

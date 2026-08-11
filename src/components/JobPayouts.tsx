@@ -23,6 +23,14 @@ interface CrewPayout {
     created_at: string;
 }
 
+interface ConnectStatus {
+    connected: boolean;
+    status: 'not_started' | 'pending' | 'restricted' | 'active';
+    payouts_enabled: boolean;
+    details_submitted: boolean;
+    requirements: string[];
+}
+
 const money = (value: unknown) =>
     `$${(Math.round(Number(value || 0) * 100) / 100).toFixed(2)}`;
 
@@ -43,6 +51,45 @@ export default function JobPayouts({ userId }: { userId: string }) {
     const [error, setError] = useState<string | null>(null);
     const [openingStripe, setOpeningStripe] = useState(false);
     const [stripeError, setStripeError] = useState<string | null>(null);
+    const [connect, setConnect] = useState<ConnectStatus | null>(null);
+    const [connecting, setConnecting] = useState(false);
+    // Signed in, but not on the crew — someone who sells gallery photos and has
+    // never worked a booking. They have no job pay to show and nothing to
+    // connect for, and the Stripe buttons would only 404 at them.
+    const [notContractor, setNotContractor] = useState(false);
+
+    const authHeaders = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        return {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token || ''}`,
+        };
+    };
+
+    // Start (or finish) Stripe onboarding. Account Links expire within
+    // minutes, so one is minted on click rather than held in state.
+    const startStripeSetup = async () => {
+        setConnecting(true);
+        setStripeError(null);
+        try {
+            const res = await fetch('/api/crew/connect', {
+                method: 'POST',
+                headers: await authHeaders(),
+            });
+            const body = await res.json();
+            if (!res.ok || !body.url) {
+                setStripeError(body.error || 'Could not start Stripe setup.');
+                return;
+            }
+            // Same tab: Stripe returns the contractor here when they finish,
+            // and a popup would strand that return on a tab they closed.
+            window.location.href = body.url;
+        } catch (err: any) {
+            setStripeError(err?.message || 'Could not start Stripe setup.');
+        } finally {
+            setConnecting(false);
+        }
+    };
 
     // Stripe login links are single-use and expire, so one is minted on click
     // rather than held in state or embedded in an email.
@@ -50,13 +97,9 @@ export default function JobPayouts({ userId }: { userId: string }) {
         setOpeningStripe(true);
         setStripeError(null);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('/api/crew/stripe-dashboard', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session?.access_token || ''}`,
-                },
+                headers: await authHeaders(),
             });
             const body = await res.json();
             if (!res.ok || !body.url) {
@@ -87,6 +130,29 @@ export default function JobPayouts({ userId }: { userId: string }) {
         return () => { cancelled = true; };
     }, [userId]);
 
+    // Ask Stripe where this contractor actually stands, rather than trusting a
+    // stored flag — someone can finish onboarding, or have Stripe reopen a
+    // requirement, without this app ever hearing about it.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/crew/connect', { headers: await authHeaders() });
+                if (cancelled) return;
+                if (res.status === 404) {
+                    setNotContractor(true);
+                    return;
+                }
+                if (!res.ok) return;
+                setConnect(await res.json());
+            } catch {
+                // Leave the panel in its neutral state; the payout list below
+                // is the point of the page and must still render.
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [userId]);
+
     const sum = (statuses: string[]) =>
         payouts
             .filter(p => statuses.includes(p.status))
@@ -94,6 +160,13 @@ export default function JobPayouts({ userId }: { userId: string }) {
 
     const paid = sum(['paid']);
     const upcoming = sum(['pending', 'approved']);
+
+    // Nothing to say to someone who isn't crew. Rendering an empty "Job
+    // Payouts" panel with a Stripe button that 404s reads as something broken,
+    // when the truth is simply that this section isn't theirs. The payout rows
+    // are still checked first — a ledger entry outlives a photographer record,
+    // and money owed must never be hidden by a missing row.
+    if (notContractor && !loading && payouts.length === 0) return null;
 
     return (
         <section className="mb-6 bg-white/5 p-6" style={{ borderRadius: 0 }}>
@@ -118,17 +191,59 @@ export default function JobPayouts({ userId }: { userId: string }) {
             </div>
 
             <div className="mb-6">
-                <button
-                    onClick={openStripeDashboard}
-                    disabled={openingStripe}
-                    className="bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                    style={{ borderRadius: 0 }}
-                >
-                    {openingStripe ? 'Opening…' : 'Open my Stripe dashboard'}
-                </button>
-                <p className="text-xs text-zinc-500 mt-2">
-                    See your balance, the deposits we've sent, and when Stripe pays them out to your bank.
-                </p>
+                {/* Until Stripe answers we show nothing rather than guessing —
+                    flashing "connect your account" at someone who connected
+                    months ago reads as though we lost their details. */}
+                {connect && !connect.payouts_enabled && (
+                    <div className="mb-4 bg-amber-500/10 p-4" style={{ borderRadius: 0 }}>
+                        <p className="text-sm font-bold uppercase tracking-wider text-amber-400">
+                            {connect.status === 'not_started'
+                                ? 'Set up your payouts'
+                                : 'Finish your Stripe setup'}
+                        </p>
+                        <p className="text-sm text-zinc-300 mt-2">
+                            {connect.status === 'not_started'
+                                ? 'Your pay is already being tracked below — it just needs somewhere to land. Takes about a minute.'
+                                : 'Stripe still needs a couple of details before it can pay you. Your pay keeps accruing below in the meantime and goes out on the next run once this clears.'}
+                        </p>
+                        <p className="text-sm text-zinc-400 mt-2">
+                            <strong className="text-white">Already use Stripe?</strong> Choose{' '}
+                            <em>Sign in</em> at the top of the Stripe page instead of filling the form
+                            out. It reuses the details you've already verified, and this becomes another
+                            account you can switch between in your Stripe dashboard — nothing changes
+                            about the accounts you already have.
+                        </p>
+                        <button
+                            onClick={startStripeSetup}
+                            disabled={connecting}
+                            className="mt-4 bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                            style={{ borderRadius: 0 }}
+                        >
+                            {connecting
+                                ? 'Opening Stripe…'
+                                : connect.status === 'not_started'
+                                    ? 'Connect Stripe'
+                                    : 'Finish setup'}
+                        </button>
+                    </div>
+                )}
+
+                {(!connect || connect.payouts_enabled) && (
+                    <>
+                        <button
+                            onClick={openStripeDashboard}
+                            disabled={openingStripe}
+                            className="bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                            style={{ borderRadius: 0 }}
+                        >
+                            {openingStripe ? 'Opening…' : 'Open my Stripe dashboard'}
+                        </button>
+                        <p className="text-xs text-zinc-500 mt-2">
+                            See your balance, the deposits we've sent, and when Stripe pays them out to your bank.
+                        </p>
+                    </>
+                )}
+
                 {stripeError && <p className="text-sm text-red-400 mt-2">{stripeError}</p>}
             </div>
 
