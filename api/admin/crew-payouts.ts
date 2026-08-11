@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSupabaseAdmin, isAdmin, toMoney, holdDays, resolveConnectAccount, PHOTOGRAPHER_SELECT, type PhotographerRow } from '../../lib/api-handlers/crew/_shared.js';
 import { runCrewPayouts } from '../../lib/api-handlers/crew/send-payouts.js';
+import { getStripe } from '../../lib/api-handlers/affiliates/_stripe-client.js';
 import {
   sendCrewPayoutNotification,
   sendContractorPayoutNotification,
@@ -103,6 +104,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         to: rel.email,
         provider: sent.provider,
         error: sent.error,
+      });
+    }
+
+    if (action === 'update-stripe-email') {
+      // Change the email on a contractor's Express account.
+      //
+      // Express dashboard login is email plus a one-time code, so this is what
+      // decides which inbox a contractor signs in through. Someone who onboarded
+      // with the wrong address does NOT need a new account: the platform uses
+      // Express, which creates accounts rather than attaching existing ones, so
+      // "connect my other Stripe account" would only produce another new Express
+      // account. Changing this field gets the same result without reversing a
+      // payout, redoing KYC, or re-verifying a bank.
+      const { photographerId, email } = req.body || {};
+      if (!photographerId) return res.status(400).json({ error: 'photographerId is required' });
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'A valid email is required' });
+      }
+
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select(PHOTOGRAPHER_SELECT)
+        .eq('id', photographerId)
+        .maybeSingle();
+      if (!photographer) return res.status(404).json({ error: 'Photographer not found' });
+
+      const { accountId } = await resolveConnectAccount(supabase, photographer as PhotographerRow);
+      if (!accountId) return res.status(400).json({ error: 'No Stripe account connected' });
+
+      const stripe = getStripe();
+      const before = await stripe.accounts.retrieve(accountId);
+      const updated = await stripe.accounts.update(accountId, { email });
+
+      return res.status(200).json({
+        success: true,
+        accountId,
+        previousEmail: before.email,
+        email: updated.email,
+        payoutsEnabled: updated.payouts_enabled,
       });
     }
 
