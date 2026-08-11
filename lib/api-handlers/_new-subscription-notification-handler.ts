@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createServiceSupabaseClient } from './_supabase-admin-client'
+import { createServiceSupabaseClient } from './_supabase-admin-client.js'
 import { sendTransactionalEmail } from './_resend-email-handler.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
