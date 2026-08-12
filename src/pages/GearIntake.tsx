@@ -185,8 +185,12 @@ export default function GearIntake() {
         </h1>
         <p className="mt-3 text-sm text-white/60 text-left max-w-2xl">
           List what you shoot on so we know which jobs to send you. Bodies, lenses, lighting,
-          audio, tripods and gimbals — the whole bag. You can come back to this link any time and
-          update it.
+          audio, tripods and gimbals — the whole bag.
+        </p>
+        <p className="mt-2 text-sm text-white/40 text-left max-w-2xl">
+          {token
+            ? 'Your invite link stays good for a week. After that, sign in and this page picks up where you left off.'
+            : 'Update this whenever your kit changes.'}
         </p>
         {photographer && (
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/40 text-left">
