@@ -51,6 +51,7 @@ import {
   ArrowsPointingOutIcon,
   InboxIcon,
   PhotoIcon,
+  CameraIcon,
   LinkIcon,
   ChatBubbleLeftRightIcon,
   MegaphoneIcon,
@@ -96,6 +97,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
+import AdminRosterView from '../components/admin/AdminRosterView';
 import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
@@ -1984,6 +1986,7 @@ export default function Admin() {
                 { id: 'newsletter', icon: EnvelopeIcon, title: 'Newsletter' },
                 { id: 'mail', icon: PaperAirplaneIcon, title: 'Webmail' },
                 { id: 'users', icon: UsersIcon, title: 'Users' },
+                { id: 'roster', icon: CameraIcon, title: 'Photographer Roster' },
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
@@ -2062,6 +2065,7 @@ export default function Admin() {
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
                   users:       { title: 'User Management',          icon: <UsersIcon className="w-5 h-5 text-white/40" /> },
+                  roster:      { title: 'Photographer Roster',      icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
                   affiliates:  { title: 'The Affiliate Program',    icon: <LinkIcon className="w-5 h-5 text-white/40" /> },
                   submissions: { title: 'Submission Queue',         icon: <DocumentTextIcon className="w-5 h-5 text-white/40" />, extra: pendingSubmissions > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span> : null },
                   events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
@@ -2126,6 +2130,11 @@ export default function Admin() {
                     stats={stats}
                     onNavigateToSection={(section) => setActivePanelSection(section)}
                   />
+                )}
+                {activePanelSection === 'roster' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Roster</div>}>
+                    <AdminRosterView adminEmail={user?.email} />
+                  </ErrorBoundary>
                 )}
                 {activePanelSection === 'crm' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading CRM</div>}>

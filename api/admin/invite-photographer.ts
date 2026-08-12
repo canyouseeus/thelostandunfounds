@@ -52,6 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 3. Send Email using standard transactional email handler
         const inviteUrl = `https://www.thelostandunfounds.com/setup?token=${token}`;
+        // Same token, second destination: the kit list. It is answerable in one
+        // sitting with no account, which is why it ships in the first email
+        // rather than waiting until after gallery setup.
+        const gearUrl = `https://www.thelostandunfounds.com/gear?token=${token}`;
 
         const content = `
             <h1 style="color: #ffffff; margin-bottom: 20px;">Welcome to THE LOST+UNFOUNDS</h1>
@@ -62,6 +66,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <a href="${inviteUrl}" style="background: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; text-transform: uppercase; display: inline-block;">Set Up Gallery</a>
             </p>
             <p style="color: #aaaaaa; font-size: 12px;">Or copy this link: <a href="${inviteUrl}" style="color: #aaaaaa; text-decoration: underline;">${inviteUrl}</a></p>
+            <p style="color: #ffffff; margin-top: 32px;">One more thing — tell us what's in your bag. Bodies, lenses, lighting, audio, tripods and gimbals. That's how we know which jobs to send your way.</p>
+            <p style="margin: 20px 0;">
+                <a href="${gearUrl}" style="background: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; text-transform: uppercase; display: inline-block;">List My Equipment</a>
+            </p>
+            <p style="color: #aaaaaa; font-size: 12px;">Or copy this link: <a href="${gearUrl}" style="color: #aaaaaa; text-decoration: underline;">${gearUrl}</a></p>
         `;
 
         const emailResult = await sendTransactionalEmail({
