@@ -231,8 +231,11 @@ export function buildBookingPaymentEmailBody(args: {
     <!-- Pay button -->
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0;">
       <tr>
-        <td align="center" style="background-color:#ffffff;">
-          <a href="${escapeHtml(args.paymentUrl)}" style="display:block;padding:16px 24px;color:#000000;font-size:14px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">
+        <!-- The fill lives on the anchor as well as the cell: a client that
+             drops the td background must not be able to turn the only
+             call-to-action on a payment email into blank space. It has. -->
+        <td align="center" bgcolor="#000000" style="background-color:#000000 !important;">
+          <a href="${escapeHtml(args.paymentUrl)}" style="display:block;padding:16px 24px;background-color:#000000 !important;color:#ffffff !important;font-size:14px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">
             Pay ${escapeHtml(args.amountDueLabel)} &rarr;
           </a>
         </td>

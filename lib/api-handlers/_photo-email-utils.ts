@@ -9,7 +9,7 @@ export async function sendPhotoDeliveryEmail(email: string, orderId: string, ent
     return `
           <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #333; background: #111;">
             <p style="color: #fff; margin: 0 0 10px 0; font-family: monospace; font-size: 12px;">PHOTO ID: ${e.photo_id || e.photoId}</p>
-            <a href="${downloadUrl}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; border: 2px solid #fff; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Download High-Res</a>
+            <a href="${downloadUrl}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Download High-Res</a>
           </div>
         `;
   }).join('');
