@@ -226,6 +226,10 @@ export async function sendTransactionalEmail(params: {
         auth,
         to: params.to as string,
         cc: ccList.length ? ccList.join(',') : undefined,
+        // Honour the caller's sender on the Zoho path too. It was previously
+        // read only on the Resend fallback, so a caller asking to send as
+        // media@ got admin@ whenever Zoho — the primary — did the sending.
+        from: params.from,
         subject: params.subject,
         htmlContent: html,
       });

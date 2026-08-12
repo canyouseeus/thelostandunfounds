@@ -40,6 +40,14 @@ export interface ZohoSendEmailParams {
   to: string
   /** Comma-separated additional recipients, visible to everyone on the thread. */
   cc?: string
+  /**
+   * Visible sender. Defaults to the OAuth account's own address (admin@), which
+   * is right for platform notices and wrong for business correspondence — a
+   * client or contractor replying to a booking thread should land on media@,
+   * the address of record. Must be an address the Zoho account is allowed to
+   * send as, or Zoho rejects the message.
+   */
+  from?: string
   subject: string
   htmlContent: string
   attachments?: ZohoEmailAttachment[]
@@ -268,6 +276,7 @@ export async function sendZohoEmail({
   auth,
   to,
   cc,
+  from,
   subject,
   htmlContent,
   attachments
@@ -304,7 +313,7 @@ export async function sendZohoEmail({
   }
 
   const body: Record<string, any> = {
-    fromAddress: auth.fromEmail,
+    fromAddress: from || auth.fromEmail,
     toAddress: to,
     subject,
     content: finalHtml,
