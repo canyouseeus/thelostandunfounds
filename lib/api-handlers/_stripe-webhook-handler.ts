@@ -783,12 +783,31 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
         console.error('⚠️ Crew payout accrual failed:', crewErr?.message)
     }
 
+    // A quote's Stripe link collects the DEPOSIT, not the total. Marking the
+    // quote 'paid' on that payment claimed the whole total had arrived, so one
+    // job showed a paid quote and a paid final invoice — double the billing for
+    // a single fee. Settle against what has actually been received.
+    const { data: priorPayments } = await supabase
+        .from('invoice_payments')
+        .select('amount')
+        .eq('invoice_id', invoice.id)
+    const received = (priorPayments || []).reduce(
+        (sum: number, p: any) => sum + (Number(p.amount) || 0), 0,
+    )
+    const invoiceTotal = Number(invoice.total) || 0
+    const settled = received >= invoiceTotal - 0.005
+    const remaining = Math.max(0, Math.round((invoiceTotal - received) * 100) / 100)
+
     const { error: invErr } = await supabase
         .from('invoices')
-        .update({ status: 'paid', paid_at: paidAt })
+        .update(
+            settled
+                ? { status: 'paid', paid_at: paidAt, amount_due: 0 }
+                : { status: 'deposit_paid', amount_due: remaining },
+        )
         .eq('id', invoice.id)
     if (invErr) {
-        console.error('❌ Failed to mark invoice paid:', invErr)
+        console.error('❌ Failed to record invoice payment state:', invErr)
         return
     }
 

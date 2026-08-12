@@ -78,7 +78,9 @@ export function useCrmClients() {
         // A draft was never sent, and void/cancelled were withdrawn — counting
         // either overstates billed and leaves phantom money outstanding. A test
         // invoice raised in error showed as $301.50 owed until this.
-        const COUNTS_AS_BILLED = new Set(['sent', 'paid', 'overdue']);
+        // deposit_paid is a real, issued invoice with money against it. superseded is
+        // a quote replaced by its final invoice — the same fee, already counted once.
+        const COUNTS_AS_BILLED = new Set(['sent', 'deposit_paid', 'paid', 'overdue']);
 
         const byClient = new Map<string, { count: number; billed: number; collected: number; last: string | null }>();
         for (const inv of invoicesRes.data || []) {

@@ -202,6 +202,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url })
       .eq('id', invoice.id)
 
+    // The quote this replaces is history now. Leaving it open double-counts the
+    // fee and keeps its unpaid balance in receivables after the money has been
+    // collected here.
+    await supabase
+      .from('invoices')
+      .update({ status: 'superseded', amount_due: 0 })
+      .eq('booking_id', bookingId)
+      .eq('invoice_type', 'quote')
+      .not('status', 'in', '("void","cancelled")')
+
     const pdfUrl = `${origin}/api/invoices/pdf?id=${invoice.id}&token=${pdfToken}`
 
     let emailed = false
