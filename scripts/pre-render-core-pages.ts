@@ -35,6 +35,7 @@ const CORE_PAGES = [
     // searches, and "airbnb photographer austin" competes with a different set
     // of results than "small business web design austin".
     { path: 'services/airbnb-photography', title: 'AUSTIN AIRBNB PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.' },
+    { path: 'services/real-estate-photography', title: 'AUSTIN REAL ESTATE & APARTMENT PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $225, full property packages at $850, portfolio retainers from $1,600/mo.' },
     { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $1,500 to custom builds with booking and payments.' },
     { path: 'services/video', title: 'AUSTIN VIDEO CONTENT & BRAND REELS | THE LOST+UNFOUNDS', description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels in 48 hours.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
@@ -227,6 +228,7 @@ async function preRenderCorePages() {
                 // rest — picking for itself which of the three survives.
                 const FOCUS: Record<string, string[]> = {
                     'services/airbnb-photography': ['Airbnb & Short-Term Rental Photography'],
+                    'services/real-estate-photography': ['Real Estate & Multifamily Photography'],
                     'services/web-design': ['Small Business Website Design'],
                     'services/video': ['Short-Form Video & Brand Reels', 'Event Photography & Video', 'Brand Content Days'],
                 };
@@ -236,6 +238,12 @@ async function preRenderCorePages() {
                         price: '195',
                         summary: 'Listing photography for Austin short-term rentals and Airbnb hosts. 25–35 edited photos, 24–72 hour delivery.',
                         detail: 'Studio / 1BR from $195 · 2BR $265 · 3BR $335 · 4BR+ / luxury from $425. Twilight +$125 · Drone +$150 · 3D tour +$200.',
+                    },
+                    {
+                        name: 'Real Estate & Multifamily Photography',
+                        price: '225',
+                        summary: 'Leasing and listing photography for Austin apartment communities, property managers, and agents.',
+                        detail: 'Single model unit or vacant listing $225 (20–30 edited photos) · Property package $850 covering exteriors, amenities and 2 model units · Portfolio retainer from $1,600/mo · Drone +$150 · Twilight +$125 · 3D tour +$200 · Floor plan +$75.',
                     },
                     {
                         name: 'Small Business Website Design',

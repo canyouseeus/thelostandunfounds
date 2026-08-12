@@ -155,6 +155,7 @@ function App() {
                     Same view and same design — Gallery reads the path and
                     leads the hero with that service. */}
                 <Route path="airbnb-photography" element={<Gallery isHomepage />} />
+                <Route path="real-estate-photography" element={<Gallery isHomepage />} />
                 <Route path="web-design" element={<Gallery isHomepage />} />
                 <Route path="video" element={<Gallery isHomepage />} />
               </Route>

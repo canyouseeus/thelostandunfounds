@@ -53,6 +53,30 @@ const PHOTO_SERVICES = [
         ],
     },
     {
+        // Multifamily / property-management work. Distinct from the Airbnb tier
+        // above: a management company is not buying one listing, it is buying
+        // model units, amenity spaces and exteriors across a portfolio, and the
+        // scope is set by the property rather than by a bedroom count.
+        //
+        // Same ladder logic as the $195 Airbnb entry — a single unit enters just
+        // above the STR rate (leasing photography carries more amenity and
+        // exterior coverage), and the margin is carried by the property package
+        // and the portfolio retainer. Quoted on a call rather than auto-invoiced:
+        // a 12-unit boutique building and a 300-unit complex cannot share one
+        // fixed price, and billing either from a card would be wrong.
+        id: 'realestate',
+        label: 'REAL ESTATE / MULTIFAMILY',
+        price: '$225+',
+        meta: 'Per unit or per property · Austin metro',
+        eventType: 'Real Estate / Multifamily',
+        isConsultation: true,
+        features: [
+            'Single model unit or vacant listing $225 · 20–30 edited photos',
+            'Property package $850 — exteriors, amenities + 2 model units',
+            'Portfolio retainer from $1,600/mo · Drone +$150 · 3D tour +$200',
+        ],
+    },
+    {
         id: 'event',
         label: 'EVENT COVERAGE',
         price: '$600',
@@ -268,6 +292,7 @@ const EVENT_TYPES = [
     'Portrait Session',
     'Lifestyle Shoot',
     'Airbnb / Short-Term Rental',
+    'Real Estate / Multifamily',
     'Event Coverage',
     'Half-Day Content',
     'Full-Day Content',
@@ -497,12 +522,16 @@ const ServiceCard: React.FC<{
  * on three addresses get collapsed to one in search, and the two Google
  * discards are the ones it decides are duplicates — not the one you'd choose.
  */
-type ServiceFocus = 'airbnb' | 'web' | 'video';
+type ServiceFocus = 'airbnb' | 'realestate' | 'web' | 'video';
 
 const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = {
     airbnb: {
         h1: <>AIRBNB<br />PHOTOGRAPHY</>,
         copy: 'Listing photography for Austin short-term rentals. 25–35 edited photos, delivered in 24–72 hours, priced from $195.',
+    },
+    realestate: {
+        h1: <>REAL ESTATE<br />PHOTOGRAPHY</>,
+        copy: 'Leasing and listing photography for Austin apartment communities, property managers and agents. Model units from $225, full property packages at $850, portfolio retainers from $1,600/mo.',
     },
     web: {
         h1: <>WEB<br />DESIGN</>,
