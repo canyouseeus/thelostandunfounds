@@ -196,8 +196,8 @@ export function generateContract(params: ContractParams): string {
                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
                       <tr>
                         <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:14px;color:#111;">
-                          <strong>Deposit Due Now</strong><br>
-                          <span style="font-size:12px;color:#555;">Required to secure your booking</span>
+                          <strong>Retainer Due Now (50%)</strong><br>
+                          <span style="font-size:12px;color:#555;">Non-refundable — reserves your date</span>
                         </td>
                         <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:14px;font-weight:bold;color:#111;text-align:right;">${formatCurrency(deposit)}</td>
                       </tr>
@@ -250,10 +250,10 @@ export function generateContract(params: ContractParams): string {
                       <tr>
                         <td style="padding:16px 20px;">
                           <p style="margin:0;font-size:13px;font-weight:bold;color:#fff;letter-spacing:0.05em;text-transform:uppercase;">
-                            Action Required — Pay Deposit to Lock In Your Date
+                            Action Required — Pay Retainer to Lock In Your Date
                           </p>
                           <p style="margin:6px 0 0 0;font-size:13px;color:rgba(255,255,255,0.75);">
-                            Your booking is <strong style="color:#fff;">not confirmed</strong> until the ${formatCurrency(deposit)} deposit
+                            Your booking is <strong style="color:#fff;">not confirmed</strong> until the ${formatCurrency(deposit)} retainer
                             is received. Send payment via any method above or email
                             <a href="mailto:${PHOTOGRAPHER_EMAIL}" style="color:#fff;">${PHOTOGRAPHER_EMAIL}</a> to arrange.
                           </p>
@@ -270,13 +270,18 @@ export function generateContract(params: ContractParams): string {
                       Terms &amp; Conditions
                     </p>
                     <ol style="margin:0;padding-left:18px;font-size:13px;color:#555;line-height:1.8;">
-                      <li><strong style="color:#111;">Deposit &amp; Booking:</strong> A 50% non-refundable deposit is required to secure the date. First-paid basis.</li>
+                      <li><strong style="color:#111;">Retainer &amp; Booking:</strong> A 50% retainer (${formatCurrency(deposit)}) is required to secure the date and is non-refundable. It pays for the date being reserved and turned away from other clients, not for work performed. Dates are held on a first-paid basis.</li>
                       <li><strong style="color:#111;">Balance:</strong> Remaining 50% due on the day of the shoot, before photography begins.</li>
                       <li><strong style="color:#111;">Scheduling:</strong> Time divided evenly between locations per peak-hour schedule provided by client.</li>
                       <li><strong style="color:#111;">Deliverables:</strong> ${deliverablesPerLocation} per location, delivered digitally within 5–7 business days.</li>
-                      <li><strong style="color:#111;">Cancellation:</strong> Cancellations less than 48 hours before the event forfeit the deposit.</li>
+                      <li><strong style="color:#111;">Cancellation by Client:</strong> The retainer is retained in every case. Notice is measured from the scheduled start time.
+                        More than 14 days' notice — nothing further is owed.
+                        Less than 14 days' notice — an additional 25% of the remaining balance (${formatCurrency(balance * 0.25)}) is owed.
+                        Less than 48 hours' notice, or a no-show — the full contract amount (${formatCurrency(totalPrice)}) is owed.</li>
+                      <li><strong style="color:#111;">Rescheduling:</strong> One reschedule is free with at least 48 hours' notice; the retainer transfers to the new date, which must fall within 90 days and is subject to availability. Any further reschedule is treated as a cancellation and requires a new retainer.</li>
+                      <li><strong style="color:#111;">Cancellation by Photographer:</strong> If we cancel for any reason other than force majeure, all monies paid — including the retainer — are refunded in full, and we will make a good-faith effort to refer a comparable replacement photographer.</li>
                       <li><strong style="color:#111;">Usage Rights:</strong> Client receives a non-exclusive license for marketing. Photographer retains full copyright.</li>
-                      <li><strong style="color:#111;">Force Majeure:</strong> Both parties agree to reschedule at the earliest mutually available date.</li>
+                      <li><strong style="color:#111;">Force Majeure:</strong> If either party cannot proceed due to circumstances beyond reasonable control, no cancellation fee applies and both parties agree to reschedule at the earliest mutually available date; the retainer transfers to that date.</li>
                     </ol>
                   </td>
                 </tr>
@@ -294,8 +299,8 @@ export function generateContract(params: ContractParams): string {
                   <td style="padding:0 40px 36px 40px;background:#fafafa;border-top:1px solid #e5e5e5;">
                     <p style="margin:24px 0 16px 0;font-size:11px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;color:#111;">Agreement</p>
                     <p style="margin:0 0 24px 0;font-size:13px;color:#555;line-height:1.7;">
-                      By paying the deposit, the client acknowledges and agrees to all terms outlined in this agreement.
-                      Please reply to this email with your confirmation and peak hour details, then arrange deposit payment
+                      By paying the retainer, the client acknowledges and agrees to all terms outlined in this agreement.
+                      Please reply to this email with your confirmation and peak hour details, then arrange retainer payment
                       to <strong style="color:#111;">${PHOTOGRAPHER_EMAIL}</strong>.
                     </p>
                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
