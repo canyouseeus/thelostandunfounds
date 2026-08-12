@@ -62,6 +62,7 @@ import SignContract from './pages/SignContract'
 import AdminContracts from './pages/AdminContracts'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
+import GearIntake from './pages/GearIntake'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
 import SubmitEvent from './pages/SubmitEvent'
@@ -391,6 +392,10 @@ function App() {
                 <Route index element={<DownloadPortal />} />
               </Route>
               <Route path="/setup" element={<OnboardingWizard />} />
+              {/* Kit list. The token in the URL is the credential, so someone
+                  who has only sent an email address can fill it in before they
+                  have an account; signed-in photographers get the same page. */}
+              <Route path="/gear" element={<GearIntake />} />
               <Route path="/photos/success" element={<Layout />}>
                 <Route index element={<PhotoSuccessPage />} />
               </Route>
