@@ -164,6 +164,12 @@ async function generateSitemap() {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>${baseUrl}/services/real-estate-photography</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>${baseUrl}/services/web-design</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>

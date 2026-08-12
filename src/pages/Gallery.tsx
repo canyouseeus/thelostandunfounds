@@ -177,6 +177,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             title: 'THE LOST+UNFOUNDS | Austin Airbnb & Short-Term Rental Photography',
             description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos delivered in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.',
         },
+        '/services/real-estate-photography': {
+            focus: 'realestate' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Real Estate & Apartment Photography',
+            description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $225, full property packages at $850 covering exteriors, amenities and model units, portfolio retainers from $1,600/mo.',
+        },
         '/services/web-design': {
             focus: 'web' as const,
             title: 'THE LOST+UNFOUNDS | Austin Small Business Web Design',
