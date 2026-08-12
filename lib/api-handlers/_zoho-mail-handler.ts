@@ -10,6 +10,14 @@ export { getZohoAuthContext } from './_zoho-email-utils.js';
 
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
 
+// Outbound mail sends as media@ — the business address of record, and the
+// address correspondence is CC'd to. The Zoho OAuth account is still admin@
+// (that's what auth.accountId resolves), but the visible From is media@ so a
+// recipient replying to a booking, quote or inquiry lands in the media inbox
+// rather than the admin one. Matches the booking flow, which has sent as
+// media@ since it was written — see FROM_EMAIL in _booking-payment-utils.ts.
+const MEDIA_FROM_EMAIL = 'media@thelostandunfounds.com';
+
 // Rate limit helper - 200ms delay between calls
 let lastApiCall = 0;
 async function rateLimitedFetch(url: string, options: RequestInit): Promise<Response> {
@@ -81,6 +89,8 @@ export interface SendEmailParams {
     contentType: string;
   }>;
   inReplyTo?: string;
+  /** Override the sender. Defaults to MEDIA_FROM_EMAIL — see the constant. */
+  from?: string;
 }
 
 export interface SearchParams {
@@ -269,7 +279,7 @@ export async function sendMessage(
     const url = `${ZOHO_MAIL_API}/${auth.accountId}/messages`;
 
     const body: any = {
-      fromAddress: auth.fromEmail,
+      fromAddress: params.from || MEDIA_FROM_EMAIL,
       toAddress: params.to,
       subject: params.subject,
       content: params.isHtml !== false ? ensureBannerHtml(params.content) : params.content,
@@ -495,7 +505,7 @@ export async function saveDraft(
     const url = `${ZOHO_MAIL_API}/${auth.accountId}/messages`;
 
     const body: any = {
-      fromAddress: auth.fromEmail,
+      fromAddress: MEDIA_FROM_EMAIL,
       toAddress: params.to || '',
       subject: params.subject || '',
       content: params.content || '',
