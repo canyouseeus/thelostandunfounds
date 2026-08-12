@@ -41,15 +41,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = getSupabaseAdmin()
     let linkId = paymentLinkId
     let invoiceId: string | null = null
+    let invoiceStatus: string | null = null
 
     if (invoiceNumber) {
       const { data: inv } = await supabase
         .from('invoices')
-        .select('id, stripe_payment_link_id')
+        .select('id, stripe_payment_link_id, status')
         .eq('invoice_number', invoiceNumber)
         .maybeSingle()
       if (!inv) return res.status(404).json({ error: `Invoice ${invoiceNumber} not found` })
       invoiceId = inv.id
+      invoiceStatus = inv.status || null
       linkId = linkId || inv.stripe_payment_link_id || undefined
     }
 
@@ -62,7 +64,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Keep the invoice in step — a dead link on a "sent" invoice is a trap for
     // whoever reads the record next.
-    if (invoiceId) {
+    //
+    // But a link is also killed on an invoice that has been PAID, to stop a
+    // client paying the same balance twice — and pushing that back to draft
+    // erases the payment from the CRM totals, which it did once. Only an
+    // unsettled invoice is withdrawn.
+    if (invoiceId && invoiceStatus && !['paid', 'void', 'cancelled'].includes(invoiceStatus)) {
       await supabase.from('invoices').update({ status: 'draft' }).eq('id', invoiceId)
     }
 

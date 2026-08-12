@@ -126,6 +126,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const client = await upsertClientForBooking(supabase, booking)
+
+    // The quote for this booking holds who is covering it and their payout.
+    const { data: priorQuote } = await supabase
+      .from('invoices')
+      .select('contractor_name, contractor_payout')
+      .eq('booking_id', bookingId)
+      .eq('invoice_type', 'quote')
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
     const recipient = client.email || booking.email
     if (!recipient || !recipient.includes('@')) {
       return res.status(400).json({ error: 'No client email available to send the invoice to' })
@@ -158,6 +168,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         total,
         amount_due: balance,
         status: 'sent',
+        // Carry the photographer forward from the quote. The final invoice is
+        // the one that gets marked paid, so a job settled without this has no
+        // record of who is owed what — and the payout reads as zero.
+        contractor_name: priorQuote?.contractor_name || null,
+        contractor_payout: priorQuote?.contractor_payout || null,
         payment_method: 'Stripe',
         pdf_token: pdfToken,
       })
