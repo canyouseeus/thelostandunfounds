@@ -58,6 +58,8 @@ import PhotoSuccessPage from './pages/PhotoSuccessPage'
 import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
 import ClientUpload from './pages/ClientUpload'
+import SignContract from './pages/SignContract'
+import AdminContracts from './pages/AdminContracts'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
@@ -85,7 +87,6 @@ import SilvaStarProposal from './templates/silva-star/SilvaStarProposal'
 import KattitudeLanding from './templates/kattitude/KattitudeLanding'
 import KattitudeDashboard from './templates/kattitude/KattitudeDashboard'
 import FadeboxLanding from './templates/fadebox/FadeboxLanding'
-import FadeboxProposal from './templates/fadebox/FadeboxProposal'
 import FadeboxDashboard from './templates/fadebox/FadeboxDashboard'
 import KioskDemo from './pages/KioskDemo'
 import Demos from './pages/Demos'
@@ -144,6 +145,19 @@ function App() {
               </Route>
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/zoho/callback" element={<ZohoCallback />} />
+              {/* Services — same view as the homepage SERVICES tab, but at a real,
+                  crawlable URL so Google and LLM crawlers can index the offer.
+                  Renders Gallery directly rather than RootPage so an admin landing
+                  here gets the services view, not the brand intro animation. */}
+              <Route path="/services" element={<Layout />}>
+                <Route index element={<Gallery isHomepage />} />
+                {/* One page per offer, so each can rank for its own search.
+                    Same view and same design — Gallery reads the path and
+                    leads the hero with that service. */}
+                <Route path="airbnb-photography" element={<Gallery isHomepage />} />
+                <Route path="web-design" element={<Gallery isHomepage />} />
+                <Route path="video" element={<Gallery isHomepage />} />
+              </Route>
               <Route path="/about" element={<Layout />}>
                 <Route index element={<About />} />
               </Route>
@@ -207,6 +221,15 @@ function App() {
                   <Affiliate />
                 </Layout>
               } />
+              {/* Contractors' own dashboard — galleries and job payouts. The
+                  component existed and was imported but was never given a
+                  route, so the page had no URL and the payout email linked to
+                  a 404. It guards itself: no session redirects home. */}
+              <Route path="/photographer-dashboard" element={
+                <Layout>
+                  <PhotographerDashboard />
+                </Layout>
+              } />
               <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/affiliate-dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/become-affiliate" element={<Layout />}>
@@ -241,6 +264,13 @@ function App() {
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />
+                <Route path="contracts" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminContracts />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
                 <Route path="invoices" element={<AdminInvoicesRedirect />} />
               </Route>
               {/* Silva Star white-label template */}
@@ -254,7 +284,6 @@ function App() {
 
               {/* Fadebox Barbershop — redesign proposal preview (public, no auth) */}
               <Route path="/fadebox-preview" element={<FadeboxLanding />} />
-              <Route path="/fadebox-preview/proposal" element={<FadeboxProposal />} />
               <Route path="/fadebox-preview/dashboard" element={<FadeboxDashboard />} />
 
               {/* Interactive Kiosk Build — public service demo + design brief.
@@ -355,6 +384,8 @@ function App() {
               {/* Client asset intake — the token is the credential, so no
                   Layout chrome and no auth gate. */}
               <Route path="/upload/:token" element={<ClientUpload />} />
+              {/* Public contract signing — the token in the URL is the credential. */}
+              <Route path="/sign/:token" element={<SignContract />} />
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
               </Route>

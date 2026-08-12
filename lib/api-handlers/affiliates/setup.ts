@@ -7,6 +7,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { sendAffiliateEmail } from './_emails.js';
 
+/** Where new-affiliate notifications land. Overridable per environment. */
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@thelostandunfounds.com';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -136,6 +140,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     } catch (emailErr: any) {
       console.warn('[affiliate-setup] welcome email failed:', emailErr?.message);
+    }
+
+    // Best-effort admin notification. Deduped on affiliate id so a retried
+    // signup can't mail the admin twice. Failures here must never fail the
+    // registration itself.
+    try {
+      const { data: userRow } = await supabase.auth.admin.getUserById(user_id);
+      await sendAffiliateEmail({
+        type: 'admin_new_affiliate',
+        affiliateId: affiliate.id,
+        referenceId: affiliate.id,
+        to: ADMIN_NOTIFICATION_EMAIL,
+        data: {
+          code,
+          firstName: first_name,
+          lastName: last_name,
+          email: userRow?.user?.email || '',
+          phone: phone_number,
+          referredByCode: referredBy ? (referred_by_code || '').toUpperCase() : '',
+          signedUpAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC',
+        },
+      });
+    } catch (emailErr: any) {
+      console.warn('[affiliate-setup] admin notification failed:', emailErr?.message);
     }
 
     return res.status(200).json({

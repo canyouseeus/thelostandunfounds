@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import JobPayouts from '../components/JobPayouts';
 import { useToast } from '../components/Toast';
 import {
   UserIcon,
@@ -1082,10 +1083,18 @@ export default function Affiliate() {
                   <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
               {/* Gallery Section */}
               {hasGallery && activeApp === 'gallery' && (
+                <>
+                  {/* Job pay for shoots covered. Lives here as well as on the
+                      photographer dashboard because this is where contractors
+                      actually land — the affiliate earnings figure above reads
+                      $0.00 for someone who has been paid for shoots, since
+                      commission and wages are deliberately separate ledgers. */}
+                  {user && <JobPayouts userId={user.id} />}
                   <AdminGalleryView
                     onBack={() => setActiveApp(null)}
                     isPhotographerView={true}
                   />
+                </>
               )}
 
               {/* Writer Section */}

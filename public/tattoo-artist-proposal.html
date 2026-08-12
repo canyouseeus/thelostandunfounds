@@ -68,9 +68,38 @@
     margin:0 auto;
   }
   @media print{
-    .page{width:8.5in; height:11in; margin:0;}
+    /* min-height, NOT height, and overflow must stay visible.
+       A fixed 11in height combined with the overflow:hidden above does not
+       "fit" an overlong page — it silently deletes whatever sits past the
+       11in mark. That is how several proposals shipped with their signature
+       block missing from the PDF while the HTML looked complete.
+       With min-height an overlong page spills onto a second sheet instead:
+       visible, and a signal to edit the page down. Never restore height. */
+    .page{width:8.5in; min-height:11in; height:auto; overflow:visible; margin:0;}
   }
   .page:last-child{page-break-after:auto;}
+
+  /* ── .page.dense ──────────────────────────────────────────────────
+     A page that runs a little past 11in gets tighter vertical rhythm
+     instead of losing a sentence. Type sizes never change — only the
+     space between blocks — so a dense page still reads as the same
+     document sitting beside a normal one.
+
+     Worth about 60–70px on a typical page. Past that, compressing
+     starts to show: split the page instead and renumber. Never reach
+     for this to cram a page that is 150px over. */
+  .page.dense .pagehead{margin-bottom:12px;}
+  .page.dense p.lede{margin-bottom:14px;}
+  .page.dense p.body{margin-bottom:11px;}
+  .page.dense .rule, .page.dense .rule-soft{margin:11px 0 15px;}
+  .page.dense .subhead{margin:4px 0 10px;}
+  .page.dense ul.list{margin-bottom:12px;}
+  .page.dense ul.list li{margin-bottom:5px;}
+  .page.dense .invest{margin-bottom:14px;}
+  .page.dense .invest th, .page.dense .invest td{padding:11px 0;}
+  .page.dense .compare{margin-bottom:14px;}
+  .page.dense .compare th, .page.dense .compare td{padding:8px 0;}
+  .page.dense .callout{padding:13px 18px;}
 
   .runhead{
     display:flex; justify-content:space-between; align-items:center;
@@ -266,7 +295,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 1 / 6</div>
+    <div>Page 1 / 8</div>
   </div>
 
   <div class="cover-body">
@@ -332,7 +361,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 1 / 6</div>
+    <div>Page 1 / 8</div>
   </div>
 </section>
 
@@ -344,7 +373,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 2 / 6</div>
+    <div>Page 2 / 8</div>
   </div>
 
   <div class="pagehead">
@@ -374,7 +403,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 2 / 6</div>
+    <div>Page 2 / 8</div>
   </div>
 </section>
 
@@ -386,7 +415,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 3 / 6</div>
+    <div>Page 3 / 8</div>
   </div>
 
   <div class="pagehead">
@@ -416,9 +445,27 @@
     <li><strong>Payment processing</strong> — <span class="lite">accept deposits and full payments from any device.</span></li>
   </ul>
 
-  <hr class="rule-soft">
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 3 / 8</div>
+  </div>
+</section>
 
-  <div class="subhead">The Dashboard</div>
+<!-- ====================== PAGE 4 — THE DASHBOARD ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 4 / 8</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">03 · The Dashboard</div>
+    <h2>One screen behind the website.</h2>
+  </div>
 
   <ul class="list">
     <li><strong>Admin console</strong> — <span class="lite">manage bookings, view client info, update your gallery, and track revenue from one screen.</span></li>
@@ -429,7 +476,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 3 / 6</div>
+    <div>Page 4 / 8</div>
   </div>
 </section>
 
@@ -441,7 +488,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 4 / 6</div>
+    <div>Page 5 / 8</div>
   </div>
 
   <div class="pagehead">
@@ -476,7 +523,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 4 / 6</div>
+    <div>Page 5 / 8</div>
   </div>
 </section>
 
@@ -488,7 +535,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 5 / 6</div>
+    <div>Page 6 / 8</div>
   </div>
 
   <div class="pagehead">
@@ -559,7 +606,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 5 / 6</div>
+    <div>Page 6 / 8</div>
   </div>
 </section>
 
@@ -571,7 +618,7 @@
       <span class="sep">·</span>
       <span>Artist Website Proposal</span>
     </div>
-    <div>Page 6 / 6</div>
+    <div>Page 7 / 8</div>
   </div>
 
   <div class="pagehead">
@@ -622,7 +669,29 @@
     </div>
   </div>
 
-  <div class="callout" style="margin-top:14px;">
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 7 / 8</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 8 — TERMS &amp; ACCEPTANCE ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 8 / 8</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">06 · Terms &amp; Acceptance</div>
+    <h2>What it costs to start, and what you own.</h2>
+  </div>
+
+  <div class="callout">
     <div class="k">Timeline &amp; Payment Terms</div>
     <div class="v"><strong>$1,000 deposit due to begin work. Balance of $1,000 due on launch day.</strong> Delivers within 3 weeks. Maintenance billed monthly starting on final launch date. Development tools (Claude Max plan, hosting infrastructure, domain management) are my overhead, covered in the build cost.</div>
   </div>
@@ -648,7 +717,7 @@
 
   <div class="runfoot">
     <div>YOUR ART. YOUR PLATFORM.</div>
-    <div>Page 6 / 6</div>
+    <div>Page 8 / 8</div>
   </div>
 </section>
 

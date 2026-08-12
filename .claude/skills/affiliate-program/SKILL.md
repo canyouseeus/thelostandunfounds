@@ -51,6 +51,8 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
     -   **Cron (Hourly)**: `api/cron/process-payouts.ts` (Sends `{ "processAll": true }`)
     -   **Handler**: `lib/api-handlers/admin/process-payouts.ts` (Handles `processAll` to pay ALL approved requests)
     -   **Stripe Connect**: `lib/api-handlers/affiliates/connect-onboarding.ts` + `_stripe-client.ts`. Payouts are Stripe-only; PayPal is retired.
+        -   Account creation / Account Link minting lives in `_connect-account.ts` and is **shared**. Never call `stripe.accounts.create` for an affiliate from a new file — you'll strand commissions on a duplicate Express account.
+        -   **Onboarding reminders**: affiliates who never connect Stripe are nudged daily by `api/cron/affiliate-stripe-reminder.ts` (24h grace, 7-day cooldown, 4 max). The email's one-click link goes to `/api/affiliates/stripe-resume?token=…`, which mints a *fresh* Account Link — Account Links expire in minutes, so never put one in an email. See `.agent/workflows/affiliate-stripe-reminders.md`.
 -   **Database Schema**:
     -   `affiliates` (Profiles, points)
     -   `affiliate_customers` (Lifetime bindings)

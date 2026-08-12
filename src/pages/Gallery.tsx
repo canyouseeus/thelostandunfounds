@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -80,6 +80,10 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         // subscribe prompt — which is what it did to a real client. Read the query
         // string directly rather than useSearchParams: this is a mount-time
         // decision, and the hook is declared further down the component.
+        // /services and every /services/<offer> page is the same arrival with
+        // intent, just as a path instead of a query param — a visitor landing
+        // there from search came to see pricing, not to be asked to subscribe.
+        if (/^\/services(\/|$)/.test(window.location.pathname)) return;
         if (new URLSearchParams(window.location.search).get('view')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
@@ -160,7 +164,34 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     // Read initial viewMode from `?view=shop|services|gallery`. This is how the
     // SERVICES nav link deep-links into the services tab on the homepage.
     const [searchParams] = useSearchParams();
+    const location = useLocation();
+    // /services is the canonical, indexable URL for the services view, and each
+    // /services/<slug> below is the same view led by one offer, so a search for
+    // "airbnb photographer austin" lands on a page about that rather than a
+    // generic agency page. The ?view= params are kept so existing links and
+    // client emails still work.
+    const servicePath = location.pathname.replace(/\/$/, '');
+    const SERVICE_PAGES = {
+        '/services/airbnb-photography': {
+            focus: 'airbnb' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Airbnb & Short-Term Rental Photography',
+            description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos delivered in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.',
+        },
+        '/services/web-design': {
+            focus: 'web' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Small Business Web Design',
+            description: 'Website design and development for Austin small businesses, artists and brands. Five-page starter sites from $1,500 through full custom builds with booking and payments.',
+        },
+        '/services/video': {
+            focus: 'video' as const,
+            title: 'THE LOST+UNFOUNDS | Austin Video Content & Brand Reels',
+            description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels within 48 hours.',
+        },
+    } as const;
+    const servicePage = SERVICE_PAGES[servicePath as keyof typeof SERVICE_PAGES];
+    const isServicesRoute = servicePath === '/services' || !!servicePage;
     const initialView = (() => {
+        if (isServicesRoute) return 'services';
         const v = searchParams.get('view');
         // support legacy ?view=booking so old links still work
         if (v === 'shop' || v === 'gallery') return v;
@@ -168,6 +199,25 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         return 'gallery';
     })();
     const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'services'>(initialView);
+
+    // Tab clicks swap the view in place — they must never navigate, or the shop's
+    // silent preload is thrown away and the page remounts under the user. So the
+    // address bar is updated directly instead of through the router: replaceState
+    // leaves the router's own location untouched, so nothing re-renders.
+    //
+    // Each URL below reproduces exactly what is on screen if it is reloaded or
+    // shared — /?view=shop returns the embedded shop, not the standalone /shop
+    // page, which is a different layout.
+    //
+    // replace, not push: the back button keeps leaving the page as it does today
+    // rather than stepping back through tabs. A pushed entry would also desync,
+    // since popstate moves the router but not this component's state.
+    const selectView = (next: 'gallery' | 'shop' | 'services') => {
+        setViewMode(next);
+        if (!isHomepage) return;
+        const url = next === 'services' ? '/services' : next === 'shop' ? '/?view=shop' : '/';
+        window.history.replaceState(window.history.state, '', url);
+    };
 
     // Scroll to top when returning from an inline gallery back to the grid
     const prevActiveGallery = useRef<string | null>(null);
@@ -209,18 +259,29 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
-                {isHomepage ? (
+                {servicePage ? (
+                    <title>{servicePage.title}</title>
+                ) : isServicesRoute ? (
+                    <title>THE LOST+UNFOUNDS | Austin Photography &amp; Web Design</title>
+                ) : isHomepage ? (
                     <title>THE LOST+UNFOUNDS</title>
                 ) : (
                     <title>THE LOST+UNFOUNDS | The Gallery</title>
                 )}
                 <meta
                     name="description"
-                    content={isHomepage
+                    content={servicePage
+                        ? servicePage.description
+                        : isServicesRoute
+                        ? "Austin photography and web design. Airbnb and short-term rental shoots from $195, event coverage from $600, and custom small business websites from $1,500."
+                        : isHomepage
                         ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
                         : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}
                 />
-                <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
+                {/* Each service page is its own canonical. Pointing them all at
+                    /services would tell Google to drop the three specific pages
+                    and keep the generic one — the exact opposite of the split. */}
+                <link rel="canonical" href={servicePage ? `https://www.thelostandunfounds.com${servicePath}` : isServicesRoute ? 'https://www.thelostandunfounds.com/services' : isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
             {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
@@ -235,7 +296,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-center gap-8 sm:gap-12 pb-2 mb-0">
                             <button
-                                onClick={() => setViewMode('gallery')}
+                                onClick={() => selectView('gallery')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'gallery' ? "text-white" : "text-white/30 hover:text-white/60"
@@ -250,7 +311,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                 )}
                             </button>
                             <button
-                                onClick={() => setViewMode('shop')}
+                                onClick={() => selectView('shop')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'shop' ? "text-white" : "text-white/30 hover:text-white/60"
@@ -265,7 +326,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                 )}
                             </button>
                             <button
-                                onClick={() => setViewMode('services')}
+                                onClick={() => selectView('services')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
                                     viewMode === 'services' ? "text-white" : "text-white/30 hover:text-white/60"
@@ -293,7 +354,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Services view — shown only when the services tab is active */}
             {isHomepage && viewMode === 'services' && (
-                <BookingPage />
+                <BookingPage focus={servicePage?.focus} />
             )}
 
             {/* Gallery view */}

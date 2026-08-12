@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { existsSync } from 'fs'
+import sourceTagPlugin from './plugins/vite-plugin-source-tag'
 
 // Check if tools-registry exists (for local development)
 // Try multiple possible paths
@@ -16,7 +17,11 @@ const hasToolsRegistry = !!toolsRegistryPath
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Stamps data-tlu-src="file:line" on host elements so SAGE MODE's selector
+      // can report the source location of whatever you click.
+      babel: { plugins: [sourceTagPlugin] },
+    }),
   ],
   resolve: {
     alias: {

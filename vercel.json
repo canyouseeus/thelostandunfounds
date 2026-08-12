@@ -23,6 +23,9 @@
     "api/cron/sync-gallery.ts": {
       "maxDuration": 250
     },
+    "api/cron/retrograde-rename.ts": {
+      "maxDuration": 300
+    },
     "api/admin/sync-library.ts": {
       "maxDuration": 300
     },
@@ -40,7 +43,11 @@
     },
     {
       "path": "/api/cron/sync-gallery",
-      "schedule": "*/2 * * * *"
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/retrograde-rename",
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/send-scheduled-newsletters",
@@ -49,12 +56,25 @@
     {
       "path": "/api/cron/affiliate-weekly-summary",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/affiliate-stripe-reminder",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/crew-payouts",
+      "schedule": "0 * * * *"
     }
   ],
   "redirects": [
     {
       "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
       "destination": "/bookclub/prompt",
+      "permanent": false
+    },
+    {
+      "source": "/fadebox-preview/proposal",
+      "destination": "/fadebox-proposal.pdf",
       "permanent": false
     }
   ],

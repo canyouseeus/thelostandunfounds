@@ -9,7 +9,7 @@ const BRAND_BANNER = 'https://www.thelostandunfounds.com/brand/banner.png'
 const WEBSITE = 'https://www.thelostandunfounds.com'
 const PHOTOGRAPHER_NAME = 'THE LOST+UNFOUNDS'
 const PHOTOGRAPHER_EMAIL = 'media@thelostandunfounds.com'
-const PHOTOGRAPHER_IG = '@tlau.photos'
+const PHOTOGRAPHER_IG = '@tlau.media'
 
 export interface ContractLocation {
   name: string

@@ -285,11 +285,13 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
 
 function parseLocationFromClaptropTitle(title: string | null | undefined): string | null {
     if (!title) return null;
-    // Accept both the new SEO prefix and the legacy short form:
-    //   @tlau.photos_thelostandunfounds_YYYY-MM-DD_{location}_{subject}_{###}
-    //   @tlau_YYYY-MM-DD_{location}_{subject}_{###}
+    // Accept every prefix generation and the legacy short form. Dropping an old
+    // one silently loses the parsed location for every file still carrying it.
+    //   @tlau.media_thelostandunfounds_YYYY-MM-DD_{location}_{subject}_{###}   (v3)
+    //   @tlau.photos_thelostandunfounds_YYYY-MM-DD_{location}_{subject}_{###}  (v2)
+    //   @tlau_YYYY-MM-DD_{location}_{subject}_{###}                            (v1)
     const m = title.match(
-        /^@tlau(?:\.photos_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/
+        /^@[a-z0-9._-]+?(?:_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/
     );
     if (!m) return null;
     const raw = m[1].replace(/_/g, ' ').trim();

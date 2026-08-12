@@ -1,3 +1,18 @@
+/**
+ * Image sitemap. `/image-sitemap.xml` rewrites here (see vercel.json).
+ *
+ * NEVER let a build step write a static dist/image-sitemap.xml. Vercel serves
+ * static files before it applies rewrites, so such a file silently shadows this
+ * route and nothing anywhere reports an error. That is exactly what happened:
+ * scripts/generate-image-sitemap.ts emitted lh3.googleusercontent.com URLs —
+ * Google Drive's CDN, a domain we do not own — and shadowed this route for
+ * months. An image sitemap only counts images on our own property, so all 1,000
+ * photos it advertised were attributed to nobody and the gallery stayed absent
+ * from Google Images. The script has been deleted; do not reintroduce it.
+ *
+ * Images must be served through /api/gallery/stream on this domain, which
+ * robots.txt allows precisely so Googlebot can index published photos.
+ */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 

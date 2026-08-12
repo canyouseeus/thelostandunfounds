@@ -122,6 +122,8 @@ export default async function handler(
         return await handleSecretSanta(req, res)
       case 'affiliates':
         return await handleAffiliates(req, res)
+      case 'affiliate-stripe-reminders':
+        return await handleAffiliateStripeReminders(req, res)
       case 'new-subscription-notification':
         return await handleNewSubscriptionNotification(req, res)
       case 'new-blog-contributor-notification':
@@ -185,6 +187,16 @@ async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) 
  */
 async function handleSendSilvaStarProposal(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/send-silva-star-proposal.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Affiliate Stripe onboarding reminders.
+ * Real sweeps require CRON_SECRET; a `testEmail` preview to an owner address
+ * is allowed without it so the template can be checked before a real send.
+ */
+async function handleAffiliateStripeReminders(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/affiliates/stripe-reminders.js')
   return handler.default(req, res)
 }
 

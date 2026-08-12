@@ -27,6 +27,16 @@ const CORE_PAGES = [
     // Public routes that existed in the router but not here, so the Vercel
     // catch-all served them the noindex shell — telling Google not to index
     // real, public pages. Any new public route must be added to this list.
+    // The services offer. Until this existed the whole hire-us page lived behind a
+    // React state flag on the homepage, so the raw HTML at /?view=services was
+    // byte-identical to the homepage and contained none of the copy below.
+    { path: 'services', title: 'AUSTIN PHOTOGRAPHY & WEB DESIGN | THE LOST+UNFOUNDS', description: 'Austin photography and web design. Airbnb shoots from $195, event coverage from $600, small business websites from $1,500. Book online.' },
+    // One page per offer. A single page cannot rank for three unrelated
+    // searches, and "airbnb photographer austin" competes with a different set
+    // of results than "small business web design austin".
+    { path: 'services/airbnb-photography', title: 'AUSTIN AIRBNB PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.' },
+    { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $1,500 to custom builds with booking and payments.' },
+    { path: 'services/video', title: 'AUSTIN VIDEO CONTENT & BRAND REELS | THE LOST+UNFOUNDS', description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels in 48 hours.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
@@ -207,6 +217,109 @@ async function preRenderCorePages() {
                 }
             }
 
+            // Services pre-render. Mirrors PHOTO_SERVICES / WEB_SERVICES in
+            // src/pages/BookingPage.tsx — display only. If a price or package
+            // changes there, change it here too or the crawled page goes stale.
+            if (page.path.startsWith('services')) {
+                // Each sub-page advertises only its own offer. Three pages
+                // listing all five services would be near-duplicates, and
+                // Google resolves duplicates by keeping one and dropping the
+                // rest — picking for itself which of the three survives.
+                const FOCUS: Record<string, string[]> = {
+                    'services/airbnb-photography': ['Airbnb & Short-Term Rental Photography'],
+                    'services/web-design': ['Small Business Website Design'],
+                    'services/video': ['Short-Form Video & Brand Reels', 'Event Photography & Video', 'Brand Content Days'],
+                };
+                const allOfferings = [
+                    {
+                        name: 'Airbnb & Short-Term Rental Photography',
+                        price: '195',
+                        summary: 'Listing photography for Austin short-term rentals and Airbnb hosts. 25–35 edited photos, 24–72 hour delivery.',
+                        detail: 'Studio / 1BR from $195 · 2BR $265 · 3BR $335 · 4BR+ / luxury from $425. Twilight +$125 · Drone +$150 · 3D tour +$200.',
+                    },
+                    {
+                        name: 'Small Business Website Design',
+                        price: '1500',
+                        summary: 'Website design and development for Austin small businesses, artists, and brands. Mobile responsive, SEO optimized.',
+                        detail: 'Starter $1,500 (5–8 pages) · Professional $3,500 (custom branding, admin dashboard, booking system, SEO) · Agency $6,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $150–300/mo.',
+                    },
+                    {
+                        name: 'Short-Form Video & Brand Reels',
+                        price: '450',
+                        summary: 'Standalone video for Austin brands — vertical reels, hero brand films, and full video content days.',
+                        detail: 'Reel Pack $450 (2 hrs, 3 reels, 5-day delivery) · Brand Video $1,200 (4 hrs, one 60-90s hero plus 3 cutdowns) · Video Content Day $2,000 (8 hrs, hero plus 6-8 reels) · Monthly Reel Retainer $900/mo for 4 reels.',
+                    },
+                    {
+                        name: 'Event Photography & Video',
+                        price: '600',
+                        summary: 'Event coverage across Austin — venues, brand activations, nightlife, and private events.',
+                        detail: '3 hours from $600 · 20–30 curated photos next-day · event highlight reel within 48 hours · +$175/hr for additional hours.',
+                    },
+                    {
+                        name: 'Brand Content Days',
+                        price: '800',
+                        summary: 'Half-day and full-day content production for brands — photography plus short-form video.',
+                        detail: 'Half-day $800 (4 hrs, 30–50 photos, 2–3 reels) · Full-day $1,400 (8 hrs, 50+ photos, 2–3 reels).',
+                    },
+                    {
+                        name: 'Lifestyle Portrait Session',
+                        price: '250',
+                        summary: 'Candid lifestyle portraits in downtown Austin with same-day delivery.',
+                        detail: '30–45 minutes · 10–15 curated photos · same-day delivery.',
+                    },
+                ];
+
+                // /services keeps the full catalogue; each sub-page carries only
+                // its own offer, so the four pages are not near-duplicates.
+                const wanted = FOCUS[page.path];
+                const offerings = wanted
+                    ? allOfferings.filter((o) => wanted.includes(o.name))
+                    : allOfferings;
+                if (wanted && offerings.length !== wanted.length) {
+                    // A renamed offering would silently empty the page it backs.
+                    throw new Error(`Service focus for ${page.path} matched ${offerings.length} of ${wanted.length} offerings — check the names in FOCUS.`);
+                }
+
+                shadowSchema = {
+                    "@context": "https://schema.org",
+                    "@type": "ProfessionalService",
+                    "name": "THE LOST+UNFOUNDS",
+                    "description": page.description,
+                    "url": `https://www.thelostandunfounds.com/${page.path}`,
+                    "areaServed": { "@type": "City", "name": "Austin", "addressRegion": "TX", "addressCountry": "US" },
+                    "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" },
+                    "priceRange": "$195–$6,000+",
+                    "hasOfferCatalog": {
+                        "@type": "OfferCatalog",
+                        "name": "Photography & Web Design Services",
+                        "itemListElement": offerings.map((o) => ({
+                            "@type": "Offer",
+                            "priceCurrency": "USD",
+                            "price": o.price,
+                            "itemOffered": { "@type": "Service", "name": o.name, "description": o.summary },
+                        })),
+                    },
+                };
+
+                shadowContent = `
+                    <section id="static-services-list" style="margin-top: 3rem;">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Services</h2>
+                        ${offerings.map((o) => `
+                        <article style="margin-bottom: 3rem; background: rgba(255,255,255,0.02); padding: 2rem;">
+                            <h3 style="font-size: 1.6rem; margin-bottom: 0.75rem; font-weight: bold;">${escapeHtml(o.name)}</h3>
+                            <p style="color: rgba(255,255,255,0.7); font-size: 1rem; line-height: 1.6; margin-bottom: 0.75rem;">${escapeHtml(o.summary)}</p>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.95rem; line-height: 1.6;">${escapeHtml(o.detail)}</p>
+                        </article>
+                        `).join('\n')}
+                        <p style="color: rgba(255,255,255,0.6); font-size: 1rem; line-height: 1.6;">
+                            THE LOST+UNFOUNDS is a creative agency in Austin, Texas offering photography and web design
+                            for brands, artists, and small businesses. Serving Austin and Central Texas.
+                        </p>
+                        <a href="/contact" style="display: inline-block; margin-top: 1.5rem; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.2em; color: black; background: white; padding: 1rem 2rem; text-decoration: none;">SCHEDULE A SESSION</a>
+                    </section>
+                `;
+            }
+
             // Breadcrumb Schema
             const breadcrumbSchema = {
                 "@context": "https://schema.org",
@@ -273,7 +386,7 @@ async function preRenderCorePages() {
                     `<div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>`
                 );
             } else {
-                html = html.replace('<div id="root">', `<div id="root">\n    <div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>`);
+                html = html.replace('<div id="root">', `<div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>\n  <div id="root">`);
             }
 
             // Write HTML

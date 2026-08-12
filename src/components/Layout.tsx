@@ -260,6 +260,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
     return createPortal(
       <div
+        data-sage-chrome
         className="fixed inset-0 z-[99999] bg-black flex flex-col"
         style={{ touchAction: 'none' }}
       >
@@ -303,7 +304,13 @@ export default function Layout({ children }: { children?: ReactNode }) {
       {isRouteLoading && <LoadingOverlay />}
 
       <SageModeOverlay />
-      <div ref={fixedHeaderRef} className="fixed top-0 left-0 w-full bg-black z-[999]">
+      {/* data-sage-chrome keeps the header clickable while SAGE MODE is armed,
+          so you can always reach the menu and switch it back off. */}
+      <div
+        ref={fixedHeaderRef}
+        data-sage-chrome
+        className="fixed top-0 left-0 w-full bg-black z-[999]"
+      >
         {/* THE AFFILIATE PROGRAM banner — sits above the nav for homepage visitors */}
         {showAdBanner && <AffiliateBanner noMargin />}
 
@@ -373,7 +380,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
               {/* Logo — centered for visitors, left-aligned when the menu shows */}
               <Link
                 to="/"
-                className={`flex items-center hover:opacity-70 transition-opacity ${
+                // `sage-brand` is the hook SAGE MODE tints gold — see index.css.
+                className={`sage-brand flex items-center hover:opacity-70 transition-opacity ${
                   showHeaderMenu ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-0'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}

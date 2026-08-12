@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { PostgrestError } from '@supabase/supabase-js'
-import { createServiceSupabaseClient } from '../_supabase-admin-client'
+import { createServiceSupabaseClient } from '../_supabase-admin-client.js'
 import { sendTransactionalEmail } from '../_resend-email-handler.js'
 
 const isMissingTable = (error?: PostgrestError | null) =>

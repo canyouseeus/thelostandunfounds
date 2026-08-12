@@ -14,6 +14,7 @@ import {
     ShareIcon
 } from '@heroicons/react/24/outline';
 import { LoadingOverlay } from '../components/Loading';
+import JobPayouts from '../components/JobPayouts';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -34,6 +35,9 @@ export default function PhotographerDashboard() {
                 <h1 className="text-3xl font-bold uppercase tracking-tighter">My Galleries</h1>
                 <p className="text-zinc-400">Manage your photo galleries and settings</p>
             </div>
+
+            {/* Job pay for shoots covered — separate from gallery sales below. */}
+            {user && <JobPayouts userId={user.id} />}
 
             {/* Revenue & Payment Info Banner */}
             <div className="mb-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-xl p-6">
