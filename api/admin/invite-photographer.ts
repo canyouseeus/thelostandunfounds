@@ -75,6 +75,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const emailResult = await sendTransactionalEmail({
             to: email,
+            // Photographer coordination is business correspondence, so the
+            // business address of record stays on the thread — CC, not BCC,
+            // so the recipient can see it and reply to it.
+            cc: 'media@thelostandunfounds.com',
             subject: "Invitation to THE LOST+UNFOUNDS",
             content,
         });
