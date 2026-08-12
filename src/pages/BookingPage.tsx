@@ -934,7 +934,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                         <ClockIcon className="w-4 h-4 text-white/30 flex-shrink-0" />
                         <p className="text-white/40 text-xs">
                             All packages require a{' '}
-                            <span className="text-white font-bold">50% deposit</span>{' '}
+                            <span className="text-white font-bold">50% non-refundable retainer</span>{' '}
                             to hold the date. Balance due before the session.
                             Payment via Stripe or Bitcoin.
                         </p>
@@ -1021,10 +1021,20 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                         </p>
                                     </div>
                                     <div className="bg-white text-black p-5">
-                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Deposit Required</p>
+                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Retainer Required</p>
                                         <p className="text-black/60 text-xs leading-relaxed">
-                                            A 50% deposit holds your date. Balance is due before the session.
+                                            A 50% retainer holds your date. Balance is due before the session.
                                             Contract and payment link arrive after we confirm scope.
+                                        </p>
+                                    </div>
+                                    <div className="bg-white/[0.03] p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Cancellation &amp; Rescheduling</p>
+                                        <p className="text-white/40 text-xs leading-relaxed">
+                                            The retainer is non-refundable — it pays for the date being held.
+                                            Cancel more than 14 days out and nothing further is owed; inside 14 days,
+                                            25% of the balance is owed; inside 48 hours or a no-show, the full amount is owed.
+                                            One free reschedule with 48+ hours' notice, within 90 days and subject to availability.
+                                            If we cancel, everything you've paid comes back in full.
                                         </p>
                                     </div>
                                 </div>
@@ -1382,11 +1392,17 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             <div className="bg-white/[0.04] p-3 mt-4">
                                                 <p className="text-white/60 text-[11px] leading-relaxed">
                                                     Submitting holds the date while we talk. A{' '}
-                                                    <span className="text-white font-bold">50% deposit</span>{' '}
+                                                    <span className="text-white font-bold">50% retainer</span>{' '}
                                                     finalizes the booking — contract and payment link follow after we scope it out.
                                                     Payment via{' '}
                                                     <span className="text-white font-bold">Stripe</span> or{' '}
                                                     <span className="text-white font-bold">Bitcoin</span>.
+                                                </p>
+                                                <p className="text-white/40 text-[11px] leading-relaxed mt-2">
+                                                    The retainer is non-refundable once paid. Cancel more than 14 days out
+                                                    and nothing further is owed; inside 14 days, 25% of the balance; inside
+                                                    48 hours or a no-show, the full amount. One free reschedule with 48+
+                                                    hours' notice. Full terms are in the contract.
                                                 </p>
                                             </div>
                                         </div>
@@ -1446,7 +1462,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                 <p className="text-white/50 text-sm leading-relaxed">
                                     <span className="text-white font-bold">{formatDate(form.event_date)}</span>{' '}
                                     is on hold while we talk. I'll reach out within 24 hours to confirm
-                                    scope — nothing is finalized until the deposit is received.
+                                    scope — nothing is finalized until the retainer is received.
                                 </p>
                                 {notifyDebug && (
                                     <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">
