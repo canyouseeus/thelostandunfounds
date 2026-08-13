@@ -18,6 +18,10 @@ Run: python3 scripts/generate-email-buttons.py
 Output: public/brand/btn-*.png
 """
 
+import hashlib
+import json
+from io import BytesIO
+
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 
@@ -71,6 +75,7 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    manifest = {}
 
     for name, label in BUTTONS.items():
         tw = text_width(probe, label, font, TRACKING)
@@ -92,9 +97,34 @@ def main():
 
         draw_tracked(draw, (x, y), label, font, FG, TRACKING)
 
-        path = OUT_DIR / f"{name}.png"
-        img.save(path, "PNG", optimize=True)
-        print(f"{path.name}: {WIDTH}x{HEIGHT} (displays {WIDTH // SCALE}x{HEIGHT // SCALE}) '{label}'")
+        # Content-hashed filename, because Vercel serves everything under
+        # /public with `cache-control: max-age=31536000, immutable`. Overwriting
+        # a button at the same filename does NOT reach anyone who already has
+        # it, and Gmail's image proxy caches harder still: a resized button kept
+        # serving the old size for exactly this reason.
+        #
+        # Hashing means a changed button is a new URL, so it always lands.
+        buf = BytesIO()
+        img.save(buf, "PNG", optimize=True)
+        data = buf.getvalue()
+        digest = hashlib.sha256(data).hexdigest()[:8]
+
+        filename = f"{name}.{digest}.png"
+        (OUT_DIR / filename).write_bytes(data)
+        manifest[name] = filename
+
+        # Remove superseded copies of this button so the folder does not fill up
+        # with every past version.
+        for old in OUT_DIR.glob(f"{name}.*.png"):
+            if old.name != filename:
+                old.unlink()
+
+        print(f"{filename}: {WIDTH}x{HEIGHT} (displays {WIDTH // SCALE}x{HEIGHT // SCALE}) '{label}'")
+
+
+    # Consumers read this rather than hardcoding a hashed filename.
+    (OUT_DIR / "buttons.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    print(f"manifest: {OUT_DIR / 'buttons.json'}")
 
 
 if __name__ == "__main__":
