@@ -13,6 +13,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+const SITE_URL = 'https://www.thelostandunfounds.com';
+
 const CORE_PAGES = [
     { path: 'about', title: 'ABOUT | THE LOST+UNFOUNDS', description: 'Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision.' },
     { path: 'privacy', title: 'PRIVACY POLICY | THE LOST+UNFOUNDS', description: 'Review the Privacy Policy for THE LOST+UNFOUNDS. Learn how protecting your personal privacy is prioritized and how we securely handle your data.' },
@@ -194,8 +196,28 @@ async function preRenderCorePages() {
                 try {
                     const { data: libraries } = await supabase
                         .from('photo_libraries')
-                        .select('name, slug, description')
+                        .select('id, name, slug, description')
                         .eq('is_private', false);
+
+                    // One cover photo per collection. Without these the gallery
+                    // index shipped zero <img> tags — the hub page most likely to
+                    // rank for "austin photographer" showed Google no photographs
+                    // at all. Served through /api/gallery/stream so the images are
+                    // credited to this domain rather than Google's CDN, same as
+                    // the individual gallery pages.
+                    const covers = new Map<string, { fileId: string; title: string }>();
+                    for (const lib of libraries || []) {
+                        const { data: firstPhoto } = await supabase
+                            .from('photos')
+                            .select('google_drive_file_id, title')
+                            .eq('library_id', (lib as any).id)
+                            .order('created_at', { ascending: true })
+                            .limit(1);
+                        const p = firstPhoto?.[0] as any;
+                        if (p?.google_drive_file_id) {
+                            covers.set((lib as any).id, { fileId: p.google_drive_file_id, title: p.title || (lib as any).name });
+                        }
+                    }
 
                     if (libraries && libraries.length > 0) {
                         shadowContent = `
@@ -204,6 +226,7 @@ async function preRenderCorePages() {
                                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
                                     ${libraries.map((lib: any) => `
                                         <a href="/gallery/${lib.slug}" style="color: white; text-decoration: none; padding: 2rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);">
+                                            ${covers.has(lib.id) ? `<img src="${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(covers.get(lib.id)!.fileId)}&amp;size=400" alt="${escapeHtml(covers.get(lib.id)!.title)}" loading="lazy" decoding="async" style="width: 100%; height: auto; margin-bottom: 1.5rem;" />` : ''}
                                             <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(lib.name)}</h3>
                                             <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">${escapeHtml(lib.description || '')}</p>
                                             <span style="display: inline-block; margin-top: 1.5rem; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.2em; color: white; border: 1px solid white; padding: 0.5rem 1rem;">VIEW GALLERY</span>
