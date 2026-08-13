@@ -78,6 +78,27 @@ hardcoding a filename.
 Adding a new button means adding it to `BUTTONS` in the generator and re-running it, never
 hand-writing a CSS button.
 
+### ✅ Named things are BOLD UPPERCASE
+
+Set by the owner on 2026-08-13. Anything with a proper name is written
+`<strong>` and in capitals, wherever it appears, including mid-sentence and
+inside link text:
+
+```
+THE LOST+UNFOUNDS      THE AFFILIATE PROGRAM      KING MIDAS
+THE LOST ARCHIVES      THE GALLERY
+```
+
+```html
+That's where the <strong>KING MIDAS</strong> leaderboard came from.
+Not a plugin. <strong>THE AFFILIATE PROGRAM</strong>.
+```
+
+These are product names, not descriptions, and the brand renders names the way
+it renders titles. Sentence-case "the affiliate program" or a plain-weight
+"THE LOST+UNFOUNDS" sign-off is wrong. Generic phrasing is unaffected: "a real
+affiliate program" describes a category and stays lowercase.
+
 ### ❌ Never give a button a border
 
 On the black body the button is a **solid white fill with black text**. Gmail inverts that into
