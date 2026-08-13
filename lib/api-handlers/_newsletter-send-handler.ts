@@ -552,7 +552,31 @@ export default async function handler(
     // Per-recipient HTML: use centralized email template
     const buildRecipientHtml = (rawHtml: string, email: string) => {
       // Process content with standardized template including branding
-      return generateNewsletterEmail(rawHtml, email)
+      const html = generateNewsletterEmail(rawHtml, email)
+
+      // Open-tracking pixel, added per recipient so an open can be attributed.
+      //
+      // It goes immediately before </body> rather than in the middle of the
+      // content: a client that stops rendering early still counts the open, and
+      // a 1x1 at the very end cannot disturb the layout.
+      //
+      // The address is base64url encoded so it is not sitting in readable form
+      // in proxy logs. That is obfuscation, not authentication; the endpoint
+      // treats it purely as an attribution hint.
+      const token = Buffer.from(email, 'utf8')
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+
+      const pixel =
+        `<img src="https://www.thelostandunfounds.com/api/newsletter/open` +
+        `?c=${encodeURIComponent(campaignRecord.id)}&e=${token}"` +
+        ` width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />`
+
+      return html.includes('</body>')
+        ? html.replace('</body>', `${pixel}</body>`)
+        : html + pixel
     }
 
     // Send emails
