@@ -233,6 +233,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Build a branded download filename: the_lost_and_unfounds_llc_joshua_abram_greene_[title].jpg
+/**
+ * Give an invited client ownership of every photo in a zero-priced private
+ * gallery — the delivery equivalent of a completed checkout.
+ *
+ * Idempotent, and it must stay that way: this runs on every load of the
+ * gallery, so a plain insert would pile up a duplicate entitlement per page
+ * view. One order per client per gallery, keyed on a stable reference.
+ */
+async function grantDeliveryEntitlements(
+    adminClient: ReturnType<typeof createClient>,
+    libraryId: string,
+    librarySlug: string,
+    email: string,
+): Promise<void> {
+    const normalized = email.toLowerCase();
+    const reference = `delivery_${librarySlug}`;
+
+    const { data: photos } = await adminClient
+        .from('photos')
+        .select('id')
+        .eq('library_id', libraryId);
+    if (!photos || photos.length === 0) return;
+
+    let { data: order } = await adminClient
+        .from('photo_orders')
+        .select('id')
+        .eq('email', normalized)
+        .eq('paypal_order_id', reference)
+        .maybeSingle();
+
+    if (!order) {
+        // 'completed' because nothing is owed — and because the CHECK on
+        // photo_orders permits only pending/completed/failed/refunded.
+        const { data: created, error } = await adminClient
+            .from('photo_orders')
+            .insert({
+                email: normalized,
+                total_amount_cents: 0,
+                payment_status: 'completed',
+                paypal_order_id: reference,
+            })
+            .select('id')
+            .single();
+        if (error || !created) throw new Error(error?.message || 'order insert failed');
+        order = created;
+    }
+
+    const { data: existing } = await adminClient
+        .from('photo_entitlements')
+        .select('photo_id')
+        .eq('order_id', (order as any).id);
+
+    const have = new Set((existing || []).map((e: any) => e.photo_id));
+    const missing = photos.filter((p: any) => !have.has(p.id));
+    if (missing.length === 0) return;
+
+    const expires = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    await adminClient
+        .from('photo_entitlements')
+        .insert(missing.map((p: any) => ({
+            order_id: (order as any).id,
+            photo_id: p.id,
+            expires_at: expires,
+        })));
+}
+
 function buildDownloadFilename(rawTitle: string): string {
     const PREFIX = 'the_lost_and_unfounds_llc_joshua_abram_greene';
     const sanitized = rawTitle
@@ -769,7 +835,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
 
         const { data: library, error: libError } = await adminClient
             .from('photo_libraries')
-            .select('id, name, slug, google_drive_folder_id, gdrive_folder_id, is_private, user_id, invited_emails')
+            .select('id, name, slug, google_drive_folder_id, gdrive_folder_id, is_private, user_id, invited_emails, price')
             .eq('slug', slug)
             .eq('published', true)
             .single();
@@ -792,6 +858,28 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
 
             if (!isOwner && !isAdmin && !isInvited) {
                 return res.status(403).json({ error: 'Access denied' });
+            }
+
+            // A private gallery priced at zero is a delivery, not a shop. The
+            // client paid by invoice; the photos are already theirs.
+            //
+            // Without this the gallery still routes them through checkout, and
+            // a $0.00 cart cannot be paid — Stripe rejects a zero-amount
+            // charge, so "pay with card" fails and the gallery is unopenable
+            // at the final step. A client hit exactly that on a shoot she had
+            // already paid for in full.
+            //
+            // Proving the invited address is the entitlement. Granting it here
+            // means the gallery opens unlocked instead of asking for money
+            // that is not owed.
+            if (isInvited && Number(library.price ?? 0) === 0) {
+                try {
+                    await grantDeliveryEntitlements(adminClient, library.id, library.slug, userEmail!);
+                } catch (err) {
+                    // Never block access on this — a failure here costs the
+                    // download button, not the gallery.
+                    console.error('[gallery] delivery entitlement grant failed:', err);
+                }
             }
         }
 
