@@ -114,12 +114,29 @@ async function processLibrary(
 ): Promise<void> {
     resetSeqs();
 
-    const { data: photos, error } = await supabase
-        .from('photos')
-        .select('id, google_drive_file_id, title, metadata, created_at, latitude, longitude, location_name')
-        .eq('library_id', library.id)
-        .order('created_at', { ascending: true });
-    if (error || !photos) return;
+    // Paged deliberately. An unbounded .select() is capped at 1000 rows by
+    // PostgREST, and that cap is silent: the run saw only the first 1000 photos
+    // in a library, renamed them, then reported "remaining=0 — nothing left to
+    // do" while ~10,000 files sat untouched. last-night-noir stopping at exactly
+    // 1000 renamed is what gave it away.
+    const PAGE = 1000;
+    const photos: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+        const { data: page, error } = await supabase
+            .from('photos')
+            .select('id, google_drive_file_id, title, metadata, created_at, latitude, longitude, location_name')
+            .eq('library_id', library.id)
+            .order('created_at', { ascending: true })
+            .range(from, from + PAGE - 1);
+        if (error) {
+            console.error(`[retrograde] photo fetch failed for ${library.slug} at offset ${from}:`, error.message);
+            return;
+        }
+        if (!page || page.length === 0) break;
+        photos.push(...page);
+        if (page.length < PAGE) break;
+    }
+    if (photos.length === 0) return;
 
     // Anything not already in the current SEO prefix gets renamed — that
     // includes both raw camera filenames and legacy `@tlau_` files that
