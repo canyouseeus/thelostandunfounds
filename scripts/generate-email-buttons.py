@@ -23,7 +23,16 @@ from pathlib import Path
 
 # 2x for retina. Displayed at half these numbers in the email.
 SCALE = 2
+
+# EVERY BUTTON IS THIS SIZE. Set by the owner on 2026-08-13: buttons that sized
+# themselves to their label came out visibly uneven down the email. The width is
+# the one the longest current label needs, and short labels centre inside it
+# rather than shrinking the button.
+#
+# Displayed at 340x52. Do not make a button that sizes itself to its text.
+WIDTH = 340 * SCALE
 HEIGHT = 52 * SCALE
+
 PAD_X = 28 * SCALE
 FONT_SIZE = 14 * SCALE
 TRACKING = 2 * SCALE  # letter-spacing, matching the banner's wide type
@@ -64,17 +73,28 @@ def main():
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
 
     for name, label in BUTTONS.items():
-        w = int(text_width(probe, label, font, TRACKING)) + PAD_X * 2
-        img = Image.new("RGBA", (w, HEIGHT), BG)
+        tw = text_width(probe, label, font, TRACKING)
+
+        # A label that cannot fit the fixed width is a design decision, not
+        # something to silently squeeze. Fail loudly and shorten the label.
+        if tw > WIDTH - PAD_X * 2:
+            raise SystemExit(
+                f"'{label}' needs {int(tw)}px but only {WIDTH - PAD_X * 2}px is available "
+                f"inside the fixed {WIDTH}px button. Shorten the label."
+            )
+
+        img = Image.new("RGBA", (WIDTH, HEIGHT), BG)
         draw = ImageDraw.Draw(img)
 
         ascent, descent = font.getmetrics()
         y = (HEIGHT - (ascent + descent)) // 2
-        draw_tracked(draw, (PAD_X, y), label, font, FG, TRACKING)
+        x = (WIDTH - tw) / 2  # centred, so every button is the same size
+
+        draw_tracked(draw, (x, y), label, font, FG, TRACKING)
 
         path = OUT_DIR / f"{name}.png"
         img.save(path, "PNG", optimize=True)
-        print(f"{path.name}: {w}x{HEIGHT} (displays {w // SCALE}x{HEIGHT // SCALE}) '{label}'")
+        print(f"{path.name}: {WIDTH}x{HEIGHT} (displays {WIDTH // SCALE}x{HEIGHT // SCALE}) '{label}'")
 
 
 if __name__ == "__main__":
