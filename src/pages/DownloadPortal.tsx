@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     ArrowDownTrayIcon,
@@ -20,6 +20,12 @@ import TipModal from '../components/TipModal';
 const DownloadPortal: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    // The delivery email already went to this address, so asking the recipient
+    // to type it again — or worse, mailing them a second link to prove they
+    // can read the first — is friction that buys nothing. When the link
+    // carries the address, the page opens straight onto the photos.
+    const linkEmail = (searchParams.get('email') || '').trim();
 
     const { user } = useAuth();
 
@@ -38,8 +44,10 @@ const DownloadPortal: React.FC = () => {
     const [tipModalOpen, setTipModalOpen] = useState(false);
 
     // Verify order and fetch photos
-    const handleVerify = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleVerify = async (e?: React.FormEvent, addressOverride?: string) => {
+        e?.preventDefault();
+        const address = (addressOverride ?? email).trim().toLowerCase();
+        if (!address) return;
         setVerifying(true);
         setError('');
 
@@ -49,7 +57,7 @@ const DownloadPortal: React.FC = () => {
                 .from('photo_orders')
                 .select('id, created_at')
                 .eq('id', orderId)
-                .eq('email', email)
+                .eq('email', address)
                 .single();
 
             if (orderError || !order) {
@@ -79,6 +87,15 @@ const DownloadPortal: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        if (linkEmail && !verified && !verifying) {
+            setEmail(linkEmail);
+            handleVerify(undefined, linkEmail);
+        }
+        // Once only: a failed auto-verify falls back to the form.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [linkEmail]);
+
     const downloadAll = async () => {
         if (!photos.length) return;
 
@@ -103,7 +120,11 @@ const DownloadPortal: React.FC = () => {
                     if (photo.storage_path && photo.thumbnail_url) {
                         response = await fetch(photo.thumbnail_url);
                     } else {
-                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`);
+                        // The stream refuses a download without an address — omitting it
+                        // returned 400 and every photo was skipped, so "Download All"
+                        // produced an empty zip.
+                        const dlEmail = encodeURIComponent((linkEmail || email).trim().toLowerCase());
+                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}`);
                     }
 
                     if (!response.ok) {
