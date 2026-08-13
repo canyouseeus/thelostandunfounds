@@ -174,14 +174,6 @@ export default function BookClub() {
           <p className="text-white/60 text-sm max-w-lg mx-auto text-justify leading-relaxed">
             Each article features four books connecting ideas across different works and sharing personal reflections.
           </p>
-          <div className="mt-6">
-            <Link
-              to="/submit/bookclub"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
-            >
-              Submit Your Article →
-            </Link>
-          </div>
         </div>
 
         {error && (
@@ -194,15 +186,6 @@ export default function BookClub() {
           <div className="text-center py-12">
             <BookOpenIcon className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <p className="text-white/60 text-lg mb-4">No articles yet.</p>
-            <p className="text-white/50 text-sm mb-6">
-              Be the first to contribute! Submit your article with four book recommendations.
-            </p>
-            <Link
-              to="/submit/bookclub"
-              className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-            >
-              Submit the First Article
-            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

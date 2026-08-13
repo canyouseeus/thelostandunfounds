@@ -1124,12 +1124,6 @@ export default function Affiliate() {
 
                     <div className="pt-4 flex gap-4">
                       <Link
-                        to="/submit-article"
-                        className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
-                      >
-                        Create New Article
-                      </Link>
-                      <Link
                         to={`/blog/${userSubdomain}`}
                         className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition"
                       >

@@ -39,7 +39,7 @@ import GearHeads from './pages/GearHeads'
 import Borderlands from './pages/Borderlands'
 import Science from './pages/Science'
 import NewTheory from './pages/NewTheory'
-import SubmitArticle from './pages/SubmitArticle'
+import SubmissionsClosed from './pages/SubmissionsClosed'
 import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
@@ -349,27 +349,19 @@ function App() {
               <Route path="/blog/:subdomain/:slug" element={<Layout />}>
                 <Route index element={<BlogPost />} />
               </Route>
+              {/*
+                Article submissions are closed. These routes stay mapped so old
+                links land on an explanation instead of a 404, but they render
+                SubmissionsClosed rather than the form. The public INSERT policy
+                on blog_submissions was dropped in the
+                close_public_blog_submissions migration, which is what actually
+                closes submissions; the form wrote to that table directly.
+              */}
               <Route path="/submit-article" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
+                <Route index element={<SubmissionsClosed />} />
               </Route>
-              {/* Column-specific submission routes */}
-              <Route path="/submit/main" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/bookclub" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/gearheads" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/borderlands" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/science" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/newtheory" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
+              <Route path="/submit/:column" element={<Layout />}>
+                <Route index element={<SubmissionsClosed />} />
               </Route>
               <Route path="/king-midas-leaderboard" element={<Layout />}>
                 <Route index element={<KingMidasLeaderboard />} />

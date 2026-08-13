@@ -6,7 +6,6 @@ export default function NewTheory() {
       column="newtheory"
       title="NEW THEORY"
       description="Practical application of technology and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments."
-      submitPath="/submit/newtheory"
     />
   );
 }

@@ -422,46 +422,11 @@ export default function BlogGettingStarted() {
                 </li>
               ))}
             </ul>
-            <div className="mt-8 space-y-4">
-              <p className="text-white/80 text-center font-medium mb-4">Ready to submit? Choose your column:</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <Link 
-                  to="/submit/main" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  Main Blog
-                </Link>
-                <Link 
-                  to="/submit/bookclub" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  BookClub
-                </Link>
-                <Link 
-                  to="/submit/gearheads" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  GearHeads
-                </Link>
-                <Link 
-                  to="/submit/borderlands" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  Borderlands
-                </Link>
-                <Link 
-                  to="/submit/science" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  MAD SCIENTISTS
-                </Link>
-                <Link 
-                  to="/submit/newtheory" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  NEW THEORY
-                </Link>
-              </div>
+            <div className="mt-8">
+              <p className="text-white/80 font-medium">
+                Submissions are closed right now. If they reopen, it will go out on the
+                newsletter first.
+              </p>
             </div>
           </div>
         </div>
