@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <p style="margin: 20px 0;">${button(inviteUrl, 'Set Up Gallery')}</p>
             ${fallbackLink(inviteUrl)}
 
-            <p style="color: #ffffff; margin-top: 36px;">&mdash; Josh, THE LOST+UNFOUNDS</p>
+            <p style="color: #ffffff; margin-top: 36px;">&mdash; Joshua, THE LOST+UNFOUNDS</p>
         `;
 
         const emailResult = await sendTransactionalEmail({
