@@ -61,8 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     to: campaign.owner_email,
                     subject: `Your Banner is now LIVE on THE LOST+UNFOUNDS!`,
                     content: `
-                        <h1 style="color: #ffffff; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">Your Banner is Live</h1>
-                        <p style="color: #ffffff; font-size: 16px; font-weight: 300; line-height: 1.6;">
+                        <h1 style="color: #000000; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">Your Banner is Live</h1>
+                        <p style="color: #000000; font-size: 16px; font-weight: 300; line-height: 1.6;">
                             Congratulations! Your banner campaign "<strong>${campaign.title}</strong>" is now active in our marketplace queue.
                         </p>
                         <div style="margin: 30px 0;">
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         <p style="color: #aaaaaa; font-size: 14px;">
                             Your content is being rotated across our Gallery, Shop, and Blog surfaces.
                         </p>
-                        <a href="https://www.thelostandunfounds.com" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a>
+                        <div style="text-align:center;"><a href="https://www.thelostandunfounds.com" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a></div>
                     `
                 });
 
@@ -98,20 +98,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     subject: `Campaign Expired (Action Required): Maintain your visibility with 33% OFF`,
                     content: `
                         <h1 style="color: #f59e0b; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">Time Slot Expired</h1>
-                        <p style="color: #ffffff; font-size: 16px; font-weight: 300; line-height: 1.6;">
+                        <p style="color: #000000; font-size: 16px; font-weight: 300; line-height: 1.6;">
                             Your purchased time for "<strong>${campaign.title}</strong>" has expired.
                         </p>
-                        <div style="background-color: rgba(255,255,255,0.05); border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0;">
-                            <p style="margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; color: #ffffff;">Status: Idle Bonus Time</p>
+                        <div style="background-color: #dddddd; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0;">
+                            <p style="margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; color: #000000;">Status: Idle Bonus Time</p>
                             <p style="margin: 10px 0 0 0; font-size: 13px; color: #aaaaaa;">
                                 Because there are currently no other campaigns in the queue, your banner is <strong>still visible</strong> to our audience. However, it will be immediately replaced as soon as a new ad is purchased.
                             </p>
                         </div>
-                        <h2 style="color: #ffffff; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 40px;">Secure More Time — 33% OFF</h2>
+                        <h2 style="color: #000000; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 40px;">Secure More Time — 33% OFF</h2>
                         <p style="color: #aaaaaa; font-size: 14px; margin-bottom: 25px;">
                             Don't lose your spot. Since you're already in the slot, we're offering you a <strong>33% discount</strong> to extend your campaign right now.
                         </p>
-                        <a href="https://www.thelostandunfounds.com/advertise?renew=${campaignId}&discount=IDLE33" style="display: inline-block; padding: 15px 30px; background-color: #f59e0b; color: #000000; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Claim Discount &amp; Renew</a>
+                        <div style="text-align:center;"><a href="https://www.thelostandunfounds.com/advertise?renew=${campaignId}&discount=IDLE33" style="display: inline-block; padding: 15px 30px; background-color: #f59e0b; color: #000000; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Claim Discount &amp; Renew</a></div>
                     `
                 });
 
@@ -158,13 +158,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             subject: `Your Banner has been Replaced`,
                             content: `
                                 <h1 style="color: #ef4444; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">Banner Replaced</h1>
-                                <p style="color: #ffffff; font-size: 16px; font-weight: 300; line-height: 1.6;">
+                                <p style="color: #000000; font-size: 16px; font-weight: 300; line-height: 1.6;">
                                     Your campaign "<strong>${prevCampaign.title}</strong>" is no longer visible on THE LOST+UNFOUNDS.
                                 </p>
                                 <p style="color: #aaaaaa; font-size: 14px; margin: 20px 0;">
                                     A new campaign has taken over the current time slot. If you'd like to return to the marketplace, you can purchase new slots at any time.
                                 </p>
-                                <a href="https://www.thelostandunfounds.com/advertise" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a>
+                                <div style="text-align:center;"><a href="https://www.thelostandunfounds.com/advertise" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a></div>
                             `
                         });
 

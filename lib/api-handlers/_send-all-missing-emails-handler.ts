@@ -7,35 +7,35 @@ import { sendTransactionalEmail } from './_resend-email-handler.js'
  */
 function generateWelcomeEmailBody(userName: string, gettingStartedUrl: string): string {
   return `
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Hello ${userName},
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Welcome to THE LOST ARCHIVES BOOK CLUB! We're excited to have you join our community of contributors.
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       To help you get started, we've created a comprehensive Contributor Getting Started Guide that walks you through:
     </p>
-    <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px; text-align: left; font-family: Arial, sans-serif;">
+    <ul style="color: #000000; font-size: 16px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px; text-align: left; font-family: Arial, sans-serif;">
       <li>Setting up your account and subdomain</li>
       <li>Writing high-quality articles</li>
       <li>Using AI responsibly with Human-In-The-Loop principles</li>
       <li>Meeting Google's E&#8209;E&#8209;A&#8209;T standards</li>
       <li>Earning as an Amazon affiliate</li>
     </ul>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
       The guide is your go-to resource to make sure your contributions are impactful, authentic, and set up to succeed.
     </p>
     <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
       <tr>
-        <td align="left">
-          <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
+        <td align="center" style="text-align:center;">
+          <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif;">
             View Getting Started Guide &rarr;
           </a>
         </td>
       </tr>
     </table>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       If you have any questions or need assistance, feel free to reach out. We're here to help you succeed!
     </p>
   `
@@ -46,32 +46,32 @@ function generateWelcomeEmailBody(userName: string, gettingStartedUrl: string): 
  */
 function generateNewsletterConfirmationBody(subscriberEmail?: string): string {
   return `
-    <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em;">
+    <h1 style="color: #000000; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em;">
       CAN YOU SEE US?
     </h1>
-    <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">
+    <h2 style="color: #000000; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">
       Thanks for subscribing!
     </h2>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
       We're excited to have you join THE LOST+UNFOUNDS community.
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center;">
       You'll receive updates about:
     </p>
-    <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
+    <ul style="color: #000000; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
       <li style="margin: 10px 0;">New tools and features</li>
       <li style="margin: 10px 0;">Platform updates</li>
       <li style="margin: 10px 0;">Special announcements</li>
     </ul>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
       Stay tuned for what's coming next!
     </p>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
+    <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;">
+    <p style="color: #666666; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
       If you didn't sign up for this newsletter, you can safely ignore this email.
     </p>
-    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
-      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
+    <p style="color: #666666; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
+      <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail || '')}" style="color: #666666; text-decoration: underline;">Unsubscribe from this newsletter</a>
     </p>
   `
 }
@@ -98,22 +98,22 @@ function generatePublicationEmailBody(postTitle: string, postUrl: string, author
   const ordinal = getOrdinalSuffix(postNumber)
 
   return `
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       Hello ${authorName},
     </p>
-    <p style="color: #ffffff; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif; font-weight: bold;">
+    <p style="color: #000000; font-size: 18px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif; font-weight: bold;">
       Congratulations! Your ${ordinal} blog post has been published to THE LOST ARCHIVES BOOK CLUB!
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
       <strong>${postTitle}</strong>
     </p>
-    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
+    <p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
       Your article is now live and available for readers to discover.
     </p>
     <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
       <tr>
-        <td align="left">
-          <a href="${postUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
+        <td align="center" style="text-align:center;">
+          <a href="${postUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif;">
             View Your Published Post &rarr;
           </a>
         </td>

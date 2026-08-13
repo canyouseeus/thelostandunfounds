@@ -10,12 +10,19 @@ export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://www.thelostandunfounds.com/brand/banner.png',
   website: 'https://www.thelostandunfounds.com',
+  // The email body is a WHITE panel with BLACK type, sitting under the black
+  // banner image. Kept identical to lib/email-template.ts on purpose: the two
+  // once derived their button from these names in opposite orders and produced
+  // two different buttons. Change one, change both.
+  //
+  // The muted/border/link values were translucent white, which vanishes on a
+  // white page. They are now opaque greys chosen to stay legible.
   colors: {
-    background: '#000000',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    link: 'rgba(255, 255, 255, 0.9)',
+    background: '#ffffff',
+    text: '#000000',
+    textMuted: '#666666',
+    border: '#dddddd',
+    link: '#000000',
   },
 };
 
@@ -65,7 +72,8 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${BRAND.name}</title>
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     /* Reset styles */
     body, table, td, p, a, li, blockquote {

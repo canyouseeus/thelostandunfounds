@@ -28,7 +28,6 @@ interface ColumnPageProps {
   column: 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'newtheory';
   title: string;
   description: string;
-  submitPath: string;
   icon?: React.ReactNode;
 }
 
@@ -41,7 +40,7 @@ const COLUMN_ICONS = {
   main: null,
 };
 
-export default function ColumnPage({ column, title, description, submitPath, icon }: ColumnPageProps) {
+export default function ColumnPage({ column, title, description, icon }: ColumnPageProps) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,35 +170,16 @@ export default function ColumnPage({ column, title, description, submitPath, ico
           <p className="text-white/60 text-sm max-w-lg mx-auto text-justify leading-relaxed">
             {description}
           </p>
-          {posts.length > 0 && (
-            <div className="mt-6">
-              <Link
-                to={submitPath}
-                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
-              >
-                Submit Your Article →
-              </Link>
-            </div>
-          )}
         </div>
 
         {posts.length === 0 ? (
           <div className="text-center py-16">
             <h2 className="text-2xl md:text-3xl font-black text-white mb-4 tracking-wide">
-              Be the First to Share
+              Nothing Here Yet
             </h2>
-            <p className="text-white/70 text-lg mb-2 max-w-lg mx-auto text-justify leading-relaxed">
-              This column is waiting for its first story.
-            </p>
             <p className="text-white/50 text-sm mb-8 max-w-lg mx-auto text-justify leading-relaxed">
               {description}
             </p>
-            <Link
-              to={submitPath}
-              className="inline-block px-8 py-3 bg-white text-black font-bold rounded-none hover:bg-white/90 transition text-base"
-            >
-              Submit the First Article →
-            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

@@ -221,9 +221,9 @@ export function buildBookingPaymentEmailBody(args: {
     <!-- Amount due -->
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0;">
       <tr>
-        <td style="background-color:#ffffff;padding:20px 24px;">
+        <td style="background-color:#000000;padding:20px 24px;">
           <p style="color:#666;font-size:10px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(args.amountDueLabel)}</p>
-          <p style="color:#000;font-size:32px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${fmtUSD(args.amountDue)}</p>
+          <p style="color:#ffffff;font-size:32px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${fmtUSD(args.amountDue)}</p>
         </td>
       </tr>
     </table>

@@ -32,7 +32,7 @@ const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
 
 ### ❌ Never give a button a border
 
-The button is a **solid white fill with black text** on the black body:
+The button inverts the body. On the white body that is a **solid black fill with white text**:
 
 ```
 background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important;
@@ -97,18 +97,23 @@ When reviewing any file that sends email, check for:
 - **Missing Shell**: Forgetting to add `<!DOCTYPE html>` or `<html>` tags. `wrapEmailContent` handles this for you.
 - **Inconsistent Buttons**: Using different padding or colors for buttons. Always use `EMAIL_STYLES.button`.
 - **Relative URLs**: Emails must use absolute URLs for all links and images.
-- **Heading color**: Dark headings (`color:#000`) will be invisible on the black email background. Headings inside `wrapEmailContent` inherit white from the template styles — don't override with black unless you intend the content to sit on a white section.
+- **Heading color**: Light headings (`color:#fff`) are invisible on the white email body. Headings inside `wrapEmailContent` inherit black from the template styles — don't override with white unless the content sits inside a black accent panel.
+- **Uncentered buttons**: buttons are centered. `EMAIL_STYLES.button` is an `inline-block`, so it cannot centre itself — use `renderButton()`, which supplies the centered wrapper.
 
 ## Palette
 
-- Background: `#000000`
-- Text: `#ffffff`
+- Background: `#ffffff`
+- Text: `#000000`
+- Banner: black PNG, unchanged
+
+This reversed on 2026-08-13 at the owners direction. See email-rendering RULE 1.
 
 The template already applies these. Only restate them if you are hand-authoring a section that sits outside `wrapEmailContent`.
 
 ## Rendering vs. the template
 
-The palette above is what the template *sends*. Gmail on iOS inverts a black email and
-displays it white — that inverted view is not evidence the brand is white. Do not change this
+The palette above is what the template *sends*. Gmail on iOS inverts it either way: it used to
+show the black email as white, and it now shows this white email as dark. That inverted view is
+not evidence of anything. Do not change this
 palette on the strength of an inbox screenshot. See the `email-rendering` skill before
 touching any email colour.

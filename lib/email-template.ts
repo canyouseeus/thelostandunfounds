@@ -10,12 +10,19 @@ export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://www.thelostandunfounds.com/brand/banner.png',
   website: 'https://www.thelostandunfounds.com',
+  // The email body is a WHITE panel with BLACK type, sitting under the black
+  // banner image. The banner is a PNG and carries its own black; it is not
+  // painted by these colours.
+  //
+  // Every other value here is derived from that pair, so they must stay
+  // legible against a white page: a light link or a near-black rule was
+  // correct on the old black body and is wrong now. See email-rendering.
   colors: {
-    background: '#000000',
-    text: '#ffffff',
-    textMuted: '#999999',
-    border: '#1a1a1a',
-    link: '#eeeeee',
+    background: '#ffffff',
+    text: '#000000',
+    textMuted: '#666666',
+    border: '#dddddd',
+    link: '#000000',
   },
 };
 
@@ -65,12 +72,12 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     :root {
-      color-scheme: light dark;
-      supported-color-schemes: light dark;
+      color-scheme: light;
+      supported-color-schemes: light;
     }
     /* Reset styles */
     body, table, td, p, a, li, blockquote {
@@ -238,6 +245,27 @@ export function generateTransactionalEmail(
     includeUnsubscribe: false,
     includeFooter: true,
   });
+}
+
+/**
+ * Render a call-to-action button.
+ *
+ * Buttons are centered. `EMAIL_STYLES.button` is an inline-block, so it cannot
+ * centre itself — the centring has to come from a wrapper, and leaving that to
+ * each caller is how buttons drift left one at a time. Use this instead of
+ * hand-writing an anchor.
+ *
+ * A table is used rather than a div because Outlook ignores `text-align` on
+ * block containers often enough to matter.
+ */
+export function renderButton(href: string, label: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse; margin: 8px 0 24px 0;">
+  <tr>
+    <td align="center" style="text-align:center;">
+      <a href="${href}" style="${EMAIL_STYLES.button}">${label}</a>
+    </td>
+  </tr>
+</table>`;
 }
 
 /**

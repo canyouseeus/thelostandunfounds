@@ -158,14 +158,10 @@ export default function AIWritingPrompt() {
           <div>
             <h4 className="text-white font-semibold mb-2">Ready to Submit?</h4>
             <p className="text-white/70 text-sm mb-2">
-              Once you have your draft, go to <a href="/submit-article" className="text-blue-400 hover:text-blue-300 underline">/submit-article</a> and paste your content. Make sure to:
+              Submissions are closed right now, so there is nowhere to send a draft at the
+              moment. Hold onto it. If submissions reopen, it will go out on the newsletter
+              first.
             </p>
-            <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
-              <li>Fill in all placeholders with actual information</li>
-              <li>Add your Amazon affiliate links in the form</li>
-              <li>Review the formatting matches the example post</li>
-              <li>Add your personal touches and experiences</li>
-            </ul>
           </div>
         </div>
       </div>
