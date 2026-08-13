@@ -115,14 +115,18 @@ export default async function handler(
         res.setHeader('Content-Type', contentType);
         res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.jpg"`);
 
-        // Pipe the stream
-        const reader = driveRes.body?.getReader();
-        if (!reader) {
-            throw new Error('Failed to get stream reader');
+        // Pipe the stream.
+        //
+        // Do not call getReader() here to null-check the body: taking a reader
+        // LOCKS the stream, and Readable.fromWeb then throws
+        // "Invalid state: ReadableStream is locked". The download failed with a
+        // 500 after the headers had already been written, so the client
+        // received a file that was actually a JSON error.
+        if (!driveRes.body) {
+            throw new Error('Drive returned no body');
         }
 
-        // Stream via generator or pipe
-        // Node 18+ Web Streams to Node Response
+        // Node 18+ Web Stream to Node response
         // @ts-ignore
         const nodeStream = Readable.fromWeb(driveRes.body);
         nodeStream.pipe(res);
