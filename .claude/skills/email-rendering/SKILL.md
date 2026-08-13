@@ -9,34 +9,37 @@ description: How THE LOST+UNFOUNDS emails actually render in mail clients, and w
 This skill exists for one reason: **what you see in an inbox is not what the template says**,
 and changing the brand to chase a screenshot has already caused one production-wide mistake.
 
-## RULE 1 — The brand is a BLACK email. Do not change it because an inbox looks white.
+## RULE 1 — The email body is a WHITE panel under a BLACK banner
 
 ```
-Background: #000000
-Text:       #ffffff
+Banner:     black PNG with white type (an image; not painted by the palette)
+Background: #ffffff
+Text:       #000000
+textMuted:  #666666
+border:     #dddddd
+link:       #000000
 ```
 
-Every branded email is authored this way — `lib/email-template.ts`, `api/email-template.ts`,
-the newsletter template in `_newsletter-send-handler.ts`, the welcome email. This is
-consistent and deliberate.
+The owner set this directly on 2026-08-13: *"I don't want a black background, white text
+email."* The banner stays black; the body under it is a white page with black type.
 
-**Gmail on iOS inverts it.** A black email is displayed as white with black text. That
-inverted rendering looks like a white-background brand, and it is not one.
+**This reverses what this skill said before, and the reversal is deliberate.** Do not "restore"
+the black body on the strength of this file's history or an old comment in a handler.
 
-This actually happened: a screenshot of a white-looking email was taken as proof that the
-brand was white-on-black-banner, the whole palette was flipped to `#ffffff` across two
-templates and fourteen handlers, and Gmail then inverted *that* — showing a dark email and
-producing the exact opposite of the intent. **Both directions were "verified" by screenshot
-and both were wrong.**
+### The trap that still applies
 
-Before concluding the palette is wrong, check what the template actually contains:
+**Gmail on iOS inverts whatever you send.** It previously turned the black email white; it now
+turns this white email dark. An inbox screenshot shows one client's transform, never the
+template. The history here is that the palette was flipped in *both* directions on the strength
+of screenshots, and both flips were argued from a phone.
+
+So the rule is not "the brand is black" or "the brand is white" — it is: **check the source, and
+change the palette only when the owner says to.**
 
 ```bash
 grep -n "background: '#" lib/email-template.ts api/email-template.ts
-git show <commit>:lib/api-handlers/_newsletter-send-handler.ts | grep "background-color"
+npx tsx scripts/audit-email-contrast.ts
 ```
-
-If those say `#000000`, the brand is black and the inbox is inverting. That is not a bug to fix.
 
 ## RULE 2 — You cannot opt out of dark-mode inversion
 
@@ -53,11 +56,16 @@ client's dark mode; it will not work and it obscures the real palette.
 
 ## RULE 3 — A button is a solid fill, never an outline
 
-On a black body the button is a **solid white fill with black text**:
+The button inverts the body. On the white body that means a **solid black fill with white
+text**, which is the same expression as before — it reads from the palette rather than naming
+colours, so it followed the palette across the flip:
 
 ```
 background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important;
 ```
+
+Accent panels (the amount-due block on a payment email) invert the same way: black block,
+white figure.
 
 ### ❌ Never fill a button with the page colour and add a border
 
@@ -71,9 +79,18 @@ now state it identically. **If you change one, change both.**
 
 ## RULE 4 — Verify contrast mechanically, never by eye
 
-A find-and-replace across email colours **will** produce invisible text. It has: one sweep
-turned two client-facing buttons black-on-black and an amount-due panel black-on-black, none
-of which was obvious in the diff.
+```bash
+npx tsx scripts/audit-email-contrast.ts
+```
+
+That script is the check. It renders the real template, verifies the palette pairs, scans every
+`style="…"` in the email handlers for a fill and a type colour that do not contrast, and rejects
+bordered buttons and translucent white. Run it after any colour change.
+
+A find-and-replace across email colours **will** produce invisible text. It has, in both
+directions: one sweep turned two client-facing buttons black-on-black, and the white-body sweep
+found a payment button and an amount-due figure that had been invisible for some time and were
+not noticed by eye.
 
 After any colour change, audit `lib/api-handlers/*.ts`, `lib/email-template.ts` and
 `api/email-template.ts` for:
