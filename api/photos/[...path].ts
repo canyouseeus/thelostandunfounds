@@ -8,6 +8,7 @@ import streamHandler from '../../lib/api-handlers/photos/_stream-handler.js'
 import checkoutHandler from '../../lib/api-handlers/photos/_checkout-handler.js'
 import freeCheckoutHandler from '../../lib/api-handlers/photos/_free-checkout-handler.js'
 import resendOrderHandler from '../../lib/api-handlers/photos/_resend-order-handler.js'
+import orderLookupHandler from '../../lib/api-handlers/photos/_order-lookup-handler.js'
 import bulkTagHandler from '../../lib/api-handlers/photos/_bulk-tag-handler.js'
 import { photoTagsHandler, removePhotoTagHandler } from '../../lib/api-handlers/photos/_photo-tags-handler.js'
 
@@ -37,6 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return freeCheckoutHandler(req, res)
     case 'resend-order':
       return resendOrderHandler(req, res)
+    case 'order':
+      return orderLookupHandler(req, res)
     case 'bulk-tag':
       return bulkTagHandler(req, res)
   }

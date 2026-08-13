@@ -52,27 +52,16 @@ const DownloadPortal: React.FC = () => {
         setError('');
 
         try {
-            // 1. Verify credentials match an order
-            const { data: order, error: orderError } = await supabase
-                .from('photo_orders')
-                .select('id, created_at')
-                .eq('id', orderId)
-                .eq('email', address)
-                .single();
+            // Server-side: RLS blocks an anonymous browser from reading
+            // photo_orders and photo_entitlements, so querying them directly
+            // returned nothing and told the rightful owner "Order not found".
+            const res = await fetch(
+                `/api/photos/order?orderId=${encodeURIComponent(orderId || '')}&email=${encodeURIComponent(address)}`
+            );
+            const payload = await res.json();
+            if (!res.ok) throw new Error(payload?.error || 'Order not found or email does not match.');
 
-            if (orderError || !order) {
-                throw new Error('Order not found or email does not match.');
-            }
-
-            // 2. Fetch the photos
-            const { data: entitlements, error: entError } = await supabase
-                .from('photo_entitlements')
-                .select('photo_id, photos (id, title, google_drive_file_id, mime_type, storage_path, thumbnail_url)')
-                .eq('order_id', orderId);
-
-            if (entError) throw entError;
-
-            const photoData = entitlements?.map(e => e.photos) || [];
+            const photoData = payload.photos || [];
 
             if (photoData.length === 0) {
                 throw new Error('No photos found for this order.');
