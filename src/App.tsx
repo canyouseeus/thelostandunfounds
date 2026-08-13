@@ -390,6 +390,16 @@ function App() {
               <Route path="/sign/:token" element={<SignContract />} />
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
+                {/* The portal reads :orderId from the path, but no route ever
+                    supplied one — so every delivery link built the way the
+                    portal expects landed on the 404 page, and useParams had
+                    nothing to read even if it had resolved. */}
+                <Route path=":orderId" element={<DownloadPortal />} />
+              </Route>
+              {/* /downloads was linked in delivery email copy and never existed. */}
+              <Route path="/downloads" element={<Layout />}>
+                <Route index element={<DownloadPortal />} />
+                <Route path=":orderId" element={<DownloadPortal />} />
               </Route>
               <Route path="/setup" element={<OnboardingWizard />} />
               {/* Kit list. The token in the URL is the credential, so someone
