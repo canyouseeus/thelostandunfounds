@@ -129,7 +129,20 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+    This is what keeps Gmail from darkening the message. lib/email-template.ts
+    has carried it for a while, which is why the photo-delivery email renders as
+    a white panel in Gmail's dark theme while this newsletter did not: the
+    newsletter has its own shell and simply never declared it.
+
+    Do not remove it, and do not "upgrade" it to "light dark", which tells the
+    client the email supplies its own dark rendering. The client then darkens
+    it. Verified in Gmail on iOS, 2026-08-13.
+  -->
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
     body { background-color: #ffffff !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
     table { background-color: #ffffff !important; border-collapse: collapse !important; }
     td { background-color: #ffffff !important; }
