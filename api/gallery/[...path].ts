@@ -248,7 +248,12 @@ async function grantDeliveryEntitlements(
     email: string,
 ): Promise<void> {
     const normalized = email.toLowerCase();
-    const reference = `delivery_${librarySlug}`;
+    // The email belongs in the key: photo_orders.paypal_order_id is UNIQUE, so
+    // a per-gallery reference collides as soon as a second person is invited to
+    // the same gallery. The insert throws, this function swallows it, and that
+    // client silently never gets their entitlements — the gallery just stays
+    // locked for everyone after the first.
+    const reference = `delivery_${librarySlug}_${normalized}`;
 
     const { data: photos } = await adminClient
         .from('photos')
