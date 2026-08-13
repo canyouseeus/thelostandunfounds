@@ -73,11 +73,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { folderId, parentFolderId, folderName, dryRun = false } = (req.body || {}) as {
+  const { folderId, parentFolderId, folderName, dryRun = false, list = false } = (req.body || {}) as {
     folderId?: string
     parentFolderId?: string
     folderName?: string
     dryRun?: boolean
+    list?: boolean
   }
 
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -86,6 +87,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const drive = await getDrive()
+
+    // Naming a folder to delete means knowing what is actually there. Guessing
+    // at a name is how the wrong folder gets picked.
+    if (list) {
+      const target = folderId || parentFolderId
+      if (!target) return res.status(400).json({ error: 'list needs folderId or parentFolderId' })
+      const { data } = await drive.files.list({
+        q: `'${target}' in parents and trashed = false`,
+        fields: 'files(id, name, mimeType, size)',
+        pageSize: 200,
+        orderBy: 'folder,name',
+      })
+      const entries = data.files || []
+      return res.status(200).json({
+        success: true,
+        parentId: target,
+        folders: entries.filter(f => f.mimeType === 'application/vnd.google-apps.folder')
+          .map(f => ({ id: f.id, name: f.name })),
+        looseFileCount: entries.filter(f => f.mimeType !== 'application/vnd.google-apps.folder').length,
+      })
+    }
+
     let targetId = folderId
 
     if (!targetId) {
