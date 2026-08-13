@@ -41,18 +41,35 @@ grep -n "background: '#" lib/email-template.ts api/email-template.ts
 npx tsx scripts/audit-email-contrast.ts
 ```
 
-## RULE 2 — You cannot opt out of dark-mode inversion
+## RULE 2 — Author dark mode where you can. You cannot opt out of Gmail iOS.
 
-- `color-scheme: light` does **not** prevent it — declaring a single scheme is what invites a
-  client to convert the message.
-- `color-scheme: light dark` says "this email handles dark mode itself", which also permits
-  conversion.
-- `[data-ogsc]` / `[data-ogsb]` overrides are **Gmail Android only**. They are inert on Gmail
-  iOS, which is where this was being tested.
-- Inline `!important` protects a specific declaration, not the client's whole-message transform.
+The templates now ship an explicit `@media (prefers-color-scheme: dark)` block and declare
+`color-scheme: light dark`, which says "this email supplies its own dark rendering". Clients
+that honour that use our block instead of inventing a conversion:
 
-Design so the email is correct as authored. Do not add machinery that tries to defeat a
-client's dark mode; it will not work and it obscures the real palette.
+| Client | Honours the dark block? |
+|---|---|
+| Apple Mail, iOS and macOS | yes |
+| Outlook app, iOS and Android | yes |
+| ProtonMail | yes |
+| Gmail **Android** | only via `[data-ogsc]` / `[data-ogsb]`, which are also shipped |
+| Gmail **iOS** | **no.** Ignores the media query AND `[data-ogsc]`, and inverts anyway |
+| Gmail webmail | partial, varies |
+
+So the split the owner asked for — light rendering in light mode, dark rendering in dark mode —
+is real for most clients and impossible for exactly one. Gmail iOS is that one, and it is the
+client the owner tests in. Say so plainly rather than promising a fix.
+
+What still does not work, and must not be re-attempted:
+
+- Inline `!important` protects a declaration, not the client's whole-message transform.
+- No meta tag, media query, or attribute suppresses Gmail iOS's inversion.
+- Telling the owner to change their phone's system settings is not a fix.
+
+The saving grace: because the whole message is authored in ONE palette, an inverted render is
+at least self-consistent. The breakage in this codebase's history came from content authored
+for one palette being wrapped in a shell of the other, which inverts into nonsense — white
+links on a white page.
 
 ## RULE 3 — A button is a solid fill, never an outline
 
