@@ -70,7 +70,7 @@ const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
 
 function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #ffffff !important; text-align: left;">
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
   <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
     <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
   </a>
@@ -78,7 +78,7 @@ function ensureBannerHtml(htmlContent: string): string {
 
   const ensureShell = (html: string) => {
     if (/<html[\s>]/i.test(html)) return html
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, sans-serif;">${html}</body></html>`
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
   }
 
   const insertAfterBody = (html: string) => {
@@ -120,66 +120,13 @@ function extractBodyContent(contentHtml: string): string {
   return contentHtml.trim()
 }
 
-function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string): string {
-  const currentYear = new Date().getFullYear()
-  const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!--
-    This is what keeps Gmail from darkening the message. lib/email-template.ts
-    has carried it for a while, which is why the photo-delivery email renders as
-    a white panel in Gmail's dark theme while this newsletter did not: the
-    newsletter has its own shell and simply never declared it.
-
-    Do not remove it, and do not "upgrade" it to "light dark", which tells the
-    client the email supplies its own dark rendering. The client then darkens
-    it. Verified in Gmail on iOS, 2026-08-13.
-  -->
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <style>
-    :root { color-scheme: light; supported-color-schemes: light; }
-    body { background-color: #ffffff !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
-    table { background-color: #ffffff !important; border-collapse: collapse !important; }
-    td { background-color: #ffffff !important; }
-    a { color: #000000; }
-  </style>
-</head>
-<body style="margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; font-family: Arial, sans-serif;">
-  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #ffffff !important; margin: 0 !important; padding: 0 !important;">
-    <tr>
-      <td align="left" style="padding: 40px 20px !important; background-color: #ffffff !important;">
-        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #ffffff !important; margin: 0 !important;">
-          <tr>
-            <td align="left" style="padding: 0 0 30px 0 !important;">
-              <a href="https://www.thelostandunfounds.com" target="_blank">
-                <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 0 !important; color: #000000 !important;">
-              ${bodyHtml || '<p style="color: #000000; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">Stay tuned for updates from THE LOST+UNFOUNDS.</p>'}
-              <hr style="border: none; border-top: 1px solid #dddddd; margin: 30px 0;">
-              <p style="color: #666666; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
-                © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
-              </p>
-              <p style="color: #666666; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
-                <a href="${unsubscribeUrl}" style="color: #666666; text-decoration: underline;">Unsubscribe from this newsletter</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
-}
+// The bespoke newsletter shell that used to live here was DEAD CODE: defined,
+// never called. The send path builds every message with generateNewsletterEmail
+// from lib/email-template.ts, the same shared template every other email uses.
+//
+// It cost an afternoon on 2026-08-13. A fix was made to it, verified against it,
+// and shipped, and none of it reached a single email. Deleted so nobody edits it
+// again believing it renders the newsletter.
 
 /**
  * Get Zoho access token

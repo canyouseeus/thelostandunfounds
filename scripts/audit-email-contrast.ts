@@ -118,15 +118,10 @@ for (const file of EMAIL_SOURCES) {
     continue
   }
 
-  // Translucent white was legible on a black page and disappears on a white
-  // one. There is no case where it is still correct in an email.
-  const translucentWhite = src.match(/rgba\(\s*255\s*,\s*255\s*,\s*255/gi) || []
-  if (translucentWhite.length) {
-    failures.push({
-      where: file,
-      detail: `${translucentWhite.length} translucent-white colour(s) remain; invisible on white`,
-    })
-  }
+  // NOTE: translucent white (rgba(255,255,255,.6)) is CORRECT on the black
+  // brand and was only a defect during the brief white-palette experiment on
+  // 2026-08-13. Do not re-add a rule banning it. What matters is the pair
+  // check below, which is palette-agnostic.
 
   // Check background/text PAIRS rather than either colour alone. A black fill
   // with white type is a button or an accent panel and is correct on a white

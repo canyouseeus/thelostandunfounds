@@ -48,35 +48,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             to = ADMIN_EMAIL;
             subject = `New Event Submission: ${event.title}`;
             content = `
-                <h2 style="color: #000000; text-transform: uppercase;">New Event Submission</h2>
-                <p style="color: #000000;">A new event has been submitted for review.</p>
-                <p style="color: #000000;"><strong>Title:</strong> ${event.title}</p>
-                <p style="color: #000000;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
-                <p style="color: #000000;"><strong>Location:</strong> ${event.location}</p>
-                <p style="color: #000000;"><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
-                <hr style="border: none; border-top: 1px solid #dddddd; margin: 20px 0;" />
-                <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
+                <h2 style="color: #ffffff; text-transform: uppercase;">New Event Submission</h2>
+                <p style="color: #ffffff;">A new event has been submitted for review.</p>
+                <p style="color: #ffffff;"><strong>Title:</strong> ${event.title}</p>
+                <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
+                <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
+                <p style="color: #ffffff;"><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
+                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;" />
+                <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
             `;
         } else if (action === 'approved') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });
             to = userEmail;
             subject = `Your Event Has Been Approved: ${event.title}`;
             content = `
-                <h2 style="color: #000000; text-transform: uppercase;">Event Approved!</h2>
-                <p style="color: #000000;">Great news! Your event <strong>${event.title}</strong> has been approved and is now live on THE LOST+UNFOUNDS.</p>
-                <p style="color: #000000;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
-                <p style="color: #000000;"><strong>Location:</strong> ${event.location}</p>
-                <hr style="border: none; border-top: 1px solid #dddddd; margin: 20px 0;" />
-                <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
+                <h2 style="color: #ffffff; text-transform: uppercase;">Event Approved!</h2>
+                <p style="color: #ffffff;">Great news! Your event <strong>${event.title}</strong> has been approved and is now live on THE LOST+UNFOUNDS.</p>
+                <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
+                <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
+                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;" />
+                <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
             `;
         } else if (action === 'rejected') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });
             to = userEmail;
             subject = `Update on Your Event Submission: ${event.title}`;
             content = `
-                <h2 style="color: #000000; text-transform: uppercase;">Event Submission Update</h2>
-                <p style="color: #000000;">Thank you for submitting your event <strong>${event.title}</strong>.</p>
-                <p style="color: #000000;">Unfortunately, we are unable to approve and publish this event at this time. If you have any questions, please reply to this email.</p>
+                <h2 style="color: #ffffff; text-transform: uppercase;">Event Submission Update</h2>
+                <p style="color: #ffffff;">Thank you for submitting your event <strong>${event.title}</strong>.</p>
+                <p style="color: #ffffff;">Unfortunately, we are unable to approve and publish this event at this time. If you have any questions, please reply to this email.</p>
             `;
         } else {
             return res.status(400).json({ error: 'Invalid action' });

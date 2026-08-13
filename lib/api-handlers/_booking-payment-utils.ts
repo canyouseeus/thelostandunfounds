@@ -221,9 +221,9 @@ export function buildBookingPaymentEmailBody(args: {
     <!-- Amount due -->
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0;">
       <tr>
-        <td style="background-color:#000000;padding:20px 24px;">
+        <td style="background-color:#ffffff;padding:20px 24px;">
           <p style="color:#666;font-size:10px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(args.amountDueLabel)}</p>
-          <p style="color:#ffffff;font-size:32px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${fmtUSD(args.amountDue)}</p>
+          <p style="color:#000000;font-size:32px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${fmtUSD(args.amountDue)}</p>
         </td>
       </tr>
     </table>
@@ -234,8 +234,8 @@ export function buildBookingPaymentEmailBody(args: {
         <!-- The fill lives on the anchor as well as the cell: a client that
              drops the td background must not be able to turn the only
              call-to-action on a payment email into blank space. It has. -->
-        <td align="center" bgcolor="#000000" style="background-color:#000000 !important;">
-          <a href="${escapeHtml(args.paymentUrl)}" style="display:block;padding:16px 24px;background-color:#000000 !important;color:#ffffff !important;font-size:14px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">
+        <td align="center" bgcolor="#ffffff" style="background-color:#ffffff !important;">
+          <a href="${escapeHtml(args.paymentUrl)}" style="display:block;padding:16px 24px;background-color:#ffffff !important;color:#000000 !important;font-size:14px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">
             Pay ${escapeHtml(args.amountDueLabel)} &rarr;
           </a>
         </td>
