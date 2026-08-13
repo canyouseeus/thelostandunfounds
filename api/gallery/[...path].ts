@@ -313,18 +313,56 @@ function buildDownloadFilename(rawTitle: string): string {
     return `${PREFIX}_${sanitized || 'photo'}.jpg`;
 }
 
-async function fetchViaServiceAccount(fileId: string, targetSize: number): Promise<{ buffer: Buffer; contentType: string } | null> {
+/**
+ * A Drive access token for reading a file the public CDN will not serve.
+ *
+ * lh3 only serves files shared "anyone with the link", and it stops serving
+ * full resolution well before it stops serving thumbnails — so a private
+ * client gallery previews correctly and then fails on download, which reads
+ * like a broken button rather than a credentials problem.
+ *
+ * The service account is tried first, but its key comes through an env var
+ * and a mangled one throws "DECODER routines::unsupported" from the signer.
+ * Production is in that state. It also holds no rights over folders created
+ * by the owner's own account. Either way the owner's OAuth credentials do,
+ * so they are the fallback rather than the request simply failing.
+ */
+async function getDriveAccessToken(): Promise<string | null> {
     const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const saKey = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-    if (!saEmail || !saKey) return null;
+
+    if (saEmail && saKey) {
+        try {
+            const { google } = await import('googleapis');
+            const auth = new google.auth.JWT({
+                email: saEmail,
+                key: saKey,
+                scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+            });
+            const { token } = await auth.getAccessToken();
+            if (token) return token;
+        } catch (err: any) {
+            console.warn('[stream] service account unusable, falling back to OAuth:', err?.message);
+        }
+    }
+
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) return null;
     try {
         const { google } = await import('googleapis');
-        const auth = new google.auth.JWT({
-            email: saEmail,
-            key: saKey,
-            scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-        });
-        const { token } = await auth.getAccessToken();
+        const oauth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+        oauth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+        const { token } = await oauth.getAccessToken();
+        return token || null;
+    } catch (err: any) {
+        console.warn('[stream] OAuth fallback failed:', err?.message);
+        return null;
+    }
+}
+
+async function fetchViaServiceAccount(fileId: string, targetSize: number): Promise<{ buffer: Buffer; contentType: string } | null> {
+    try {
+        const token = await getDriveAccessToken();
         if (!token) return null;
         const fileRes = await fetch(
             `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,

@@ -59,21 +59,38 @@ export default async function handler(
         const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
         const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n')
 
-        if (!clientEmail || !privateKey) {
-            console.error('Missing Google credentials');
-            return res.status(500).json({ error: 'Server configuration error' });
+        // The service account first, the owner's OAuth credentials when it
+        // cannot be used. A mangled private key throws
+        // "DECODER routines::unsupported" from the JWT signer — production is
+        // in that state, so this endpoint returned a 500 on every download —
+        // and the service account has no rights over folders created by the
+        // owner's own account even when the key is sound.
+        let accessToken: string | null | undefined
+        if (clientEmail && privateKey) {
+            try {
+                const auth = new GoogleAuth({
+                    credentials: { client_email: clientEmail, private_key: privateKey },
+                    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+                })
+                const client = await auth.getClient();
+                accessToken = await client.getAccessToken();
+            } catch (err: any) {
+                console.warn('[download] service account unusable, falling back to OAuth:', err?.message);
+            }
         }
 
-        const auth = new GoogleAuth({
-            credentials: {
-                client_email: clientEmail,
-                private_key: privateKey,
-            },
-            scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-        })
-
-        const client = await auth.getClient();
-        const accessToken = await client.getAccessToken();
+        if (!accessToken) {
+            const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env
+            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+                console.error('No usable Google credentials for download');
+                return res.status(500).json({ error: 'Server configuration error' });
+            }
+            const { google } = await import('googleapis');
+            const oauth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+            oauth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+            const { token } = await oauth.getAccessToken();
+            accessToken = token;
+        }
 
         const fileId = entitlement.photos.google_drive_file_id
 
