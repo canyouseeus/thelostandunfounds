@@ -9,82 +9,83 @@ description: How THE LOST+UNFOUNDS emails actually render in mail clients, and w
 This skill exists for one reason: **what you see in an inbox is not what the template says**,
 and changing the brand to chase a screenshot has already caused one production-wide mistake.
 
-## RULE 1 — The email body is a WHITE panel under a BLACK banner
+## RULE 1 — The brand is a BLACK email. It renders WHITE in the owner's Gmail.
 
 ```
-Banner:     black PNG with white type (an image; not painted by the palette)
-Background: #ffffff
-Text:       #000000
-textMuted:  #666666
-border:     #dddddd
-link:       #000000
+Background: #000000
+Text:       #ffffff
+Banner:     black PNG (an image; never repainted, and never inverted by a client)
 ```
 
-The owner set this directly on 2026-08-13: *"I don't want a black background, white text
-email."* The banner stays black; the body under it is a white page with black type.
+**Gmail on iOS inverts every email it receives, and this is the entire point.** The owner reads
+his mail there. A black email arrives and Gmail displays it as a white page with black type and
+a solid black button. That inverted view is what he considers correct, and it is produced by
+the BLACK source.
 
-**This reverses what this skill said before, and the reversal is deliberate.** Do not "restore"
-the black body on the strength of this file's history or an old comment in a handler.
+### The whole day this cost, in one table
 
-### The trap that still applies
+On 2026-08-13 the palette was flipped to white because the owner said *"I don't want a black
+background, white text email"* while pointing at a screenshot of a white-looking email. Then:
 
-**Gmail on iOS inverts whatever you send.** It previously turned the black email white; it now
-turns this white email dark. An inbox screenshot shows one client's transform, never the
-template. The history here is that the palette was flipped in *both* directions on the strength
-of screenshots, and both flips were argued from a phone.
+| Email | Authored | Gmail iOS showed | Owner's verdict |
+|---|---|---|---|
+| Photo delivery, 14:36 | **black** | white page, black button | "this is correct" |
+| TEST 7 / 8 / 10 | **white** | dark page, white button | "this is not correct" |
 
-So the rule is not "the brand is black" or "the brand is white" — it is: **check the source, and
-change the palette only when the owner says to.**
+The email he held up as proof that white was possible **was the black brand**, pulled from the
+Zoho Sent folder and confirmed: `bgcolor="#000000"`, `meta content="dark"`, sent five hours
+before the white palette deployed.
+
+So the request "make it white like that one" is satisfied by KEEPING IT BLACK.
+
+### What this means for you
+
+- Do not flip the palette on the strength of a screenshot. A screenshot shows a client's
+  transform, never the source.
+- When the owner points at an email as the reference, **fetch that email's source** before
+  changing anything. It is one call:
+  `/api/mail/messages?folderId=<sent>` then `/api/mail/message?id=<id>&folderId=<sent>`.
+  That single step would have saved the entire afternoon.
 
 ```bash
 grep -n "background: '#" lib/email-template.ts api/email-template.ts
 npx tsx scripts/audit-email-contrast.ts
 ```
 
-## RULE 2 — `color-scheme: light` DOES stop Gmail darkening the email
+## RULE 2 — You cannot opt out of Gmail iOS inversion. Every attempt was tried.
 
-Every email shell must carry both of these in `<head>`:
+All of these were tried on 2026-08-13 and none of them worked:
 
-```html
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
-```
+- `color-scheme: light` + `supported-color-schemes: light`. **Does not prevent it.** It was
+  briefly documented here as the fix; that was wrong and was disproved by TEST 8.
+- `color-scheme: light dark` plus an authored `@media (prefers-color-scheme: dark)` block.
+  Reverted: it tells the client the email handles dark mode, so the client darkens it.
+- `[data-ogsc]` / `[data-ogsb]`. **Gmail Android only**, inert on Gmail iOS.
+- Inline `!important`. Protects a declaration, not a whole-message transform.
+- Sending via Zoho instead of Resend. **TEST 10 ruled transport out**: same body, sent from the
+  same `admin` address through the same Zoho path as the email the owner approved, still
+  darkened.
 
-**This was previously documented here as not working. That was wrong**, and the owner disproved
-it from his own inbox on 2026-08-13: two emails, same phone, same Gmail, same dark mode. The
-photo-delivery email rendered as a white panel; the newsletter rendered dark. The only
-difference was this declaration. `lib/email-template.ts` had it, and the newsletter's separate
-shell in `_newsletter-send-handler.ts` did not.
+Apple Mail, the Outlook apps and ProtonMail *do* honour `prefers-color-scheme`, so an authored
+dark block is not useless in general. It is useless for the owner, and it actively broke the
+black brand's rendering for him, which is why it is not in the templates.
 
-Do **not** "upgrade" it to `light dark`. That declares the email supplies its own dark
-rendering, and the client will duly darken it. Adding a `prefers-color-scheme: dark` block has
-the same effect and was reverted for that reason.
-
-Still true:
-
-- `[data-ogsc]` / `[data-ogsb]` are **Gmail Android only**, inert on Gmail iOS.
-- Inline `!important` protects a declaration, not a whole-message transform.
-
-### The lesson that outlives the specific fact
-
-The wrong version of this rule survived here because it sounded authoritative and nobody
-retested it. It then cost the owner an hour of being told his request was impossible while he
-was looking at an email that did it. **When the owner says he can see something working, he is
-holding better evidence than this file.** Go find the difference between the two messages
-instead of explaining why what he sees cannot happen.
+Design so the email is correct as authored, in black, and let Gmail invert it.
 
 ## RULE 3 — A button is a solid fill, never an outline
 
-The button inverts the body. On the white body that means a **solid black fill with white
-text**, which is the same expression as before — it reads from the palette rather than naming
-colours, so it followed the palette across the flip:
+On the black body the button is a **solid white fill with black text**, which is what Gmail
+inverts into the SOLID BLACK button the owner asks for:
 
 ```
 background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important;
 ```
 
-Accent panels (the amount-due block on a payment email) invert the same way: black block,
-white figure.
+Accent panels (the amount-due block on a payment email) follow the same rule: white block,
+black figure, which inverts to a black block in Gmail.
+
+**If the owner asks for a black button, the source stays a WHITE fill.** Authoring a black fill
+on the black body is the invisible-button bug, twice shipped.
 
 ### ❌ Never fill a button with the page colour and add a border
 

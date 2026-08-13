@@ -10,19 +10,24 @@ export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://www.thelostandunfounds.com/brand/banner.png',
   website: 'https://www.thelostandunfounds.com',
-  // The email body is a WHITE panel with BLACK type, sitting under the black
-  // banner image. The banner is a PNG and carries its own black; it is not
-  // painted by these colours.
+  // THE BRAND IS A BLACK EMAIL. Black background, white type, under a black
+  // banner PNG.
   //
-  // Every other value here is derived from that pair, so they must stay
-  // legible against a white page: a light link or a near-black rule was
-  // correct on the old black body and is wrong now. See email-rendering.
+  // This was flipped to white on 2026-08-13 and flipped back the same day, once
+  // the email the owner pointed to as "the correct white one" was pulled out of
+  // the Zoho Sent folder and turned out to be THIS palette, inverted by Gmail.
+  // Gmail on iOS inverts whatever it is sent: a black email displays white, and
+  // a white email displays dark. The owner reads his mail there, so the black
+  // brand is what renders the way he wants.
+  //
+  // Do not flip this to white again on the strength of a screenshot.
+  // See email-rendering RULE 1.
   colors: {
-    background: '#ffffff',
-    text: '#000000',
-    textMuted: '#666666',
-    border: '#dddddd',
-    link: '#000000',
+    background: '#000000',
+    text: '#ffffff',
+    textMuted: '#999999',
+    border: '#1a1a1a',
+    link: '#eeeeee',
   },
 };
 
@@ -72,12 +77,12 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <style>
     :root {
-      color-scheme: light;
-      supported-color-schemes: light;
+      color-scheme: light dark;
+      supported-color-schemes: light dark;
     }
     /* Reset styles */
     body, table, td, p, a, li, blockquote {
