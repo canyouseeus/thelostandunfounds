@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 supabase.from('event_tickets')
                     .select('customer_email, purchase_amount_cents, status, created_at'),
                 supabase.from('invoice_payments')
-                    .select('amount, paid_at, invoices ( contractor_payout )'),
+                    .select('amount, paid_at, invoice_id, invoices ( contractor_payout )'),
                 supabase.from('affiliate_commissions')
                     .select('gross_amount, profit_generated, product_cost, status, created_at')
                     .not('status', 'in', '("cancelled","rejected")'),
@@ -106,8 +106,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const cogsCents = (prodigi.data ?? [])
             .filter(p => p.paid_at)
             .reduce((n, p) => n + Math.round(Number(p.unit_cost ?? 0) * 100) * (p.copies ?? 1), 0)
-        const payoutCents = (invPaid.data ?? [])
-            .reduce((n, p) => n + Math.round(Number((p as any).invoices?.contractor_payout ?? 0) * 100), 0)
+        // A subcontractor is owed once per invoice, not once per payment against
+        // it. Iterating payment rows charged the full payout again for every
+        // instalment — a $200 job split into a deposit and a balance subtracted
+        // the photographer's $130 twice. Collapse to one payout per invoice.
+        const payoutByInvoice = new Map<string, number>()
+        for (const p of invPaid.data ?? []) {
+            const id = (p as any).invoice_id
+            if (!id || payoutByInvoice.has(id)) continue
+            payoutByInvoice.set(id, Math.round(Number((p as any).invoices?.contractor_payout ?? 0) * 100))
+        }
+        const payoutCents = [...payoutByInvoice.values()].reduce((n, c) => n + c, 0)
         const refundCents = (refunds.data ?? []).reduce((n, r) => n + (r.amount_cents ?? 0), 0)
         const netCents = grossCents - feesCents - cogsCents - payoutCents - refundCents
 

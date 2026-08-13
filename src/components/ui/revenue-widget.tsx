@@ -165,8 +165,18 @@ function RevenueDetail({ summary: s }: { summary: RevenueSummary }) {
 }
 
 const summaryToData = (s: RevenueSummary): RevenueWidgetData => ({
-  // The headline is NET — money that is actually yours — not gross.
-  total: s.waterfall.netCents / 100,
+  // The headline is GROSS — total money taken in.
+  //
+  // It was net, and net is the wrong headline for two reasons. It contradicted
+  // everything shown beneath it: the source rows and the 30-day sparkline are
+  // both gross, so the big number never equalled the sum of its own breakdown.
+  // And it moves for reasons that are not sales — correcting a contractor
+  // payout from $0 to its true value dropped the all-time total, which a
+  // headline revenue figure must never do.
+  //
+  // Net is not hidden; it is the last line of the waterfall in the expanded
+  // card, under the fees and payouts that explain the gap.
+  total: s.waterfall.grossCents / 100,
   sources: s.sources.map(x => ({
     label: x.source.charAt(0).toUpperCase() + x.source.slice(1),
     value: x.totalCents / 100,

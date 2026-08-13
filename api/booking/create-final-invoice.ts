@@ -205,12 +205,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // The quote this replaces is history now. Leaving it open double-counts the
     // fee and keeps its unpaid balance in receivables after the money has been
     // collected here.
-    await supabase
+    const { data: supersededQuotes } = await supabase
       .from('invoices')
-      .update({ status: 'superseded', amount_due: 0 })
+      .select('id')
       .eq('booking_id', bookingId)
       .eq('invoice_type', 'quote')
       .not('status', 'in', '("void","cancelled")')
+
+    const quoteIds = (supersededQuotes || []).map((q) => q.id)
+
+    if (quoteIds.length > 0) {
+      // The deposit was collected against the quote. Superseding the quote drops
+      // it out of every "billed" rollup — and its payment rows go with it, so
+      // the client reads as still owing the deposit they already paid. Kelly's
+      // $150 deposit sat on a superseded quote and showed as due on the CRM.
+      // The money follows the invoice that now carries the fee.
+      await supabase
+        .from('invoice_payments')
+        .update({ invoice_id: invoice.id })
+        .in('invoice_id', quoteIds)
+
+      // The payout is owed once for the job. It is carried on the final invoice
+      // above; leaving a copy on the quote subtracts it twice from net revenue.
+      await supabase
+        .from('invoices')
+        .update({ status: 'superseded', amount_due: 0, contractor_payout: 0 })
+        .in('id', quoteIds)
+    }
 
     const pdfUrl = `${origin}/api/invoices/pdf?id=${invoice.id}&token=${pdfToken}`
 
