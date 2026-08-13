@@ -573,10 +573,59 @@ function resolveCreds(): ResolvedCreds {
     const GOOGLE_EMAIL = (rawEmail || '').replace(/[^a-zA-Z0-9@._-]/g, '');
     const GOOGLE_KEY = normalizePrivateKey(rawKey || '');
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
-        throw new Error(`Missing credentials for sync. Email: ${!!GOOGLE_EMAIL}, Key: ${!!GOOGLE_KEY}`);
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error('Missing Supabase credentials for sync');
     }
+    // Google credentials are checked in buildDrive(), which can fall back to
+    // OAuth — demanding a service account here would rule that out.
     return { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_EMAIL, GOOGLE_KEY };
+}
+
+/**
+ * A Drive client for reading a gallery's folder.
+ *
+ * The service account is preferred: it is what photographers share their
+ * folders with, and it holds no rights over anything else.
+ *
+ * It is not always usable, though. Its private key is passed through an env
+ * var, and a mangled one fails deep inside the JWT signer as
+ * `DECODER routines::unsupported` — which reads like a corrupt file rather
+ * than a config problem. And a folder created by the owner's own account is
+ * not shared with the service account at all, so even a valid key lists it
+ * as empty and the sync reports zero photos rather than an error.
+ *
+ * Both cases fall back to the owner's OAuth credentials, which own those
+ * folders outright. The key is validated up front so a bad one degrades
+ * instead of throwing from the signer.
+ */
+function buildDrive(GOOGLE_EMAIL: string, GOOGLE_KEY: string) {
+    let serviceAccountUsable = Boolean(GOOGLE_EMAIL && GOOGLE_KEY);
+    if (serviceAccountUsable) {
+        try {
+            createPrivateKey(GOOGLE_KEY);
+        } catch (err: any) {
+            console.warn('[sync] service account key is unusable, falling back to OAuth:', err?.message);
+            serviceAccountUsable = false;
+        }
+    }
+
+    if (serviceAccountUsable) {
+        const auth = new google.auth.GoogleAuth({
+            credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
+            scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+        });
+        return google.drive({ version: 'v3', auth });
+    }
+
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+        throw new Error(
+            'No usable Google credentials for sync — the service account key is missing or malformed and no OAuth refresh token is configured',
+        );
+    }
+    const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+    auth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+    return google.drive({ version: 'v3', auth });
 }
 
 async function buildCtx(
@@ -598,11 +647,7 @@ async function buildCtx(
     const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
     if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
 
-    const auth = new google.auth.GoogleAuth({
-        credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
-        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-    });
-    const drive = google.drive({ version: 'v3', auth });
+    const drive = buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
 
     const { data: locationTagsRaw } = await supabase
         .from('tags')
@@ -667,11 +712,7 @@ export async function listLibrarySubfolders(librarySlug: string): Promise<{
     const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
     if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
 
-    const auth = new google.auth.GoogleAuth({
-        credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
-        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-    });
-    const drive = google.drive({ version: 'v3', auth });
+    const drive = buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
 
     const { photos, subfolders } = await listFolderEntries(drive, folderId);
 
