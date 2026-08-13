@@ -56,11 +56,11 @@ export function wrapEmailContent(
 
   const footerHtml = includeFooter ? `
               <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
-              <p class="tlu-muted" style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
+              <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
                 © ${currentYear} ${BRAND.name}. All rights reserved.
               </p>
               ${includeUnsubscribe && subscriberEmail ? `
-              <p class="tlu-muted" style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
+              <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
                 <a href="${unsubscribeUrl}" style="color: ${BRAND.colors.textMuted}; text-decoration: underline;">Unsubscribe from this newsletter</a>
               </p>
               ` : ''}
@@ -72,23 +72,12 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <!--
-    "light dark" declares that this email supplies its own dark rendering, so a
-    client that supports the declaration uses the block at the bottom of this
-    stylesheet instead of auto-converting the message itself.
-
-    This is honoured by Apple Mail on iOS and macOS, the Outlook apps on iOS and
-    Android, and ProtonMail. It is NOT honoured by Gmail on iOS, which supports
-    neither this nor the [data-ogsc] attribute and simply inverts whatever it
-    receives. There is no opt-out for that client. Do not add machinery that
-    claims to defeat it.
-  -->
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     :root {
-      color-scheme: light dark;
-      supported-color-schemes: light dark;
+      color-scheme: light;
+      supported-color-schemes: light;
     }
     /* Reset styles */
     body, table, td, p, a, li, blockquote {
@@ -143,59 +132,6 @@ export function wrapEmailContent(
       line-height: 1.8;
       margin: 0 0 20px 0;
       padding-left: 20px;
-    }
-
-    /*
-      Dark mode, authored rather than left to the client.
-
-      The light rendering above is the brand: black banner, white body, black
-      type. When the reader's device is in dark mode, a client that supports
-      this block shows the deliberate inverse below instead of running its own
-      conversion over the message.
-
-      The banner is a PNG and is not repainted by any of this, which is why it
-      looks identical in both modes.
-
-      Gmail on iOS ignores this block entirely and inverts by itself. Nothing
-      here can change that; the point of the block is that every client which
-      CAN be told is told.
-    */
-    @media (prefers-color-scheme: dark) {
-      body, table, td,
-      .tlu-body, .tlu-cell {
-        background-color: #000000 !important;
-      }
-      p, h1, h2, h3, h4, h5, h6, ul, ol, li, div, span, strong {
-        color: #ffffff !important;
-      }
-      a {
-        color: #ffffff !important;
-      }
-      /* The button inverts the body in either mode, so in dark mode it is a
-         white fill with black type. */
-      .tlu-button {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-      }
-      hr {
-        border-top-color: #333333 !important;
-      }
-      .tlu-muted {
-        color: #999999 !important;
-      }
-    }
-
-    /* Gmail on ANDROID exposes these attributes; Gmail on iOS does not. */
-    [data-ogsc] body, [data-ogsc] table, [data-ogsc] td {
-      background-color: #000000 !important;
-    }
-    [data-ogsc] p, [data-ogsc] h1, [data-ogsc] h2, [data-ogsc] h3,
-    [data-ogsc] li, [data-ogsc] div, [data-ogsc] a, [data-ogsc] strong {
-      color: #ffffff !important;
-    }
-    [data-ogsc] .tlu-button {
-      background-color: #ffffff !important;
-      color: #000000 !important;
     }
   </style>
 </head>
@@ -262,7 +198,7 @@ export function processEmailContent(
   // Add unsubscribe block if missing
   if (injectUnsubscribeIfMissing && !hasUnsubscribeLink) {
     const unsubBlock = `
-      <p class="tlu-muted" style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left;">
+      <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left;">
         <a href="${unsubscribeUrl}" style="color: ${BRAND.colors.textMuted}; text-decoration: underline;">Unsubscribe</a>
       </p>`;
 
@@ -326,7 +262,7 @@ export function renderButton(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse; margin: 8px 0 24px 0;">
   <tr>
     <td align="center" style="text-align:center;">
-      <a href="${href}" class="tlu-button" style="${EMAIL_STYLES.button}">${label}</a>
+      <a href="${href}" style="${EMAIL_STYLES.button}">${label}</a>
     </td>
   </tr>
 </table>`;

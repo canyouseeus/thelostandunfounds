@@ -129,34 +129,11 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Kept in step with lib/email-template.ts. See email-rendering RULE 2. -->
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
   <style>
-    :root { color-scheme: light dark; supported-color-schemes: light dark; }
     body { background-color: #ffffff !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
     table { background-color: #ffffff !important; border-collapse: collapse !important; }
     td { background-color: #ffffff !important; }
     a { color: #000000; }
-
-    /*
-      Dark mode we author, rather than letting the client invent one. Honoured
-      by Apple Mail, the Outlook apps and ProtonMail. Gmail on iOS ignores it
-      and inverts on its own, which cannot be prevented.
-    */
-    @media (prefers-color-scheme: dark) {
-      body, table, td { background-color: #000000 !important; }
-      p, h1, h2, h3, h4, h5, h6, li, div, span, strong { color: #ffffff !important; }
-      a { color: #ffffff !important; }
-      a[style*="background-color:#000000"], a[style*="background-color: #000000"] {
-        background-color: #ffffff !important; color: #000000 !important;
-      }
-      hr { border-top-color: #333333 !important; }
-    }
-
-    [data-ogsc] body, [data-ogsc] table, [data-ogsc] td { background-color: #000000 !important; }
-    [data-ogsc] p, [data-ogsc] h1, [data-ogsc] h2, [data-ogsc] li,
-    [data-ogsc] div, [data-ogsc] a, [data-ogsc] strong { color: #ffffff !important; }
   </style>
 </head>
 <body style="margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; font-family: Arial, sans-serif;">
