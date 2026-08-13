@@ -41,18 +41,37 @@ grep -n "background: '#" lib/email-template.ts api/email-template.ts
 npx tsx scripts/audit-email-contrast.ts
 ```
 
-## RULE 2 — You cannot opt out of dark-mode inversion
+## RULE 2 — `color-scheme: light` DOES stop Gmail darkening the email
 
-- `color-scheme: light` does **not** prevent it — declaring a single scheme is what invites a
-  client to convert the message.
-- `color-scheme: light dark` says "this email handles dark mode itself", which also permits
-  conversion.
-- `[data-ogsc]` / `[data-ogsb]` overrides are **Gmail Android only**. They are inert on Gmail
-  iOS, which is where this was being tested.
-- Inline `!important` protects a specific declaration, not the client's whole-message transform.
+Every email shell must carry both of these in `<head>`:
 
-Design so the email is correct as authored. Do not add machinery that tries to defeat a
-client's dark mode; it will not work and it obscures the real palette.
+```html
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+```
+
+**This was previously documented here as not working. That was wrong**, and the owner disproved
+it from his own inbox on 2026-08-13: two emails, same phone, same Gmail, same dark mode. The
+photo-delivery email rendered as a white panel; the newsletter rendered dark. The only
+difference was this declaration. `lib/email-template.ts` had it, and the newsletter's separate
+shell in `_newsletter-send-handler.ts` did not.
+
+Do **not** "upgrade" it to `light dark`. That declares the email supplies its own dark
+rendering, and the client will duly darken it. Adding a `prefers-color-scheme: dark` block has
+the same effect and was reverted for that reason.
+
+Still true:
+
+- `[data-ogsc]` / `[data-ogsb]` are **Gmail Android only**, inert on Gmail iOS.
+- Inline `!important` protects a declaration, not a whole-message transform.
+
+### The lesson that outlives the specific fact
+
+The wrong version of this rule survived here because it sounded authoritative and nobody
+retested it. It then cost the owner an hour of being told his request was impossible while he
+was looking at an email that did it. **When the owner says he can see something working, he is
+holding better evidence than this file.** Go find the difference between the two messages
+instead of explaining why what he sees cannot happen.
 
 ## RULE 3 — A button is a solid fill, never an outline
 
