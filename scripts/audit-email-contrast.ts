@@ -154,6 +154,40 @@ for (const file of EMAIL_SOURCES) {
   }
 }
 
+
+// 5. Any email shell must declare its background with bgcolor ATTRIBUTES, not
+//    CSS alone. Gmail's dark-mode conversion treats the two differently: a
+//    CSS-only black shell arrives as a muted grey panel while an attribute
+//    carrying one arrives as a clean white page. On 2026-08-13 a client quote
+//    and the newsletter landed in the same inbox as two different colours for
+//    exactly this reason, with identical #000000 in both.
+const SHELL_SOURCES = [
+  'lib/email-template.ts',
+  'lib/api-handlers/_zoho-email-utils.ts',
+  'lib/api-handlers/_newsletter-subscribe-handler.ts',
+]
+
+for (const file of SHELL_SOURCES) {
+  let src: string
+  try {
+    src = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8')
+  } catch {
+    failures.push({ where: file, detail: 'listed as a shell source but not found' })
+    continue
+  }
+
+  // Only files that actually build a document need the attributes.
+  if (!/<html[\s>]/i.test(src) && !/<html\b/i.test(src)) continue
+
+  const bgcolors = (src.match(/bgcolor=/g) || []).length
+  if (bgcolors < 4) {
+    failures.push({
+      where: file,
+      detail: `builds an email shell with only ${bgcolors} bgcolor attribute(s); Gmail will render it grey instead of the brand black`,
+    })
+  }
+}
+
 if (failures.length) {
   console.error(`\n❌ Email contrast audit failed with ${failures.length} problem(s):\n`)
   for (const f of failures) console.error(`  ${f.where}: ${f.detail}`)

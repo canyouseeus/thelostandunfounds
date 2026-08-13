@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 function generateWelcomeHtml(email: string): string {
   return `
     <!DOCTYPE html>
-    <html>
+    <html bgcolor="#000000" style="background-color:#000000;">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,20 +14,20 @@ function generateWelcomeHtml(email: string): string {
         td { background-color: #000000 !important; }
       </style>
     </head>
-    <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
-      <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
+    <body bgcolor="#000000" style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+      <table bgcolor="#000000" role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
         <tr>
-          <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
-            <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
+          <td bgcolor="#000000" align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+            <table bgcolor="#000000" role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
               <!-- Branding Header -->
               <tr>
-                <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
+                <td bgcolor="#000000" align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
                   <img src="https://www.thelostandunfounds.com/brand/banner.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
                 </td>
               </tr>
               <!-- Main Content -->
               <tr>
-                <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
+                <td bgcolor="#000000" style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
                   <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #000000 !important;">
                     CAN YOU SEE US?
                   </h1>

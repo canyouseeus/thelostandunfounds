@@ -102,7 +102,36 @@ export function ensureBannerHtml(htmlContent: string): string {
 
   const ensureShell = (html: string) => {
     if (/<html[\s>]/i.test(html)) return html
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
+
+    // The bgcolor ATTRIBUTES are the point, not decoration alongside the CSS.
+    //
+    // This shell previously set the background in CSS alone. Gmail's dark-mode
+    // conversion treats that differently from a background declared with
+    // bgcolor: on 2026-08-13 a client quote built this way arrived as a muted
+    // grey panel while the newsletter, whose shell carries bgcolor on every
+    // wrapper, arrived as a clean white one. Same #000000, two different
+    // results.
+    //
+    // Anything reaching this fallback is a legacy handler that hands over raw
+    // HTML, so it cannot go through wrapEmailContent without risking a second
+    // banner. It gets the same attributes instead.
+    return `<!DOCTYPE html>
+<html bgcolor="#000000" style="background-color:#000000;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"></head>
+<body bgcolor="#000000" style="margin:0; padding:0; background-color:#000000; color:#ffffff; font-family: Arial, Helvetica, sans-serif; width:100% !important; height:100% !important;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="#000000" style="border-collapse:collapse; background-color:#000000; background:#000000; margin:0; padding:0; width:100% !important; height:100% !important;">
+  <tr>
+    <td align="center" bgcolor="#000000" style="padding:0; background-color:#000000;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" bgcolor="#000000" style="max-width:600px; width:100%; background-color:#000000; margin:0 auto; border-collapse:collapse;">
+        <tr>
+          <td align="left" bgcolor="#000000" style="background-color:#000000; color:#ffffff;">${html}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
   }
 
   const insertAfterBody = (html: string) => {
