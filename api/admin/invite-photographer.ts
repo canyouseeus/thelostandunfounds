@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js';
+import { GALLERY_AGENT_EMAIL } from '../../src/lib/gallery-agent.js';
 
 // Load env vars if running locally
 if (process.env.NODE_ENV !== 'production') {
@@ -57,20 +58,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // rather than waiting until after gallery setup.
         const gearUrl = `https://www.thelostandunfounds.com/gear?token=${token}`;
 
+        // Gear leads, gallery follows. The kit list is the thing we actually
+        // need back, it takes two minutes and it depends on nothing — whereas
+        // gallery setup involves another service and is genuinely optional.
+        // Leading with the optional half is what made this read like a chore.
+        const button = (href: string, label: string) =>
+            `<a href="${href}" style="background: #ffffff; color: #000000; padding: 14px 28px; text-decoration: none; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">${label}</a>`;
+        const fallbackLink = (href: string) =>
+            `<p style="color: #aaaaaa; font-size: 12px;">Or copy this link: <a href="${href}" style="color: #aaaaaa; text-decoration: underline;">${href}</a></p>`;
+
         const content = `
-            <h1 style="color: #ffffff; margin-bottom: 20px;">Welcome to THE LOST+UNFOUNDS</h1>
-            <p style="color: #ffffff;">Hi ${name || 'there'},</p>
-            <p style="color: #ffffff;">You have been invited to set up your gallery.</p>
-            <p style="color: #ffffff;">Please click the button below to connect your Google Drive folder and publish your photos.</p>
-            <p style="margin: 30px 0;">
-                <a href="${inviteUrl}" style="background: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; text-transform: uppercase; display: inline-block;">Set Up Gallery</a>
-            </p>
-            <p style="color: #aaaaaa; font-size: 12px;">Or copy this link: <a href="${inviteUrl}" style="color: #aaaaaa; text-decoration: underline;">${inviteUrl}</a></p>
-            <p style="color: #ffffff; margin-top: 32px;">One more thing — tell us what's in your bag. Bodies, lenses, lighting, audio, tripods and gimbals. That's how we know which jobs to send your way.</p>
-            <p style="margin: 20px 0;">
-                <a href="${gearUrl}" style="background: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; text-transform: uppercase; display: inline-block;">List My Equipment</a>
-            </p>
-            <p style="color: #aaaaaa; font-size: 12px;">Or copy this link: <a href="${gearUrl}" style="color: #aaaaaa; text-decoration: underline;">${gearUrl}</a></p>
+            <h1 style="color: #ffffff; margin-bottom: 20px;">You're on the roster</h1>
+            <p style="color: #ffffff;">Hey ${name || 'there'},</p>
+            <p style="color: #ffffff;">You're in. Two things and you're set.</p>
+
+            <h2 style="color: #ffffff; margin-top: 36px; margin-bottom: 8px; font-size: 18px;">1. Your equipment</h2>
+            <p style="color: #ffffff; margin-top: 0;">What you shoot on — bodies, lenses, lighting, audio, tripods, gimbals. Takes about two minutes, and it's how we know which jobs to send your way. Start here.</p>
+            <p style="margin: 20px 0;">${button(gearUrl, 'List My Equipment')}</p>
+            ${fallbackLink(gearUrl)}
+
+            <h2 style="color: #ffffff; margin-top: 36px; margin-bottom: 8px; font-size: 18px;">2. Your gallery <span style="color: #aaaaaa; font-weight: normal; font-size: 14px;">(optional)</span></h2>
+            <p style="color: #ffffff; margin-top: 0;">Host and sell your work on the site. We sync from one Google Drive folder you pick:</p>
+            <ul style="color: #ffffff; padding-left: 20px; line-height: 1.7;">
+                <li>In Google Drive, right-click your photo folder &rarr; <strong>Share</strong></li>
+                <li>Paste in <span style="color: #aaaaaa; word-break: break-all;">${GALLERY_AGENT_EMAIL}</span></li>
+                <li>Set it to <strong>Viewer</strong> &rarr; Send</li>
+                <li>Copy the folder link, paste it into the setup page</li>
+            </ul>
+            <p style="color: #ffffff;">Nothing to install and nothing to set up on Google's end — it's the same as sharing a folder with a person.</p>
+            <p style="margin: 20px 0;">${button(inviteUrl, 'Set Up Gallery')}</p>
+            ${fallbackLink(inviteUrl)}
+
+            <p style="color: #ffffff; margin-top: 36px;">&mdash; Josh, THE LOST+UNFOUNDS</p>
         `;
 
         const emailResult = await sendTransactionalEmail({
@@ -81,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // file even when someone replies to one person only.
             from: 'media@thelostandunfounds.com',
             cc: 'media@thelostandunfounds.com',
-            subject: "Invitation to THE LOST+UNFOUNDS",
+            subject: "You're on the roster — two quick things",
             content,
         });
 

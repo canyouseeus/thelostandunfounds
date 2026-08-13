@@ -4,6 +4,7 @@ import { CheckIcon, ClipboardDocumentIcon, ArrowRightIcon, ArrowPathIcon, Exclam
 import { LoadingSpinner, LoadingOverlay } from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { GALLERY_AGENT_EMAIL } from '../../lib/gallery-agent';
 
 export default function OnboardingWizard() {
     const [searchParams] = useSearchParams();
@@ -38,7 +39,8 @@ export default function OnboardingWizard() {
         }
     }, [user]);
 
-    const AGENT_EMAIL = 'the-gallery-agent@the-lost-and-unf-1737406545588.iam.gserviceaccount.com';
+    // Shared with the invitation email — see src/lib/gallery-agent.ts.
+    const AGENT_EMAIL = GALLERY_AGENT_EMAIL;
 
     useEffect(() => {
         verifyToken();
