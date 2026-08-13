@@ -73,7 +73,8 @@ export default async function handler(
                     scopes: ['https://www.googleapis.com/auth/drive.readonly'],
                 })
                 const client = await auth.getClient();
-                accessToken = await client.getAccessToken();
+                const got = await client.getAccessToken();
+                accessToken = typeof got === 'string' ? got : got?.token;
             } catch (err: any) {
                 console.warn('[download] service account unusable, falling back to OAuth:', err?.message);
             }
@@ -97,7 +98,7 @@ export default async function handler(
         // Fetch file stream from Drive API
         const driveRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
             headers: {
-                'Authorization': `Bearer ${accessToken.token}`
+                'Authorization': `Bearer ${accessToken}`
             }
         });
 
