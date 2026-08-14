@@ -3,7 +3,16 @@ import { sendAffiliateEmail } from './_emails.js';
 
 export interface CommissionTriggerInput {
   email: string;
-  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket';
+  /**
+   * Written straight through to `affiliate_commissions.source` by the
+   * `register_referral_conversion` RPC, so this union must stay a subset of
+   * that column's CHECK constraint:
+   *   paypal | fourthwall | local | stripe | photo_order | booking |
+   *   event_ticket | prodigi_order
+   * Listed here are the values callers actually pass; `prodigi_order` was
+   * being passed by both webhook handlers while missing from this union.
+   */
+  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket' | 'prodigi_order';
   sourceId: string;
   grossAmount: number;
   userId?: string | null;
