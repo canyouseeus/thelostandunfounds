@@ -712,8 +712,9 @@ export default function Admin() {
           amount: (o.total_amount_cents || 0) / 100
         }));
 
-        // Booking history must use the same net-of-payout figure as the revenue
-        // tiles: what the site actually keeps, capped by what was collected.
+        // Booking history is gross: every dollar collected against the invoice,
+        // contractor payout included. The payout is a cost, and costs belong in
+        // the waterfall on the expanded card, not netted out of the headline.
         // Invoices predating invoice_payments have no rows, so fall back to the
         // full total when status is 'paid' (mirrors the bookingRevenue logic).
         const collectedByInvoice = new Map<string, number>();
@@ -723,13 +724,12 @@ export default function Admin() {
         }
 
         const bookingHistory = (invoicesHist.data || []).map((inv: any) => {
-          const siteShare = Number(inv.total || 0) - Number(inv.contractor_payout || 0);
           const recorded = collectedByInvoice.get(inv.id);
           const collected =
             recorded != null ? recorded : inv.status === 'paid' ? Number(inv.total || 0) : 0;
           return {
             date: inv.paid_at,
-            amount: Math.max(0, Math.min(collected, siteShare)),
+            amount: Math.max(0, collected),
           };
         });
 
@@ -942,9 +942,12 @@ export default function Admin() {
         // client's email still reads "Invoice", not "Receipt"), but the deposit
         // is real income the moment it lands — keying off status alone hid it.
         //
-        // Each invoice contributes what it has collected, capped at the site's
-        // own share (total − contractor_payout): a subcontractor's cut is never
-        // site revenue, and the site's share is treated as collected first.
+        // Each invoice contributes the full amount collected against it. This
+        // figure is GROSS — the contractor's cut is not subtracted here. It is a
+        // cost, and it is shown as one in the waterfall on the expanded card.
+        // Netting it out of the headline made assigning a photographer *lower*
+        // all-time revenue on a job whose payment had not changed, which is the
+        // one thing a gross revenue figure must never do.
         const { data: revenueInvoices } = await supabase
           .from('invoices')
           .select('id, total, contractor_payout, status');
@@ -961,13 +964,12 @@ export default function Admin() {
           }
 
           bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
-            const siteShare = Number(inv.total || 0) - Number(inv.contractor_payout || 0);
             // Invoices marked paid with no itemised payments still count in
             // full — older rows predate invoice_payments being populated.
             const recorded = collectedByInvoice.get(inv.id);
             const collected =
               recorded != null ? recorded : inv.status === 'paid' ? Number(inv.total || 0) : 0;
-            return sum + Math.max(0, Math.min(collected, siteShare));
+            return sum + Math.max(0, collected);
           }, 0);
         }
       } catch (err) {
@@ -1472,7 +1474,7 @@ export default function Admin() {
           values={(stats?.history?.revenue || []).map(r => (typeof r === 'string' ? 1 : r.amount))}
         />
       ),
-      footer: <span className="text-[10px] text-white/40">Gross profit estimate</span>,
+      footer: <span className="text-[10px] text-white/40">Gross, before fees and payouts</span>,
       content: (
         <div className="space-y-10 pt-2">
           <div className="space-y-4">
@@ -1894,18 +1896,15 @@ export default function Admin() {
             if (id === 'revenue-performance') {
             const category = dashboardCategories.find(c => c.id === id);
               return cell(invertIfLight(
+                /* No pinned data: the widget reads /api/admin/revenue-summary,
+                   the one server-side computation of the revenue picture. The
+                   pinned props re-derived the total in the browser from three
+                   of the five sources (no shop, no tickets) and carried the
+                   net-of-payout booking figure, so the tile and the waterfall
+                   inside its own expanded card disagreed. */
                 <RevenueWidget
                   size={size}
                   className="w-full h-full"
-                  data={{
-                    total: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
-                    sources: [
-                      { label: 'Affiliate', value: stats?.affiliateRevenue || 0 },
-                      { label: 'Gallery', value: stats?.galleryRevenue || 0 },
-                      { label: 'Bookings', value: stats?.bookingRevenue || 0 },
-                    ],
-                    series: (stats?.history?.revenue || []).map(r => (typeof r === 'string' ? 1 : r.amount)),
-                  }}
                   detail={category?.content}
                 />
               ));
