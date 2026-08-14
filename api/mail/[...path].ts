@@ -391,9 +391,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // GET /api/mail/debug
       case 'debug': {
         const auth = await mailHandler.getZohoAuthContext();
+
+        // Which addresses may this account actually send as? Zoho keeps that in
+        // sendMailDetails/emailAddress on the account record, and it is the only
+        // way to answer "do we have an alias for X" without the Zoho console.
+        let sendAs: Array<{ address: string; displayName?: string; isDefault?: boolean }> = [];
+        let aliases: string[] = [];
+        try {
+          const accountsRes = await fetch('https://mail.zoho.com/api/accounts', {
+            headers: { Authorization: `Zoho-oauthtoken ${auth.accessToken}` }
+          });
+          if (accountsRes.ok) {
+            const json = await accountsRes.json();
+            const account = json?.data?.[0] || json?.accounts?.[0] || {};
+            sendAs = (account.sendMailDetails || []).map((d: any) => ({
+              address: d.fromAddress,
+              displayName: d.displayName,
+              isDefault: d.default === true || d.default === 'true'
+            }));
+            aliases = (account.emailAddress || [])
+              .map((e: any) => (typeof e === 'string' ? e : e.mailId))
+              .filter(Boolean);
+          }
+        } catch (err) {
+          console.warn('[Mail debug] send-as lookup failed', err);
+        }
+
         return res.status(200).json({
           accountId: auth.accountId,
           email: auth.fromEmail,
+          sendAs,
+          aliases,
           tokenPreview: auth.accessToken?.substring(0, 10) + '...'
         });
       }
