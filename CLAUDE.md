@@ -94,6 +94,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | newsletter, campaign, subscribers, outreach | `outreach-ops`, `brand-email-manager`, `email-delivery` |
 | admin, dashboard, analytics | `admin-ops` |
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
+| photographer assignment, crew, payout, 80/20 split, "does he know" | `crew-assignment` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
 | invoice, proposal, quote, estimate, client document | `client-documents` |
 | billing, deposit, payment link, promo code, discount code, checkout | `email-billing` |
