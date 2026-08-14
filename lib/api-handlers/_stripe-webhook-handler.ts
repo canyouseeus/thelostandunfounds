@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
-import { sendDepositConfirmationEmail } from './_booking-payment-utils.js'
+import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
 import { accrueCrewPayout } from './crew/_shared.js'
 
 /**
@@ -885,6 +885,71 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
         } catch (mailErr: any) {
             console.warn('⚠️ Deposit confirmation email failed:', mailErr?.message)
         }
+
+        await notifyPhotographerOnce(supabase, booking, invoice)
+    }
+}
+
+/**
+ * Tell the photographer the shoot is on — once the deposit has landed.
+ *
+ * This used to fire the moment a booking was created, which announced jobs
+ * that were not yet paid for and could still evaporate. A deposit is what
+ * makes a date real, so that is what triggers it, and the email can then say
+ * what the photographer is being paid and when it reaches their account.
+ *
+ * photographer_notified_at makes it idempotent. Stripe replays webhooks, and
+ * without the stamp a retried deposit event sends the same assignment twice.
+ * It is also the only record anywhere that the photographer was told.
+ */
+async function notifyPhotographerOnce(supabase: any, booking: any, invoice: any): Promise<void> {
+    try {
+        if (booking.photographer_notified_at) return
+
+        const { data: payout } = await supabase
+            .from('crew_payouts')
+            .select('amount, available_at, photographer_id')
+            .eq('invoice_id', invoice.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        let photographer: any = null
+        if (payout?.photographer_id) {
+            const { data } = await supabase
+                .from('photographers')
+                .select('id, name, email, payout_pct')
+                .eq('id', payout.photographer_id)
+                .maybeSingle()
+            photographer = data
+        }
+        if (!photographer?.email) return
+
+        await sendPhotographerAssignment({
+            photographer,
+            clientName: booking.name,
+            eventType: booking.event_type,
+            eventDate: booking.event_date,
+            startTime: booking.start_time,
+            endTime: booking.end_time,
+            location: booking.location,
+            accessNotes: (booking.notes || '').match(/Access:\s*([^\n]+)/i)?.[1] || null,
+            jobTotal: (Number(booking.total_amount_cents) || 0) / 100,
+            invoiceNumber: invoice.invoice_number,
+            payoutAmount: payout?.amount != null ? Number(payout.amount) : null,
+            payoutAvailableAt: payout?.available_at || null,
+        })
+
+        await supabase
+            .from('bookings')
+            .update({ photographer_notified_at: new Date().toISOString() })
+            .eq('id', booking.id)
+
+        console.log('✅ Photographer notified for booking', booking.id)
+    } catch (err: any) {
+        // Never fail the webhook over an email — Stripe would retry a payment
+        // that has already been recorded.
+        console.warn('⚠️ Photographer assignment email failed:', err?.message)
     }
 }
 

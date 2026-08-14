@@ -149,7 +149,7 @@ export async function accrueCrewPayout(
     amountPaid: number;
     paidAt?: string;
   }
-): Promise<{ accrued: boolean; amount?: number; reason?: string }> {
+): Promise<{ accrued: boolean; amount?: number; reason?: string; availableAt?: string; photographer?: PhotographerRow }> {
   const { data: invoice } = await supabase
     .from('invoices')
     .select('id, invoice_number, booking_id, total, contractor_payout, contractor_name, description')
@@ -213,5 +213,6 @@ export async function accrueCrewPayout(
     throw error;
   }
 
-  return { accrued: true, amount };
+  // The caller needs these to tell the photographer what is coming and when.
+  return { accrued: true, amount, availableAt: availableAt.toISOString(), photographer };
 }

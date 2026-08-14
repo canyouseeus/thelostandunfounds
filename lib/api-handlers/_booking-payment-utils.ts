@@ -574,10 +574,33 @@ export async function sendPhotographerAssignment(args: {
   accessNotes: string | null
   jobTotal: number
   invoiceNumber?: string | null
+  /** What is being released now — the photographer's share of the deposit. */
+  payoutAmount?: number | null
+  /** When that share clears Stripe's hold and lands in their account. */
+  payoutAvailableAt?: string | Date | null
 }): Promise<void> {
   const payout = Math.round(args.jobTotal * (args.photographer.payout_pct / 100) * 100) / 100
   const fmt = (n: number) => `$${n.toFixed(2)}`
   const hhmm = (t: string | null) => (t ? String(t).slice(0, 5) : null)
+
+  // Central, never UTC. The photographer and the owner are both in Austin, and
+  // "01:25 UTC" is a time nobody can act on.
+  const inCentral = (value: string | Date) =>
+    new Date(value).toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      weekday: 'long', month: 'long', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    })
+
+  const fundsLine = args.payoutAmount && args.payoutAvailableAt
+    ? `
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
+      <strong>${fmt(args.payoutAmount)}</strong> is on its way to you now — it clears
+      the card settlement hold and lands in your account around
+      <strong>${inCentral(args.payoutAvailableAt)}</strong>. The rest follows when
+      the client settles the balance.
+    </p>`
+    : ''
 
   const when = args.eventDate
     ? new Date(`${args.eventDate}T00:00:00`).toLocaleDateString('en-US', {
@@ -593,7 +616,7 @@ export async function sendPhotographerAssignment(args: {
 
   const bodyHtml = `
     <h1 style="color:${BRAND.colors.text};font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SHOOT ASSIGNED</h1>
-    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${args.photographer.name.split(' ')[0]}, you're booked for this one.</p>
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${args.photographer.name.split(' ')[0]}, this one is confirmed — the client has paid their deposit, so the date is locked in.</p>
     ${row('Date', when)}
     ${row('Time', window)}
     ${row('Location', args.location || 'TBC — will confirm')}
@@ -603,8 +626,9 @@ export async function sendPhotographerAssignment(args: {
     <hr style="border:none;margin:30px 0;">
     ${row('Job total', fmt(args.jobTotal))}
     ${row('Your payout', `<strong>${fmt(payout)}</strong> (${args.photographer.payout_pct}%)`)}
+    ${fundsLine}
     <p style="color:${BRAND.colors.textMuted};font-size:14px;line-height:1.5;margin:0 0 20px 0;">
-      The house takes ${HOUSE_COMMISSION_PCT}% for booking the session. Paid out after the client settles.
+      The house takes ${HOUSE_COMMISSION_PCT}% for booking the session.
     </p>
     <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
       If the date, time or access doesn't work, reply here and we'll sort it with the client.
@@ -618,7 +642,7 @@ export async function sendPhotographerAssignment(args: {
     auth,
     to: args.photographer.email,
     cc: FROM_EMAIL,
-    subject: `Shoot assigned — ${when}${window !== 'TBC' ? `, ${window.split(' – ')[0]}` : ''}${args.location ? ` — ${args.location}` : ''}`,
+    subject: `Shoot confirmed — ${when}${window !== 'TBC' ? `, ${window.split(' – ')[0]}` : ''}${args.location ? ` — ${args.location}` : ''}`,
     htmlContent,
   })
 }

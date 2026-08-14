@@ -6,7 +6,6 @@ import {
     createQuoteForBooking,
     siteOrigin,
     getDefaultPhotographer,
-    sendPhotographerAssignment,
 } from '../../lib/api-handlers/_booking-payment-utils.js'
 import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
 
@@ -499,27 +498,19 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
             })
             quote = { created: true, invoiceNumber: result.invoiceNumber, total: result.total }
 
-            // Tell the photographer they have a job. Previously a booking could
-            // land with nobody assigned and nobody told — the shoot was passed
-            // on by hand, or not at all. Best-effort: the booking and invoice
-            // stand whether or not this email gets through.
+            // The photographer is NOT told here. A booking without a paid
+            // deposit is not a confirmed job, and announcing one that can still
+            // evaporate wastes a freelancer's evening. The assignment email is
+            // sent from the Stripe webhook when the deposit lands, where it can
+            // also state what they are being paid and when it reaches their
+            // account. See notifyPhotographerOnce in _stripe-webhook-handler.ts.
             try {
                 const photographer = await getDefaultPhotographer(supabase as any)
                 if (photographer) {
-                    await sendPhotographerAssignment({
-                        photographer,
-                        clientName: name.trim(),
-                        eventType: event_type.trim(),
-                        eventDate: event_date,
-                        startTime: start_time || null,
-                        endTime: end_time || null,
-                        location: location?.trim() || null,
-                        accessNotes: (notes || '').match(/Access:\s*([^\n]+)/i)?.[1] || null,
-                        jobTotal: result.total,
-                        invoiceNumber: result.invoiceNumber,
-                    })
                     // Record who is covering it and what they earn, so the split
-                    // is on the invoice rather than in someone's memory.
+                    // is on the invoice rather than in someone's memory. This is
+                    // the assignment; the email announcing it waits for the
+                    // deposit.
                     await supabase
                         .from('invoices')
                         .update({
