@@ -84,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         </tbody>
       </table>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;" />
+      <hr style="border:none;margin:32px 0;" />
       <p style="font-size:12px;color:#aaaaaa;margin:0;">
         Automated subscription notification from THE LOST+UNFOUNDS
       </p>

@@ -48,7 +48,7 @@ function generateWelcomeHtml(email: string): string {
                   <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #000000 !important;">
                     Stay tuned for what's coming next!
                   </p>
-                  <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
+                  <hr style="border: none; margin: 30px 0; background-color: #000000 !important;">
                   <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                     If you didn't sign up for this newsletter, you can safely ignore this email.
                   </p>

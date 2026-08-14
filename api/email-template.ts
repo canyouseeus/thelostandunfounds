@@ -32,5 +32,6 @@ export {
   generateNewsletterEmail,
   generateTransactionalEmail,
   renderButton,
+  renderImageButton,
   EMAIL_STYLES,
 } from '../lib/email-template.js';

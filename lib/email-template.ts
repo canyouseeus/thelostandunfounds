@@ -5,6 +5,8 @@
  * Use this for newsletters, transactional emails, notifications, etc.
  */
 
+import { EMAIL_BUTTON_FILES } from './email-buttons.generated.js';
+
 // Brand assets
 export const BRAND = {
   name: 'THE LOST+UNFOUNDS',
@@ -60,7 +62,7 @@ export function wrapEmailContent(
   const unsubscribeUrl = subscriberEmail ? getUnsubscribeUrl(subscriberEmail) : '#';
 
   const footerHtml = includeFooter ? `
-              <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
+              <hr style="border: none; margin: 30px 0;">
               <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
                 © ${currentYear} ${BRAND.name}. All rights reserved.
               </p>
@@ -286,6 +288,38 @@ export const EMAIL_STYLES = {
   // the page colour and made visible by a border — that renders as an empty
   // outlined box. See brand-email-manager.
   button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
-  divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
+  divider: `border: none; margin: 30px 0;`,
   muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };
+
+/**
+ * Render a call-to-action button as an IMAGE.
+ *
+ * Gmail's dark-mode conversion maps a white CSS fill to roughly #2b2b2b while
+ * the banner PNG keeps its true #000000, because Gmail never repaints images.
+ * A CSS button therefore never matches the banner sitting above it. As an
+ * image, it does, in every client and every mode.
+ *
+ * Buttons are all one size (340x52) and centred. `name` is a key in
+ * EMAIL_BUTTON_FILES; the filename carries a content hash because Vercel serves
+ * /public as immutable for a year, so a changed button must be a new URL.
+ *
+ * If images are blocked the alt text shows in white on the black body and the
+ * anchor still works, so the call to action survives.
+ */
+export function renderImageButton(href: string, name: string, alt: string): string {
+  const file = EMAIL_BUTTON_FILES[name];
+  if (!file) {
+    throw new Error(
+      `Unknown email button "${name}". Add it to BUTTONS in scripts/generate-email-buttons.py and re-run it.`
+    );
+  }
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" bgcolor="${BRAND.colors.background}" style="border-collapse:collapse;margin:8px 0 24px 0;background-color:${BRAND.colors.background};">
+  <tr>
+    <td align="center" bgcolor="${BRAND.colors.background}" style="text-align:center;background-color:${BRAND.colors.background};">
+      <a href="${href}" style="display:inline-block;text-decoration:none;"><img src="${BRAND.website}/brand/${file}" alt="${alt}" width="340" height="52" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:340px;height:52px;max-width:100%;color:${BRAND.colors.text};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;" /></a>
+    </td>
+  </tr>
+</table>`;
+}

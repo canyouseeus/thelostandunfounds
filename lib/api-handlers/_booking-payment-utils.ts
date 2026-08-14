@@ -13,7 +13,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import crypto from 'crypto'
-import { wrapEmailContent, BRAND } from '../../api/email-template.js'
+import { wrapEmailContent, BRAND, renderImageButton } from '../../api/email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js'
 
 const FROM_EMAIL = 'media@thelostandunfounds.com'
@@ -207,7 +207,7 @@ export function buildBookingPaymentEmailBody(args: {
       Hey ${escapeHtml(firstName)} — ${intro}
     </p>
 
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0;border-top:1px solid ${border};border-bottom:1px solid ${border};">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0;">
       <tr>
         <td style="padding:16px 0;color:${muted};font-size:13px;font-family:Arial,Helvetica,sans-serif;">Event date</td>
         <td align="right" style="padding:16px 0;color:${text} !important;font-size:13px;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(fmtDate(args.eventDate))}</td>
@@ -228,26 +228,24 @@ export function buildBookingPaymentEmailBody(args: {
       </tr>
     </table>
 
-    <!-- Pay button -->
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px 0;">
-      <tr>
-        <!-- The fill lives on the anchor as well as the cell: a client that
-             drops the td background must not be able to turn the only
-             call-to-action on a payment email into blank space. It has. -->
-        <td align="center" bgcolor="#ffffff" style="background-color:#ffffff !important;">
-          <a href="${escapeHtml(args.paymentUrl)}" style="display:block;padding:16px 24px;background-color:#ffffff !important;color:#000000 !important;font-size:14px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">
-            Pay ${escapeHtml(args.amountDueLabel)} &rarr;
-          </a>
-        </td>
-      </tr>
-    </table>
+    <!-- Pay button.
+         An IMAGE, not a CSS fill. Gmail maps a white fill to roughly #2b2b2b
+         while the banner PNG keeps its true #000000, so a CSS button never
+         matches the banner above it. The amount is not in the label: it is
+         already the largest thing on the page in the panel directly above, and
+         a per-invoice label would mean rendering a PNG at send time. -->
+    ${renderImageButton(
+      escapeHtml(args.paymentUrl),
+      args.kind === 'quote' ? 'btn-pay-deposit' : 'btn-pay-balance',
+      args.kind === 'quote' ? 'PAY DEPOSIT' : 'PAY BALANCE'
+    )}
 
     <p style="color:${muted};font-size:12px;line-height:1.6;margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;">
       Secure payment via Stripe. Prefer the full document?
       <a href="${escapeHtml(args.pdfUrl)}" style="color:${text};text-decoration:underline;">View the ${args.kind === 'quote' ? 'quote' : 'invoice'} PDF</a>.
     </p>
 
-    <hr style="border:none;border-top:1px solid ${border};margin:24px 0;">
+    <hr style="border:none;margin:24px 0;">
     <p style="color:${muted} !important;font-size:12px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">
       Questions? Just reply to this email.
     </p>
@@ -501,7 +499,7 @@ export async function sendDepositConfirmationEmail(args: {
     ${row('Date', when)}
     ${time ? row('Time', time) : ''}
     ${args.location ? row('Location', args.location) : ''}
-    <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
+    <hr style="border: none; margin: 30px 0;">
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
       <strong>Remaining balance: ${fmt(args.balanceDue)}</strong>, collected on the day of the shoot
       once it's complete. We'll send the final invoice and payment link then — nothing to do before that.
@@ -602,7 +600,7 @@ export async function sendPhotographerAssignment(args: {
     ${row('Access', args.accessNotes || 'None supplied — check before the day')}
     ${row('Client', args.clientName)}
     ${row('Shoot', args.eventType)}
-    <hr style="border:none;border-top:1px solid ${BRAND.colors.border};margin:30px 0;">
+    <hr style="border:none;margin:30px 0;">
     ${row('Job total', fmt(args.jobTotal))}
     ${row('Your payout', `<strong>${fmt(payout)}</strong> (${args.photographer.payout_pct}%)`)}
     <p style="color:${BRAND.colors.textMuted};font-size:14px;line-height:1.5;margin:0 0 20px 0;">
