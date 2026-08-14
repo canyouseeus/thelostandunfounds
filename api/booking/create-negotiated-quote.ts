@@ -55,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     listPrice,
     depositPct = 50,
     reason,
+    sendTo,
   } = (req.body || {}) as Record<string, any>
 
   if (!clientEmail || !String(clientEmail).includes('@')) {
@@ -122,6 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       lineItems: items,
       description: `Photography services — ${eventType}`,
       origin: siteOrigin(req),
+      // Preview to the owner when asked; the invoice and client record are
+      // unaffected either way.
+      sendTo: sendTo ? String(sendTo) : undefined,
     })
 
     return res.status(200).json({ success: true, bookingId: booking.id, ...result })

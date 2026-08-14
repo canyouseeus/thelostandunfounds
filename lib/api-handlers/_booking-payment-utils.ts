@@ -305,6 +305,16 @@ export async function createQuoteForBooking(args: {
   lineItems?: BookingLineItem[]
   description?: string
   origin: string
+  /**
+   * Send the quote email here instead of to the client.
+   *
+   * The invoice, the Stripe link and the client record are unchanged — only
+   * the delivery is redirected — so the owner can read exactly what the client
+   * would receive before it reaches them. Without this, the only way to
+   * preview a quote email was to send it, and a rehearsal booking has already
+   * reached a real client once.
+   */
+  sendTo?: string
 }): Promise<{
   invoiceId: string
   invoiceNumber: string
@@ -330,10 +340,12 @@ export async function createQuoteForBooking(args: {
   if (bookingErr || !booking) throw new Error('Booking not found')
 
   const client = await upsertClientForBooking(supabase, booking)
-  const recipient = client.email || booking.email
-  if (!recipient || !recipient.includes('@')) {
+  const clientRecipient = client.email || booking.email
+  if (!clientRecipient || !clientRecipient.includes('@')) {
     throw new Error('No client email available to send the quote to')
   }
+  const override = (args.sendTo || '').trim()
+  const recipient = override && override.includes('@') ? override : clientRecipient
 
   const items: BookingLineItem[] =
     Array.isArray(args.lineItems) && args.lineItems.length > 0
