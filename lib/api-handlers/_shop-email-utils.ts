@@ -28,7 +28,7 @@ export async function sendShopDigitalDeliveryEmail(args: {
     const body = `
         <h1 style="color:#ffffff;text-transform:uppercase;letter-spacing:-1px;font-size:28px;font-weight:bold;margin:0 0 10px;">Your Download is Ready</h1>
         <p style="color:#999;font-size:16px;margin:0 0 30px;">Thank you for your purchase. Your file is available below.</p>
-        <div style="margin-bottom:40px;padding:20px;border:1px solid #333;background:#111;">
+        <div style="margin-bottom:40px;padding:20px;background:#111;">
             <a href="${downloadUrl}" style="display:inline-block;padding:12px 24px;background:#000000;color:#ffffff;text-decoration:none;font-weight:bold;text-transform:uppercase;font-size:13px;letter-spacing:1px;">Download</a>
             <p style="color:#666;font-size:12px;margin:16px 0 0;">Link expires ${expiresLabel}.</p>
         </div>

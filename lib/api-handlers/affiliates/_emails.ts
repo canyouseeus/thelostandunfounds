@@ -85,19 +85,19 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
 
           <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Your link</span><br>
                 <a href="${refUrl}" style="color:#fff;font-size:13px;word-break:break-all;text-decoration:underline;">${refUrl}</a>
               </td>
             </tr>
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Commission rate</span><br>
                 <span style="color:#fff;font-size:13px;">42% of profit per sale</span>
               </td>
             </tr>
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Dashboard</span><br>
                 <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;font-size:13px;text-decoration:underline;">${SITE_URL}/affiliate-dashboard</a>
               </td>
@@ -118,7 +118,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const signedUpAt = escapeHtml(data.signedUpAt || '');
       const row = (label: string, value: string, last = false) => `
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;${last ? 'border-bottom:1px solid #1a1a1a;' : ''}">
+              <td style="padding:12px 0;${last ? '' : ''}">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">${label}</span><br>
                 <span style="color:#fff;font-size:13px;word-break:break-word;">${value}</span>
               </td>
@@ -199,19 +199,19 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
 
           <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Your details go to</span><br>
                 <span style="color:#fff;font-size:13px;">Stripe — not us. We never see your bank info or SSN.</span>
               </td>
             </tr>
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">What it costs you</span><br>
                 <span style="color:#fff;font-size:13px;">Nothing. No fees, no subscription.</span>
               </td>
             </tr>
             <tr>
-              <td style="padding:12px 0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;">
+              <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">You earn</span><br>
                 <span style="color:#fff;font-size:13px;">42% of profit per sale, for the lifetime of every customer you bring in.</span>
               </td>

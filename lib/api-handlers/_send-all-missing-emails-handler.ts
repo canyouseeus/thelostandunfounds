@@ -66,7 +66,7 @@ function generateNewsletterConfirmationBody(subscriberEmail?: string): string {
     <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
       Stay tuned for what's coming next!
     </p>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+    <hr style="border: none; margin: 30px 0;">
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
       If you didn't sign up for this newsletter, you can safely ignore this email.
     </p>

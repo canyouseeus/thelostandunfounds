@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
                 <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
                 <p style="color: #ffffff;"><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
-                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;" />
+                <hr style="border: none; margin: 20px 0;" />
                 <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
             `;
         } else if (action === 'approved') {
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="color: #ffffff;">Great news! Your event <strong>${event.title}</strong> has been approved and is now live on THE LOST+UNFOUNDS.</p>
                 <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
                 <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
-                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;" />
+                <hr style="border: none; margin: 20px 0;" />
                 <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
             `;
         } else if (action === 'rejected') {

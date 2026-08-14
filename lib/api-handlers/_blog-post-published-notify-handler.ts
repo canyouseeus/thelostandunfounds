@@ -86,7 +86,7 @@ function generateEmailBody(postTitle: string, postUrl: string, authorName: strin
         </td>
       </tr>
     </table>
-    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+    <hr style="border: none; margin: 30px 0;">
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
       <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
     </p>

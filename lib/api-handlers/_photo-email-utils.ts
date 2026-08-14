@@ -7,7 +7,7 @@ export async function sendPhotoDeliveryEmail(email: string, orderId: string, ent
   const linksHtml = entitlements.map(e => {
     const downloadUrl = `${baseUrl}/api/photos/download?token=${e.token}`;
     return `
-          <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #333; background: #111;">
+          <div style="margin-bottom: 20px; padding: 15px; background: #111;">
             <p style="color: #ffffff; margin: 0 0 10px 0; font-family: monospace; font-size: 12px;">PHOTO ID: ${e.photo_id || e.photoId}</p>
             <a href="${downloadUrl}" style="display: inline-block; padding: 10px 20px; background: #000000; color: #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Download High-Res</a>
           </div>
@@ -43,7 +43,7 @@ export async function sendAdminPurchaseNotification(customerEmail: string, order
     `).join('');
 
   const body = `
-        <h1 style="color:#ffffff;text-transform:uppercase;letter-spacing:-1px;font-size:24px;font-weight:bold;border-bottom:1px solid #333;padding-bottom:20px;margin:0 0 24px;">NEW PURCHASE</h1>
+        <h1 style="color:#ffffff;text-transform:uppercase;letter-spacing:-1px;font-size:24px;font-weight:bold;padding-bottom:20px;margin:0 0 24px;">NEW PURCHASE</h1>
         <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
           <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;">Customer</td><td style="color:#ffffff;font-size:16px;padding:8px 0;">${customerEmail}</td></tr>
           <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;">Order ID</td><td style="color:#ffffff;font-size:14px;font-family:monospace;padding:8px 0;">${orderId}</td></tr>

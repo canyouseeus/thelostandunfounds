@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       <p style="margin:0;">
         <a href="${dashboardUrl}" style="color:#ffffff;text-decoration:underline;">Open Admin dashboard &rarr;</a>
       </p>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;" />
+      <hr style="border:none;margin:32px 0;" />
       <p style="font-size:12px;color:#aaaaaa;margin:0;">
         Blog contributor notification &bull; THE LOST+UNFOUNDS
       </p>
