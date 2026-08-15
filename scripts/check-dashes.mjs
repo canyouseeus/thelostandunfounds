@@ -52,9 +52,13 @@ function isAllowed(line, idx) {
   return false;
 }
 
-const files = execSync('git ls-files', { encoding: 'utf8' })
-  .split('\n')
-  .filter((f) => f && EXT.test(f) && f !== SELF);
+// Tracked files plus new, non-ignored ones. A check that cannot see a brand new
+// file is a check that passes because its input is missing.
+const files = [
+  ...new Set(
+    execSync('git ls-files --cached --others --exclude-standard', { encoding: 'utf8' }).split('\n'),
+  ),
+].filter((f) => f && EXT.test(f) && f !== SELF);
 
 const violations = [];
 
@@ -89,4 +93,4 @@ if (violations.length) {
   process.exit(1);
 }
 
-console.log(`✓ no em or en dashes in ${files.length} tracked files`);
+console.log(`✓ no em or en dashes in ${files.length} files`);

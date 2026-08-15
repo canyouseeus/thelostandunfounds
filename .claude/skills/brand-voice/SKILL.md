@@ -56,9 +56,10 @@ When joining display values, the house separator is a middot, not a dash:
 [client.business, `${count} invoices`].filter(Boolean).join(' · ')
 ```
 
-If you are rewriting an old `.join(' — ')`, use `' · '`. Do not substitute prose punctuation into
-a separator literal: `join(': ')` renders as `draft: $500 due`, which reads as a label. And if a
-`.split()` elsewhere depends on that separator, change both or the parse breaks silently.
+If you are rewriting a `.join()` whose separator is an em dash, replace it with `' · '`. Do not
+substitute prose punctuation into a separator literal: `join(': ')` renders as `draft: $500 due`,
+which reads as a label. And if a `.split()` elsewhere depends on that separator, change both or
+the parse breaks silently.
 
 ## Enforcement
 
