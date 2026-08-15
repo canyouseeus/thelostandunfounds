@@ -5,6 +5,7 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
+import AdminCrewRequests from './AdminCrewRequests';
 
 /**
  * The roster, read as a deployment tool rather than a contact list.
@@ -41,6 +42,13 @@ interface GearItem {
   is_primary: boolean;
 }
 
+interface SetupState {
+  hasLogin: boolean;
+  hasGear: boolean;
+  hasStripe: boolean;
+  complete: boolean;
+}
+
 interface RosterEntry {
   id: string;
   name: string;
@@ -51,6 +59,42 @@ interface RosterEntry {
   gear_notes: string | null;
   gear_updated_at: string | null;
   items: GearItem[];
+  setup?: SetupState;
+}
+
+/**
+ * The three walls between "on the roster" and "can actually work a job":
+ * a login to see anything, a kit list to come up in a search, and Stripe to be
+ * paid. Shown as what's missing rather than what's done — the gaps are the
+ * actionable half.
+ */
+function SetupChips({ setup }: { setup?: SetupState }) {
+  if (!setup) return null;
+  const gates = [
+    { done: setup.hasLogin, label: 'Login' },
+    { done: setup.hasGear, label: 'Gear' },
+    { done: setup.hasStripe, label: 'Stripe' },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-1 mt-2">
+      {setup.complete ? (
+        <span className="bg-green-500/15 text-green-300 px-2 py-1 text-[9px] font-black uppercase tracking-widest">
+          Fully set up
+        </span>
+      ) : (
+        gates.map((gate) => (
+          <span
+            key={gate.label}
+            className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+              gate.done ? 'bg-green-500/15 text-green-300' : 'bg-amber-500/15 text-amber-300'
+            }`}
+          >
+            {gate.done ? gate.label : `No ${gate.label}`}
+          </span>
+        ))
+      )}
+    </div>
+  );
 }
 
 const itemText = (item: GearItem) =>
@@ -67,6 +111,10 @@ function freshness(updatedAt: string | null): { label: string; stale: boolean } 
 }
 
 export default function AdminRosterView({ adminEmail }: { adminEmail?: string }) {
+  // Two questions about the same people: what they own, and what they've asked
+  // for. Kept on one panel because "who is on the crew" is the thing you came
+  // here for either way.
+  const [tab, setTab] = useState<'roster' | 'requests'>('roster');
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +174,24 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
 
   return (
     <div className="text-white">
+      <div className="flex gap-8 mb-6">
+        {(['roster', 'requests'] as const).map((option) => (
+          <button
+            key={option}
+            onClick={() => setTab(option)}
+            className={`pb-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${
+              tab === option ? 'text-white' : 'text-white/30 hover:text-white/60'
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'requests' ? (
+        <AdminCrewRequests adminEmail={adminEmail} />
+      ) : (
+      <>
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="flex items-center gap-2 bg-white/5 px-3 py-2 flex-1 min-w-[220px]">
           <MagnifyingGlassIcon className="w-4 h-4 text-white/40" />
@@ -145,6 +211,12 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
           Refresh
         </button>
       </div>
+
+      {!loading && roster.length > 0 && (
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4 text-left">
+          {roster.filter((p) => p.setup?.complete).length} of {roster.length} fully set up
+        </p>
+      )}
 
       {error && <div className="bg-red-500/10 px-4 py-3 text-sm text-red-300 mb-6">{error}</div>}
       {loading && (
@@ -181,6 +253,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
                     {person.instagram ? ` · @${person.instagram.replace(/^@/, '')}` : ''}
                     {person.phone ? ` · ${person.phone}` : ''}
                   </p>
+                  <SetupChips setup={person.setup} />
                 </div>
                 <div className="flex items-center gap-3">
                   <span
@@ -246,6 +319,8 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }

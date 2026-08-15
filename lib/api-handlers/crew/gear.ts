@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin, resolveUserId, isAdmin } from './_shared.js';
+import { getSupabaseAdmin, resolveUserId, resolveCrewMember, isAdmin } from './_shared.js';
 
 /**
  * The roster's equipment list — what each photographer actually owns.
@@ -157,16 +157,17 @@ async function resolveCaller(
     return { photographer: created };
   }
 
-  const userId = await resolveUserId(req);
-  if (!userId) return { photographer: null, error: 'Sign in to manage your kit.', status: 401 };
-
-  const { data } = await supabase
-    .from('photographers')
-    .select(PHOTOGRAPHER_FIELDS)
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (!data) return { photographer: null, error: 'You are not on the roster yet.', status: 404 };
-  return { photographer: data };
+  // Matches on user_id, falling back to a verified email so somebody who was
+  // added to the roster by hand and signed up later still finds their own kit
+  // instead of being told they aren't on the roster.
+  const resolved = await resolveCrewMember(supabase, req, PHOTOGRAPHER_FIELDS);
+  if (!resolved) {
+    const signedIn = await resolveUserId(req);
+    return signedIn
+      ? { photographer: null, error: 'You are not on the roster yet.', status: 404 }
+      : { photographer: null, error: 'Sign in to manage your kit.', status: 401 };
+  }
+  return { photographer: resolved.photographer };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -180,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data: people } = await supabase
         .from('photographers')
-        .select('id, name, email, phone, instagram, active, gear_notes, gear_updated_at')
+        .select('id, name, email, phone, instagram, active, gear_notes, gear_updated_at, user_id, stripe_account_id')
         .order('name', { ascending: true });
 
       const { data: gear } = await supabase
@@ -195,11 +196,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         byPhotographer.set(item.photographer_id, list);
       }
 
+      // How far through setup each person actually is.
+      //
+      // Being on the roster is not the same as being able to work: without a
+      // login they can't see a job or block a date, without a kit list they
+      // don't come up in a search, and without Stripe they can be assigned and
+      // accrued but never actually paid. Three separate walls, all invisible
+      // from a contact list, all of which have to be answered by someone
+      // eventually — so the panel answers them instead of the owner guessing.
+      //
+      // Stripe counts either way round: most of the crew onboarded as
+      // affiliates first and `resolveConnectAccount` reuses that account.
+      const userIds = (people || []).map((p) => p.user_id).filter(Boolean) as string[];
+      const { data: affiliates } = userIds.length
+        ? await supabase
+            .from('affiliates')
+            .select('user_id, stripe_account_id')
+            .in('user_id', userIds)
+        : { data: [] as Array<{ user_id: string; stripe_account_id: string | null }> };
+
+      const affiliateStripe = new Set(
+        (affiliates || []).filter((a) => a.stripe_account_id).map((a) => a.user_id)
+      );
+
       return res.status(200).json({
-        roster: (people || []).map((person) => ({
-          ...person,
-          items: byPhotographer.get(person.id) || [],
-        })),
+        roster: (people || []).map((person) => {
+          const items = byPhotographer.get(person.id) || [];
+          const hasLogin = Boolean(person.user_id);
+          const hasGear = items.length > 0;
+          const hasStripe = Boolean(
+            person.stripe_account_id || (person.user_id && affiliateStripe.has(person.user_id))
+          );
+          const { user_id: _userId, stripe_account_id: _stripeId, ...safe } = person;
+          return {
+            ...safe,
+            items,
+            setup: {
+              hasLogin,
+              hasGear,
+              hasStripe,
+              complete: hasLogin && hasGear && hasStripe,
+            },
+          };
+        }),
       });
     }
 

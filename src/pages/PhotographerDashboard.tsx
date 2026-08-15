@@ -15,6 +15,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { LoadingOverlay } from '../components/Loading';
 import JobPayouts from '../components/JobPayouts';
+import CrewAvailabilityCalendar from '../components/crew/CrewAvailabilityCalendar';
+import CrewRequestBox from '../components/crew/CrewRequestBox';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -32,12 +34,18 @@ export default function PhotographerDashboard() {
     return (
         <div className="container mx-auto py-8 text-white px-4">
             <div className="mb-6">
-                <h1 className="text-3xl font-bold uppercase tracking-tighter">My Galleries</h1>
-                <p className="text-zinc-400">Manage your photo galleries and settings</p>
+                <h1 className="text-3xl font-bold uppercase tracking-tighter">PHOTOGRAPHER DASHBOARD</h1>
+                <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
             </div>
 
             {/* Job pay for shoots covered — separate from gallery sales below. */}
             {user && <JobPayouts userId={user.id} />}
+
+            {/* Availability first: it is the thing the studio needs from you,
+                rather than the thing you came to look up. */}
+            <div className="mb-6">
+                <CrewAvailabilityCalendar />
+            </div>
 
             {/* Revenue & Payment Info Banner */}
             <div className="mb-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-xl p-6">
@@ -149,12 +157,17 @@ export default function PhotographerDashboard() {
                 </p>
             </div>
 
-            <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
-                <AdminGalleryView
-                    onBack={() => { }}
-                    isPhotographerView={true}
-                />
+            <div className="mb-6">
+                <h2 className="text-xl font-bold uppercase tracking-tighter mb-4">MY GALLERIES</h2>
+                <div className="bg-white/5 p-6" style={{ borderRadius: 0 }}>
+                    <AdminGalleryView
+                        onBack={() => { }}
+                        isPhotographerView={true}
+                    />
+                </div>
             </div>
+
+            <CrewRequestBox />
         </div>
     );
 }

@@ -47,6 +47,20 @@ export function isCronAuthorized(req: VercelRequest): boolean {
  * never from a request body a caller controls.
  */
 export async function resolveUserId(req: VercelRequest): Promise<string | null> {
+  const identity = await resolveIdentity(req);
+  return identity?.id || null;
+}
+
+/**
+ * The verified session behind a request — id, email, and whether that email has
+ * actually been confirmed.
+ *
+ * `resolveUserId` throws the last two away, which is fine when all you need is
+ * a foreign key. Claiming a roster row needs more: see `resolveCrewMember`.
+ */
+export async function resolveIdentity(
+  req: VercelRequest
+): Promise<{ id: string; email: string | null; emailVerified: boolean } | null> {
   const authHeader = (req.headers.authorization as string) || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!token) return null;
@@ -57,7 +71,71 @@ export async function resolveUserId(req: VercelRequest): Promise<string | null> 
 
   const { data, error } = await createClient(url, key).auth.getUser(token);
   if (error || !data.user?.id) return null;
-  return data.user.id;
+
+  return {
+    id: data.user.id,
+    email: data.user.email?.toLowerCase().trim() || null,
+    // Google OAuth sets this; so does a confirmed email signup. An account
+    // created with an address the holder never proved they own does not.
+    emailVerified: Boolean(data.user.email_confirmed_at || data.user.confirmed_at),
+  };
+}
+
+/**
+ * Find the roster row for a signed-in person, linking it on first sight.
+ *
+ * `photographers.user_id` is only populated when somebody happened to be
+ * invited through a flow that set it. In practice most of the roster was typed
+ * in by the owner and the column is null, so a photographer who signs up later
+ * — with the exact address the owner used — logs in and is told they are not on
+ * the roster. Their kit, their payouts and their calendar are all sitting there
+ * under a row nothing connects them to.
+ *
+ * So: look up by `user_id` first, and fall back to matching the verified email.
+ * The match claims the row by writing `user_id`, which is what makes it a
+ * one-time repair rather than a lookup that has to run forever.
+ *
+ * The claim is gated on a **verified** email for the obvious reason — an
+ * unverified signup with somebody else's address would otherwise walk straight
+ * into their earnings. It is also gated on the row being unclaimed: an existing
+ * `user_id` is never overwritten, so this can't move a roster entry between
+ * accounts.
+ */
+export async function resolveCrewMember(
+  supabase: SupabaseClient,
+  req: VercelRequest,
+  fields = 'id, name, email, active'
+): Promise<{ photographer: any; userId: string } | null> {
+  const identity = await resolveIdentity(req);
+  if (!identity) return null;
+
+  const { data: linked } = await supabase
+    .from('photographers')
+    .select(fields)
+    .eq('user_id', identity.id)
+    .maybeSingle();
+  if (linked) return { photographer: linked, userId: identity.id };
+
+  if (!identity.email || !identity.emailVerified) return null;
+
+  const { data: byEmail } = await supabase
+    .from('photographers')
+    .select(fields)
+    .ilike('email', identity.email)
+    .is('user_id', null)
+    .maybeSingle();
+  if (!byEmail) return null;
+
+  // Claim it. A failure here is not fatal — the caller still gets their row,
+  // and the next request retries the link.
+  const { error } = await supabase
+    .from('photographers')
+    .update({ user_id: identity.id })
+    .eq('id', (byEmail as any).id)
+    .is('user_id', null);
+  if (error) console.warn('[crew] could not link roster row to user:', error.message);
+
+  return { photographer: byEmail, userId: identity.id };
 }
 
 export function getSupabaseAdmin(): SupabaseClient {
