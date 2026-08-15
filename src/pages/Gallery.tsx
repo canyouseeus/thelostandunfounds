@@ -290,8 +290,12 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             </Helmet>
 
             {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
-                tab toggle below, but gives the page (and bots) a real top-level heading. */}
-            {isHomepage && (
+                tab toggle below, but gives the page (and bots) a real top-level heading.
+                The /services routes reuse this component with isHomepage, and they render
+                their own service heading; emitting the brand H1 there too gave each of
+                those five pages two competing top-level headings, one of them identical
+                across all of them. The homepage is the only page this heading belongs to. */}
+            {isHomepage && !isServicesRoute && (
                 <h1 className="sr-only">THE LOST+UNFOUNDS — Austin, TX Editorial &amp; Nightlife Photography</h1>
             )}
 

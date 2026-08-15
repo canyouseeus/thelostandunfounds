@@ -10,6 +10,7 @@ config({ path: '.env.local' });
 import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { replacePreRenderBlock } from './lib/pre-render-shell';
 
 async function preRenderBlogPosts() {
   console.log('🔄 Starting blog post pre-rendering...');
@@ -296,21 +297,10 @@ async function preRenderBlogPosts() {
           </article>
         `;
 
-        // Replace pre-render content
-        if (html.includes('id="pre-render"')) {
-          html = html.replace(
-            /<div id="pre-render"[^>]*>[\s\S]*?<\/div>/i,
-            `<div id="pre-render">${preRenderContent}</div>`
-          );
-        } else {
-          // Sibling of #root, never a child: React's createRoot().render()
-          // clears its container, destroying anything nested inside before a
-          // crawler's render snapshot is taken.
-          html = html.replace(
-            '<div id="root">',
-            `<div id="pre-render">${preRenderContent}</div>\n  <div id="root">`
-          );
-        }
+        // Replace pre-render content. The block is a sibling of #root, never a
+        // child: React's createRoot().render() clears its container, destroying
+        // anything nested inside before a crawler's render snapshot is taken.
+        html = replacePreRenderBlock(html, `<div id="pre-render">${preRenderContent}</div>`);
 
         // Write the pre-rendered HTML file at {folderPath}/{slug}/index.html
         // so Vercel serves it for the extensionless URL /{folderPath}/{slug}.
@@ -327,8 +317,68 @@ async function preRenderBlogPosts() {
       }
     }));
 
+    // Column landing pages: /blog/<subdomain>
+    //
+    // Every post under a column is pre-rendered, but the column page itself was
+    // not, so it fell through the Vercel catch-all to the noindex shell — the
+    // one page linking a column's posts together was telling crawlers to ignore
+    // it and to follow none of its links. It also canonicalised to
+    // https://<subdomain>.thelostandunfounds.com, which answers 404; that half
+    // is fixed in src/pages/UserBlog.tsx.
+    const escapeAttr = (str: string) => str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    const columns = [...new Set(posts.map((p) => p.subdomain).filter(Boolean))] as string[];
+
+    await Promise.all(columns.map(async (subdomain) => {
+      try {
+        const columnPosts = posts.filter((p) => p.subdomain === subdomain);
+        const columnName = subdomain.replace(/-/g, ' ').toUpperCase();
+        const columnUrl = `https://www.thelostandunfounds.com/blog/${subdomain}`;
+        const title = `${columnName} | THE LOST+UNFOUNDS`;
+        const description = `Every article in the ${columnName} collection on THE LOST ARCHIVES — ${columnPosts.length} ${columnPosts.length === 1 ? 'piece' : 'pieces'} from THE LOST+UNFOUNDS.`;
+
+        let html = htmlTemplate;
+        html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(title)}</title>`);
+
+        const canonicalTag = `<link rel="canonical" href="${escapeAttr(columnUrl)}" />`;
+        html = html.includes('rel="canonical"')
+          ? html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, canonicalTag)
+          : html.replace('</head>', `  ${canonicalTag}\n</head>`);
+
+        html = html.replace(
+          /<meta\s+name=["']description["'][^>]*>/i,
+          `<meta name="description" content="${escapeAttr(description)}" />`
+        );
+        html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeAttr(columnName)}" />`);
+        html = html.replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${escapeAttr(description)}" />`);
+        html = html.replace(/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${escapeAttr(columnUrl)}" />`);
+
+        const listItems = columnPosts.map((p) => {
+          const href = `/blog/${subdomain}/${p.slug}`;
+          const excerpt = (p.excerpt || '').replace(/<[^>]*>?/gm, ' ').trim().slice(0, 200);
+          return `<li style="margin-bottom: 2rem;"><a href="${escapeAttr(href)}" style="color: white; font-size: 1.25rem; text-decoration: none;">${escapeAttr(p.title)}</a>${excerpt ? `<p style="color: rgba(255,255,255,0.6); margin-top: 0.5rem;">${escapeAttr(excerpt)}</p>` : ''}</li>`;
+        }).join('\n');
+
+        const preRenderContent = `<h1 style="font-size: 4rem; margin-bottom: 2rem; font-weight: 900; text-transform: uppercase;">${escapeAttr(columnName)}</h1>\n<p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); margin-bottom: 3rem;">${escapeAttr(description)}</p>\n<ul style="list-style: none; padding: 0;">${listItems}</ul>`;
+
+        html = replacePreRenderBlock(html, `<div id="pre-render">${preRenderContent}</div>`);
+
+        const columnDir = join(distPath, 'blog', subdomain);
+        await mkdir(columnDir, { recursive: true });
+        await writeFile(join(columnDir, 'index.html'), html, 'utf-8');
+        console.log(`  ✅ Pre-rendered column: /blog/${subdomain} (${columnPosts.length} posts)`);
+      } catch (columnErr) {
+        console.error(`❌ Error rendering column ${subdomain}:`, columnErr);
+      }
+    }));
+
     const duration = (Date.now() - startTime) / 1000;
-    console.log(`✅ Successfully pre-rendered ${posts.length} blog posts in ${duration.toFixed(2)}s!`);
+    console.log(`✅ Successfully pre-rendered ${posts.length} blog posts and ${columns.length} column pages in ${duration.toFixed(2)}s!`);
   } catch (err) {
     console.error('❌ Error during pre-rendering:', err);
     process.exit(1);

@@ -211,11 +211,18 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
 
   return (
     <>
-      <Helmet>
-        <title>THE LOST+UNFOUNDS | Shop</title>
-        <meta name="description" content="Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door." />
-        <link rel="canonical" href="https://www.thelostandunfounds.com/shop" />
-      </Helmet>
+      {/* Page-level SEO belongs to the page at /shop, not to the shop tab that
+          Gallery mounts inside the homepage and the /services pages. Helmet
+          resolves duplicate tags last-mount-wins, so an embedded Shop was
+          overwriting those URLs with the shop's title and — worse — telling
+          crawlers the homepage canonicalises to /shop. */}
+      {!embedded && (
+        <Helmet>
+          <title>THE LOST+UNFOUNDS | Shop</title>
+          <meta name="description" content="Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door." />
+          <link rel="canonical" href="https://www.thelostandunfounds.com/shop" />
+        </Helmet>
+      )}
 
       {!hideBanner && <MarketplaceBanner surface="shop" />}
 

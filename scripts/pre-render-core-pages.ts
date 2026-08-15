@@ -8,6 +8,7 @@ config({ path: '.env.local' });
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
+import { replacePreRenderBlock } from './lib/pre-render-shell';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -43,7 +44,16 @@ const CORE_PAGES = [
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
-    { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' }
+    { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' },
+    // Same omission as the note above, caught again in the August crawl: these
+    // four are public, linked from pages that are themselves indexed, and were
+    // being served the noindex shell. /thelostarchives/all in particular is the
+    // only page that links to every article, so noindex+nofollow there cut the
+    // crawl path to the back catalogue.
+    { path: 'thelostarchives/all', title: 'ALL ARTICLES | THE LOST+UNFOUNDS', description: 'Every article in THE LOST ARCHIVES — the full back catalogue on development, AI, photography, and building in the age of information.' },
+    { path: 'tools', title: 'TOOL BOX | THE LOST+UNFOUNDS', description: 'Free tools from THE LOST+UNFOUNDS, including the TikTok downloader. Small utilities built in public and open to everyone.' },
+    { path: 'tools/tiktok-downloader', title: 'TIKTOK DOWNLOADER | THE LOST+UNFOUNDS', description: 'Download TikTok videos without the watermark. A free browser tool from THE LOST+UNFOUNDS — paste a link and save the file.' },
+    { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' }
 ];
 
 async function preRenderCorePages() {
@@ -411,14 +421,8 @@ async function preRenderCorePages() {
             // Inject content into pre-render block
             const h1Tag = `<h1 style="font-size: 4rem; margin-bottom: 2rem; font-weight: 900; letter-spacing: -0.02em; text-transform: uppercase;">${escapeAttr(page.title.split(' | ')[0])}</h1>`;
 
-            if (html.includes('id="pre-render"')) {
-                html = html.replace(
-                    /<div id="pre-render"[^>]*>[\s\S]*?<\/div>/i,
-                    `<div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>`
-                );
-            } else {
-                html = html.replace('<div id="root">', `<div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>\n  <div id="root">`);
-            }
+            const preRenderBlock = `<div id="pre-render" style="background: black; color: white; min-height: 100vh; padding: 6rem 2rem; max-width: 1000px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif;">\n      ${h1Tag}\n      <p style="font-size: 1.25rem; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.6; margin-bottom: 4rem;">${escapeAttr(page.description)}</p>\n      ${shadowContent}\n    </div>`;
+            html = replacePreRenderBlock(html, preRenderBlock);
 
             // Write HTML
             const filePath = join(pageDir, 'index.html');

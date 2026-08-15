@@ -206,6 +206,37 @@ async function generateSitemap() {
     <priority>0.5</priority>
   </url>
 
+  <!-- Full article index. The only page linking every post, so it carries the
+       crawl path to the back catalogue. -->
+  <url>
+    <loc>${baseUrl}/thelostarchives/all</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Public tools -->
+  <url>
+    <loc>${baseUrl}/tools</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/tools/tiktok-downloader</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Photographer guide -->
+  <url>
+    <loc>${baseUrl}/docs/photographer-guide</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
   <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
        /newtheory are intentionally omitted: pricing is deleted, booking is
        admin-gated, and the five column pages are admin-only. -->
@@ -272,6 +303,21 @@ async function generateSitemap() {
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>`;
+      }
+      // Column landing pages (/blog/<subdomain>). Pre-rendered alongside the
+      // posts themselves — see scripts/pre-render-blog-posts.ts — so they are
+      // indexable rather than falling through to the noindex shell.
+      const columns = [...new Set(posts.map((p) => p.subdomain).filter(Boolean))] as string[];
+      for (const subdomain of columns) {
+        sitemap += `
+
+  <!-- Blog column: ${subdomain} -->
+  <url>
+    <loc>${baseUrl}/blog/${subdomain}</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>`;
       }
     } else {

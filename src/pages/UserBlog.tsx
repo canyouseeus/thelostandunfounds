@@ -285,15 +285,20 @@ export default function UserBlog() {
       ? `Articles and insights from ${authorName} in this collection on THE LOST ARCHIVES.`
       : `Articles and insights from ${subdomain} on THE LOST ARCHIVES.`;
 
+  // Per-author subdomains were never provisioned — https://<subdomain>.thelostandunfounds.com
+  // answers 404 — so canonicalising there told crawlers the real column page was a
+  // duplicate of a dead URL. The column lives at /blog/<subdomain>; say so.
+  const columnUrl = `https://www.thelostandunfounds.com/blog/${subdomain}`;
+
   return (
     <>
       <Helmet>
         <title>{pageTitle}</title>
-        <link rel="canonical" href={`https://${subdomain}.thelostandunfounds.com`} />
+        <link rel="canonical" href={columnUrl} />
         <meta name="description" content={blogDescription} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={blogDescription} />
-        <meta property="og:url" content={`https://${subdomain}.thelostandunfounds.com`} />
+        <meta property="og:url" content={columnUrl} />
         <meta property="og:type" content="website" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

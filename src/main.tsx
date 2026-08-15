@@ -158,6 +158,7 @@ if (!rootElement) {
     // The pre-render lives outside #root (see index.html) so React no longer
     // destroys it, and it stays on screen until there is something to replace it.
     hidePreRenderWhenPainted()
+    watchShellHeadTags()
   } catch (error) {
     console.error('❌ React mount failed:', error)
     rootElement.innerHTML = `
@@ -185,18 +186,71 @@ function hidePreRenderWhenPainted() {
   const root = document.getElementById('root')
   if (!preRender || !root) return
 
-  const hide = () => { preRender.style.display = 'none' }
+  // Remove rather than hide. Every pre-render carries its own <h1> (see
+  // scripts/pre-render-core-pages.ts), and display:none leaves that heading in
+  // the DOM, so a rendering crawler counted two H1s on every URL on the site and
+  // read the shell's copy alongside the real page's. Once the app has painted,
+  // the shell has done its whole job — the snapshot should not still contain it.
+  const dispose = () => { preRender.remove() }
   const painted = () => (root.textContent || '').trim().length > 120
 
-  if (painted()) { hide(); return }
+  if (painted()) { dispose(); return }
 
   const observer = new MutationObserver(() => {
     if (!painted()) return
     observer.disconnect()
     clearTimeout(fallback)
-    hide()
+    dispose()
   })
   observer.observe(root, { childList: true, subtree: true, characterData: true })
 
-  const fallback = setTimeout(() => { observer.disconnect(); hide() }, 8000)
+  const fallback = setTimeout(() => { observer.disconnect(); dispose() }, 8000)
+}
+
+/**
+ * Drop the shell's head tags once Helmet has restated them.
+ *
+ * The static shell (index.html, or the pre-render/404 variants built from it)
+ * ships its own canonical, description and robots tags. react-helmet-async only
+ * manages the tags it created — marked data-rh — so it appends alongside the
+ * shell's rather than replacing them, and every page ended up serving two
+ * canonicals and two descriptions.
+ *
+ * Where the two disagree it is worse than untidy. The catch-all rewrite serves
+ * dist/404.html, whose `noindex, nofollow` is baked into the markup; a page that
+ * declared `index,follow` through Helmet ended up carrying both, and a crawler
+ * resolving conflicting robots directives takes the most restrictive one. /demos
+ * asked to be indexed and was telling Google the opposite.
+ *
+ * A shell tag is removed only once Helmet has supplied a replacement of the same
+ * kind, so a page that never renders keeps whatever the shell gave it. Helmet
+ * commits its tags in an effect, after the first DOM write, so this watches the
+ * head rather than running once — and it keeps watching, because client-side
+ * navigation swaps these tags on every route change.
+ */
+function dropShellHeadTagsHelmetReplaced() {
+  // Declared in the function body, not at module scope: this runs during mount,
+  // which is above these definitions in the file, so a module-level const would
+  // still be in its temporal dead zone and throw.
+  const selectors = [
+    'link[rel="canonical"]',
+    'meta[name="description"]',
+    'meta[name="robots"]',
+    'meta[property="og:url"]',
+  ]
+
+  for (const selector of selectors) {
+    const tags = [...document.querySelectorAll(selector)]
+    if (!tags.some((tag) => tag.hasAttribute('data-rh'))) continue
+    tags.filter((tag) => !tag.hasAttribute('data-rh')).forEach((tag) => tag.remove())
+  }
+}
+
+function watchShellHeadTags() {
+  dropShellHeadTagsHelmetReplaced()
+
+  // Removing a tag re-enters this callback, but by then the duplicate is gone
+  // and the pass is a no-op, so it settles rather than looping.
+  new MutationObserver(dropShellHeadTagsHelmetReplaced)
+    .observe(document.head, { childList: true })
 }
