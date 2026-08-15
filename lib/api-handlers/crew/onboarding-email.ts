@@ -155,9 +155,9 @@ export function buildOnboardingEmail(person: Recipient): {
           account to your spot on the roster. Use a different address and you'll land on an empty
           dashboard while all your work sits somewhere you can't see it.
         </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'SIGN IN & OPEN YOUR DASHBOARD')}</p>
         <p style="${EMAIL_STYLES.paragraph}">
-          Once you're in, everything below takes about five minutes total.
+          Once you're in, the dashboard walks you through the rest one step at a time. The whole
+          thing takes about five minutes.
         </p>`,
     });
   }
@@ -172,8 +172,7 @@ export function buildOnboardingEmail(person: Recipient): {
           it's the difference between getting called and not: we search the gear list to decide who
           to send. A rooftop job goes to whoever has the drone, a talking-head to whoever has the
           lav. An empty list means you don't come up in that search at all.
-        </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(`${SITE}/gear`, 'ADD YOUR GEAR')}</p>`,
+        </p>`,
     });
   }
 
@@ -191,8 +190,7 @@ export function buildOnboardingEmail(person: Recipient): {
         <p style="${EMAIL_STYLES.paragraph}">
           The same account covers both kinds of money: job pay for shoots we send you on, and
           your gallery sales. You only do it once.
-        </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'CONNECT STRIPE')}</p>`,
+        </p>`,
     });
   }
 
@@ -276,6 +274,22 @@ export function buildOnboardingEmail(person: Recipient): {
     .map((step) => `<h2 style="${EMAIL_STYLES.heading2}">${step.heading}</h2>${step.body}`)
     .join('\n');
 
+  // One button, at the end, after everything that explains why it's worth
+  // pressing. Earlier versions put a call to action on every step, which meant
+  // handing somebody three or four competing destinations and asking them to
+  // pick — and for anyone without a login, three of them led to the same login
+  // wall anyway. The dashboard walks them through the steps once they're in,
+  // so the email's only job is to get them there.
+  const cta = `
+    <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'OPEN MY DASHBOARD')}</p>
+    <p style="${EMAIL_STYLES.muted}">
+      ${
+        missing.length
+          ? "It'll walk you through what's left as soon as you're in, and you can skip anything and come back to it."
+          : 'Everything above is waiting for you there.'
+      }
+    </p>`;
+
   const content = `
     <h1 style="${EMAIL_STYLES.heading1}">YOU'RE ON THE ROSTER</h1>
 
@@ -283,9 +297,9 @@ export function buildOnboardingEmail(person: Recipient): {
     ${doneBlock}
     ${stepsBlock}
     ${calendarBlock}
-    ${missing.length ? '' : `<p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'OPEN YOUR DASHBOARD')}</p>`}
     ${galleryBlock}
     ${askBlock}
+    ${cta}
 
     <p style="${EMAIL_STYLES.paragraph}">Joshua / THE LOST+UNFOUNDS</p>
 
