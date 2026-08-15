@@ -23,12 +23,12 @@ const SOURCE_LABEL: Record<string, string> = {
   unknown: 'Unmatched',
 };
 
-/** Dashboard tile surfacing the refunds ledger — previously invisible (webhook only logged to console). */
+/** Dashboard tile surfacing the refunds ledger; previously invisible (webhook only logged to console). */
 /**
  * The refunds ledger, as a section rather than a tile of its own.
  *
  * It was a separate dashboard tile showing a figure that belongs with the rest
- * of the money — so it now renders inside the Revenue Performance panel.
+ * of the money, so it now renders inside the Revenue Performance panel.
  */
 export function RefundsLedger() {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +46,7 @@ export function RefundsLedger() {
           .limit(50);
 
         if (error) {
-          // Migration not applied yet — treat as empty state rather than an error.
+          // Migration not applied yet: treat as empty state rather than an error.
           setTableMissing(true);
           setRefunds([]);
         } else {
@@ -80,7 +80,7 @@ export function RefundsLedger() {
                 </div>
               ) : tableMissing ? (
                 <div className="py-16 text-center text-white/40 text-xs uppercase font-bold tracking-widest">
-                  Refunds ledger not set up yet — run the refunds_ledger migration
+                  Refunds ledger not set up yet; run the refunds_ledger migration
                 </div>
               ) : refunds.length === 0 ? (
                 <div className="py-16 text-center text-white/40 text-xs uppercase font-bold tracking-widest">
@@ -115,7 +115,7 @@ export function RefundsLedger() {
                           </div>
                           <div className="text-[10px] text-white/30 mt-1">
                             {new Date(r.created_at).toLocaleString()}
-                            {r.reason ? ` — ${r.reason.replace(/_/g, ' ')}` : ''}
+                            {r.reason ? `; ${r.reason.replace(/_/g, ' ')}` : ''}
                           </div>
                         </div>
                         <span className="text-sm font-mono font-bold text-amber-400 shrink-0">

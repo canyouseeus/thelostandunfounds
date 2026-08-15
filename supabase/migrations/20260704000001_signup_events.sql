@@ -3,7 +3,7 @@
 -- instead of relying on Vercel's short-lived runtime logs or Supabase's
 -- own auth logs (which have limited retention and aren't queryable from
 -- the app). Written exclusively by backend endpoints using the service
--- role key — RLS is enabled with no policies, so anon/authenticated
+-- role key: RLS is enabled with no policies, so anon/authenticated
 -- clients can neither read nor write this table directly.
 
 create table if not exists signup_events (
@@ -14,7 +14,7 @@ create table if not exists signup_events (
   method text,                   -- 'email' | 'google'
   success boolean not null,
   email text,                    -- best-effort, may be unknown for early OAuth failures
-  intent text,                   -- e.g. 'affiliate' — carried through from the signup CTA
+  intent text,                   -- e.g. 'affiliate': carried through from the signup CTA
   path text,                     -- page the attempt originated from
   error_message text,
   user_agent text,

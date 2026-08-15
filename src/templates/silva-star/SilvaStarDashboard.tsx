@@ -124,19 +124,19 @@ const FLEET_INIT: Truck[] = [
 ];
 
 const EMAILS = [
-  { id: 1, from: 'Jordan Miles',    subject: 'Re: Barton Springs Fest — Jun 21 booking',     preview: "Confirmed for 8 AM. We'll have 14 vendors on site this time...",     date: 'Today 2:14 PM', read: false, tag: 'customer'  },
-  { id: 2, from: 'Marcus Webb',     subject: 'New referral — ATX Street Tacos',               preview: 'Hey Daniel, just referred another food truck owner your way...',      date: 'Today 11:30 AM',read: false, tag: 'affiliate' },
-  { id: 3, from: 'Square Payments', subject: 'Payment received: $720 — INV-0107',            preview: 'A payment of $720 has been deposited to your account...',            date: 'Jun 17',        read: true,  tag: 'payment'  },
+  { id: 1, from: 'Jordan Miles',    subject: 'Re: Barton Springs Fest; Jun 21 booking',     preview: "Confirmed for 8 AM. We'll have 14 vendors on site this time...",     date: 'Today 2:14 PM', read: false, tag: 'customer'  },
+  { id: 2, from: 'Marcus Webb',     subject: 'New referral; ATX Street Tacos',               preview: 'Hey Daniel, just referred another food truck owner your way...',      date: 'Today 11:30 AM',read: false, tag: 'affiliate' },
+  { id: 3, from: 'Square Payments', subject: 'Payment received: $720; INV-0107',            preview: 'A payment of $720 has been deposited to your account...',            date: 'Jun 17',        read: true,  tag: 'payment'  },
   { id: 4, from: 'Kenji Sato',      subject: 'Rescheduling Jun 20 appointment',               preview: 'Hi Daniel, we need to push the pickup back to 3 PM if possible...',  date: 'Jun 17',        read: true,  tag: 'customer'  },
-  { id: 5, from: 'City of Austin',  subject: 'Waste disposal permit renewal — Action required',preview: 'Your grey water disposal permit #WD-2847 expires Aug 31...',        date: 'Jun 16',        read: true,  tag: 'admin'    },
-  { id: 6, from: 'Devon Park',      subject: 'New affiliate inquiry — South Congress vendor', preview: 'Have another contact who might need your services weekly...',         date: 'Jun 15',        read: true,  tag: 'affiliate' },
+  { id: 5, from: 'City of Austin',  subject: 'Waste disposal permit renewal; Action required',preview: 'Your grey water disposal permit #WD-2847 expires Aug 31...',        date: 'Jun 16',        read: true,  tag: 'admin'    },
+  { id: 6, from: 'Devon Park',      subject: 'New affiliate inquiry; South Congress vendor', preview: 'Have another contact who might need your services weekly...',         date: 'Jun 15',        read: true,  tag: 'affiliate' },
   { id: 7, from: 'Priya Nair',      subject: 'Thanks for the quick turnaround yesterday',     preview: 'The crew was super professional and on time as always...',           date: 'Jun 15',        read: true,  tag: 'customer'  },
 ];
 
 const CAMPAIGNS = [
   { id: 1, subject: 'June Service Update + Event Season Reminder', status: 'sent',      sentDate: 'Jun 1',  recipients: 47, opens: 31, openRate: 66 },
   { id: 2, subject: 'New Grease Disposal Service Now Available',    status: 'sent',      sentDate: 'May 15', recipients: 43, opens: 24, openRate: 56 },
-  { id: 3, subject: 'Spring Event Season — Reserve Your Spot',      status: 'sent',      sentDate: 'Apr 10', recipients: 38, opens: 22, openRate: 58 },
+  { id: 3, subject: 'Spring Event Season; Reserve Your Spot',      status: 'sent',      sentDate: 'Apr 10', recipients: 38, opens: 22, openRate: 58 },
   { id: 4, subject: 'Summer Pricing + Affiliate Program Launch',    status: 'scheduled', sentDate: 'Jun 25', recipients: 51, opens: null, openRate: null },
   { id: 5, subject: 'July Newsletter Draft',                        status: 'draft',     sentDate: null,     recipients: null, opens: null, openRate: null },
 ];
@@ -144,7 +144,7 @@ const CAMPAIGNS = [
 // chart data
 const jobsPerWeek  = [{ week:'May W1',jobs:18},{week:'May W2',jobs:21},{week:'May W3',jobs:19},{week:'May W4',jobs:25},{week:'Jun W1',jobs:27},{week:'Jun W2',jobs:31}];
 const revenueTrend = [{ week:'May W1',collected:1420,outstanding:280},{week:'May W2',collected:1730,outstanding:340},{week:'May W3',collected:1550,outstanding:500},{week:'May W4',collected:2040,outstanding:190},{week:'Jun W1',collected:2270,outstanding:420},{week:'Jun W2',collected:2650,outstanding:405}];
-const invoiceAging = [{bracket:'1–7 days',amount:170},{bracket:'8–14 days',amount:85},{bracket:'15–30 days',amount:95},{bracket:'30+ days',amount:140}];
+const invoiceAging = [{bracket:'1-7 days',amount:170},{bracket:'8-14 days',amount:85},{bracket:'15-30 days',amount:95},{bracket:'30+ days',amount:140}];
 const busyDays     = [{day:'Mon',jobs:14},{day:'Tue',jobs:11},{day:'Wed',jobs:9},{day:'Thu',jobs:16},{day:'Fri',jobs:18},{day:'Sat',jobs:19},{day:'Sun',jobs:4}];
 const jobsByType   = [{name:'Grey Water',value:68,color:ICY},{name:'Grease',value:17,color:'#64b5f6'},{name:'Event',value:15,color:'rgba(255,255,255,0.2)'}];
 
@@ -808,7 +808,7 @@ function SchedulePanel({ jobs }: { jobs: Job[] }) {
             </div>
           ))}
         </div>
-        {/* Calendar + clock — desktop only, hidden on mobile to keep schedule list front-and-center */}
+        {/* Calendar + clock: desktop only, hidden on mobile to keep schedule list front-and-center */}
         <div className="hidden xl:block">
           <div className="mb-3"><SectionLabel eyebrow="Service Calendar" title="Monthly View" /></div>
           <CalendarWidget interactive className="bg-transparent"
@@ -841,7 +841,7 @@ function JobsPanel({ jobs, onCompleteJob }: { jobs: Job[]; onCompleteJob: (id: s
   return (
     <div>
       <PanelHeader title="Jobs" sub={`${jobs.length} total jobs`} />
-      {/* Filter tabs — horizontally scrollable on mobile */}
+      {/* Filter tabs: horizontally scrollable on mobile */}
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-3 sm:mb-0">
         <div className="flex gap-1 p-1 bg-white/5 rounded-full w-max sm:w-fit">
           {filters.map(f => (
@@ -1381,8 +1381,8 @@ function AffiliatesPanel() {
         <SectionLabel eyebrow="Program" title="Tier Structure" />
         <div className="grid sm:grid-cols-3 gap-6 mt-6">
           {[
-            {tier:'Bronze',color:'#c2855a',req:'1–5 referrals',perk:'$10/job commission'},
-            {tier:'Silver',color:'#94a3b8',req:'6–10 referrals',perk:'$12/job + priority listings'},
+            {tier:'Bronze',color:'#c2855a',req:'1-5 referrals',perk:'$10/job commission'},
+            {tier:'Silver',color:'#94a3b8',req:'6-10 referrals',perk:'$12/job + priority listings'},
             {tier:'Gold',  color:'#fbbf24',req:'11+ referrals', perk:'$15/job + co-marketing'},
           ].map(t=>(
             <div key={t.tier} className="p-4 bg-white/5 sm:bg-transparent">
@@ -1621,7 +1621,7 @@ function WebmailPanel() {
           ))}
         </div>
 
-        {/* Email detail — desktop inline */}
+        {/* Email detail: desktop inline */}
         <div className="hidden xl:block xl:col-span-3">
           {!selectedEmail && (
             <div className="flex flex-col items-center justify-center h-48 text-white/15">
@@ -1633,7 +1633,7 @@ function WebmailPanel() {
         </div>
       </div>
 
-      {/* Email detail — mobile/tablet slide-up sheet (hidden at xl where inline detail shows) */}
+      {/* Email detail: mobile/tablet slide-up sheet (hidden at xl where inline detail shows) */}
       {selectedEmail && (
         <div className="xl:hidden">
           <MobileDetailSheet title="Message" onClose={() => setSelected(null)}>
@@ -1744,7 +1744,7 @@ function NewsletterPanel() {
                 </div>
               </div>
             ) : (
-              <div className="text-white/20 text-[11px]">{c.recipients ? `${c.recipients} recipients` : 'Draft — not yet sent'}</div>
+              <div className="text-white/20 text-[11px]">{c.recipients ? `${c.recipients} recipients` : 'Draft, not yet sent'}</div>
             )}
           </div>
         ))}
@@ -1768,7 +1768,7 @@ function NewsletterPanel() {
               <td className="py-2.5 pr-4">
                 {c.openRate != null
                   ? <span className="text-xs font-bold tabular-nums" style={{ color: c.openRate >= 60 ? '#81c784' : c.openRate >= 50 ? '#fff176' : '#ffb74d' }}>{c.openRate}%</span>
-                  : <span className="text-white/20 text-xs">—</span>}
+                  : <span className="text-white/20 text-xs">, </span>}
               </td>
             </tr>
           ))}
@@ -1894,14 +1894,14 @@ export default function SilvaStarDashboard() {
   return (
     <div className="min-h-screen bg-[#0d1117] flex font-sans overflow-x-hidden">
 
-      {/* Sidebar – desktop */}
+      {/* Sidebar: desktop */}
       <div className="hidden lg:block flex-shrink-0" style={{ width: 256 }}>
         <div className="fixed top-0 left-0 bottom-0 w-64 z-30">
           <Sidebar activeSection={activeSection} onNav={handleNav} onAction={setModal} outstandingCount={outstandingCount} />
         </div>
       </div>
 
-      {/* Sidebar – mobile overlay */}
+      {/* Sidebar: mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />

@@ -51,10 +51,10 @@ export default function ShopSuccess() {
                             setStatus('error')
                             return
                         }
-                        // status === 'pending' — keep polling for the webhook.
+                        // status === 'pending': keep polling for the webhook.
                         setStatus('pending')
                     } else if (response.status === 404) {
-                        // Order row not visible yet — keep waiting.
+                        // Order row not visible yet: keep waiting.
                         setStatus('pending')
                     } else {
                         const body = await response.json().catch(() => ({}))
@@ -67,7 +67,7 @@ export default function ShopSuccess() {
                 await new Promise(r => setTimeout(r, 2000))
             }
             if (!cancelled && status !== 'success') {
-                setError('Payment is still processing. Check your email — we\'ll send confirmation shortly.')
+                setError('Payment is still processing. Check your email: we\'ll send confirmation shortly.')
                 setStatus('error')
             }
         }

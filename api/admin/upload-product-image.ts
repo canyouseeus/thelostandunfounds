@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const contentType = (req.headers['content-type'] as string || '').split(';')[0].trim()
   const ext = CONTENT_TYPE_EXT[contentType]
   if (!ext) {
-    return res.status(400).json({ error: 'Unsupported image type — use JPEG, PNG, or WebP' })
+    return res.status(400).json({ error: 'Unsupported image type; use JPEG, PNG, or WebP' })
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey)

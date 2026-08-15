@@ -11,7 +11,7 @@ import { join } from 'path';
 
 /**
  * Every image URL emitted below must be on this domain, served through
- * /api/gallery/stream — the proxy robots.txt allows so Googlebot can index
+ * /api/gallery/stream: the proxy robots.txt allows so Googlebot can index
  * published photos. Google credits an image to the domain that serves it, so
  * pointing <img>, ImageObject.contentUrl or og:image straight at
  * lh3.googleusercontent.com hands the entire gallery to Google's own CDN.
@@ -74,7 +74,7 @@ async function preRenderGalleries() {
       // SEO Tags
       html = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
       // Replace-or-insert. A bare .replace() is a silent no-op when the tag is
-      // not in the template — which is exactly what happened: every gallery
+      // not in the template: which is exactly what happened: every gallery
       // page shipped with no description and no canonical.
       const descTag = `<meta name="description" content="${description}" />`;
       html = html.includes('name="description"')

@@ -3,7 +3,7 @@
 -- can resolve the list of public library IDs before querying photos.
 --
 -- Idempotent: drops then re-creates the policy. Does NOT toggle RLS state on the
--- table — that's controlled separately to avoid breaking other access paths.
+-- table: that's controlled separately to avoid breaking other access paths.
 
 DROP POLICY IF EXISTS "Public can view non-private libraries" ON photo_libraries;
 

@@ -25,7 +25,7 @@ WHERE
 
 -- ─── Step 3: Assign approximate city-level GPS for photos still missing coords ─
 -- Uses the location slug embedded in the @tlau_ filename.
--- Coordinates are city centroids (not exact — used for map clustering only).
+-- Coordinates are city centroids (not exact; used for map clustering only).
 WITH city_coords (slug, lat, lon, display_name) AS (
   VALUES
     ('austin',         30.2672,   -97.7431, 'Austin'),

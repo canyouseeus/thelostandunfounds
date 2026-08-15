@@ -10,16 +10,16 @@ This skill ensures that every blog post is published correctly and adheres to th
 ## Part 1: The Publishing Workflow
 
 Publishing a post is a **database write, executed directly via the Supabase MCP server**. Read the
-`supabase-mcp` skill — it governs this. Do not write SQL files.
+`supabase-mcp` skill: it governs this. Do not write SQL files.
 
 1. **Write the post content** to the styling rules in Part 2.
 2. **Apply it via MCP**: use `apply_migration` (name it `snake_case`, e.g.
    `publish_blog_post_[slug]`) with the idempotent check-and-update template below.
     - **Pattern**: `DECLARE existing_post_id UUID;` then a check-and-insert/update block.
-    - **Critical**: Never use `ON CONFLICT (slug)` — `slug` is not guaranteed UNIQUE.
+    - **Critical**: Never use `ON CONFLICT (slug)`; `slug` is not guaranteed UNIQUE.
     - Set `published=true` and `status='published'`, plus title, slug, content, excerpt, SEO fields.
 3. **Verify the write**: query the row back with `execute_sql` and confirm `published`/`status`.
-4. **Verify the rendered post** at `https://www.thelostandunfounds.com/thelostarchives/[slug]` —
+4. **Verify the rendered post** at `https://www.thelostandunfounds.com/thelostarchives/[slug]`;
    check the live page, never the SQL you sent.
 
 > **Retired:** this workflow used to write `sql/` + `public/sql/` files, register them in
@@ -43,7 +43,7 @@ Publishing a post is a **database write, executed directly via the Supabase MCP 
 
 ## Migration Template Pattern
 
-Pass this as the `query` to `apply_migration` — it is not saved as a file anywhere.
+Pass this as the `query` to `apply_migration`; it is not saved as a file anywhere.
 
 ```sql
 DO $$

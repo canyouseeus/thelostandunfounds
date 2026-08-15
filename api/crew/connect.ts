@@ -19,11 +19,11 @@ import {
  * payout email points at.
  *
  *  GET  → { connected, status, payouts_enabled, requirements, ... }
- *  POST → { url } — a fresh Account Link to open
+ *  POST → { url }: a fresh Account Link to open
  *
  * Auth is the verified Supabase JWT (see `resolveUserId`). The contractor is
  * looked up from the verified user id, so a caller cannot start onboarding
- * against — or read the status of — somebody else's account.
+ * against, or read the status of, somebody else's account.
  *
  * Two things make this materially shorter for someone who already has Stripe:
  *
@@ -35,7 +35,7 @@ import {
  *     The panel says so, because it is not obvious from Stripe's own page.
  *
  * The capabilities we request are deliberately unchanged from the affiliate
- * flow — see the note on `ensureStripeAccount`. Requesting `transfers` alone
+ * flow: see the note on `ensureStripeAccount`. Requesting `transfers` alone
  * looks leaner and is rejected outright by Stripe for platforms that have not
  * been approved for it.
  *

@@ -33,7 +33,7 @@ export interface CommissionTriggerResult {
 
 /**
  * Idempotent: writes a pending commission for a referred customer, plus MLM
- * earnings, when an order/booking is paid. Safe to call multiple times — the
+ * earnings, when an order/booking is paid. Safe to call multiple times: the
  * underlying RPC checks for an existing (source, source_id) row.
  *
  * If `fallbackAffiliateCode` is provided and no customer tie exists, we'll

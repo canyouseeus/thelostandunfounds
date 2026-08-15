@@ -88,13 +88,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         for (const p of invPaid.data ?? []) {
             // invoice_payments.amount is dollars; method may be cash/zelle, but
-            // fees on those are zero — estimate only when it looks like a card.
+            // fees on those are zero: estimate only when it looks like a card.
             const cents = Math.round(Number(p.amount ?? 0) * 100)
             txns.push({ source: 'bookings', email: null, cents, at: p.paid_at, feeCents: 0 })
         }
         for (const c of commissions.data ?? []) {
             // Affiliate rows: the site's take is the gross sale minus what the
-            // affiliate is owed — profit_generated is that figure when present.
+            // affiliate is owed: profit_generated is that figure when present.
             const cents = Math.round(Number(c.profit_generated ?? c.gross_amount ?? 0) * 100)
             if (cents <= 0) continue
             txns.push({ source: 'affiliate', email: null, cents, at: c.created_at, feeCents: 0 })
@@ -108,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .reduce((n, p) => n + Math.round(Number(p.unit_cost ?? 0) * 100) * (p.copies ?? 1), 0)
         // A subcontractor is owed once per invoice, not once per payment against
         // it. Iterating payment rows charged the full payout again for every
-        // instalment — a $200 job split into a deposit and a balance subtracted
+        // instalment: a $200 job split into a deposit and a balance subtracted
         // the photographer's $130 twice. Collapse to one payout per invoice.
         const payoutByInvoice = new Map<string, number>()
         for (const p of invPaid.data ?? []) {

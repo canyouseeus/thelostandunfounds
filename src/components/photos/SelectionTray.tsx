@@ -73,9 +73,9 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
 
                 {/* Total + Checkout.
 
-                    The tray used to carry three separate micro-captions at 7-9px — "Card or
+                    The tray used to carry three separate micro-captions at 7-9px; "Card or
                     Bitcoin at checkout", "Personal use only · Commercial →" and the photo count
-                    — stacked around the amount and the button, which is what made it read as
+                    stacked around the amount and the button, which is what made it read as
                     noise. Both captions already appear on the gallery page itself (step 03 says
                     card or bitcoin; the licensing block sits above the grid), so the tray keeps
                     only what is specific to the selection: the amount and how many photos it

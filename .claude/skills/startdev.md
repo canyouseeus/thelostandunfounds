@@ -49,7 +49,7 @@ Then run this in `preview_eval` to log in as admin (Google OAuth doesn't work in
 ```
 
 ## Known facts
-- Screenshot always looks black — this is correct (noir pre-render div is `opacity:0`). Verify with `preview_eval` checking `document.body.innerText` or `localStorage` session key.
-- `vercel dev` is linked to a fresh worktree project with no cloud env vars. The `auto-login.ts` handler loads `.env.local` via dotenv explicitly — this is already in the code.
-- Vercel dev takes 30–60s to fully start. Use the poll loop above instead of `sleep`.
+- Screenshot always looks black: this is correct (noir pre-render div is `opacity:0`). Verify with `preview_eval` checking `document.body.innerText` or `localStorage` session key.
+- `vercel dev` is linked to a fresh worktree project with no cloud env vars. The `auto-login.ts` handler loads `.env.local` via dotenv explicitly; this is already in the code.
+- Vercel dev takes 30-60s to fully start. Use the poll loop above instead of `sleep`.
 - Always use port 3000 (Vercel dev), never 5173 (standalone Vite).

@@ -8,7 +8,7 @@ import { getSupabaseAdmin, resolveUserId, resolveConnectAccount, PHOTOGRAPHER_SE
  *
  * Auth is a verified Supabase JWT, not the `x-admin-email` header the older
  * admin routes use. That header is caller-supplied, and this route hands back
- * a session into someone's financial account — it must prove who is asking.
+ * a session into someone's financial account; it must prove who is asking.
  * The account is looked up *from the verified user id*, never from the request
  * body, so a caller cannot ask for somebody else's dashboard.
  *

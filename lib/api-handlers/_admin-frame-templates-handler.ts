@@ -18,7 +18,7 @@ function getSupabase() {
 }
 
 /**
- * CRUD for print_frame_templates — the 4 admin-uploaded mockup photos
+ * CRUD for print_frame_templates: the 4 admin-uploaded mockup photos
  * (black frame x landscape/portrait x mat/no-mat) used to composite a
  * customer's actual photo into a realistic preview. Admin only.
  */

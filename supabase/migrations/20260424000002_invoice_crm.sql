@@ -1,5 +1,5 @@
 -- Invoice/CRM system: clients, invoices, invoice_payments
--- Idempotent migration — safe to re-run.
+-- Idempotent migration: safe to re-run.
 
 -- ── clients ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS clients (
@@ -112,16 +112,16 @@ BEGIN
             'INV-001',
             '2026-04-16',
             '2026-04-18',
-            'Event Photography — Toke Truck (2 locations)',
+            'Event Photography: Toke Truck (2 locations)',
             '[
                 {
-                    "description": "East 6th St (10PM–11:15PM) — 10 photos + 1 reel",
+                    "description": "East 6th St (10PM, 11:15PM); 10 photos + 1 reel",
                     "quantity": 1,
                     "unit_price": 150.00,
                     "amount": 150.00
                 },
                 {
-                    "description": "West 6th St (11:45PM–1AM) — 10 photos + 1 reel",
+                    "description": "West 6th St (11:45PM, 1AM); 10 photos + 1 reel",
                     "quantity": 1,
                     "unit_price": 150.00,
                     "amount": 150.00
@@ -138,7 +138,7 @@ BEGIN
         -- Record the two payments
         INSERT INTO invoice_payments (invoice_id, amount, method, paid_at, notes)
         VALUES
-            (v_invoice_id, 150.00, 'Venmo', '2026-04-16 00:00:00+00', '$150 deposit — @thelostandunfounds'),
-            (v_invoice_id, 150.00, 'Venmo', '2026-04-18 00:00:00+00', '$150 balance — collected night of event');
+            (v_invoice_id, 150.00, 'Venmo', '2026-04-16 00:00:00+00', '$150 deposit; @thelostandunfounds'),
+            (v_invoice_id, 150.00, 'Venmo', '2026-04-18 00:00:00+00', '$150 balance; collected night of event');
     END IF;
 END $$;

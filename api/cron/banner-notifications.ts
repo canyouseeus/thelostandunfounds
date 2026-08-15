@@ -107,7 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                 Because there are currently no other campaigns in the queue, your banner is <strong>still visible</strong> to our audience. However, it will be immediately replaced as soon as a new ad is purchased.
                             </p>
                         </div>
-                        <h2 style="color: #ffffff; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 40px;">Secure More Time — 33% OFF</h2>
+                        <h2 style="color: #ffffff; font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 40px;">Secure More Time; 33% OFF</h2>
                         <p style="color: #aaaaaa; font-size: 14px; margin-bottom: 25px;">
                             Don't lose your spot. Since you're already in the slot, we're offering you a <strong>33% discount</strong> to extend your campaign right now.
                         </p>

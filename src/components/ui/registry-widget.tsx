@@ -11,7 +11,7 @@ interface CensusEntry { label: string; value: number; section: string; panel: st
 /**
  * The registry explorer: a stack of cards. The census is the first card; a
  * category opens as its own card of rows; a row with more inside opens as its
- * own card of fields — expandable cards the whole way down, per the brief.
+ * own card of fields: expandable cards the whole way down, per the brief.
  * The header always offers the way back: to the previous card, or from the
  * first card back to the dashboard.
  */
@@ -94,7 +94,7 @@ export function RegistryExplorer({ census, onOpenPanel, onClose }: {
             ) : (
               <>
                 <p className="text-[10px] uppercase tracking-widest text-white/40 mb-3 tabular-nums">
-                  {d.total.toLocaleString()} on record — most recent {Math.min(d.rows.length, 12)} shown
+                  {d.total.toLocaleString()} on record: most recent {Math.min(d.rows.length, 12)} shown
                 </p>
                 <div className="space-y-px">
                   {d.rows.map((r, i) => (
@@ -146,11 +146,11 @@ export function RegistryExplorer({ census, onOpenPanel, onClose }: {
 }
 
 export interface RegistryWidgetData {
-  /** Gallery photos on record — the headline. */
+  /** Gallery photos on record: the headline. */
   photos: number;
   /** Registered accounts. */
   users: number;
-  /** Published posts — all of them in The Lost Archives column. */
+  /** Published posts: all of them in The Lost Archives column. */
   posts: number;
   products: number;
   /** Blog contributors registered on the platform. */
@@ -165,7 +165,7 @@ const compact = (n: number) => (n >= 10_000 ? `${(n / 1000).toFixed(1)}K` : n.to
 
 /**
  * The archive field: a grid of marks whose opacities are a fixed pseudo-random
- * texture — iconography for "a registry of many things", the way the weather
+ * texture: iconography for "a registry of many things", the way the weather
  * face's glyph is iconography for a sky. It measures nothing; the figures do.
  */
 function ArchiveField({ cols, rows, u }: { cols: number; rows: number; u: (n: number) => string }) {
@@ -246,7 +246,7 @@ export function RegistryWidget({ size = '4x2', data, census, onOpenPanel, classN
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="Registry — open detail"
+        aria-label="Registry: open detail"
         className={cn(
           'relative bg-black text-white flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -290,7 +290,7 @@ export function RegistryWidget({ size = '4x2', data, census, onOpenPanel, classN
                   ))}
                 </div>
               ) : (
-                /* 4x2: six pairs as a three-column grid of mini figures — as
+                /* 4x2: six pairs as a three-column grid of mini figures, as
                    full-width rows they overflowed the tile sideways. */
                 <div className="grid grid-cols-3" style={{ gap: u(4) }}>
                   {figures.slice(1).map(f => (

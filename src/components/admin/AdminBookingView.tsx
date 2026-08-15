@@ -134,7 +134,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
             } else {
                 setFeedback({
                     type: 'success',
-                    msg: `Quote ${data.invoiceNumber} created — ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
+                    msg: `Quote ${data.invoiceNumber} created; ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
                     pdfUrl: data.pdfUrl,
                 });
                 setQuoteOpen(false);
@@ -165,7 +165,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
             } else {
                 setFeedback({
                     type: 'success',
-                    msg: `Invoice ${data.invoiceNumber} created — balance ${fmtUSDc(Math.round(Number(data.balanceDue) * 100))} — ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
+                    msg: `Invoice ${data.invoiceNumber} created; balance ${fmtUSDc(Math.round(Number(data.balanceDue) * 100))}; ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
                     pdfUrl: data.pdfUrl,
                 });
                 onStatusChange();
@@ -208,7 +208,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                     {(b.location || b.start_time) && (
                         <div className="flex gap-4 mt-1 text-[10px] text-white/30">
                             {b.location && <span>{b.location}</span>}
-                            {b.start_time && <span>{b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</span>}
+                            {b.start_time && <span>{b.start_time}{b.end_time ? `; ${b.end_time}` : ''}</span>}
                         </div>
                     )}
                 </div>
@@ -222,7 +222,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
             </div>
         </button>
 
-        {/* Booking Detail — fullscreen ExpandableScreen pattern */}
+        {/* Booking Detail: fullscreen ExpandableScreen pattern */}
         <ExpandableScreen isOpen={expanded} onOpenChange={setExpanded}>
             <ExpandableScreenContent className="overflow-x-hidden">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -240,7 +240,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                         <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Date</p><p className="font-bold">{fmtDate(b.event_date)}</p></div>
                                         <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Type</p><p className="font-bold">{b.event_type}</p></div>
-                                        {b.start_time && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Time</p><p className="font-bold">{b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</p></div>}
+                                        {b.start_time && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Time</p><p className="font-bold">{b.start_time}{b.end_time ? `; ${b.end_time}` : ''}</p></div>}
                                         {b.location && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Location</p><p className="font-bold">{b.location}</p></div>}
                                         {b.phone && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Phone</p><p className="font-bold">{b.phone}</p></div>}
                                     </div>

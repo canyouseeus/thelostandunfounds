@@ -73,7 +73,7 @@ export async function signInWithGoogle(redirectTo?: string) {
   try {
     await supabase.auth.signOut();
   } catch {
-    // Non-fatal — continue with OAuth regardless
+    // Non-fatal: continue with OAuth regardless
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({

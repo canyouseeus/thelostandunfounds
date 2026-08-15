@@ -10,7 +10,7 @@ import Gallery from './Gallery'
 export default function RootPage() {
   const { user, loading } = useAuth()
 
-  // Show gallery immediately — switch to Home only once auth confirms admin
+  // Show gallery immediately: switch to Home only once auth confirms admin
   if (!loading && user && isAdminEmail(user.email || '')) return <Home />
 
   return <Gallery isHomepage />

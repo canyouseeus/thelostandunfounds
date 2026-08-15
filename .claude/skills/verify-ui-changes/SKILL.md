@@ -44,7 +44,7 @@ Return a report confirming [Success Criteria] or detailing any regressions.
 A check that passes when its inputs are missing is not a check. Verify the failure path before
 trusting the pass.
 
-Real example from this codebase — this loop reported five documents identical when **none of the
+Real example from this codebase: this loop reported five documents identical when **none of the
 screenshots had been generated**. `md5sum` errored on both sides, both variables came back empty,
 and empty equals empty:
 
@@ -67,9 +67,9 @@ Before trusting any new check: break it on purpose once and confirm it reports f
 
 Three bugs shipped this month because verification confirmed the specific fix and stopped there:
 
-- A viewport of 1100×1600 was used to compare 3–7 page documents. It covered page one. Everything
+- A viewport of 1100×1600 was used to compare 3-7 page documents. It covered page one. Everything
   below the fold went unchecked and was declared identical.
-- An invoice banner was fixed, the overlap it caused was fixed — and the brand name printed twice
+- An invoice banner was fixed, the overlap it caused was fixed, and the brand name printed twice
   in the result, plainly visible in the rendered image, unnoticed because the check was "is the
   overlap gone?"
 - A typecheck was reported clean while running against an empty `node_modules`, where it could
@@ -90,5 +90,5 @@ grep -rE "border-|shadow-|divide-[xy]|ring-" <changed files>   # expect no match
 npx tsc --noEmit 2>&1 | grep -c "error TS"
 ```
 
-Run the typecheck **only with dependencies installed** — against an empty `node_modules` it
+Run the typecheck **only with dependencies installed**, against an empty `node_modules` it
 resolves nothing and reports success regardless of the code.

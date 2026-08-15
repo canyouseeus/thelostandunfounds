@@ -159,7 +159,7 @@ export default function KattitudeWaiver() {
   return (
     <>
       <SEOHead
-        title="Client Waiver — Kattitude Tattoo Studio"
+        title="Client Waiver: Kattitude Tattoo Studio"
         description="Sign your tattoo waiver before your appointment at Kattitude Tattoo Studio, Austin TX."
         canonicalPath="/kattitude/waiver"
         noIndex={true}
@@ -222,7 +222,7 @@ export default function KattitudeWaiver() {
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-white/50 mb-2">Emergency Contact</label>
                   <input type="text" value={form.emergency_contact} onChange={set('emergency_contact')}
-                    placeholder="Name — Phone number"
+                    placeholder="Name: Phone number"
                     className="w-full bg-white/5 border border-white/10 text-white placeholder-white/20 px-4 py-3 text-sm focus:outline-none focus:border-white/40 transition-colors" />
                 </div>
               </fieldset>

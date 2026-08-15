@@ -47,7 +47,7 @@ export default async function handler(
         total_amount_cents: 0,
         // 'completed', not 'free'. photo_orders has a CHECK allowing only
         // pending/completed/failed/refunded, so every free checkout ever
-        // attempted failed on insert with a 500 — the free path existed but
+        // attempted failed on insert with a 500; the free path existed but
         // had never once worked, and clients were pushed to "pay with card"
         // for a $0.00 cart, which Stripe rejects. The order IS complete;
         // nothing was owed.

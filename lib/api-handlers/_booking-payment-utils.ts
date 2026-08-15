@@ -194,7 +194,7 @@ export function buildBookingPaymentEmailBody(args: {
 
   const intro =
     args.kind === 'quote'
-      ? `Here's the quote for your ${escapeHtml(args.eventType || 'shoot')}. To lock the date, a <b>50% deposit</b> is due now — the rest is invoiced after the shoot.`
+      ? `Here's the quote for your ${escapeHtml(args.eventType || 'shoot')}. To lock the date, a <b>50% deposit</b> is due now; the rest is invoiced after the shoot.`
       : `Thanks again for your ${escapeHtml(args.eventType || 'shoot')}. Here's the final invoice for the remaining balance.`
 
   const heading = args.kind === 'quote' ? 'YOUR QUOTE IS READY' : 'FINAL INVOICE'
@@ -204,7 +204,7 @@ export function buildBookingPaymentEmailBody(args: {
     <p style="color:${muted};font-size:12px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(args.invoiceNumber)}</p>
 
     <p style="color:${text} !important;font-size:15px;line-height:1.6;margin:0 0 20px 0;font-family:Arial,Helvetica,sans-serif;">
-      Hey ${escapeHtml(firstName)} — ${intro}
+      Hey ${escapeHtml(firstName)}: ${intro}
     </p>
 
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0;">
@@ -249,7 +249,7 @@ export function buildBookingPaymentEmailBody(args: {
     <p style="color:${muted} !important;font-size:12px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">
       Questions? Just reply to this email.
     </p>
-    <p style="color:${text} !important;font-size:13px;margin:20px 0 0 0;font-family:Arial,Helvetica,sans-serif;">— Joshua / TLAU</p>
+    <p style="color:${text} !important;font-size:13px;margin:20px 0 0 0;font-family:Arial,Helvetica,sans-serif;">, Joshua / TLAU</p>
   `
 }
 
@@ -268,8 +268,8 @@ export async function sendBookingPaymentEmail(args: {
   })
   const subject =
     args.kind === 'quote'
-      ? `Your quote ${args.invoiceNumber} — ${BRAND.name}`
-      : `Invoice ${args.invoiceNumber} — ${BRAND.name}`
+      ? `Your quote ${args.invoiceNumber}: ${BRAND.name}`
+      : `Invoice ${args.invoiceNumber}: ${BRAND.name}`
 
   const auth = await getZohoAuthContext()
   const result = await sendZohoEmail({
@@ -293,8 +293,8 @@ export async function sendBookingPaymentEmail(args: {
  * payment path is how the two drift and one of them starts charging the wrong
  * amount.
  *
- * Throws on validation or Stripe/DB failure. A failed *email* is not fatal —
- * the invoice and link exist and can be resent — so it is reported instead.
+ * Throws on validation or Stripe/DB failure. A failed *email* is not fatal;
+ * the invoice and link exist and can be resent, so it is reported instead.
  */
 export async function createQuoteForBooking(args: {
   bookingId: string
@@ -306,8 +306,8 @@ export async function createQuoteForBooking(args: {
   /**
    * Send the quote email here instead of to the client.
    *
-   * The invoice, the Stripe link and the client record are unchanged — only
-   * the delivery is redirected — so the owner can read exactly what the client
+   * The invoice, the Stripe link and the client record are unchanged, only
+   * the delivery is redirected, so the owner can read exactly what the client
    * would receive before it reaches them. Without this, the only way to
    * preview a quote email was to send it, and a rehearsal booking has already
    * reached a real client once.
@@ -354,7 +354,7 @@ export async function createQuoteForBooking(args: {
           amount: Number(li.amount) || 0,
         }))
       : [{
-          description: `Photography — ${booking.event_type || 'shoot'}`,
+          description: `Photography: ${booking.event_type || 'shoot'}`,
           quantity: 1,
           unit_price: totalPrice,
           amount: totalPrice,
@@ -378,7 +378,7 @@ export async function createQuoteForBooking(args: {
       invoice_type: 'quote',
       date: new Date().toISOString().slice(0, 10),
       event_date: booking.event_date || null,
-      description: args.description || `Photography services — ${booking.event_type || 'shoot'}`,
+      description: args.description || `Photography services: ${booking.event_type || 'shoot'}`,
       line_items: items,
       subtotal,
       total,
@@ -394,8 +394,8 @@ export async function createQuoteForBooking(args: {
 
   const link = await createPaymentLink(stripe, {
     amountCents: depositCents,
-    productName: `Deposit (${pct}%) — ${booking.event_type || 'Photography'} — ${invoiceNumber}`,
-    description: `${invoiceNumber} deposit — booking ${bookingId}`,
+    productName: `Deposit (${pct}%): ${booking.event_type || 'Photography'}; ${invoiceNumber}`,
+    description: `${invoiceNumber} deposit: booking ${bookingId}`,
     metadata: {
       source: BOOKING_PAYMENT_SOURCE,
       kind: 'quote',
@@ -492,7 +492,7 @@ export async function sendDepositConfirmationEmail(args: {
       ${args.clientName ? `Hi ${args.clientName},` : 'Hi,'}
     </p>
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
-      Thank you for booking with us — we've received your deposit of <strong>${fmt(args.depositPaid)}</strong>
+      Thank you for booking with us; we've received your deposit of <strong>${fmt(args.depositPaid)}</strong>
       against ${args.invoiceNumber}. Your shoot is confirmed.
     </p>
     ${row('Shoot', args.eventType || 'Photography')}
@@ -502,7 +502,7 @@ export async function sendDepositConfirmationEmail(args: {
     <hr style="border: none; margin: 30px 0;">
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
       <strong>Remaining balance: ${fmt(args.balanceDue)}</strong>, collected on the day of the shoot
-      once it's complete. We'll send the final invoice and payment link then — nothing to do before that.
+      once it's complete. We'll send the final invoice and payment link then; nothing to do before that.
     </p>
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
       If anything about the date, time or access changes, just reply to this email.
@@ -521,7 +521,7 @@ export async function sendDepositConfirmationEmail(args: {
     auth,
     to: args.to,
     cc: FROM_EMAIL,
-    subject: `Deposit received — your shoot is confirmed (${args.invoiceNumber})`,
+    subject: `Deposit received: your shoot is confirmed (${args.invoiceNumber})`,
     htmlContent,
   })
 }
@@ -531,7 +531,7 @@ export async function sendDepositConfirmationEmail(args: {
  *
  * The house takes 20% for booking the session; the photographer keeps the rest.
  * This is the standing arrangement for every photography subcontractor, not a
- * per-person deal — photographers.payout_pct defaults to 80 and exists only so
+ * per-person deal: photographers.payout_pct defaults to 80 and exists only so
  * an individual arrangement can differ if one is ever agreed.
  */
 export const HOUSE_COMMISSION_PCT = 20
@@ -559,7 +559,7 @@ export async function getDefaultPhotographer(
 /**
  * Tell the photographer they have a job.
  *
- * Everything they need to turn up and get in — date, window, address, access —
+ * Everything they need to turn up and get in; date, window, address, access,
  * plus what the job pays them, so the split is never a conversation after the
  * fact. Never sent to the client: it carries the payout.
  */
@@ -574,7 +574,7 @@ export async function sendPhotographerAssignment(args: {
   accessNotes: string | null
   jobTotal: number
   invoiceNumber?: string | null
-  /** What is being released now — the photographer's share of the deposit. */
+  /** What is being released now: the photographer's share of the deposit. */
   payoutAmount?: number | null
   /** When that share clears Stripe's hold and lands in their account. */
   payoutAvailableAt?: string | Date | null
@@ -595,7 +595,7 @@ export async function sendPhotographerAssignment(args: {
   const fundsLine = args.payoutAmount && args.payoutAvailableAt
     ? `
     <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
-      <strong>${fmt(args.payoutAmount)}</strong> is on its way to you now — it clears
+      <strong>${fmt(args.payoutAmount)}</strong> is on its way to you now; it clears
       the card settlement hold and lands in your account around
       <strong>${inCentral(args.payoutAvailableAt)}</strong>. The rest follows when
       the client settles the balance.
@@ -607,7 +607,7 @@ export async function sendPhotographerAssignment(args: {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
       })
     : 'TBC'
-  const window = [hhmm(args.startTime), hhmm(args.endTime)].filter(Boolean).join(' – ') || 'TBC'
+  const window = [hhmm(args.startTime), hhmm(args.endTime)].filter(Boolean).join(' - ') || 'TBC'
 
   const row = (label: string, value: string) => `
     <p style="color:${BRAND.colors.text};font-size:15px;line-height:1.6;margin:0 0 8px 0;text-align:left;">
@@ -616,11 +616,11 @@ export async function sendPhotographerAssignment(args: {
 
   const bodyHtml = `
     <h1 style="color:${BRAND.colors.text};font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SHOOT ASSIGNED</h1>
-    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${args.photographer.name.split(' ')[0]}, this one is confirmed — the client has paid their deposit, so the date is locked in.</p>
+    <p style="color:${BRAND.colors.text};font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${args.photographer.name.split(' ')[0]}, this one is confirmed; the client has paid their deposit, so the date is locked in.</p>
     ${row('Date', when)}
     ${row('Time', window)}
-    ${row('Location', args.location || 'TBC — will confirm')}
-    ${row('Access', args.accessNotes || 'None supplied — check before the day')}
+    ${row('Location', args.location || 'TBC; will confirm')}
+    ${row('Access', args.accessNotes || 'None supplied; check before the day')}
     ${row('Client', args.clientName)}
     ${row('Shoot', args.eventType)}
     <hr style="border:none;margin:30px 0;">
@@ -642,7 +642,7 @@ export async function sendPhotographerAssignment(args: {
     auth,
     to: args.photographer.email,
     cc: FROM_EMAIL,
-    subject: `Shoot confirmed — ${when}${window !== 'TBC' ? `, ${window.split(' – ')[0]}` : ''}${args.location ? ` — ${args.location}` : ''}`,
+    subject: `Shoot confirmed: ${when}${window !== 'TBC' ? `, ${window.split(' - ')[0]}` : ''}${args.location ? `; ${args.location}` : ''}`,
     htmlContent,
   })
 }

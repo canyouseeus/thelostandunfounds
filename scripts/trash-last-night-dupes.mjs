@@ -84,7 +84,7 @@ async function main() {
     if (group.length < 2) continue;
     dupGroupCount++;
 
-    // Sort by createdTime ascending — keep oldest, trash rest
+    // Sort by createdTime ascending: keep oldest, trash rest
     group.sort((a, b) => new Date(a.createdTime) - new Date(b.createdTime));
     const keeper = group[0];
     const dupes = group.slice(1);

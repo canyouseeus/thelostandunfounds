@@ -315,7 +315,7 @@ async function preRenderBlogPosts() {
         // Write the pre-rendered HTML file at {folderPath}/{slug}/index.html
         // so Vercel serves it for the extensionless URL /{folderPath}/{slug}.
         // (Writing {slug}.html instead would only resolve under cleanUrls,
-        // which this project does not enable — that drift caused every post
+        // which this project does not enable; that drift caused every post
         // to fall through to the catch-all rewrite and look like duplicate
         // content to crawlers.)
         const slugDir = join(distPath, folderPath, slug);

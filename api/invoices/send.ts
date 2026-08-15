@@ -4,8 +4,8 @@
  * Sends a branded invoice email to a client via Zoho Mail.
  *
  * Body (JSON):
- *   invoice_id  string   — UUID of the invoice to send
- *   to_email?   string   — Optional override (for testing). Falls back to client's email.
+ *   invoice_id  string: UUID of the invoice to send
+ *   to_email?   string: Optional override (for testing). Falls back to client's email.
  *
  * Auth: localhost is allowed, otherwise `x-admin-email` or `x-admin-secret`.
  */
@@ -73,7 +73,7 @@ function buildPersonalMessageBody(message: string, invoiceNumber: string): strin
   return `
     ${html}
     <p style="color:${muted} !important;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:30px 0 0 0;font-family:Arial,Helvetica,sans-serif;">
-      Invoice ${escapeHtml(invoiceNumber)} — attached as PDF
+      Invoice ${escapeHtml(invoiceNumber)}: attached as PDF
     </p>
   `
 }
@@ -123,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const client = (invoice as any).clients || null
 
     // Pull start/end time from the linked booking so the PDF can show
-    // "Sunday, May 24, 2026" + "5:00 PM – 8:00 PM".
+    // "Sunday, May 24, 2026" + "5:00 PM; 8:00 PM".
     let bookingStartTime: string | null = null
     let bookingEndTime: string | null = null
     const bookingId = (invoice as any).booking_id
@@ -147,13 +147,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? (invoice as any).line_items
       : []
 
-    // Every invoice email carries the branded PDF as an attachment — never
+    // Every invoice email carries the branded PDF as an attachment, never
     // the legacy inline render, which drops the banner/layout in most clients.
     const hasMessage = typeof message === 'string' && message.trim().length > 0
     const bodyMessage = hasMessage
       ? message!.trim()
       : invoice.status === 'paid'
-      ? 'Thank you — here is your receipt.'
+      ? 'Thank you: here is your receipt.'
       : 'Please find your invoice attached.'
 
     const bodyHtml = buildPersonalMessageBody(bodyMessage, invoice.invoice_number)
@@ -211,7 +211,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     const subject = invoice.status === 'paid'
-      ? `Receipt — ${invoice.invoice_number} from ${BRAND.name}`
+      ? `Receipt: ${invoice.invoice_number} from ${BRAND.name}`
       : `Invoice ${invoice.invoice_number} from ${BRAND.name}`
 
     const auth = await getZohoAuthContext()

@@ -9,7 +9,7 @@ description: How THE LOST+UNFOUNDS emails actually render in mail clients, and w
 This skill exists for one reason: **what you see in an inbox is not what the template says**,
 and changing the brand to chase a screenshot has already caused one production-wide mistake.
 
-## RULE 1 — The brand is a BLACK email. It renders WHITE in the owner's Gmail.
+## RULE 1: The brand is a BLACK email. It renders WHITE in the owner's Gmail.
 
 ```
 Background: #000000
@@ -52,7 +52,7 @@ grep -n "background: '#" lib/email-template.ts api/email-template.ts
 npx tsx scripts/audit-email-contrast.ts
 ```
 
-## RULE 2 — You cannot opt out of Gmail iOS inversion. Every attempt was tried.
+## RULE 2: You cannot opt out of Gmail iOS inversion. Every attempt was tried.
 
 All of these were tried on 2026-08-13 and none of them worked:
 
@@ -72,7 +72,7 @@ black brand's rendering for him, which is why it is not in the templates.
 
 Design so the email is correct as authored, in black, and let Gmail invert it.
 
-## RULE 3 — A button is a solid fill, never an outline
+## RULE 3: A button is a solid fill, never an outline
 
 On the black body the button is a **solid white fill with black text**, which is what Gmail
 inverts into the SOLID BLACK button the owner asks for:
@@ -90,14 +90,14 @@ on the black body is the invisible-button bug, twice shipped.
 ### ❌ Never fill a button with the page colour and add a border
 
 The historical `lib` button was `background-color: <page black>` + `border: 2px solid <white>`.
-The fill was invisible, so the border was the only thing making the button visible — it
+The fill was invisible, so the border was the only thing making the button visible; it
 rendered as an empty outlined box, which is not the brand and violates the no-border rule.
 
 Note the two templates previously derived the button from `colors.background` / `colors.text`
 in **opposite orders**, producing two different buttons from identical constant names. They
 now state it identically. **If you change one, change both.**
 
-## RULE 4 — Verify contrast mechanically, never by eye
+## RULE 4: Verify contrast mechanically, never by eye
 
 ```bash
 npx tsx scripts/audit-email-contrast.ts
@@ -116,14 +116,14 @@ After any colour change, audit `lib/api-handlers/*.ts`, `lib/email-template.ts` 
 `api/email-template.ts` for:
 
 - black background with black-ish text, and the white/white case
-- **multi-line** rules — `background-color` and `color` are usually on different lines, which a
+- **multi-line** rules: `background-color` and `color` are usually on different lines, which a
   line-based grep misses
-- translucent colours — `rgba(255,255,255,…)` text and `border-top` dividers vanish on white
+- translucent colours: `rgba(255,255,255,…)` text and `border-top` dividers vanish on white
 - buttons specifically, since they legitimately invert the body palette
 
-## RULE 5 — Some files that look like email are not
+## RULE 5: Some files that look like email are not
 
-`_newsletter-unsubscribe-handler.ts` renders **browser pages** — it has `<title>` tags and
+`_newsletter-unsubscribe-handler.ts` renders **browser pages**; it has `<title>` tags and
 sends no mail. The site is black, so those pages must stay dark. Recolouring them as if they
 were email makes them black-on-black.
 
@@ -132,12 +132,12 @@ grep -c "<title>" <file>   # >0 → browser page, not email
 grep -c "sendEmail\|sendZohoEmail\|wrapEmailContent\|generateTransactional" <file>
 ```
 
-## RULE 6 — The test loop. Run it until the owner approves.
+## RULE 6: The test loop. Run it until the owner approves.
 
 **Never send a client-facing email that the owner has not approved from a test.** The loop is:
 
 1. Make the change.
-2. **Send a `[TEST n]` email to `thelostandunfounds@gmail.com`** — unprompted, in the same turn
+2. **Send a `[TEST n]` email to `thelostandunfounds@gmail.com`**; unprompted, in the same turn
    as the change. Never wait to be asked.
 3. **Tell them you sent it**, which number it is, and the specific thing to look at.
 4. They approve, or they ask for a change.
@@ -145,7 +145,7 @@ grep -c "sendEmail\|sendZohoEmail\|wrapEmailContent\|generateTransactional" <fil
 6. Repeat from 4. Only an explicit approval ends the loop.
 
 There is no step where a change goes out without a fresh test behind it. A revision to an
-already-tested email is a new email and needs its own test — do not assume a small edit is
+already-tested email is a new email and needs its own test; do not assume a small edit is
 safe because the previous version looked right.
 
 This is not optional politeness. Every email rendering defect in this codebase's history was
@@ -168,10 +168,10 @@ curl -sS -X POST https://www.thelostandunfounds.com/api/mail/send \
 
 Then name the one thing that test can actually settle.
 
-## RULE 7 — A bare URL in an email body is styled by the mail client, not by us
+## RULE 7: A bare URL in an email body is styled by the mail client, not by us
 
 Dropping a raw `https://…` into email text hands the styling to the recipient's client. It
-auto-links it and paints it in **its own default blue with an underline** — the one colour the
+auto-links it and paints it in **its own default blue with an underline**; the one colour the
 brand never uses. The template is not consulted. This reached a client on QUO-002: a Stripe
 deposit URL was passed as plain text in the `message` field of `/api/invoices/send`, and iOS
 Mail rendered it as blue link text where the brand calls for a solid black-fill button.
@@ -179,16 +179,16 @@ Mail rendered it as blue link text where the brand calls for a solid black-fill 
 Any URL a recipient is meant to click is an anchor carrying `EMAIL_STYLES.button`:
 
 ```ts
-`<a href="${url}" style="${EMAIL_STYLES.button}">PAY DEPOSIT — $150</a>`
+`<a href="${url}" style="${EMAIL_STYLES.button}">PAY DEPOSIT, $150</a>`
 ```
 
-Per RULE 3 that resolves to a solid fill with inverted text — on the black body, white fill and
+Per RULE 3 that resolves to a solid fill with inverted text, on the black body, white fill and
 black text. Never a bare URL, and never a bare URL *plus* a button: the client will still
 auto-link the loose one and the email ends up with two competing CTAs in two different colours.
 
 **The trap in `/api/invoices/send`:** its `message` parameter is rendered by
 `buildPersonalMessageBody()`, which runs the text through `escapeHtml()` and wraps it in `<p>`
-tags. It cannot emit an anchor — any markup passed in comes out as visible literal text. So the
+tags. It cannot emit an anchor: any markup passed in comes out as visible literal text. So the
 payment button must come from the body builder, not from the caller's message. The payment link
 also lives in the attached PDF (`generateInvoicePdf` takes `paymentUrl`), which is why this
 defect still *worked* and was easy to miss: the client could pay, it just looked wrong.

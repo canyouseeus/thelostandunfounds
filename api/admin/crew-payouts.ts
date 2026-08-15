@@ -55,9 +55,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // and the delivery path are proven before a live payout depends on them.
       // Clearly marked as a test in the body it sends.
       const result = await sendCrewPayoutNotification({
-        contractorName: req.body?.contractorName || 'TEST — not a real payout',
+        contractorName: req.body?.contractorName || 'TEST, not a real payout',
         amount: Number(req.body?.amount) || 120,
-        description: 'TEST NOTIFICATION — no money moved. Verifying the payout email path.',
+        description: 'TEST NOTIFICATION: no money moved. Verifying the payout email path.',
         transferId: 'tr_test_no_money_moved',
         destinationAccountId: req.body?.destination || 'acct_test',
         remainingBalance: Number(req.body?.remainingBalance) || 0,
@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!row) return res.status(404).json({ error: 'Payout not found' });
       if (row.status !== 'paid') {
         return res.status(400).json({
-          error: `Payout is ${row.status}, not paid — nothing to notify about.`,
+          error: `Payout is ${row.status}, not paid; nothing to notify about.`,
         });
       }
 
@@ -153,12 +153,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Needed because a Stripe-managed Express account will not let the
       // platform edit its email ("This application is not authorized to edit
       // the parameter 'email'"), so a contractor who onboarded with the wrong
-      // address cannot be fixed in place from here — the account has to go.
+      // address cannot be fixed in place from here; the account has to go.
       //
       // Order matters. Reverse first: the funds must leave the connected
       // account before it is detached, or they are stranded in an account
       // nobody is going to log into. The reversal only works while the money
-      // is still in their Stripe balance — once Stripe pays it out to their
+      // is still in their Stripe balance, once Stripe pays it out to their
       // bank, this route stops being available.
       const { payoutId, skipReversal } = req.body || {};
       if (!payoutId) return res.status(400).json({ error: 'payoutId is required' });
@@ -177,7 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!skipReversal) {
         if (row.status !== 'paid' || !row.stripe_transfer_id) {
           return res.status(400).json({
-            error: `Payout is ${row.status} with transfer ${row.stripe_transfer_id || 'none'} — nothing to reverse.`,
+            error: `Payout is ${row.status} with transfer ${row.stripe_transfer_id || 'none'}, nothing to reverse.`,
           });
         }
         try {
@@ -195,7 +195,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Put the row back in the queue. Once they reconnect, the normal payer
-        // sends it again — no manual transfer, no second ledger entry.
+        // sends it again: no manual transfer, no second ledger entry.
         await supabase
           .from('crew_payouts')
           .update({

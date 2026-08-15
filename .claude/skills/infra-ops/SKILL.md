@@ -25,7 +25,7 @@ This skill governs the backend and deployment integrity of THE LOST+UNFOUNDS.
 
 ## Zoho Mail Integration
 - **Sending email is not covered here.** Use `sendTransactionalEmail` from
-  `lib/api-handlers/_resend-email-handler.ts` — the `email-delivery` skill is the authority.
+  `lib/api-handlers/_resend-email-handler.ts`; the `email-delivery` skill is the authority.
 - **`_zoho-mail-handler.ts` is the mailbox client**, not a sending path: `getFolders`,
   `getMessages`, `moveMessage`, `saveDraft`, `markAsRead`. It backs the admin webmail page and is
   imported only by `api/mail/[...path].ts`. Use it for inbox features, never to send.
@@ -34,4 +34,4 @@ This skill governs the backend and deployment integrity of THE LOST+UNFOUNDS.
 
 ## Deployment Verification
 - **Build Logs**: After deployment, ALWAYS check Vercel logs for "Silent Failures" or JSON parsing errors.
-- **Schema Check**: After a migration, verify with the Supabase MCP (`list_tables`, `get_advisors` for RLS gaps). All DB changes go through `apply_migration` — see the `supabase-mcp` skill.
+- **Schema Check**: After a migration, verify with the Supabase MCP (`list_tables`, `get_advisors` for RLS gaps). All DB changes go through `apply_migration`; see the `supabase-mcp` skill.

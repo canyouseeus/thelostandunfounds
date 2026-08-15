@@ -4,14 +4,14 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 
 /**
  * The full-screen card every dashboard widget expands into: long-press on
- * touch, click with a mouse, and the tile's face opens to the full thing —
+ * touch, click with a mouse, and the tile's face opens to the full thing;
  * weather to the forecast, the calendar to its month, a data tile to its
  * breakdown. One shell so they all close the same way (X, Escape) and stack
  * the same way (z-[9999], per modal-z-index-manager).
  */
 export function DetailSheet({ onClose, label, children, wide = false }: {
   onClose: () => void;
-  /** Accessible name for the close control — "Close weather detail" etc. */
+  /** Accessible name for the close control; "Close weather detail" etc. */
   label: string;
   children: ReactNode;
   /** Widens the card for content that wants a full month grid or a chart. */

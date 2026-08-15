@@ -50,7 +50,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const [applicationModalOpen, setApplicationModalOpen] = useState(false);
     const isMounted = useRef(true);
 
-    // Newsletter modal — shown to visitors after a delay
+    // Newsletter modal: shown to visitors after a delay
     const [newsletterBarVisible, setNewsletterBarVisible] = useState(false);
     const [newsletterBarDismissed, setNewsletterBarDismissed] = useState(false);
 
@@ -77,11 +77,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         // Arriving on a deep link (?view=booking from a client email, ?view=shop,
         // ?view=services) means the visitor came with a specific intent. Covering
         // that intent with a newsletter signup is how a booking CTA turns into a
-        // subscribe prompt — which is what it did to a real client. Read the query
+        // subscribe prompt: which is what it did to a real client. Read the query
         // string directly rather than useSearchParams: this is a mount-time
         // decision, and the hook is declared further down the component.
         // /services and every /services/<offer> page is the same arrival with
-        // intent, just as a path instead of a query param — a visitor landing
+        // intent, just as a path instead of a query param; a visitor landing
         // there from search came to see pricing, not to be asked to subscribe.
         if (/^\/services(\/|$)/.test(window.location.pathname)) return;
         if (new URLSearchParams(window.location.search).get('view')) return;
@@ -205,13 +205,13 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     })();
     const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'services'>(initialView);
 
-    // Tab clicks swap the view in place — they must never navigate, or the shop's
+    // Tab clicks swap the view in place; they must never navigate, or the shop's
     // silent preload is thrown away and the page remounts under the user. So the
     // address bar is updated directly instead of through the router: replaceState
     // leaves the router's own location untouched, so nothing re-renders.
     //
     // Each URL below reproduces exactly what is on screen if it is reloaded or
-    // shared — /?view=shop returns the embedded shop, not the standalone /shop
+    // shared: /?view=shop returns the embedded shop, not the standalone /shop
     // page, which is a different layout.
     //
     // replace, not push: the back button keeps leaving the page as it does today
@@ -245,7 +245,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     return (
         <div className="min-h-screen bg-black pt-0 pb-48" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
 
-            {/* Inline gallery — collapses back to grid via the nav back button */}
+            {/* Inline gallery: collapses back to grid via the nav back button */}
             <AnimatePresence mode="wait">
                 {isHomepage && activeGallery && (
                     <motion.div
@@ -260,7 +260,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 )}
             </AnimatePresence>
 
-            {/* Gallery grid — hidden (not unmounted) while a gallery is open */}
+            {/* Gallery grid: hidden (not unmounted) while a gallery is open */}
             <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
@@ -285,17 +285,17 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 />
                 {/* Each service page is its own canonical. Pointing them all at
                     /services would tell Google to drop the three specific pages
-                    and keep the generic one — the exact opposite of the split. */}
+                    and keep the generic one: the exact opposite of the split. */}
                 <link rel="canonical" href={servicePage ? `https://www.thelostandunfounds.com${servicePath}` : isServicesRoute ? 'https://www.thelostandunfounds.com/services' : isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
-            {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
+            {/* Homepage H1: visually hidden so it doesn't duplicate the Gallery/Shop/Services
                 tab toggle below, but gives the page (and bots) a real top-level heading. */}
             {isHomepage && (
-                <h1 className="sr-only">THE LOST+UNFOUNDS — Austin, TX Editorial &amp; Nightlife Photography</h1>
+                <h1 className="sr-only">THE LOST+UNFOUNDS; Austin, TX Editorial &amp; Nightlife Photography</h1>
             )}
 
-            {/* Gallery / Shop / Booking toggle — homepage visitor mode only */}
+            {/* Gallery / Shop / Booking toggle: homepage visitor mode only */}
             {isHomepage && (
                 <div className="sticky z-[98] bg-black px-4 md:px-8 pt-2 pb-0" style={{ top: 'var(--nav-height, 64px)' }}>
                     <div className="max-w-7xl mx-auto">
@@ -350,14 +350,14 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 </div>
             )}
 
-            {/* Shop view — preloaded silently, revealed via display when tab is active */}
+            {/* Shop view: preloaded silently, revealed via display when tab is active */}
             {isHomepage && (
                 <div style={{ display: viewMode === 'shop' ? 'block' : 'none' }}>
                     <Shop hideBanner embedded />
                 </div>
             )}
 
-            {/* Services view — shown only when the services tab is active */}
+            {/* Services view: shown only when the services tab is active */}
             {isHomepage && viewMode === 'services' && (
                 <BookingPage focus={servicePage?.focus} />
             )}
@@ -381,7 +381,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         </h1>
                         <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed max-w-2xl">
                             <p>
-                                Welcome to <span className="font-bold text-white">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
+                                Welcome to <span className="font-bold text-white">THE GALLERY</span>; an invite-only platform for photographers to host, share, and sell their work.
                             </p>
                         </div>
 
@@ -491,7 +491,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             )}
         </div> {/* end gallery grid wrapper */}
 
-            {/* Newsletter modal — slides up from bottom to center, like the old homepage */}
+            {/* Newsletter modal: slides up from bottom to center, like the old homepage */}
             <AnimatePresence>
                 {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && (
                     <motion.div

@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from './utils';
 
 /**
- * GRAPH STYLE RULE — the hero chart (DashboardCharts) is the format for every
+ * GRAPH STYLE RULE: the hero chart (DashboardCharts) is the format for every
  * graph on the platform: monotone-smoothed 2px line, flat ~12% fill, r=2 data
  * dots (Sparkline draws exactly this); bars are the accent at 10% for the
  * track with a solid accent fill. Categories are told apart by accent, never
- * by dialect — the same hues the hero's metric tabs use:
+ * by dialect: the same hues the hero's metric tabs use:
  */
 export const CHART_ACCENTS = {
-  revenue: 'text-green-400',    // #4ade80 — money
+  revenue: 'text-green-400',    // #4ade80: money
   newsletter: 'text-blue-400',  // #60a5fa
   affiliates: 'text-purple-400',// #c084fc
   bookings: 'text-amber-500',   // #f59e0b
@@ -22,19 +22,19 @@ export const CHART_ACCENTS = {
  * Monochrome instruments for the dashboard tiles.
  *
  * The clock is a dial, the calendar is a month grid, the calculator is a keypad
- * — each one is drawn, and you read it without reading words. The data tiles
+ *, each one is drawn, and you read it without reading words. The data tiles
  * were label/value text instead, so a tile full of figures said nothing at a
  * glance. These are the drawn equivalents: an arc, a trace, a set of bars, a
  * row of state marks.
  *
  * All of them draw in `currentColor` at varying opacity, so a tile decides
- * whether they come out white on black or black on white — no borders, no shadows,
+ * whether they come out white on black or black on white; no borders, no shadows,
  * no gradients, and square corners, per no-border-design and noir-design. The
  * one exception to squareness is the ring, which is a circle because it is a
  * dial, the same way the clock face is.
  */
 
-/** Arc showing a proportion — billed against outstanding, used against total. */
+/** Arc showing a proportion: billed against outstanding, used against total. */
 export function RingGauge({
   value,
   max,
@@ -76,7 +76,7 @@ export function RingGauge({
 /**
  * Trace of a series over time, in the hero revenue chart's exact dialect
  * (DashboardCharts): a monotone-smoothed 2px line, a flat fill beneath it,
- * and r=2 dots at the data points. Drawn in pixel space — measured with a
+ * and r=2 dots at the data points. Drawn in pixel space: measured with a
  * ResizeObserver rather than a stretched viewBox, because a non-uniform
  * viewBox distorts curves and turns dots into ellipses, which is exactly why
  * the tiles used to look like a different chart language from the hero.
@@ -185,7 +185,7 @@ export function MiniBars({
 }
 
 /**
- * State marks — one per service. Square, not round: a status light is neither a
+ * State marks: one per service. Square, not round: a status light is neither a
  * tool tray nor an avatar, and those are the only two things noir-design lets
  * be circular.
  */
@@ -210,7 +210,7 @@ export function StatusMarks({
   );
 }
 
-/** A count you can see rather than read — one mark per unit, up to `cap`. */
+/** A count you can see rather than read; one mark per unit, up to `cap`. */
 export function DotMatrix({
   filled,
   total,

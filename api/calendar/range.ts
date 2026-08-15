@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .order('created_at', { ascending: false }),
             // Crew blocks are a different kind of fact from `adminBlocked`.
             // An admin block closes the date to the public booking form; a
-            // photographer marking themselves out closes nothing — it says
+            // photographer marking themselves out closes nothing; it says
             // who cannot cover a job that day. Kept in a separate key so the
             // calendar can render "Eric is out" without implying the studio is.
             supabase

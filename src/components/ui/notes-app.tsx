@@ -23,7 +23,7 @@ const stamp = (iso: string) => {
 };
 
 /**
- * The notes app that lives behind the NOTES card in the master calendar —
+ * The notes app that lives behind the NOTES card in the master calendar;
  * list on the left, editor on the right, Apple Notes' shape in the site's
  * colours. Notes autosave as you type; rows are ordered pinned-first, then
  * most recently touched. Backed by `admin_notes` with per-user RLS.
@@ -120,7 +120,7 @@ export function NotesApp() {
           <p className="text-[11px] uppercase tracking-widest text-white/30 py-6 text-left">Loading…</p>
         ) : filtered.length === 0 ? (
           <p className="text-[11px] uppercase tracking-widest text-white/30 py-6 text-left">
-            {query ? 'Nothing matches.' : 'No notes yet — start one.'}
+            {query ? 'Nothing matches.' : 'No notes yet; start one.'}
           </p>
         ) : (
           filtered.map(n => (
@@ -160,7 +160,7 @@ export function NotesApp() {
           <ChevronLeftIcon className="w-4 h-4" />
         </button>
         <span className="text-[10px] uppercase tracking-widest text-white/30 tabular-nums flex-1 text-left">
-          {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retrying on next edit' : `Edited ${stamp(active.updated_at)}`}
+          {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed: retrying on next edit' : `Edited ${stamp(active.updated_at)}`}
         </span>
         <button
           onClick={() => patch(active.id, { pinned: !active.pinned })}

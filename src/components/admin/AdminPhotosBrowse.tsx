@@ -110,7 +110,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
   const [filterDateTo, setFilterDateTo] = useState('');
   const [cameraModels, setCameraModels] = useState<string[]>([]);
 
-  // Console tray — which expandable card (if any) is open below the icon dock
+  // Console tray: which expandable card (if any) is open below the icon dock
   const [openCard, setOpenCard] = useState<'search' | 'filter' | 'library' | null>(null);
 
   // Batch selection
@@ -738,7 +738,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
       {dragRectStyle && <div style={dragRectStyle} />}
 
-      {/* Floating console tray — frosted glass like the public gallery's back-to-top button
+      {/* Floating console tray: frosted glass like the public gallery's back-to-top button
           (bg-white/10 backdrop-blur-md rounded-full), not a solid plate. Fixed at the bottom so
           it's reachable regardless of scroll position; bottom-24 clears the batch action bar
           below (bottom-6) when both are visible. See "Platform Console Tray" in the bento-design

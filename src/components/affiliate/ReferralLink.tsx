@@ -124,7 +124,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
           </div>
         </div>
 
-        {/* Live Demos Link — the marketing asset for pitching web work */}
+        {/* Live Demos Link: the marketing asset for pitching web work */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
@@ -172,7 +172,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
 
           <p className="mt-2 text-white/40 text-xs leading-relaxed">
             Send this to any business that needs a website. It opens the live demo
-            reel — real sites we built — and tags the visitor to your code, so every
+            reel, real sites we built, and tags the visitor to your code, so every
             build they buy pays you.
           </p>
         </div>
@@ -194,11 +194,11 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
             </li>
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">03</span>
-              <span>Paste the demos link in cold emails and DMs — it shows the work instead of describing it, and the referral tag rides along.</span>
+              <span>Paste the demos link in cold emails and DMs; it shows the work instead of describing it, and the referral tag rides along.</span>
             </li>
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">04</span>
-              <span>Links work forever — customers and affiliates are tied to you permanently.</span>
+              <span>Links work forever: customers and affiliates are tied to you permanently.</span>
             </li>
           </ul>
         </div>

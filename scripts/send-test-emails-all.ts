@@ -21,7 +21,7 @@ interface ZohoAuthContext { accessToken: string; accountId: string; fromEmail: s
 
 async function sendTest(auth: ZohoAuthContext, subject: string, html: string) {
   const result = await sendZohoEmail({ auth, to: TO, subject, htmlContent: html })
-  console.log(result.success ? `  ✅  ${subject}` : `  ❌  ${subject} — ${result.error}`)
+  console.log(result.success ? `  ✅  ${subject}` : `  ❌  ${subject}: ${result.error}`)
   await delay(600)
 }
 
@@ -53,7 +53,7 @@ function adminShellHtml(body: string) {
 <body style="margin:0;padding:32px;background:#000;color:#fff;font-family:Arial,sans-serif;">
 <div style="max-width:640px;margin:0 auto;">${body}
 <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;">
-<p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">Automated notification — THE LOST+UNFOUNDS</p>
+<p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">Automated notification; THE LOST+UNFOUNDS</p>
 </div></body></html>`
 }
 
@@ -63,8 +63,8 @@ async function main() {
   console.log('\n📧  Sending 12 test emails to thelostandunfounds@gmail.com…\n')
   const auth = await getZohoAuthContext()
 
-  // 1. Booking inquiry (admin) — standard template
-  await sendTest(auth, '[TEST] New Booking Inquiry — Lifestyle Shoot',
+  // 1. Booking inquiry (admin): standard template
+  await sendTest(auth, '[TEST] New Booking Inquiry, Lifestyle Shoot',
     generateTransactionalEmail(`
       <h1 style="color:#fff;font-size:24px;font-weight:bold;margin:0 0 8px;letter-spacing:.05em;">[TEST] NEW BOOKING INQUIRY</h1>
       <p style="color:#999;font-size:13px;margin:0 0 24px;">Submitted ${new Date().toLocaleString()}</p>
@@ -78,11 +78,11 @@ async function main() {
       <p style="color:#666;font-size:12px;margin:32px 0 0;">Booking ID: <code style="color:#888;">test-booking-000</code></p>
     `))
 
-  // 2. Client booking confirmation — standard template
-  await sendTest(auth, '[TEST] Your Booking Request Is In — TLAU',
+  // 2. Client booking confirmation: standard template
+  await sendTest(auth, '[TEST] Your Booking Request Is In, TLAU',
     generateTransactionalEmail(`
       <h1 style="color:#fff;font-size:24px;font-weight:bold;margin:0 0 16px;letter-spacing:.05em;">[TEST] YOUR BOOKING REQUEST IS IN</h1>
-      <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">Hey Jane — thanks for reaching out. I'll get back to you within 24 hours. Nothing is finalized until the 50% deposit is received.</p>
+      <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">Hey Jane; thanks for reaching out. I'll get back to you within 24 hours. Nothing is finalized until the 50% deposit is received.</p>
       <p style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px;">What you submitted</p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
         <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;">Shoot Type</td><td style="color:#fff;font-size:14px;padding:8px 0;">Lifestyle Shoot</td></tr>
@@ -90,11 +90,11 @@ async function main() {
         <tr><td style="color:#999;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;">Location</td><td style="color:#fff;font-size:14px;padding:8px 0;">Downtown Chicago, IL</td></tr>
       </table>
       <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px;">A <b>50% non-refundable deposit</b> holds the date. We accept <b>Bitcoin (Strike)</b>, Apple Pay, Cashapp, and Venmo.</p>
-      <p style="color:#fff;font-size:14px;margin:32px 0 0;">— Joshua / TLAU</p>
+      <p style="color:#fff;font-size:14px;margin:32px 0 0;">, Joshua / TLAU</p>
     `))
 
-  // 3. Photo downloads — standard template via generateTransactionalEmail
-  await sendTest(auth, '[TEST] Your Photo Marketplace Downloads — THE LOST+UNFOUNDS',
+  // 3. Photo downloads: standard template via generateTransactionalEmail
+  await sendTest(auth, '[TEST] Your Photo Marketplace Downloads; THE LOST+UNFOUNDS',
     generateTransactionalEmail(`
       <h1 style="color:#fff;text-transform:uppercase;letter-spacing:-1px;font-size:28px;font-weight:bold;margin:0 0 10px;">[TEST] Your Downloads are Ready</h1>
       <p style="color:#999;font-size:16px;margin:0 0 30px;">Thank you for your purchase. Your high-resolution files are available below.</p>
@@ -105,8 +105,8 @@ async function main() {
       <p style="color:#666;font-size:12px;margin:20px 0 0;">Order ID: test-order-000</p>
     `))
 
-  // 4. Admin purchase notification — standard template via generateTransactionalEmail
-  await sendTest(auth, '[TEST] New Sale: jane@example.com — THE LOST+UNFOUNDS',
+  // 4. Admin purchase notification: standard template via generateTransactionalEmail
+  await sendTest(auth, '[TEST] New Sale: jane@example.com; THE LOST+UNFOUNDS',
     generateTransactionalEmail(`
       <h1 style="color:#fff;text-transform:uppercase;letter-spacing:-1px;font-size:24px;font-weight:bold;border-bottom:1px solid #333;padding-bottom:20px;margin:0 0 24px;">[TEST] NEW PURCHASE</h1>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
@@ -117,7 +117,7 @@ async function main() {
       <p style="margin:24px 0 0;"><a href="https://www.thelostandunfounds.com/admin" style="color:#999;font-size:11px;text-transform:uppercase;text-decoration:none;letter-spacing:2px;">View Admin Dashboard →</a></p>
     `))
 
-  // 5. Welcome email — custom HTML with Supabase banner (same as welcome handler)
+  // 5. Welcome email: custom HTML with Supabase banner (same as welcome handler)
   const welcomeHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#000;font-family:Arial,sans-serif;">
 <table role="presentation" style="width:100%;border-collapse:collapse;background:#000;">
@@ -144,15 +144,15 @@ async function main() {
 </table></td></tr></table></body></html>`
   await sendTest(auth, '[TEST] Welcome to THE LOST ARCHIVES BOOK CLUB', welcomeHtml)
 
-  // 6. Newsletter — generateNewsletterEmail (standard template)
-  await sendTest(auth, '[TEST] Newsletter — Community Update April 2026',
+  // 6. Newsletter: generateNewsletterEmail (standard template)
+  await sendTest(auth, '[TEST] Newsletter; Community Update April 2026',
     generateNewsletterEmail(`
-      <h2 style="color:#fff;font-size:22px;font-weight:bold;margin:0 0 16px;">[TEST] COMMUNITY UPDATE — APRIL 2026</h2>
+      <h2 style="color:#fff;font-size:22px;font-weight:bold;margin:0 0 16px;">[TEST] COMMUNITY UPDATE; APRIL 2026</h2>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">This is a test of the newsletter template. The banner above should appear once.</p>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">New this month: gallery, events, and book club updates.</p>
     `, TO))
 
-  // 7. New subscription notification (admin — minimal shell, no Supabase banner in body)
+  // 7. New subscription notification (admin: minimal shell, no Supabase banner in body)
   await sendTest(auth, '[TEST] New PRO subscription',
     adminShellHtml(`
       <h2 style="margin:0 0 16px;font-size:24px;">[TEST] New subscription created</h2>
@@ -166,7 +166,7 @@ async function main() {
       </table>`))
 
   // 8. Blog submission received
-  await sendTest(auth, '[TEST] Article Submission Received — THE LOST ARCHIVES',
+  await sendTest(auth, '[TEST] Article Submission Received; THE LOST ARCHIVES',
     blogHtml('Hello Jane,', `
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">Thank you for submitting your article to THE LOST ARCHIVES.</p>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;"><strong>[TEST] The Art of Street Photography in 2026</strong></p>
@@ -180,7 +180,7 @@ async function main() {
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">Thank you for your contribution!</p>`))
 
   // 10. Blog submission rejected
-  await sendTest(auth, '[TEST] Submission Update — THE LOST ARCHIVES',
+  await sendTest(auth, '[TEST] Submission Update; THE LOST ARCHIVES',
     blogHtml('Hello Jane,', `
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">After careful review, we're unable to publish your submission at this time.</p>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;"><strong>[TEST] The Art of Street Photography in 2026</strong></p>
@@ -191,7 +191,7 @@ async function main() {
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">We encourage you to revise and resubmit.</p>`))
 
   // 11. Blog post published (author notification)
-  await sendTest(auth, '[TEST] Your Article is Live — THE LOST ARCHIVES',
+  await sendTest(auth, '[TEST] Your Article is Live; THE LOST ARCHIVES',
     blogHtml('Hello Jane,', `
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;">Your article is live on THE LOST ARCHIVES!</p>
       <p style="color:#fff;font-size:16px;line-height:1.6;margin:0 0 20px;"><strong>[TEST] The Art of Street Photography in 2026</strong></p>
@@ -200,16 +200,16 @@ async function main() {
         <tr><td align="left"><a href="https://www.thelostandunfounds.com/blog/test" style="${BTN}">Read Your Article →</a></td></tr>
       </table>`))
 
-  // 12. Photography contract — brand banner + white card, via sendZohoEmail
-  await sendTest(auth, '[TEST] Photography Services Agreement — THE LOST+UNFOUNDS',
+  // 12. Photography contract: brand banner + white card, via sendZohoEmail
+  await sendTest(auth, '[TEST] Photography Services Agreement; THE LOST+UNFOUNDS',
     generateContract({
       clientName: 'Jane Smith (TEST)',
       clientEmail: TO,
       eventDate: 'Saturday, May 10, 2026',
-      locations: [{ name: 'Millennium Park', address: 'Chicago, IL', peakHours: '10am–12pm' }],
+      locations: [{ name: 'Millennium Park', address: 'Chicago, IL', peakHours: '10am, 12pm' }],
       totalPrice: 800,
       deliverablesPerLocation: '20 edited photos + 1 reel',
-      notes: 'This is a test contract email — no real agreement.',
+      notes: 'This is a test contract email; no real agreement.',
     }))
 
   console.log('\nDone. Check thelostandunfounds@gmail.com for all 12 test emails.\n')

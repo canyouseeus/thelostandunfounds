@@ -10,12 +10,12 @@ export { getZohoAuthContext } from './_zoho-email-utils.js';
 
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
 
-// Outbound mail sends as media@ — the business address of record, and the
+// Outbound mail sends as media@: the business address of record, and the
 // address correspondence is CC'd to. The Zoho OAuth account is still admin@
 // (that's what auth.accountId resolves), but the visible From is media@ so a
 // recipient replying to a booking, quote or inquiry lands in the media inbox
 // rather than the admin one. Matches the booking flow, which has sent as
-// media@ since it was written — see FROM_EMAIL in _booking-payment-utils.ts.
+// media@ since it was written: see FROM_EMAIL in _booking-payment-utils.ts.
 const MEDIA_FROM_EMAIL = 'media@thelostandunfounds.com';
 
 // Rate limit helper - 200ms delay between calls
@@ -89,7 +89,7 @@ export interface SendEmailParams {
     contentType: string;
   }>;
   inReplyTo?: string;
-  /** Override the sender. Defaults to MEDIA_FROM_EMAIL — see the constant. */
+  /** Override the sender. Defaults to MEDIA_FROM_EMAIL: see the constant. */
   from?: string;
 }
 
@@ -233,7 +233,7 @@ export async function getMessage(
     const m = data.data || data;
 
     const message: MailMessageFull = {
-      // Prefer the requested IDs (exact strings) over Zoho's response fields —
+      // Prefer the requested IDs (exact strings) over Zoho's response fields;
       // Zoho returns these as unquoted JSON numbers, and IDs this large
       // (e.g. 1783136480784158500) exceed Number.MAX_SAFE_INTEGER and get
       // silently rounded by JSON.parse.

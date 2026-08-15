@@ -3,7 +3,7 @@
  *
  * Records every signup attempt (success or failure) so a report like
  * "I tried to sign up and it didn't work" is diagnosable after the fact.
- * Fire-and-forget from the client — never let a logging failure surface
+ * Fire-and-forget from the client, never let a logging failure surface
  * to the user or block the auth flow.
  */
 

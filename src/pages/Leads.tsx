@@ -13,7 +13,7 @@ import {
  * Sales pipeline tracker for the fabrication service. Internal / admin-gated.
  * Prospect status + notes persist in the browser (localStorage) so the page
  * is a working tracker without a backend. Seed leads were researched from
- * public listings (July 2026) — VERIFY flags mark unconfirmed contact info.
+ * public listings (July 2026): VERIFY flags mark unconfirmed contact info.
  */
 
 type Status = 'New' | 'Contacted' | 'Quoted' | 'Won' | 'Pass';
@@ -42,7 +42,7 @@ const CUSTOM_KEY = 'lau_leads_custom_v1';
 const PITCH: Record<Category, JSX.Element> = {
   'Machine Shop': (
     <>
-      "I make custom <b className="text-white font-normal">jigs, fixtures, and tooling</b> in-house — nylon and
+      "I make custom <b className="text-white font-normal">jigs, fixtures, and tooling</b> in-house; nylon and
       carbon-fiber, <b className="text-white font-normal">no minimum order</b>, usually within a few days. When you
       need a one-off and don't want to tie up a machinist, call me." Walk in with a printed sample. Lead with{' '}
       <b className="text-white font-normal">saved labor hours</b>, not the printer.
@@ -50,7 +50,7 @@ const PITCH: Record<Category, JSX.Element> = {
   ),
   'Dental Lab': (
     <>
-      "I run a <b className="text-white font-normal">9K resin printer with biocompatible and castable resin</b> — I can
+      "I run a <b className="text-white font-normal">9K resin printer with biocompatible and castable resin</b>; I can
       turn around <b className="text-white font-normal">models, dies, and aligner molds</b> fast when you're backed up.
       Think of me as overflow capacity." Lead with <b className="text-white font-normal">accuracy + same-day
       turnaround</b> during their busy weeks.
@@ -59,7 +59,7 @@ const PITCH: Record<Category, JSX.Element> = {
   'Repair Shop': (
     <>
       "When a part's <b className="text-white font-normal">discontinued or backordered</b>, I reverse-engineer and
-      reprint it in <b className="text-white font-normal">nylon or PC</b> — days, not 'never.' Send me the broken
+      reprint it in <b className="text-white font-normal">nylon or PC</b>; days, not 'never.' Send me the broken
       piece." Lead with <b className="text-white font-normal">unblocking a repair</b> they otherwise can't finish.
     </>
   ),
@@ -72,114 +72,114 @@ const MAPS: Record<Category, string> = {
 };
 
 // Researched from public listings, July 2026. Contact details flagged
-// `verify` need confirming before outreach — do not treat as authoritative.
+// `verify` need confirming before outreach: do not treat as authoritative.
 const SEED: Lead[] = [
   // ---------- Machine Shops ----------
   {
     id: 'precise-machining', category: 'Machine Shop',
     name: 'Precise Machining Company', type: 'CNC Machining',
     phone: '512-528-8771', email: 'info@precisemachiningco.com', website: 'https://www.precisemachiningco.com',
-    area: 'Central TX — address unconfirmed', verify: true,
+    area: 'Central TX: address unconfirmed', verify: true,
     note: 'Overflow jigs/fixtures + one-off prototypes. Confirm they are local before visiting.',
   },
   {
     id: 'austin-precision-mm', category: 'Machine Shop',
     name: 'Austin Precision Machining & Mfg', type: 'CNC for OEMs',
-    website: 'https://austinprecisionmachining.com', area: 'Austin — verify address', verify: true,
-    note: 'OEM shop — pitch printed soft-jaws / fixtures and rapid prototypes between runs.',
+    website: 'https://austinprecisionmachining.com', area: 'Austin; verify address', verify: true,
+    note: 'OEM shop: pitch printed soft-jaws / fixtures and rapid prototypes between runs.',
   },
   {
     id: 'jj-machine', category: 'Machine Shop',
     name: 'J&J Machine (Austin page)', type: 'CNC Machine Shop',
-    website: 'https://jjmachine99.com', area: 'Austin? — verify', verify: true,
+    website: 'https://jjmachine99.com', area: 'Austin?; verify', verify: true,
     note: '⚠ Listed number uses a non-local area code; site may be SEO, not a local shop. Verify on Maps first.',
   },
   {
     id: 'twisted-metals', category: 'Machine Shop',
     name: 'Twisted Metals Welding & Fabrication', type: 'Welding / Metal Fab',
-    website: 'https://twistedmetalswelding.com', area: 'Austin — verify address', verify: true,
-    note: 'Custom fab — printed jigs/templates and one-off plastic parts they can’t weld.',
+    website: 'https://twistedmetalswelding.com', area: 'Austin; verify address', verify: true,
+    note: 'Custom fab: printed jigs/templates and one-off plastic parts they can’t weld.',
   },
   {
     id: 'techni-center-weld', category: 'Machine Shop',
     name: 'Welding / Fab Shop (Techni Center Dr)', type: 'Welding / Metal Fab',
-    phone: '(512) 358-6330', area: '5800 Techni Center Dr, 78721 — ~4 mi', verify: true,
+    phone: '(512) 358-6330', area: '5800 Techni Center Dr, 78721; ~4 mi', verify: true,
     note: 'Closest to you. Confirm the business name when you call. Fixtures + templates.',
   },
   {
     id: 'forge-metal-works', category: 'Machine Shop',
     name: 'Forge Metal Works', type: 'Welding / Metal Fab',
-    website: 'https://www.forgemw.com', area: 'Jarrell, TX — ~40 mi N',
-    note: 'Out of range (checked) — deprioritize unless they have an Austin drop-off.',
+    website: 'https://www.forgemw.com', area: 'Jarrell, TX; ~40 mi N',
+    note: 'Out of range (checked): deprioritize unless they have an Austin drop-off.',
   },
   {
     id: 'fathom-austin', category: 'Machine Shop',
     name: 'Fathom Manufacturing (Austin)', type: 'Digital Mfg / 3D Print',
     website: 'https://fathommfg.com/locations/austin-tx', area: 'Austin',
-    note: 'NOT a cold client — large competitor. Approach as overflow / subcontract partner.',
+    note: 'NOT a cold client: large competitor. Approach as overflow / subcontract partner.',
   },
 
   // ---------- Dental Labs ----------
   {
     id: 'electric-arts', category: 'Dental Lab',
     name: 'Electric Arts Dental Lab', type: 'Full-Service Dental Lab',
-    website: 'https://www.electricartsdentallab.com', area: 'Austin — verify address', verify: true,
-    note: 'Strongest dental target — a real full lab. Pitch overflow models, dies, aligner molds, same-day turnaround.',
+    website: 'https://www.electricartsdentallab.com', area: 'Austin; verify address', verify: true,
+    note: 'Strongest dental target: a real full lab. Pitch overflow models, dies, aligner molds, same-day turnaround.',
   },
   {
     id: 'great-state-dental', category: 'Dental Lab',
     name: 'Great State Dental Lab', type: 'Digital Implant Lab',
-    website: 'https://www.greatstatedental.com', area: 'Austin — verify address', verify: true,
-    note: 'Digital implant lab — offer overflow model & surgical-guide printing.',
+    website: 'https://www.greatstatedental.com', area: 'Austin; verify address', verify: true,
+    note: 'Digital implant lab: offer overflow model & surgical-guide printing.',
   },
   {
     id: 'implanttx', category: 'Dental Lab',
     name: 'ImplantTx Dental Lab', type: 'Implant Lab',
-    website: 'https://www.implanttx.com', area: 'Austin — verify address', verify: true,
-    note: 'Implant lab — surgical guides and models are the resin sweet spot.',
+    website: 'https://www.implanttx.com', area: 'Austin; verify address', verify: true,
+    note: 'Implant lab: surgical guides and models are the resin sweet spot.',
   },
   {
     id: 'shoal-creek-prostho', category: 'Dental Lab',
     name: 'Shoal Creek Prosthodontic Group', type: 'In-House Prostho Lab',
-    phone: '(512) 451-7491', area: '1500 W 38th St Ste 34, 78731 — ~5 mi', verify: true,
-    note: 'Runs an in-house lab; may not outsource — but worth a call for overflow capacity.',
+    phone: '(512) 451-7491', area: '1500 W 38th St Ste 34, 78731; ~5 mi', verify: true,
+    note: 'Runs an in-house lab; may not outsource, but worth a call for overflow capacity.',
   },
   {
     id: 'lucent-dentistry', category: 'Dental Lab',
     name: 'Lucent Dentistry', type: 'Dentist (same-day crowns)',
-    phone: '512-458-5600', area: '3909 N IH-35 Suite A1, 78722 — ~2 mi',
-    note: 'Very close, but likely mills crowns in-house — low priority. Good for a warm intro / referral.',
+    phone: '512-458-5600', area: '3909 N IH-35 Suite A1, 78722; ~2 mi',
+    note: 'Very close, but likely mills crowns in-house; low priority. Good for a warm intro / referral.',
   },
 
   // ---------- Repair Shops ----------
   {
     id: 'express-appliance', category: 'Repair Shop',
     name: 'Express Appliance Repair of Austin', type: 'Appliance Repair',
-    phone: '(512) 548-0025', area: 'Serves 78702 / 78721 — verify shop address', verify: true,
+    phone: '(512) 548-0025', area: 'Serves 78702 / 78721; verify shop address', verify: true,
     note: 'May be mobile. Best fit = shops that bench-repair units with obsolete plastic parts.',
   },
   {
     id: 'austin-appliance', category: 'Repair Shop',
     name: 'Austin Appliance Repair', type: 'Appliance Repair',
-    phone: '(512) 399-4425', area: 'Serves 78702 / 78721 — verify', verify: true,
+    phone: '(512) 399-4425', area: 'Serves 78702 / 78721; verify', verify: true,
     note: 'Confirm it is a real local bench shop, not a dispatch/lead-gen line.',
   },
   {
     id: 'tony-appliance', category: 'Repair Shop',
     name: 'Tony Appliance Repair', type: 'Appliance Repair',
-    area: 'Near 78721 (Yelp) — find contact', verify: true,
+    area: 'Near 78721 (Yelp): find contact', verify: true,
     note: 'Yelp-listed near you. Look up on Yelp/Maps for phone + address before contacting.',
   },
   {
     id: 'artifix-appliance', category: 'Repair Shop',
     name: 'ArtiFix Appliance Repair', type: 'Appliance Repair',
-    area: 'Austin (Yelp) — find contact', verify: true,
+    area: 'Austin (Yelp): find contact', verify: true,
     note: 'Yelp-listed; verify contact. Ask what parts they most often can’t source.',
   },
   {
     id: 'yarrow-appliance', category: 'Repair Shop',
     name: 'Yarrow Appliance Repair', type: 'Appliance Repair',
-    area: 'Austin (Yelp) — find contact', verify: true,
+    area: 'Austin (Yelp): find contact', verify: true,
     note: 'Yelp-listed; verify contact. Vintage/discontinued parts = your best pitch.',
   },
 ];
@@ -275,7 +275,7 @@ export default function Leads() {
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
       <Helmet>
         <title>THE LOST+UNFOUNDS | Sales Pipeline</title>
-        <meta name="description" content="Internal sales pipeline tracker for the fabrication service — prospects, status, and notes." />
+        <meta name="description" content="Internal sales pipeline tracker for the fabrication service; prospects, status, and notes." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -288,7 +288,7 @@ export default function Leads() {
           <h1 className="text-[clamp(2rem,6vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
             Pipeline
           </h1>
-          <p className="font-mono text-xs text-white/40">Downtown Austin · 78702 · ~3–5 mi</p>
+          <p className="font-mono text-xs text-white/40">Downtown Austin · 78702 · ~3-5 mi</p>
         </div>
 
         {/* Category filter */}
@@ -313,7 +313,7 @@ export default function Leads() {
         {filter !== 'All' && (
           <div className="border border-white/10 p-5 mb-8">
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-2">
-              The Pitch — {filter}
+              The Pitch: {filter}
             </p>
             <p className="text-sm text-white/70 font-light leading-relaxed">{PITCH[filter]}</p>
           </div>
@@ -430,7 +430,7 @@ export default function Leads() {
                 <textarea
                   value={notesOf(l.id)}
                   onChange={(e) => setNotes(l.id, e.target.value)}
-                  placeholder="Call notes — who you spoke to, next step, quote sent…"
+                  placeholder="Call notes: who you spoke to, next step, quote sent…"
                   rows={2}
                   className="w-full mt-4 px-3 py-2 bg-white/[0.03] border border-white/10 text-white/80 placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors text-sm font-light resize-none"
                 />
@@ -442,10 +442,10 @@ export default function Leads() {
         {/* Disclaimer */}
         <p className="text-[11px] text-white/30 font-light mt-10 leading-relaxed border-t border-white/10 pt-6">
           <b className="text-white/60">About this list.</b> Seed prospects were researched from public listings
-          (July 2026) and are starting points, not verified records — <b className="text-white/60">confirm the company
+          (July 2026) and are starting points, not verified records; <b className="text-white/60">confirm the company
           name, address, and phone before contacting</b>, especially rows marked "Verify." A strict 3-mile radius of
           78702 is sparse for these trades, so some entries sit wider (a few are out of range and flagged). Many
-          "appliance repair" web results are lead-gen dispatch numbers, not real shops — prefer bench-repair shops
+          "appliance repair" web results are lead-gen dispatch numbers, not real shops; prefer bench-repair shops
           you confirm on Yelp/Maps. Status and notes are saved in <b className="text-white/60">this browser only</b>.
         </p>
       </div>

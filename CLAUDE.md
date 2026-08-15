@@ -1,7 +1,7 @@
-# THE LOST+UNFOUNDS — Agent Guide
+# THE LOST+UNFOUNDS: Agent Guide
 
 > **This is the single canonical rules file for all agents (Claude Code and otherwise).**
-> Cursor is no longer used — there is no separate Cursor rule set to keep in sync.
+> Cursor is no longer used: there is no separate Cursor rule set to keep in sync.
 
 ## What This Project Is
 
@@ -26,13 +26,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 
 | What you need | Where to look |
 |---|---|
-| Agent skills (domain-specific guides) | `.claude/skills/*/SKILL.md` — the single canonical location |
+| Agent skills (domain-specific guides) | `.claude/skills/*/SKILL.md`; the single canonical location |
 | Step-by-step workflows | `.agent/workflows/*.md` |
 | Blog publishing rules | Blog Publishing Rule section below |
 | Email branding rules | `.claude/skills/brand-email-manager/SKILL.md` |
 | Design system & styling | `.claude/skills/noir-design/SKILL.md`, `.claude/skills/no-border-design/SKILL.md` |
-| Database schema & migrations | Supabase MCP (`apply_migration`) — see `supabase-mcp` skill. `sql/` is a dead archive |
-| Which Supabase project is live | `cxpyqjxhbvuygnxyukli` — see Database Project Rule below |
+| Database schema & migrations | Supabase MCP (`apply_migration`); see `supabase-mcp` skill. `sql/` is a dead archive |
+| Which Supabase project is live | `cxpyqjxhbvuygnxyukli`; see Database Project Rule below |
 | Environment variables | `.env.local` (local), Vercel dashboard (prod) |
 | Deployment verification | `.agent/workflows/deploy-and-verify.md` |
 | Setup & onboarding docs | `docs/setup/` |
@@ -44,7 +44,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 
 **Production runs on Supabase project `cxpyqjxhbvuygnxyukli` ("SCOT33 BACK-UP").** The site was
 switched to this backup to escape an egress overage on the original project,
-`nonaqhllakrckbtbawrb`. The old project is no longer the live database — do not apply migrations
+`nonaqhllakrckbtbawrb`. The old project is no longer the live database; do not apply migrations
 to it, and do not treat data there as current.
 
 **The local `.env` is stale and still names the old project.** It is not evidence of anything.
@@ -58,11 +58,11 @@ curl -sS "https://www.thelostandunfounds.com$JS" | grep -o 'https://[a-z0-9]*\.s
 
 Vercel's environment variables are the source of truth for production; `.env` only affects local
 runs. If a Supabase MCP call returns "You do not have permission to perform this action", you are
-almost certainly pointed at the retired project — check the ref before concluding you lack access.
+almost certainly pointed at the retired project; check the ref before concluding you lack access.
 
-## EVIDENCE RULE — every task, no exceptions
+## EVIDENCE RULE: every task, no exceptions
 
-Statements about your own process are reconstructions, not logs — they come out confident whether
+Statements about your own process are reconstructions, not logs; they come out confident whether
 or not they're true. Produce artifacts instead.
 
 **Before writing code:**
@@ -73,7 +73,7 @@ or not they're true. Produce artifacts instead.
    wins. Never reconcile a conflict silently.
 
 **Before saying it's done:**
-4. Show the artifact — rendered page, screenshot, command output. Not a description of one.
+4. Show the artifact: rendered page, screenshot, command output. Not a description of one.
 5. Every check must be able to fail. A command that passes when its inputs are missing is not a
    check. Verify the failure path before trusting the pass.
 6. Look at the whole output, not just the part you changed. Bugs hide in what you didn't inspect.
@@ -81,11 +81,11 @@ or not they're true. Produce artifacts instead.
 **Styling work:** run `git log --oneline -3` first. If `noir-design` still says *"rigid, thin
 borders"*, you're on a stale base and every rule you read is wrong.
 
-## SKILL UTILIZATION RULE — HIGHEST PRIORITY
+## SKILL UTILIZATION RULE: HIGHEST PRIORITY
 
 **Before starting ANY task, read the relevant SKILL.md files.**
 
-Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canonical location.
+Skills live in **`.claude/skills/<name>/SKILL.md`**; this is the single canonical location.
 (`.agent/skills/` and `skills/` were duplicate forks and have been deleted. Do not recreate them.)
 
 | Keywords / Domain | Required Skill(s) |
@@ -116,6 +116,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | Google service account, photographer | `gallery-agent-management` |
 | deployment verification, Vercel status | `dev-parity-guard` (see Deployment Verification Rule below) |
 | page titles, h1, heading case | Page Title Style Rule below |
+| copy, wording, punctuation, tone, any writing at all | `brand-voice` (authority), NO EM DASHES rule below |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 
@@ -123,13 +124,13 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 
 | Command | When | File |
 |---|---|---|
-| `/ralph-loop` | After any change — self-verify | `.agent/workflows/ralph-loop.md` |
+| `/ralph-loop` | After any change: self-verify | `.agent/workflows/ralph-loop.md` |
 | `/preflight-check` | Before committing | `.agent/workflows/preflight-check.md` |
 | `/deploy-and-verify` | Deploying to production | `.agent/workflows/deploy-and-verify.md` |
 | `/cleanup` | Monthly maintenance | `.agent/workflows/cleanup.md` |
 | `/send-email` | Sending emails | `.agent/workflows/send-email.md` |
 
-## CAPABILITY RULE — build it before reporting you can't
+## CAPABILITY RULE: build it before reporting you can't
 
 The Vercel environment holds the Stripe, Supabase, Zoho and Google credentials so the platform can
 act on its own behalf. When a connector or MCP tool is blocked in a non-interactive session
@@ -138,19 +139,56 @@ not send the owner into a third-party dashboard.** Check whether the app already
 credential and add an admin-gated endpoint that does the job.
 
 Read `build-the-endpoint` first. It has the pattern, the admin gate, and the cases where this must
-NOT be used — chiefly, never rebuild a capability the owner deliberately denied.
+NOT be used, chiefly, never rebuild a capability the owner deliberately denied.
 
 ## MODEL SELECTION RULE
 
 Match the model to the task's difficulty. Use the cheapest model that can do the job.
 
-- **Haiku**: mechanical work with a known path — git operations, file moves/renames, running an existing script, status checks, applying a known migration, sending an already-drafted email. Also all scheduled monitor tasks.
-- **Sonnet**: the default for ordinary coding — bug fixes, UI changes, copy updates, component work.
-- **Opus**: reserved for genuinely hard problems — system architecture, multi-service builds, or debugging that already defeated a cheaper model.
+- **Haiku**: mechanical work with a known path; git operations, file moves/renames, running an existing script, status checks, applying a known migration, sending an already-drafted email. Also all scheduled monitor tasks.
+- **Sonnet**: the default for ordinary coding; bug fixes, UI changes, copy updates, component work.
+- **Opus**: reserved for genuinely hard problems; system architecture, multi-service builds, or debugging that already defeated a cheaper model.
 
 Escalate to a stronger model only after a cheaper one demonstrably fails.
 
-## SEVEN CRITICAL INVARIANTS
+## NO EM DASHES, EVER
+
+**Never use an em dash (—) or an en dash (–). Anywhere. In anything.**
+
+This is a brand voice rule, not a style preference. It applies to every word this project
+produces: site copy, page titles, blog posts, emails, invoices, proposals, commit messages, PR
+descriptions, code comments, agent docs, skills, and this file. It applies to text you write for
+the owner to read as much as to text a customer reads.
+
+Use ordinary punctuation instead. Pick the one that fits:
+
+| Instead of an em dash | Use | Example |
+|---|---|---|
+| Label, then explanation | colon | `Deploy: merge to main, push, verify.` |
+| Two independent clauses | semicolon or full stop | `The build passed; the deploy is queued.` |
+| A parenthetical aside | paired commas | `The gallery, synced nightly, holds 4k photos.` |
+| An aside that already has commas | parentheses | `Consultation work (web, retainer, editorial) bills monthly.` |
+| A trailing fragment | comma | `Ship it, carefully.` |
+| A numeric range | hyphen | `$195-$6,000`, `4-8 items` |
+
+**Two things are not covered by this rule**, because they are typography rather than writing:
+
+1. The `'—'` glyph used as a "no value" placeholder in data tables and dashboards, e.g.
+   `{invoice.paid_at ?? '—'}`. That is a UI mark, not a sentence.
+2. A dash inside a regex character class, e.g. `/[—–⸻]/g`, which is how
+   `src/utils/blogUtils.ts` and `BlogSubmissionReview.tsx` strip these characters out of
+   submitted copy.
+
+**Enforcement:** `npm run check:dashes` scans every tracked file and exits non-zero on a
+violation. It also runs in `prebuild`, so a stray dash fails the build before it reaches
+production. Do not add allowances to widen the rule.
+
+This rule already existed for outside contributors, in the five writing prompts under
+`public/prompts/`, and the blog submission pipeline has stripped these characters for a long
+time. It was never written down for agents, which is why agent-written copy kept reintroducing
+them. It is written down now.
+
+## EIGHT CRITICAL INVARIANTS
 
 These rules are **non-negotiable**. Violating them will break production.
 
@@ -175,31 +213,36 @@ Use the keyword table above.
 ### 7. Produce evidence, not claims
 Quote the rule you followed, show the rendered output, and make sure every check you run is capable of failing. See the Evidence Rule above.
 
+### 8. No em dashes or en dashes
+Not in copy, code comments, commit messages, or docs. Use a comma, colon, semicolon, full stop, or
+parentheses. `npm run check:dashes` enforces it and runs in `prebuild`. See the NO EM DASHES rule
+above.
+
 ## BLOG POST PUBLISHING RULE
 
 Publishing a post is a **database write via the Supabase MCP server**. Read `supabase-mcp` and
 `blog-publishing` first.
 
-1. **Apply via MCP** — `apply_migration`, named `publish_blog_post_[slug]`
+1. **Apply via MCP**: `apply_migration`, named `publish_blog_post_[slug]`
    - Use check-and-insert pattern (invariant #3)
    - Include title, slug, content, excerpt, SEO fields, published=true, status='published'
-2. **Verify the write** — query the row back with `execute_sql`
+2. **Verify the write**: query the row back with `execute_sql`
 3. **Verify the rendered post** at `https://www.thelostandunfounds.com/thelostarchives/[slug]`
 
 **Never** write SQL files to `sql/` or `public/sql/`, and never hand SQL to the user to paste into
 the Supabase dashboard. The `/sql` page, `src/pages/SQL.tsx` and the `SQL_FILES` endpoint were
-removed — do not recreate them.
+removed: do not recreate them.
 
 ## EMAIL SENDING RULE
-- Never claim you can't send email — use Zoho Mail integrations
+- Never claim you can't send email; use Zoho Mail integrations
 - Test: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with `{"testEmail":"target@example.com"}`
 - Required env vars: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_FROM_EMAIL`
-- **Always CC `media@thelostandunfounds.com`** on media-related outbound mail — client and booking
+- **Always CC `media@thelostandunfounds.com`** on media-related outbound mail; client and booking
   correspondence, invoices, quotes, proposals, shoot confirmations, photographer coordination. It is
   the business address of record, so the thread stays on file even when a reply goes to one person.
-  Use the CC field, not BCC — recipients should see it. Never substitute a personal address for it.
+  Use the CC field, not BCC; recipients should see it. Never substitute a personal address for it.
   Bulk sends (newsletters, campaigns) are exempt: one CC per subscriber is not a business record.
-  Verify the CC actually landed before treating a send as done — a dropped CC fails silently.
+  Verify the CC actually landed before treating a send as done; a dropped CC fails silently.
 
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials
@@ -214,26 +257,26 @@ Clock face click → cycles formats (Analog → Digital 12h → 24h). Top label 
 
 Applies to ANY tool that interacts with a web browser, or when asked to "browse", "check online", "verify url", or "search".
 
-1. **Read first** — `.claude/skills/smart-browsing/SKILL.md` before the first browser action of a session.
-2. **Single tab policy** — never open multiple tabs; reuse the existing tab/session.
-3. **Page load protocol** — wait for visible UI elements or 15 seconds (whichever comes first) before calling a page "failed." Don't fail on an initial blank screen before that window elapses.
+1. **Read first**: `.claude/skills/smart-browsing/SKILL.md` before the first browser action of a session.
+2. **Single tab policy**, never open multiple tabs; reuse the existing tab/session.
+3. **Page load protocol**: wait for visible UI elements or 15 seconds (whichever comes first) before calling a page "failed." Don't fail on an initial blank screen before that window elapses.
 
 ## DEPLOYMENT VERIFICATION RULE
 
 After creating any deployment (Vercel or otherwise), you MUST before calling the task done:
 
-1. **Check deployment status** — state is `READY`/`SUCCESS`, not an intermediate state (`BUILDING`, `QUEUED`) or a failure (`ERROR`, `CANCELED`)
-2. **Review build logs** — check for errors/warnings/failures
-3. **Verify the deployment URL** — fetch it and confirm it's accessible
-4. **Confirm functionality** — exercise the key feature that changed
+1. **Check deployment status**: state is `READY`/`SUCCESS`, not an intermediate state (`BUILDING`, `QUEUED`) or a failure (`ERROR`, `CANCELED`)
+2. **Review build logs**: check for errors/warnings/failures
+3. **Verify the deployment URL**: fetch it and confirm it's accessible
+4. **Confirm functionality**: exercise the key feature that changed
 
-**Builds currently take about 5 minutes.** Do not treat `BUILDING` at the 30-second or 1-minute mark as a problem, and do not poll every 15s — that just burns calls on a build that was never going to be done. Wait ~5 minutes before the first status check, then poll every ~30–60s up to a 10-minute timeout. Report it's still building rather than guessing success. Never mark a deployment complete based on creation alone or on logs you didn't check.
+**Builds currently take about 5 minutes.** Do not treat `BUILDING` at the 30-second or 1-minute mark as a problem, and do not poll every 15s; that just burns calls on a build that was never going to be done. Wait ~5 minutes before the first status check, then poll every ~30-60s up to a 10-minute timeout. Report it's still building rather than guessing success. Never mark a deployment complete based on creation alone or on logs you didn't check.
 
 **Never verify against production before the deploy carrying your change is `READY`.** Fetching a page or hitting an endpoint mid-build exercises the *previous* deployment, so a fix looks broken and an unfixed bug looks fixed. Both have happened. Confirm `READY` first, then verify.
 
 ## GRAPH STYLE RULE
 
-Every chart on the platform draws in the hero revenue chart's dialect — see
+Every chart on the platform draws in the hero revenue chart's dialect; see
 `CHART_ACCENTS` and the `Sparkline` primitive in `src/components/ui/viz.tsx`:
 monotone-smoothed 2px line, flat ~12% fill, r=2 data dots; bars are the accent at
 10% for the track with a solid accent fill. Categories differ by **accent color
@@ -242,16 +285,16 @@ bookings amber-500), never by dialect. Never introduce a new chart style.
 
 ## PAGE TITLE STYLE RULE
 
-Main page titles (h1 headings — page titles, navigation/landing titles, major section titles) are **UPPERCASE**. Does NOT apply to error messages, loading states, success toasts, subheadings (h2+), body text, button labels, or form labels.
+Main page titles (h1 headings: page titles, navigation/landing titles, major section titles) are **UPPERCASE**. Does NOT apply to error messages, loading states, success toasts, subheadings (h2+), body text, button labels, or form labels.
 
 ## SECURITY
 
-- **Dependency security**: `npm audit` on request or via `dep-security` skill — check for CVEs, recommend updates.
+- **Dependency security**: `npm audit` on request or via `dep-security` skill; check for CVEs, recommend updates.
 - **Auth security**: review Supabase Auth config, Google OAuth setup, session management, RLS policies when asked about authentication.
 - **API/DB security**: audit Supabase RLS policies, check for injection vectors when asked about API or database security.
 - **Infra security**: check Vercel config, env vars, SSL/TLS, Cloudflare Turnstile when asked about infrastructure or deployment security.
 - **Frontend security**: scan for XSS, exposed secrets, CSP headers when asked about frontend security.
-- **Severity response** — critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. There is no automated schedule — these run when asked or when something looks wrong, not on a timer.
+- **Severity response**: critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. There is no automated schedule: these run when asked or when something looks wrong, not on a timer.
 
 ## ENVIRONMENT VARIABLES
 

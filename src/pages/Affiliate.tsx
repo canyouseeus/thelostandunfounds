@@ -1047,7 +1047,7 @@ export default function Affiliate() {
               </div>
             </div>
 
-            {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
+            {/* Console: full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
             <ExpandableScreen
               isOpen={activeApp !== null}
               onOpenChange={(open) => { if (!open) setActiveApp(null); }}
@@ -1086,7 +1086,7 @@ export default function Affiliate() {
                 <>
                   {/* Job pay for shoots covered. Lives here as well as on the
                       photographer dashboard because this is where contractors
-                      actually land — the affiliate earnings figure above reads
+                      actually land: the affiliate earnings figure above reads
                       $0.00 for someone who has been paid for shoots, since
                       commission and wages are deliberately separate ledgers. */}
                   {user && <JobPayouts userId={user.id} />}
@@ -1252,7 +1252,7 @@ export default function Affiliate() {
                     <div className="text-white/40 text-xs uppercase tracking-widest py-12 text-center animate-pulse">Loading dashboard...</div>
                   ) : dashError || !dashData ? (
                     <div className="text-white/40 text-xs uppercase tracking-widest py-12 text-center">
-                      {dashError || (userIsAdmin && !affiliateData ? 'No affiliate account — sign up at /become-affiliate' : 'Failed to load')}
+                      {dashError || (userIsAdmin && !affiliateData ? 'No affiliate account: sign up at /become-affiliate' : 'Failed to load')}
                     </div>
                   ) : (
                     <>
@@ -1462,7 +1462,7 @@ export default function Affiliate() {
                                   <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Details Submitted</span><span className="text-white font-mono uppercase tracking-widest text-xs">{stripeStatus?.details_submitted ? 'Yes' : 'No'}</span></div>
                                   {stripeStatus?.requirements && stripeStatus.requirements.length > 0 && (
                                     <div className="pb-4 bg-yellow-500/5 px-4 py-3">
-                                      <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest">Action Required — Complete your Stripe profile to unlock payouts</p>
+                                      <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest">Action Required; Complete your Stripe profile to unlock payouts</p>
                                     </div>
                                   )}
                                   <button onClick={handleConnectStripe} disabled={stripeRedirecting} className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1663,7 +1663,7 @@ export default function Affiliate() {
                         </div>
                       )}
 
-                      {/* Payout Request Modal — lives outside all tab conditionals so it renders on any active tab */}
+                      {/* Payout Request Modal: lives outside all tab conditionals so it renders on any active tab */}
                       {showPayoutRequest && dashData && (
                         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
                           <div className="bg-black border-0 rounded-none p-8 max-w-md w-full">

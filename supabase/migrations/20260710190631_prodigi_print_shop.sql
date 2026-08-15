@@ -7,7 +7,7 @@
 -- prodigi_orders: one row per Prodigi fulfillment order. Decoupled from
 -- shop_orders because a Prodigi order can originate from either the Stripe
 -- checkout flow (shop_orders exists) or the Strike/Lightning flow (no
--- shop_orders row — Strike invoices aren't persisted anywhere today).
+-- shop_orders row: Strike invoices aren't persisted anywhere today).
 
 CREATE TABLE IF NOT EXISTS prodigi_products (
     id                   UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -91,7 +91,7 @@ CREATE TRIGGER prodigi_orders_updated_at
     FOR EACH ROW EXECUTE FUNCTION prodigi_set_updated_at();
 
 -- Service role writes; nothing public reads these directly (same policy
--- shape as shop_orders — API routes use the service role key).
+-- shape as shop_orders: API routes use the service role key).
 ALTER TABLE prodigi_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prodigi_orders ENABLE ROW LEVEL SECURITY;
 

@@ -1,5 +1,5 @@
 -- Booking payment flow: quote → 50% deposit → final invoice → balance.
--- Idempotent — safe to re-run.
+-- Idempotent: safe to re-run.
 
 -- ── bookings: deposit tracking + 'deposit_paid' status ───────────────────────
 ALTER TABLE bookings

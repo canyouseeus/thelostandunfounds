@@ -73,7 +73,7 @@ export function generateContract(params: ContractParams): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Photography Services Agreement — ${PHOTOGRAPHER_NAME}</title>
+  <title>Photography Services Agreement: ${PHOTOGRAPHER_NAME}</title>
   <style>
     body,table,td,p,a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
     table,td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
@@ -197,7 +197,7 @@ export function generateContract(params: ContractParams): string {
                       <tr>
                         <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:14px;color:#111;">
                           <strong>Retainer Due Now (50%)</strong><br>
-                          <span style="font-size:12px;color:#555;">Non-refundable — reserves your date</span>
+                          <span style="font-size:12px;color:#555;">Non-refundable; reserves your date</span>
                         </td>
                         <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:14px;font-weight:bold;color:#111;text-align:right;">${formatCurrency(deposit)}</td>
                       </tr>
@@ -250,7 +250,7 @@ export function generateContract(params: ContractParams): string {
                       <tr>
                         <td style="padding:16px 20px;">
                           <p style="margin:0;font-size:13px;font-weight:bold;color:#fff;letter-spacing:0.05em;text-transform:uppercase;">
-                            Action Required — Pay Retainer to Lock In Your Date
+                            Action Required: Pay Retainer to Lock In Your Date
                           </p>
                           <p style="margin:6px 0 0 0;font-size:13px;color:rgba(255,255,255,0.75);">
                             Your booking is <strong style="color:#fff;">not confirmed</strong> until the ${formatCurrency(deposit)} retainer
@@ -273,13 +273,13 @@ export function generateContract(params: ContractParams): string {
                       <li><strong style="color:#111;">Retainer &amp; Booking:</strong> A 50% retainer (${formatCurrency(deposit)}) is required to secure the date and is non-refundable. It pays for the date being reserved and turned away from other clients, not for work performed. Dates are held on a first-paid basis.</li>
                       <li><strong style="color:#111;">Balance:</strong> Remaining 50% due on the day of the shoot, before photography begins.</li>
                       <li><strong style="color:#111;">Scheduling:</strong> Time divided evenly between locations per peak-hour schedule provided by client.</li>
-                      <li><strong style="color:#111;">Deliverables:</strong> ${deliverablesPerLocation} per location, delivered digitally within 5–7 business days.</li>
+                      <li><strong style="color:#111;">Deliverables:</strong> ${deliverablesPerLocation} per location, delivered digitally within 5-7 business days.</li>
                       <li><strong style="color:#111;">Cancellation by Client:</strong> The retainer is retained in every case. Notice is measured from the scheduled start time.
-                        More than 14 days' notice — nothing further is owed.
-                        Less than 14 days' notice — an additional 25% of the remaining balance (${formatCurrency(balance * 0.25)}) is owed.
-                        Less than 48 hours' notice, or a no-show — the full contract amount (${formatCurrency(totalPrice)}) is owed.</li>
+                        More than 14 days' notice: nothing further is owed.
+                        Less than 14 days' notice: an additional 25% of the remaining balance (${formatCurrency(balance * 0.25)}) is owed.
+                        Less than 48 hours' notice, or a no-show; the full contract amount (${formatCurrency(totalPrice)}) is owed.</li>
                       <li><strong style="color:#111;">Rescheduling:</strong> One reschedule is free with at least 48 hours' notice; the retainer transfers to the new date, which must fall within 90 days and is subject to availability. Any further reschedule is treated as a cancellation and requires a new retainer.</li>
-                      <li><strong style="color:#111;">Cancellation by Photographer:</strong> If we cancel for any reason other than force majeure, all monies paid — including the retainer — are refunded in full, and we will make a good-faith effort to refer a comparable replacement photographer.</li>
+                      <li><strong style="color:#111;">Cancellation by Photographer:</strong> If we cancel for any reason other than force majeure, all monies paid, including the retainer, are refunded in full, and we will make a good-faith effort to refer a comparable replacement photographer.</li>
                       <li><strong style="color:#111;">Usage Rights:</strong> Client receives a non-exclusive license for marketing. Photographer retains full copyright.</li>
                       <li><strong style="color:#111;">Force Majeure:</strong> If either party cannot proceed due to circumstances beyond reasonable control, no cancellation fee applies and both parties agree to reschedule at the earliest mutually available date; the retainer transfers to that date.</li>
                     </ol>

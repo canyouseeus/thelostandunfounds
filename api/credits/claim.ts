@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Bot protection: honeypot field filled = bot
   if (hp) {
-    // Silent accept — don't reveal rejection
+    // Silent accept: don't reveal rejection
     return res.status(200).json({ credits_remaining: 10, is_new: true })
   }
 

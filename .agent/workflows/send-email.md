@@ -16,7 +16,7 @@ description: How to send any outgoing email (newsletter, transactional, notifica
    - **Newsletter emails** → `generateNewsletterEmail(bodyContent, subscriberEmail)`
    - **Transactional emails** → `generateTransactionalEmail(bodyContent)`
    - **Custom emails** → `wrapEmailContent(bodyContent, options)`
-   - ❌ NEVER use `processEmailContent` alone — it does NOT include the logo/banner.
+   - ❌ NEVER use `processEmailContent` alone: it does NOT include the logo/banner.
 
 ## Verify the logo URL
 3. Confirm the logo URL in `lib/email-template.ts` resolves (HTTP 200):

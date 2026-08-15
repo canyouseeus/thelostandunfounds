@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js'
  * cut a Drive folder, insert the photo_libraries row, point the row at the
  * folder, and add the client to invited_emails. Miss the last one and the
  * client gets a link that asks them for an email it will never accept.
- * onboard-gallery.ts does not cover this — it is bound to a photographer
+ * onboard-gallery.ts does not cover this; it is bound to a photographer
  * invitation token and expects the folder to already exist.
  *
  * The Drive folder is created with the owner's OAuth credentials, the same
@@ -96,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!name) return res.status(400).json({ error: 'name is required' })
   if (!clientEmail) {
     // Without this the gallery is private and reachable by nobody.
-    return res.status(400).json({ error: 'clientEmail is required — it is what grants access' })
+    return res.status(400).json({ error: 'clientEmail is required; it is what grants access' })
   }
 
   const slug = slugify(rawSlug || name)
@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('slug', slug)
       .maybeSingle()
 
-    // Never cut a second folder for a gallery that already has one — the
+    // Never cut a second folder for a gallery that already has one; the
     // photos would be in the first and the gallery would read the second.
     let folderId = providedFolderId || existing?.google_drive_folder_id || existing?.gdrive_folder_id || null
     let folderUrl = folderId ? `https://drive.google.com/drive/folders/${folderId}` : null

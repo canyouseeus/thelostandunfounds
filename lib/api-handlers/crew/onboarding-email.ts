@@ -4,7 +4,7 @@ import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
 /**
- * The "you're on the roster — here's what's still missing for *you*" email.
+ * The "you're on the roster: here's what's still missing for *you*" email.
  *
  * The invite email gets somebody onto the roster and asks for their kit list.
  * This is the one that comes after, and the thing that makes it work is that
@@ -14,13 +14,13 @@ import { EMAIL_STYLES } from '../../email-template.js';
  * without Stripe you can be assigned and accrued but never actually paid.
  *
  * A generic "go set everything up" email asks each person to work out for
- * themselves which of those they've already done — which is exactly the effort
+ * themselves which of those they've already done; which is exactly the effort
  * that made them stall the first time. So each send is assembled from that
  * person's real state: what's done is acknowledged in one line, and the body is
  * only the steps they still owe, in the order that unblocks the most.
  *
  * The ordering is not cosmetic. Login gates the dashboard, and the dashboard is
- * where Stripe and the calendar live — so somebody with no account gets exactly
+ * where Stripe and the calendar live, so somebody with no account gets exactly
  * one ask, and the rest is described rather than demanded. Handing a person
  * four buttons when three of them lead to a login wall is how you get zero.
  *
@@ -42,7 +42,7 @@ const SITE = (process.env.SITE_URL || 'https://www.thelostandunfounds.com').repl
 const BUSINESS_RECORD_CC = 'media@thelostandunfounds.com';
 
 // This one goes out over Joshua's name, not the platform's. It asks people for
-// things — their kit, their bank details, their availability — and those asks
+// things (their kit, their bank details, their availability) and those asks
 // land differently from a person than from noreply@. Both providers honour a
 // caller-supplied sender, so this is read on the Zoho path and the Resend
 // fallback alike.
@@ -134,7 +134,7 @@ export function buildOnboardingEmail(person: Recipient): {
   const doneBlock = done.length
     ? `<p style="${EMAIL_STYLES.paragraph}">
          You've already got ${done.length === 1 ? done[0] : `${done.slice(0, -1).join(', ')} and ${done[done.length - 1]}`}
-         — thank you, that's the part most people never get round to.
+         thank you, that's the part most people never get round to.
        </p>`
     : '';
 
@@ -147,11 +147,11 @@ export function buildOnboardingEmail(person: Recipient): {
     // four buttons that all land on a login screen.
     steps.push({
       key: 'login',
-      heading: 'STEP ONE — SIGN IN',
+      heading: 'STEP ONE: SIGN IN',
       body: `
         <p style="${EMAIL_STYLES.paragraph}">
           You don't have a login yet, and it's the only thing standing between you and everything
-          below. <strong>Sign in with this exact email address</strong> — that's what connects the
+          below. <strong>Sign in with this exact email address</strong>; that's what connects the
           account to your spot on the roster. Use a different address and you'll land on an empty
           dashboard while all your work sits somewhere you can't see it.
         </p>
@@ -165,7 +165,7 @@ export function buildOnboardingEmail(person: Recipient): {
   if (!hasGear) {
     steps.push({
       key: 'gear',
-      heading: person.hasLogin ? 'ADD YOUR GEAR' : 'THEN — ADD YOUR GEAR',
+      heading: person.hasLogin ? 'ADD YOUR GEAR' : 'THEN: ADD YOUR GEAR',
       body: `
         <p style="${EMAIL_STYLES.paragraph}">
           <strong>We don't have a kit list for you.</strong> This is the one thing we need back, and
@@ -180,7 +180,7 @@ export function buildOnboardingEmail(person: Recipient): {
   if (!person.hasStripe) {
     steps.push({
       key: 'stripe',
-      heading: person.hasLogin ? 'CONNECT STRIPE' : 'THEN — CONNECT STRIPE',
+      heading: person.hasLogin ? 'CONNECT STRIPE' : 'THEN: CONNECT STRIPE',
       body: `
         <p style="${EMAIL_STYLES.paragraph}">
           <strong>You haven't connected Stripe.</strong> This is the one that costs you money if
@@ -189,7 +189,7 @@ export function buildOnboardingEmail(person: Recipient): {
           button on your dashboard.
         </p>
         <p style="${EMAIL_STYLES.paragraph}">
-          Same account covers both kinds of money — job pay for shoots we send you on, and your
+          Same account covers both kinds of money; job pay for shoots we send you on, and your
           gallery sales. You only do it once.
         </p>
         <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'CONNECT STRIPE')}</p>`,
@@ -200,14 +200,14 @@ export function buildOnboardingEmail(person: Recipient): {
   const calendarBlock = `
     <h2 style="${EMAIL_STYLES.heading2}">BLOCK OUT YOUR DATES</h2>
     <p style="${EMAIL_STYLES.paragraph}">
-      This is brand new, and it's the reason for this email. Your dashboard now has a calendar —
+      This is brand new, and it's the reason for this email. Your dashboard now has a calendar;
       tap any day to mark yourself unavailable, tap it again to free it up. It feeds straight into
       the studio's master calendar, so we can see who's actually free before we start calling. No
       text needed${person.hasLogin ? '' : ' once you\'re signed in'}.
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
       Blocking a day only blocks <em>you</em>. It doesn't close the date for anyone else on the
-      roster and it doesn't stop the studio taking the work — it just means we don't call you about it.
+      roster and it doesn't stop the studio taking the work; it just means we don't call you about it.
     </p>`;
 
   const galleryBlock = `
@@ -215,24 +215,24 @@ export function buildOnboardingEmail(person: Recipient): {
     <p style="${EMAIL_STYLES.paragraph}">
       ${
         person.galleries > 0
-          ? `You've got ${person.galleries} up already — keep going. `
+          ? `You've got ${person.galleries} up already; keep going. `
           : 'You can post galleries and sell prints and digitals through the platform. '
       }
       <strong>You keep 100% of your gallery sales.</strong> We take nothing off the top; you just
-      pay Stripe's processing fee, same as you would anywhere. That's separate from job pay —
-      shoots we send you on are the usual 80/20 split — and both land on the same dashboard.
+      pay Stripe's processing fee, same as you would anywhere. That's separate from job pay:
+      shoots we send you on are the usual 80/20 split, and both land on the same dashboard.
     </p>`;
 
   const askBlock = `
     <h2 style="${EMAIL_STYLES.heading2}">ASK FOR ANYTHING</h2>
     <p style="${EMAIL_STYLES.paragraph}">
       There's a box at the bottom of your dashboard. Type a question, something that's broken, or a
-      feature you want built, and send it — it comes straight to us and the reply shows up in the
+      feature you want built, and send it; it comes straight to us and the reply shows up in the
       same place. You don't need to know whether something is possible. Ask, and we'll tell you;
       if enough of you want the same thing, we'll build it.
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
-      Genuinely — go poke around and tell us what's missing. That's the fastest way this gets
+      Genuinely: go poke around and tell us what's missing. That's the fastest way this gets
       better for all of you.
     </p>`;
 
@@ -243,15 +243,15 @@ export function buildOnboardingEmail(person: Recipient): {
   if (!missing.length) {
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName} — thank you again for signing up. You're one of the few who is completely
+        Hey ${firstName}: thank you again for signing up. You're one of the few who is completely
         set up: login, gear list and Stripe all done. Nothing to chase you for, so this is just the
         new stuff.
       </p>`;
-    subject = `${firstName}, you're all set — and your dashboard just got a calendar`;
+    subject = `${firstName}, you're all set, and your dashboard just got a calendar`;
   } else if (missing.length === 3) {
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName} — thank you again for signing up. You're on the roster, but nothing's
+        Hey ${firstName}: thank you again for signing up. You're on the roster, but nothing's
         switched on yet, so right now we can't call you for work and couldn't pay you if we did.
         Here's exactly what's left, shortest path first.
       </p>`;
@@ -263,8 +263,8 @@ export function buildOnboardingEmail(person: Recipient): {
     const one = missing.length === 1;
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName} — thank you again for signing up. You're nearly there:
-        ${one ? 'the only thing still missing is' : "there are two things left —"} ${label}.
+        Hey ${firstName}: thank you again for signing up. You're nearly there:
+        ${one ? 'the only thing still missing is' : "there are two things left; "} ${label}.
         Here's what that takes.
       </p>`;
     subject = one
@@ -287,12 +287,12 @@ export function buildOnboardingEmail(person: Recipient): {
     ${galleryBlock}
     ${askBlock}
 
-    <p style="${EMAIL_STYLES.paragraph}">— Joshua / THE LOST+UNFOUNDS</p>
+    <p style="${EMAIL_STYLES.paragraph}">; Joshua / THE LOST+UNFOUNDS</p>
 
     <hr style="${EMAIL_STYLES.divider}" />
 
     <p style="${EMAIL_STYLES.muted}">
-      This one comes straight from me — reply to it and it lands in my inbox. Anything about a
+      This one comes straight from me; reply to it and it lands in my inbox. Anything about a
       shoot, a payment or a date can go here or in the box on the dashboard, whichever is quicker
       for you.
     </p>
@@ -383,7 +383,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Preview: one copy of each distinct variant, to the owner ───────
     // Sending only the first person's copy would hide exactly what this
-    // endpoint exists to get right — that the emails differ per person.
+    // endpoint exists to get right: that the emails differ per person.
     if (testEmail) {
       const seen = new Set<string>();
       const samples = roster.filter((person) => {
@@ -400,7 +400,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           to: testEmail,
           cc: BUSINESS_RECORD_CC,
           from: FROM_ADDRESS,
-          subject: `[TEST — ${person.name}] ${email.subject}`,
+          subject: `[TEST: ${person.name}] ${email.subject}`,
           content: email.content,
         });
         sent.push({

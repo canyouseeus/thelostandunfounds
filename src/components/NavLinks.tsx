@@ -53,7 +53,7 @@ export default function NavLinks({
         </>
     );
 
-    // Limited menu for signed-in affiliates — only HOME, MORE, dashboard, log out
+    // Limited menu for signed-in affiliates, only HOME, MORE, dashboard, log out
     if (user && !userIsAdmin) {
         return (
             <>
@@ -77,7 +77,7 @@ export default function NavLinks({
         );
     }
 
-    // Full menu — admins and signed-out visitors
+    // Full menu: admins and signed-out visitors
     return (
         <>
             <Link to="/" className="menu-item" onClick={onLinkClick}>

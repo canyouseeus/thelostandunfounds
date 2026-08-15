@@ -81,7 +81,7 @@ function Navbar() {
 function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-[#0d1117] overflow-hidden">
-      {/* Subtle radial glow only — no grid */}
+      {/* Subtle radial glow only: no grid */}
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 20%, rgba(79,195,247,0.06) 0%, transparent 70%)' }} />
 
@@ -98,7 +98,7 @@ function Hero() {
         </h1>
 
         <p className="max-w-xl mx-auto text-white/50 text-base sm:text-lg leading-relaxed mb-10">
-          Professional grey water and grease removal for food trucks, festivals, and events across Austin. Fast, reliable, licensed — so you can focus on what matters.
+          Professional grey water and grease removal for food trucks, festivals, and events across Austin. Fast, reliable, licensed, so you can focus on what matters.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
@@ -207,11 +207,11 @@ function ServiceArea() {
             <div className="text-[10px] tracking-[0.35em] uppercase text-white/30 mb-3">Where We Operate</div>
             <h2 className="text-4xl font-black text-white uppercase tracking-tight mb-6">Serving Greater Austin</h2>
             <p className="text-white/45 leading-relaxed mb-8">
-              Based in Austin, TX — we cover a 60-mile radius including all major food truck parks, festival venues, and event grounds. Not on the list? Call us anyway.
+              Based in Austin, TX: we cover a 60-mile radius including all major food truck parks, festival venues, and event grounds. Not on the list? Call us anyway.
             </p>
             <div className="flex items-center gap-3 mb-8">
               <MapPinIcon className="w-4 h-4 text-white/40 flex-shrink-0" />
-              <span className="text-white/50 text-sm">Austin, TX — 60-mile service radius</span>
+              <span className="text-white/50 text-sm">Austin, TX; 60-mile service radius</span>
             </div>
             <button className="flex items-center gap-2 px-6 py-3 text-xs font-bold tracking-widest uppercase text-[#0d1117] hover:opacity-90 transition-opacity"
               style={{ background: ICY }}>
@@ -288,15 +288,15 @@ function HowItWorks() {
 function Testimonials() {
   const testimonials = [
     {
-      name: 'Maria R.', biz: 'La Paloma Tacos — East Austin', rating: 5,
+      name: 'Maria R.', biz: 'La Paloma Tacos; East Austin', rating: 5,
       text: "Daniel and his crew are the most reliable service I've used. They showed up on time, got it done fast, and left zero mess. I've recommended them to every food truck operator I know.",
     },
     {
-      name: 'Tyler M.', biz: 'ATX Burger Co. — Food Truck', rating: 5,
+      name: 'Tyler M.', biz: 'ATX Burger Co.; Food Truck', rating: 5,
       text: 'Used them at the Barton Springs Festival last summer. They handled 12 vendors without a single hitch. The event coordinator was blown away. Will use every season.',
     },
     {
-      name: 'Jess L.', biz: 'Green Sprout Kitchen — SoCo', rating: 5,
+      name: 'Jess L.', biz: 'Green Sprout Kitchen; SoCo', rating: 5,
       text: "Finally a service that doesn't ghost you. I get a confirmation, a reminder, and an invoice. That's all I want. Simple, professional, done.",
     },
   ];
@@ -403,7 +403,7 @@ function BookingCTA() {
         <SparklesIcon className="w-7 h-7 text-white/30 mx-auto mb-6" />
         <h2 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tight mb-6">Ready to Book?</h2>
         <p className="text-white/45 text-lg mb-10">
-          Serving food truck operators across Austin. No contracts, no hassle — just clean, compliant service when you need it.
+          Serving food truck operators across Austin. No contracts, no hassle, just clean, compliant service when you need it.
         </p>
 
         <div className="bg-[#161b22] p-8 mb-8 text-left">
@@ -446,7 +446,7 @@ function BookingCTA() {
         <div className="flex items-center justify-center gap-6 text-xs text-white/25">
           <div className="flex items-center gap-1.5"><PhoneIcon className="w-3.5 h-3.5" />(512) 408-1234</div>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5" />Mon–Sat, 7am–7pm</div>
+          <div className="flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5" />Mon, Sat, 7am, 7pm</div>
           <div className="w-px h-4 bg-white/10" />
           <div className="flex items-center gap-1.5"><MapPinIcon className="w-3.5 h-3.5" />Austin, TX</div>
         </div>
@@ -489,8 +489,8 @@ function Footer() {
             <div className="space-y-3">
               {[
                 { icon: <PhoneIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: '(512) 408-1234' },
-                { icon: <MapPinIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Austin, TX — 60-mile radius' },
-                { icon: <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Mon–Sat, 7:00am–7:00pm' },
+                { icon: <MapPinIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Austin, TX; 60-mile radius' },
+                { icon: <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Mon, Sat, 7:00am, 7:00pm' },
               ].map(row => (
                 <div key={row.text} className="flex items-center gap-2 text-xs text-white/40">
                   {row.icon}{row.text}

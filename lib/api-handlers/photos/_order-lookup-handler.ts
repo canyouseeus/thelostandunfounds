@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
  * Look up an order's photos for the download portal.
  *
  * The portal used to query photo_orders and photo_entitlements straight from
- * the browser, which RLS blocks for an anonymous visitor — every lookup came
+ * the browser, which RLS blocks for an anonymous visitor; every lookup came
  * back empty and the page said "Order not found", including for the person
  * whose order it was. Delivery links have to work for someone who is not
  * signed in; that is the entire point of them.
@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!order) {
       // Deliberately identical whether the order is missing or the address is
-      // wrong — otherwise this confirms which orders exist to anyone probing.
+      // wrong: otherwise this confirms which orders exist to anyone probing.
       return res.status(404).json({ error: 'Order not found or email does not match.' })
     }
 

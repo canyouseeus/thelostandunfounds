@@ -5,7 +5,7 @@ import { EMAIL_STYLES } from '../../email-template.js';
  * Tell the owner a contractor was paid.
  *
  * The point of the automatic payer is that nobody has to remember to send the
- * money — but that also means nobody sees it happen. Without this, the first
+ * money, but that also means nobody sees it happen. Without this, the first
  * sign that a payout went out (or that the balance moved) would be the Stripe
  * dashboard. Every transfer produces a line in the admin inbox instead.
  *
@@ -29,7 +29,7 @@ const money = (value: number) =>
  * The admin notification tells the owner the money moved; without this, the
  * person who actually did the work is the only one not told. They would find
  * out by opening Stripe, checking their bank, or happening to look at their
- * dashboard — which is the same "go and check somewhere else" problem the
+ * dashboard: which is the same "go and check somewhere else" problem the
  * automatic payer exists to remove, just pointed at them instead of the owner.
  *
  * Same best-effort contract as the admin notification: the transfer has already
@@ -47,7 +47,7 @@ export async function sendContractorPayoutNotification(args: {
   const content = `
     <h1 style="${EMAIL_STYLES.heading1}">YOU'VE BEEN PAID</h1>
     <p style="${EMAIL_STYLES.paragraph}">
-      Hey ${firstName} — <strong>${money(args.amount)}</strong> is on its way to you for
+      Hey ${firstName}: <strong>${money(args.amount)}</strong> is on its way to you for
       ${args.description || 'your recent shoot'}.
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
@@ -60,7 +60,7 @@ export async function sendContractorPayoutNotification(args: {
     <p style="${EMAIL_STYLES.paragraph}">
       From there you can open your own Stripe dashboard to see your balance and when it lands in
       your bank. We link you through from the page rather than from this email, because Stripe's
-      dashboard links are single-use and expire — one sent by email would be dead before you
+      dashboard links are single-use and expire; one sent by email would be dead before you
       tapped it.
     </p>
     <p style="${EMAIL_STYLES.muted}">
@@ -94,7 +94,7 @@ export async function sendCrewPayoutNotification(args: {
     <h1 style="${EMAIL_STYLES.heading1}">CONTRACTOR PAID</h1>
     <p style="${EMAIL_STYLES.paragraph}">
       ${money(args.amount)} was transferred to <strong>${args.contractorName}</strong>'s connected
-      Stripe account. No action needed — this is the automatic job payout confirming it went out.
+      Stripe account. No action needed: this is the automatic job payout confirming it went out.
     </p>
     <hr style="${EMAIL_STYLES.divider}" />
     <p style="${EMAIL_STYLES.paragraph}">
@@ -116,7 +116,7 @@ export async function sendCrewPayoutNotification(args: {
     const result = await sendTransactionalEmail({
       to: ADMIN_INBOX,
       cc: BUSINESS_RECORD_CC,
-      subject: `Paid ${args.contractorName} ${money(args.amount)} — ${args.description || 'photography job'}`,
+      subject: `Paid ${args.contractorName} ${money(args.amount)}; ${args.description || 'photography job'}`,
       content,
     });
     return { success: result.success, provider: result.provider, error: result.error };

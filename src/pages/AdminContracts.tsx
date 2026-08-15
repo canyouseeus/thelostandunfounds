@@ -1,5 +1,5 @@
 /**
- * Admin contracts console — /admin/contracts
+ * Admin contracts console: /admin/contracts
  *
  * Create a contract from a saved template (or free text), send it for
  * signature, and track status. Noir: black, uppercase, square, no borders and
@@ -48,7 +48,7 @@ const STATUS_LABEL: Record<string, string> = {
   voided: 'VOIDED',
 }
 
-/** Status colour. Text-only — no borders, no badges with outlines. */
+/** Status colour. Text-only: no borders, no badges with outlines. */
 const STATUS_TONE: Record<string, string> = {
   draft: 'text-white/40',
   sent: 'text-blue-400',
@@ -227,7 +227,7 @@ export default function AdminContracts() {
               <label className={label}>Template</label>
               <select className={field} style={{ borderRadius: 0 }} value={templateId}
                 onChange={e => { setTemplateId(e.target.value); setVariables({}) }}>
-                <option value="">— Write it myself —</option>
+                <option value="">: Write it myself: </option>
                 {templates.map(t => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}

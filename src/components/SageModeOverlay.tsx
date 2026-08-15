@@ -1,12 +1,12 @@
 /**
- * SAGE MODE Overlay — tap anything on the live site, say what should change,
+ * SAGE MODE Overlay: tap anything on the live site, say what should change,
  * and it becomes a GitHub issue that names the source file.
  *
  * State shows two ways. The site logo turns gold (see `.sage-brand` in
  * index.css), and a frosted tile holds a triangle that is gold when armed and
  * white when idle. The tile is the only control, and it has to exist: while
  * armed, selection swallows every tap, so without one guaranteed-unswallowed
- * control there is no way back out — and no way to browse to the page you
+ * control there is no way back out, and no way to browse to the page you
  * actually wanted to annotate.
  *
  * The earlier full control panel was removed because it covered the page you
@@ -75,7 +75,7 @@ export default function SageModeOverlay() {
 
   const isAdmin = isAdminEmail(user?.email || '');
 
-  // SAGE MODE lives in localStorage, so signing out used to leave it armed —
+  // SAGE MODE lives in localStorage, so signing out used to leave it armed,
   // and armed means every tap is intercepted, including the "Sign in with
   // Google" button. That locked the account out of its own site. Nothing is
   // ever armed without a signed-in admin, and `enabled` below is the effective
@@ -94,7 +94,7 @@ export default function SageModeOverlay() {
   // `?sage=on` / `?sage=off` / `?sage=toggle` flips SAGE MODE, then strips the
   // parameter so a refresh or a shared link doesn't re-fire it. This exists so
   // an iOS Shortcut ("Hey Siri, sage mode") can open the URL and have the site
-  // act on it — the browser's own speech API cannot listen for a wake word in
+  // act on it: the browser's own speech API cannot listen for a wake word in
   // the background, but Siri can, and this gives it something to call.
   const location = useLocation();
   const navigate = useNavigate();
@@ -144,7 +144,7 @@ export default function SageModeOverlay() {
     const onClick = (e: MouseEvent) => {
       const el = e.target as HTMLElement | null;
       if (!el) return;
-      // Never hijack our own composer, or the header — the header is how you
+      // Never hijack our own composer, or the header; the header is how you
       // reach the menu to switch SAGE MODE back off.
       if (el.closest('[data-sage-chrome]')) return;
       // While the composer is open, the next tap should land normally.
@@ -272,28 +272,28 @@ export default function SageModeOverlay() {
   // in. Any ancestor with a transform (an animated expandable card, say)
   // becomes the containing block for `position: fixed`, so viewport
   // coordinates land offset, and it opens a stacking context that traps
-  // z-index no matter how high the value — which is how the composer ended up
+  // z-index no matter how high the value; which is how the composer ended up
   // behind the card that triggered it. A body portal has no such ancestor.
   return createPortal(
     <>
       {/* Always-present toggle. Selection swallows every tap while armed, so
           there has to be one control that never gets swallowed and never
-          scrolls away — otherwise turning SAGE MODE off means hunting for a
+          scrolls away: otherwise turning SAGE MODE off means hunting for a
           menu that SAGE MODE has eaten. Admin-only; visitors never see it. */}
       {isAdmin && !target && (
         <button
           data-sage-chrome
           onClick={toggleSageMode}
           aria-pressed={enabled}
-          aria-label={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
-          title={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
+          aria-label={enabled ? 'SAGE MODE on: tap to turn off' : 'Turn SAGE MODE on'}
+          title={enabled ? 'SAGE MODE on: tap to turn off' : 'Turn SAGE MODE on'}
           // Frosted circle above the transport bar. bg-white/10 + backdrop-blur-md
           // are the floating-tray glass values from bento-design, which also
-          // forbids a shadow — separation comes from the blur, not elevation.
+          // forbids a shadow: separation comes from the blur, not elevation.
           className="fixed bottom-24 right-4 z-[100000] h-12 w-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md transition-colors"
         >
-          {/* Triangle outline — gold when armed, white when idle. Points are
-              centred on the circle: the bounding box spans x 7–18, so it sits
+          {/* Triangle outline: gold when armed, white when idle. Points are
+              centred on the circle: the bounding box spans x 7-18, so it sits
               a touch right of dead centre, which is how a pointing triangle
               reads as optically centred inside a round button. */}
           <svg
@@ -335,7 +335,7 @@ export default function SageModeOverlay() {
             <div className="min-w-0">
               <p className="text-yellow-400 text-xs font-bold">REQUEST A CHANGE</p>
               <p className="text-white/50 text-[10px] font-mono truncate mt-1">
-                {target.source || `<${target.tag}> — no source stamp`}
+                {target.source || `<${target.tag}>: no source stamp`}
               </p>
             </div>
             <button
@@ -355,7 +355,7 @@ export default function SageModeOverlay() {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendRequest();
             }}
             rows={4}
-            placeholder="Say what should change — dictate or type…"
+            placeholder="Say what should change: dictate or type…"
             className="w-full bg-white/5 text-white text-sm p-2 outline-none resize-none placeholder:text-white/30 focus:bg-white/10"
           />
 

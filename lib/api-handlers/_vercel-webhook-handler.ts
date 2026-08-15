@@ -33,7 +33,7 @@ export default async function handler(
             return res.status(401).json({ error: 'Invalid signature' })
         }
     } else {
-        console.warn('⚠️ VERCEL_WEBHOOK_SECRET not set — skipping signature verification')
+        console.warn('⚠️ VERCEL_WEBHOOK_SECRET not set, skipping signature verification')
     }
 
     let event: any
@@ -48,7 +48,7 @@ export default async function handler(
     console.log('🔔 Vercel webhook received:', { type, deploymentId: deployment?.id })
 
     if (!deployment?.id) {
-        // Not a deployment-shaped event (e.g. a Vercel test ping) — accept and ignore.
+        // Not a deployment-shaped event (e.g. a Vercel test ping): accept and ignore.
         return res.status(200).json({ received: true })
     }
 
@@ -78,7 +78,7 @@ export default async function handler(
             await createNotification(supabase, {
                 type: 'deployment',
                 title: 'Deployment Succeeded',
-                message: commitMessage ? `${commitMessage}${url ? ` — ${url}` : ''}` : `Deployment ${deployment.id} is live${url ? ` at ${url}` : ''}`,
+                message: commitMessage ? `${commitMessage}${url ? `; ${url}` : ''}` : `Deployment ${deployment.id} is live${url ? ` at ${url}` : ''}`,
                 severity: 'info',
             })
 
@@ -189,7 +189,7 @@ async function createNotification(
 async function fetchBuildLogs(deploymentId: string): Promise<string | null> {
     const token = process.env.VERCEL_TOKEN
     if (!token) {
-        console.warn('⚠️ VERCEL_TOKEN not set — skipping build log fetch')
+        console.warn('⚠️ VERCEL_TOKEN not set; skipping build log fetch')
         return null
     }
 

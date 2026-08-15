@@ -4,11 +4,11 @@ import { createClient } from '@supabase/supabase-js'
 /**
  * The notifications feed for the dashboard widget.
  *
- * GET  /api/admin/notifications           — recent notifications, newest first.
+ * GET  /api/admin/notifications: recent notifications, newest first.
  *      Deployment notifications carry their deployment's context (commit,
  *      sha, url, error log excerpt) matched from the deployments table, so
  *      "Deployment Failed" drills to what broke and which commit did it.
- * POST /api/admin/notifications           — { id } marks one read; { all: true }
+ * POST /api/admin/notifications: { id } marks one read; { all: true }
  *      marks everything read.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             let deployment = null
             if (n.type === 'deployment') {
                 // The webhook writes the deployment row and the notification in
-                // the same handler call — nearest-in-time within two minutes is
+                // the same handler call: nearest-in-time within two minutes is
                 // the same event.
                 const t = new Date(n.created_at).getTime()
                 const near = deployments

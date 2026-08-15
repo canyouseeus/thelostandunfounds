@@ -44,7 +44,7 @@ Expected: `200`
 
 ### 7. Verify the specific change
 Depending on what you deployed:
-- **Blog post SQL**: Check `https://www.thelostandunfounds.com/sql` — script must appear in list
+- **Blog post SQL**: Check `https://www.thelostandunfounds.com/sql`; script must appear in list
 - **API endpoint**: Hit the endpoint and verify response
 - **UI change**: Load the page and verify visually
 - **Email template**: Send a test email and verify branding
@@ -60,5 +60,5 @@ Tell the user:
 
 1. Check build logs for errors
 2. Fix the error locally
-3. **Loop back to Step 2** — commit the fix and redeploy
+3. **Loop back to Step 2**: commit the fix and redeploy
 4. If stuck after 2 attempts, escalate to the user

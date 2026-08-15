@@ -52,7 +52,7 @@ function Lattice({ id, size, phone, neighbours, children }: {
   )
 }
 
-/** Neighbours chosen so every lattice closes on a complete row — no ragged bottom. */
+/** Neighbours chosen so every lattice closes on a complete row; no ragged bottom. */
 const PHONE_FILL: Record<string, (keyof typeof SHAPE_CLASS)[]> = {
   '1x1': ['1x1', '1x1', '1x1', '4x1', '2x2', '2x2'],
   '2x1': ['2x1', '4x1', '2x2', '2x2'],

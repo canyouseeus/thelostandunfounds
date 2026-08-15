@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
 
     if (uploadError) {
-        // If it already exists that's fine — just return the public URL
+        // If it already exists that's fine, just return the public URL
         if (!uploadError.message.includes('already exists') && !uploadError.message.includes('duplicate')) {
             console.error('[upload-processed-image] Upload error:', uploadError)
             return res.status(500).json({ error: uploadError.message })

@@ -19,7 +19,7 @@ function getSupabase() {
 
 /**
  * CRUD for the Prodigi print catalog (prodigi_products). Admin only.
- * GET: list all rows (including drafts — admin sees everything).
+ * GET: list all rows (including drafts; admin sees everything).
  * POST: create a row.
  * PUT: update a row by ?id=.
  * DELETE: remove a row by ?id=.

@@ -4,8 +4,8 @@
  * NEVER let a build step write a static dist/image-sitemap.xml. Vercel serves
  * static files before it applies rewrites, so such a file silently shadows this
  * route and nothing anywhere reports an error. That is exactly what happened:
- * scripts/generate-image-sitemap.ts emitted lh3.googleusercontent.com URLs —
- * Google Drive's CDN, a domain we do not own — and shadowed this route for
+ * scripts/generate-image-sitemap.ts emitted lh3.googleusercontent.com URLs;
+ * Google Drive's CDN, a domain we do not own, and shadowed this route for
  * months. An image sitemap only counts images on our own property, so all 1,000
  * photos it advertised were attributed to nobody and the gallery stayed absent
  * from Google Images. The script has been deleted; do not reintroduce it.
@@ -79,7 +79,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
                 // falling back to the library name. Strip the extension.
                 const rawTitle = (p.title as string | null)?.replace(/\.[^.]+$/, '') || lib.name;
                 const title = xmlEscape(rawTitle);
-                const caption = xmlEscape(`${rawTitle} — The Lost+Unfounds`);
+                const caption = xmlEscape(`${rawTitle}: The Lost+Unfounds`);
                 return `    <image:image>\n      <image:loc>${xmlEscape(imgUrl)}</image:loc>\n      <image:title>${title}</image:title>\n      <image:caption>${caption}</image:caption>\n    </image:image>`;
             })
             .join('\n');
@@ -96,7 +96,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     ].join('\n');
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    // Cache 1 hr at the edge — sitemap bots hit this infrequently, but photos sync daily
+    // Cache 1 hr at the edge; sitemap bots hit this infrequently, but photos sync daily
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600');
     res.status(200).send(xml);
 }

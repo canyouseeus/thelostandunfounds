@@ -74,7 +74,7 @@ import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import { lazy, Suspense } from 'react'
 const PreviewAffiliate = lazy(() => import('./pages/PreviewAffiliate'))
 // BookingPage is rendered inline on the homepage (see src/pages/Gallery.tsx)
-// rather than as a standalone route — see the comment near the removed
+// rather than as a standalone route; see the comment near the removed
 // /booking route below.
 import Marty from './pages/Marty'
 import Kattitude from './pages/Kattitude'
@@ -146,14 +146,14 @@ function App() {
               </Route>
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/zoho/callback" element={<ZohoCallback />} />
-              {/* Services — same view as the homepage SERVICES tab, but at a real,
+              {/* Services: same view as the homepage SERVICES tab, but at a real,
                   crawlable URL so Google and LLM crawlers can index the offer.
                   Renders Gallery directly rather than RootPage so an admin landing
                   here gets the services view, not the brand intro animation. */}
               <Route path="/services" element={<Layout />}>
                 <Route index element={<Gallery isHomepage />} />
                 {/* One page per offer, so each can rank for its own search.
-                    Same view and same design — Gallery reads the path and
+                    Same view and same design: Gallery reads the path and
                     leads the hero with that service. */}
                 <Route path="airbnb-photography" element={<Gallery isHomepage />} />
                 <Route path="real-estate-photography" element={<Gallery isHomepage />} />
@@ -223,7 +223,7 @@ function App() {
                   <Affiliate />
                 </Layout>
               } />
-              {/* Contractors' own dashboard — galleries and job payouts. The
+              {/* Contractors' own dashboard: galleries and job payouts. The
                   component existed and was imported but was never given a
                   route, so the page had no URL and the payout email linked to
                   a 404. It guards itself: no session redirects home. */}
@@ -280,22 +280,22 @@ function App() {
               <Route path="/silva-star/dashboard" element={<SilvaStarDashboard />} />
               <Route path="/silva-star/proposal" element={<SilvaStarProposal />} />
 
-              {/* Kattitude Tattoo Studio — proposal preview (public, no auth) */}
+              {/* Kattitude Tattoo Studio: proposal preview (public, no auth) */}
               <Route path="/kattitude-preview" element={<KattitudeLanding />} />
               <Route path="/kattitude-preview/dashboard" element={<KattitudeDashboard />} />
 
-              {/* Fadebox Barbershop — redesign proposal preview (public, no auth) */}
+              {/* Fadebox Barbershop: redesign proposal preview (public, no auth) */}
               <Route path="/fadebox-preview" element={<FadeboxLanding />} />
               <Route path="/fadebox-preview/dashboard" element={<FadeboxDashboard />} />
 
-              {/* Interactive Kiosk Build — public service demo + design brief.
+              {/* Interactive Kiosk Build: public service demo + design brief.
                   Standalone (no Layout) because it prints to Letter as a PDF a
                   client can forward. Launches the two live demos rather than
                   describing them. */}
               <Route path="/kiosk-demo" element={<KioskDemo />} />
 
               {/* One address that gathers every demo, so a whole set can be sent
-                  at once. It is a directory, not a container — each demo it lists
+                  at once. It is a directory, not a container, each demo it lists
                   is its own working URL and stays sendable on its own. */}
               <Route path="/demos" element={<Demos />} />
 
@@ -375,15 +375,15 @@ function App() {
               {/* Invited-client sign-in. Its own page, outside Layout: the
                   visitor here has one job, and the site chrome is not it. */}
               <Route path="/gallery/:slug/access" element={<GalleryAccess />} />
-              {/* Client asset intake — the token is the credential, so no
+              {/* Client asset intake: the token is the credential, so no
                   Layout chrome and no auth gate. */}
               <Route path="/upload/:token" element={<ClientUpload />} />
-              {/* Public contract signing — the token in the URL is the credential. */}
+              {/* Public contract signing: the token in the URL is the credential. */}
               <Route path="/sign/:token" element={<SignContract />} />
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
                 {/* The portal reads :orderId from the path, but no route ever
-                    supplied one — so every delivery link built the way the
+                    supplied one, so every delivery link built the way the
                     portal expects landed on the 404 page, and useParams had
                     nothing to read even if it had resolved. */}
                 <Route path=":orderId" element={<DownloadPortal />} />
@@ -420,11 +420,11 @@ function App() {
                   The "BOOK ME" nav link uses /?view=booking to land users on
                   the homepage with the booking panel pre-selected. Keeping a
                   /booking route here would just serve a duplicate of the
-                  homepage shell to crawlers — the issue Ahrefs flagged. */}
+                  homepage shell to crawlers: the issue Ahrefs flagged. */}
 
               <Route path="/marty" element={<Marty />} />
 
-              {/* Temporary preview routes — remove after gallery-homepage branch ships */}
+              {/* Temporary preview routes: remove after gallery-homepage branch ships */}
               <Route path="/preview/visitor" element={<PreviewVisitorPage />} />
               <Route path="/preview/admin-login" element={<PreviewAdminLoginPage />} />
               <Route path="/preview/affiliate" element={<Suspense fallback={null}><PreviewAffiliate /></Suspense>} />

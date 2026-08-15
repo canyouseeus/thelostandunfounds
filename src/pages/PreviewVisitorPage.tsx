@@ -1,5 +1,5 @@
 /**
- * PREVIEW ONLY — not a production route.
+ * PREVIEW ONLY, not a production route.
  * Shows exactly what visitors will see when the gallery-homepage branch ships:
  *   • Visitor-mode nav (logo only, no hamburger)
  *   • Gallery / Shop toggle at the top
@@ -22,7 +22,7 @@ export default function PreviewVisitorPage() {
       <div className="fixed top-0 left-0 w-full bg-black z-[999]">
         <div className="h-8 flex items-center justify-center">
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
-            Preview Mode — Visitor Homepage
+            Preview Mode: Visitor Homepage
           </p>
         </div>
         <nav className="h-16 flex items-center px-4 sm:px-6 lg:px-8">
@@ -37,7 +37,7 @@ export default function PreviewVisitorPage() {
 
       <main className="pt-24 flex-1">
 
-        {/* Gallery / Shop toggle — same style as the Public / Private tab */}
+        {/* Gallery / Shop toggle: same style as the Public / Private tab */}
         <div className="px-4 md:px-8 pt-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-center gap-12 border-b border-white/5 pb-2">

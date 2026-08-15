@@ -37,7 +37,7 @@ export class UnifiedAuthService {
    *
    * Used only by the gallery access page. A client we emailed a private
    * gallery link is gated on photo_libraries.invited_emails, matched against
-   * the signed-in user's email — so proving the address is the whole of what
+   * the signed-in user's email, so proving the address is the whole of what
    * access requires, and a password is a step that only loses them.
    * shouldCreateUser is true because an invited client has no account yet.
    */

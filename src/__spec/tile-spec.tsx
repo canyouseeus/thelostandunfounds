@@ -55,12 +55,12 @@ function Board() {
           grid-auto-rows: var(--lattice-unit);
         }
         /* A red backstop behind every cell. Any red showing through is a tile
-           that failed to fill its cell — the check can fail, visibly. */
+           that failed to fill its cell; the check can fail, visibly. */
         #lattice > * { background: #f00; }
       `}</style>
       <div style={{ containerType: 'inline-size' }}>
         <div id="lattice" className="grid grid-cols-8 gap-6 [grid-auto-flow:dense]">
-          {/* Legacy DashboardTile path — the one that sat short. */}
+          {/* Legacy DashboardTile path: the one that sat short. */}
           <Cell id="legacy-a" size="2x2">
             <DashboardCategoryCard
               size="2x2"

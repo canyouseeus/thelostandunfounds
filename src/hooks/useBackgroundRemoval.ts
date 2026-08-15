@@ -5,12 +5,12 @@ import { useState, useEffect } from 'react';
  *
  * The transparent PNGs are PRE-GENERATED at build/author time by
  * `scripts/generate-transparent-product-images.mjs` and committed to
- * `public/product-transparent/`. They are served as static Vercel assets — so
+ * `public/product-transparent/`. They are served as static Vercel assets, so
  * the shop's outlined images cost ZERO Supabase egress and require no in-browser
  * WASM background removal (the previous approach hammered Supabase storage and
  * blew the free-tier egress quota).
  *
- * The filename is the first 32 hex chars of sha256(imageUrl) — this MUST stay in
+ * The filename is the first 32 hex chars of sha256(imageUrl); this MUST stay in
  * sync with `toFilename` in the generator script. Hashing the URL means a
  * changed Fourthwall image automatically points at a new (missing) file, and the
  * caller falls back to the original photo until the script is re-run.

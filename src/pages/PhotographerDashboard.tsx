@@ -38,7 +38,7 @@ export default function PhotographerDashboard() {
                 <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
             </div>
 
-            {/* Job pay for shoots covered — separate from gallery sales below. */}
+            {/* Job pay for shoots covered: separate from gallery sales below. */}
             {user && <JobPayouts userId={user.id} />}
 
             {/* Availability first: it is the thing the studio needs from you,

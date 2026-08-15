@@ -226,7 +226,7 @@ export default function Events() {
             showError(err.message || 'Failed to purchase ticket');
             setIsProcessingDirectAction(null);
         }
-        // Note: don't clear isProcessingDirectAction on success — page will redirect
+        // Note: don't clear isProcessingDirectAction on success, page will redirect
     };
 
     const handleFormSubmit = async (e: React.FormEvent) => {
@@ -410,7 +410,7 @@ export default function Events() {
                                                 );
                                             }
 
-                                            // Default to Tickets — pricing-model aware
+                                            // Default to Tickets: pricing-model aware
                                             const model = event.settings?.pricing_model || 'standard';
                                             const isSoldOut = event.capacity && (event.sold_count || 0) >= event.capacity;
 
@@ -429,14 +429,14 @@ export default function Events() {
                                                     const sold = event.sold_count || 0;
                                                     if (sold < limit) {
                                                         const earlyPrice = (event.settings?.early_bird_price_cents || 0) / 100;
-                                                        return `Early Bird — $${earlyPrice.toFixed(2)}`;
+                                                        return `Early Bird: $${earlyPrice.toFixed(2)}`;
                                                     }
                                                     const currentPrice = calculateCurrentPrice(event) / 100;
-                                                    return `Get Tickets — $${currentPrice.toFixed(2)}`;
+                                                    return `Get Tickets: $${currentPrice.toFixed(2)}`;
                                                 }
                                                 if (model === 'dynamic') {
                                                     const currentPrice = calculateCurrentPrice(event) / 100;
-                                                    return `Get Tickets — $${currentPrice.toFixed(2)}`;
+                                                    return `Get Tickets: $${currentPrice.toFixed(2)}`;
                                                 }
                                                 return 'Get Tickets';
                                             })();

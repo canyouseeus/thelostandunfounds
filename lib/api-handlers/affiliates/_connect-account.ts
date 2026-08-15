@@ -85,7 +85,7 @@ export async function ensureStripeAccount(
     email: email || undefined,
     // Both capabilities, even though nothing here ever charges a card on a
     // connected account. Requesting `transfers` *without* `card_payments`
-    // reads like the leaner ask, and it is — but Stripe only permits that
+    // reads like the leaner ask, and it is, but Stripe only permits that
     // combination for platforms it has specifically approved, and rejects
     // account creation outright otherwise:
     //
@@ -123,7 +123,7 @@ export async function ensureStripeAccount(
 
   // Mirror onto payout settings so payout requests can find the account.
   // affiliate_payout_settings has a UNIQUE constraint on affiliate_id (not user_id),
-  // and paypal_email is still NOT NULL on legacy schemas — supply '' so the
+  // and paypal_email is still NOT NULL on legacy schemas; supply '' so the
   // row can be created for Stripe-only affiliates.
   await supabase.from('affiliate_payout_settings').upsert(
     {
@@ -141,7 +141,7 @@ export async function ensureStripeAccount(
 
 /**
  * Mint a fresh Stripe Account Link. These expire after a few minutes, so one
- * must be created at the moment the affiliate is about to be redirected —
+ * must be created at the moment the affiliate is about to be redirected,
  * never baked into an email.
  */
 export async function createOnboardingLink(
@@ -174,10 +174,10 @@ export function sanitizePath(input: any, fallback: string): string {
 }
 
 /**
- * `active` means "we can pay this person" — nothing more.
+ * `active` means "we can pay this person", nothing more.
  *
  * This used to also require `charges_enabled`. We do still request
- * `card_payments` — Stripe rejects the account outright otherwise — so that
+ * `card_payments`, Stripe rejects the account outright otherwise, so that
  * test usually passes, but it is the wrong question: charges are a capability
  * this platform never exercises, and an account can have payouts enabled while
  * card processing sits in review. Gating on it would show a red badge, and

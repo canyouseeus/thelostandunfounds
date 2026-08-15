@@ -61,7 +61,7 @@ async function renameInDrive(fileId: string, newName: string): Promise<boolean> 
         return true;
     } catch (err: any) {
         if (err.code === 403 || err.code === 404) {
-            console.warn(`    ⚠️  No write access to ${fileId} — skipped.`);
+            console.warn(`    ⚠️  No write access to ${fileId}, skipped.`);
         } else {
             console.error(`    ❌ Drive rename failed: ${err.message}`);
         }
@@ -170,7 +170,7 @@ async function processLibrary(library: { id: string; slug: string; name: string 
 export async function run() {
     console.log('\n=== Phase 3: CLAPTROP Retrograde ===');
 
-    if (DRY_RUN) console.log('🔍 DRY RUN — no changes will be made.\n');
+    if (DRY_RUN) console.log('🔍 DRY RUN; no changes will be made.\n');
 
     const SUPABASE_URL              = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

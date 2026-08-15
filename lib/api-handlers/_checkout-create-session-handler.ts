@@ -7,12 +7,12 @@ import Stripe from 'stripe'
  * pre-existing Stripe Price ID (e.g., Mystery Box: price_1TX8dOF4xIdsehKGoawhJZD1).
  *
  * Request body:
- *   priceId      string   required — Stripe Price ID
+ *   priceId      string   required: Stripe Price ID
  *   quantity?    number   default 1
  *   productKind? 'physical' | 'digital'   default 'physical'
  *   customerEmail? string   if known, prefilled on the Checkout page
  *
- * Returns: { sessionId, url } — the caller redirects the browser to `url`.
+ * Returns: { sessionId, url }: the caller redirects the browser to `url`.
  *
  * A pending row is pre-inserted into shop_orders so the webhook can find
  * the order by stripe_session_id. The webhook flips status to 'paid' and

@@ -5,8 +5,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 /* ============================================================
-   FADEBOX — Owner console (sample dashboard).
-   Same monochrome identity as the site, no borders — cards are
+   FADEBOX: Owner console (sample dashboard).
+   Same monochrome identity as the site, no borders; cards are
    separated by background + whitespace. All data is illustrative.
    Route: /fadebox-preview/dashboard
    ============================================================ */

@@ -1,6 +1,6 @@
 // Batch photo-editing operations for the admin Gallery Management panel.
 // Every write here goes through the service-role Supabase client and, where
-// relevant, the Google Drive API — this is the "home base" that keeps the
+// relevant, the Google Drive API: this is the "home base" that keeps the
 // website and Drive in sync when the admin edits tags, location, folder, or
 // deletes photos from the fullscreen gallery grid.
 import type { VercelRequest } from '@vercel/node';
@@ -23,7 +23,7 @@ function getGoogleCreds() {
     return { email, key };
 }
 
-// Full (non-readonly) scope — required to trash/move files, unlike the
+// Full (non-readonly) scope: required to trash/move files, unlike the
 // drive.readonly scope used elsewhere for listing/streaming.
 async function getWriteDriveClient() {
     const { google } = await import('googleapis');
@@ -41,7 +41,7 @@ export interface DriveOpError {
     error: string;
 }
 
-// Moves a file to Drive's trash — the same result as clicking Delete in the
+// Moves a file to Drive's trash; the same result as clicking Delete in the
 // Drive UI. Only requires Editor access to the file's folder (not ownership),
 // and is recoverable, unlike a permanent purge.
 export async function trashDriveFile(fileId: string): Promise<{ ok: boolean; error?: string }> {
@@ -158,7 +158,7 @@ export async function batchDeletePhotos(supabase: ServiceSupabaseClient, photoId
     return { deleted: photoIds.length, driveErrors };
 }
 
-// Downloads analytics — reads photo_download_events via service role since
+// Downloads analytics: reads photo_download_events via service role since
 // the table's only RLS policy is scoped to service_role (by design, it holds
 // emails + IPs). The admin panel previously queried this with the anon
 // client and silently got zero rows back from every query.

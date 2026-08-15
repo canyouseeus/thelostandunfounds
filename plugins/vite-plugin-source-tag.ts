@@ -7,7 +7,7 @@
  * a class name.
  *
  * Runs as a Babel plugin inside @vitejs/plugin-react, so it costs no new dependency.
- * Only lowercase (host) elements are tagged — adding the attribute to a custom
+ * Only lowercase (host) elements are tagged; adding the attribute to a custom
  * component would pass it down as an unrecognized prop.
  */
 
@@ -31,7 +31,7 @@ export default function sourceTagPlugin({ types: t }: { types: BabelTypes }) {
                 if (name?.type !== 'JSXIdentifier') return
                 if (!/^[a-z]/.test(name.name)) return
 
-                // Never double-stamp — the plugin can see a file more than once.
+                // Never double-stamp: the plugin can see a file more than once.
                 const already = nodePath.node.attributes.some(
                     (attr: any) =>
                         attr.type === 'JSXAttribute' && attr.name?.name === SOURCE_ATTR

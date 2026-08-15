@@ -1,4 +1,4 @@
-# Architecture — THE LOST+UNFOUNDS
+# Architecture: THE LOST+UNFOUNDS
 
 ## System Overview
 
@@ -25,7 +25,7 @@
 
 ## Directory Map
 
-### `src/` — Frontend (React SPA)
+### `src/`: Frontend (React SPA)
 The entire user-facing application. Built with React 18 + TypeScript + Vite.
 
 | Directory | Purpose |
@@ -40,7 +40,7 @@ The entire user-facing application. Built with React 18 + TypeScript + Vite.
 | `src/constants/` | App-wide constants |
 | `src/lib/` | Frontend library code |
 
-### `api/` — Backend (Vercel Serverless Functions)
+### `api/`: Backend (Vercel Serverless Functions)
 Each subdirectory is a domain. Each `.ts` file is an API endpoint.
 
 | Directory | Purpose |
@@ -59,7 +59,7 @@ Each subdirectory is a domain. Each `.ts` file is an API endpoint.
 | `api/tiktok/` | TikTok integration |
 | `api/utils/` | Shared API utilities |
 
-### `lib/` — Shared Logic
+### `lib/`: Shared Logic
 Code shared between API routes.
 
 | File/Directory | Purpose |
@@ -68,26 +68,26 @@ Code shared between API routes.
 | `lib/email-template.ts` | **Branded email templates** (MUST use for all emails) |
 | `lib/fourthwall/` | Fourthwall shop API client |
 
-### `sql/` — Legacy Database Scripts (archive only)
+### `sql/`: Legacy Database Scripts (archive only)
 Historical migration and blog-post scripts from the retired file-based workflow. **Not a live
-path** — the `/sql` page that served them has been removed. All database changes now go through
+path**: the `/sql` page that served them has been removed. All database changes now go through
 the Supabase MCP server (`apply_migration`). Do not add files here; see the `supabase-mcp` skill.
 
-### `.claude/` — Agent Configuration
+### `.claude/`: Agent Configuration
 | Directory | Purpose |
 |---|---|
-| `.claude/skills/` | **All** domain-specific skill guides — the single canonical location |
+| `.claude/skills/` | **All** domain-specific skill guides; the single canonical location |
 | `.claude/commands/` | Slash commands (`/audit`, `/startdev`, …) |
 | `.agent/workflows/` | Step-by-step operational procedures |
 
 > `.agent/skills/` and a top-level `skills/` used to hold duplicate forks of the same skills. They
 > drifted apart and produced contradictory rules, so they were deleted and everything was
-> consolidated into `.claude/skills/`. Do not recreate them — one skill, one file.
+> consolidated into `.claude/skills/`. Do not recreate them: one skill, one file.
 
-### `scripts/` — Utility Scripts
+### `scripts/`: Utility Scripts
 One-off and helper scripts for operations tasks.
 
-### `public/` — Static Assets
+### `public/`: Static Assets
 Images, SQL files, and other static content served directly.
 
 ## Key Data Flow

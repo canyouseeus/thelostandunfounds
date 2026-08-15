@@ -130,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (affiliate.is_flagged) {
-      // Stop counting clicks for flagged affiliates — admin needs to clear them first.
+      // Stop counting clicks for flagged affiliates; admin needs to clear them first.
       return res.status(200).json({ success: true, message: 'Affiliate flagged; clicks ignored' })
     }
 
@@ -150,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const isSuspicious = rateLimited || isDup
 
-    // Always log the event (with the suspicious flag) — useful for analytics
+    // Always log the event (with the suspicious flag); useful for analytics
     await supabase.from('affiliate_click_events').insert({
       affiliate_id: affiliate.id,
       metadata: metadata || {},

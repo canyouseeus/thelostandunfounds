@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // GET → just refresh status from Stripe
     if (req.method === 'GET') {
       if (!affiliate.stripe_account_id) {
-        // No Stripe account yet — don't even initialize the Stripe client.
+        // No Stripe account yet: don't even initialize the Stripe client.
         // This lets the dashboard render for legacy affiliates even if the
         // server hasn't been configured with STRIPE_SECRET_KEY yet.
         return res.status(200).json({

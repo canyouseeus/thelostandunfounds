@@ -36,9 +36,9 @@ For each stale doc:
 
 ### 4. Update docs/index.md
 After moving or deleting docs, update `docs/index.md` to reflect the current state. Mark documents with their freshness status:
-- ✅ Active — currently accurate
-- ⚠️ Needs Review — may be outdated
-- 🗄️ Archived — moved to `docs/archive/`
+- ✅ Active, currently accurate
+- ⚠️ Needs Review: may be outdated
+- 🗄️ Archived: moved to `docs/archive/`
 
 ### 5. Check skill freshness
 Scan the `.claude/skills/` directory:

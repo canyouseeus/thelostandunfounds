@@ -74,7 +74,7 @@ export function SiteAnalyticsCard({ span, light, size }: TileShape = {}) {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        {/* `block w-full h-full` — see DashboardCategoryCard: without it the
+        {/* `block w-full h-full`: see DashboardCategoryCard: without it the
             button sizes to its content and the tile sits short in its cell. */}
         <ExpandableScreenTrigger className={`block w-full h-full text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile
@@ -134,7 +134,7 @@ export function SiteAnalyticsCard({ span, light, size }: TileShape = {}) {
 
                   <div>
                     <h3 className="text-xs font-black uppercase tracking-widest text-white/60 mb-3 flex items-center gap-2">
-                      <ArrowTrendingUpIcon className="w-4 h-4" /> Views — Last 14 Days
+                      <ArrowTrendingUpIcon className="w-4 h-4" /> Views; Last 14 Days
                     </h3>
                     <div className="flex gap-1.5 h-24 items-end bg-white/5 p-4">
                       {trend.map((t) => (

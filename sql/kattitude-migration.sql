@@ -1,4 +1,4 @@
--- Kattitude Tattoo Studio — Multi-tenant client dashboard migration
+-- Kattitude Tattoo Studio: Multi-tenant client dashboard migration
 -- Run this in Supabase SQL editor
 
 -- ─── BUSINESSES ────────────────────────────────────────────────────────────
@@ -202,11 +202,11 @@ INSERT INTO businesses (name, slug, type, settings) VALUES (
     "instagram": "",
     "hours": {
       "monday":    "Closed",
-      "tuesday":   "10am – 6pm",
-      "wednesday": "10am – 6pm",
-      "thursday":  "10am – 6pm",
-      "friday":    "10am – 7pm",
-      "saturday":  "10am – 6pm",
+      "tuesday":   "10am: 6pm",
+      "wednesday": "10am: 6pm",
+      "thursday":  "10am: 6pm",
+      "friday":    "10am: 7pm",
+      "saturday":  "10am: 6pm",
       "sunday":    "Closed"
     }
   }'

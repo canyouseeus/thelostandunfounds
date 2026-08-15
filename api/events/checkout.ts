@@ -7,14 +7,14 @@
  * event_ticket row, and triggers affiliate commissions.
  *
  * Body:
- *   eventId      string  – UUID of the event
- *   tierId?      string  – ticket_tiers element id (null for flat-price events)
- *   amountCents  number  – final price in cents (validated server-side)
- *   quantity?    number  – defaults to 1
- *   email        string  – buyer's email
- *   name?        string  – buyer's display name
- *   formResponses? object – custom-form answers to persist with order
- *   returnPath?  string  – safe same-origin path for success/cancel redirect
+ *   eventId      string: UUID of the event
+ *   tierId?      string: ticket_tiers element id (null for flat-price events)
+ *   amountCents  number: final price in cents (validated server-side)
+ *   quantity?    number: defaults to 1
+ *   email        string: buyer's email
+ *   name?        string: buyer's display name
+ *   formResponses? object: custom-form answers to persist with order
+ *   returnPath?  string: safe same-origin path for success/cancel redirect
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node'
@@ -153,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? (() => {
         const tiers = Array.isArray(event.ticket_tiers) ? event.ticket_tiers : []
         const t = tiers.find((x: any) => x.id === tierId)
-        return t ? ` — ${t.name}` : ''
+        return t ? `; ${t.name}` : ''
       })()
     : ''
 

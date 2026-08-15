@@ -49,7 +49,7 @@ function getSupabase() {
 
 /**
  * Render an affiliate email's subject and inner body without sending it.
- * Exported so previews use the exact markup a real send would — never a
+ * Exported so previews use the exact markup a real send would, never a
  * hand-copied duplicate that can drift.
  */
 export function renderAffiliateEmail(
@@ -71,16 +71,16 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
                Complete Stripe Setup →
              </a>
            </p>
-           <p style="color:#666;font-size:11px;margin:10px 0 0 0;">Required to receive payouts — takes about 5 minutes.</p>`
+           <p style="color:#666;font-size:11px;margin:10px 0 0 0;">Required to receive payouts; takes about 5 minutes.</p>`
         : '';
       return {
-        subject: `You're in — THE AFFILIATE PROGRAM`,
+        subject: `You're in: THE AFFILIATE PROGRAM`,
         content: `
           <h1 style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;white-space:nowrap;">W3 COM3 TO 3AT YOUR BRAIN!!!</h1>
           <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
 
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
-            You're officially part of <b style="text-transform:uppercase;letter-spacing:0.05em;">THE AFFILIATE PROGRAM</b> at THE LOST+UNFOUNDS. Every time someone uses your link to buy — merch, photo galleries, anything — you keep <b>42% of the profit</b>. Plus MLM bonuses when people you recruit make sales.
+            You're officially part of <b style="text-transform:uppercase;letter-spacing:0.05em;">THE AFFILIATE PROGRAM</b> at THE LOST+UNFOUNDS. Every time someone uses your link to buy (merch, photo galleries, anything) you keep <b>42% of the profit</b>. Plus MLM bonuses when people you recruit make sales.
           </p>
 
           <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
@@ -109,7 +109,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       };
     }
     case 'admin_new_affiliate': {
-      // Internal notification — goes to the admin address, never to the affiliate.
+      // Internal notification: goes to the admin address, never to the affiliate.
       const code = escapeHtml(data.code || '');
       const name = escapeHtml([data.firstName, data.lastName].filter(Boolean).join(' ')) || '—';
       const email = escapeHtml(data.email || '—');
@@ -124,7 +124,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
               </td>
             </tr>`;
       return {
-        subject: `New affiliate registration — ${code}`,
+        subject: `New affiliate registration: ${code}`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;">NEW AFFILIATE REGISTERED</h1>
           <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
@@ -151,12 +151,12 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const firstName = escapeHtml(data.firstName || '');
       const resumeUrl = escapeHtml(data.resumeUrl || `${SITE_URL}/affiliate-dashboard`);
       const pending = Number(data.pendingEarnings || 0);
-      const greeting = firstName ? `${firstName} — you're` : `You're`;
+      const greeting = firstName ? `${firstName}, you're` : `You're`;
       const pendingLine =
         pending > 0
           ? `<p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
                You already have <b>${fmtUsd(pending)}</b> in commissions sitting in your balance. It stays
-               there until Stripe is connected — we have nowhere to send it.
+               there until Stripe is connected: we have nowhere to send it.
              </p>`
           : '';
       return {
@@ -167,7 +167,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
 
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
             ${greeting} signed up as an affiliate at THE LOST+UNFOUNDS, but you haven't connected your
-            Stripe account yet — and <b>you can't get paid until you do</b>. Your link still works and
+            Stripe account yet, and <b>you can't get paid until you do</b>. Your link still works and
             your commissions still count; they just can't leave the account without somewhere to land.
           </p>
 
@@ -180,20 +180,20 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
             </a>
           </p>
           <p style="color:#666;font-size:11px;margin:-20px 0 32px 0;">
-            One tap — no dashboard, no login. Takes about 5 minutes.
+            One tap: no dashboard, no login. Takes about 5 minutes.
           </p>
 
           <h2 style="color:#fff;font-size:15px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 12px 0;">So what is Stripe?</h2>
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
             Stripe is the payment company that moves the money. It's how nearly every modern business
-            online gets paid — <b>Amazon, Shopify, Lyft, DoorDash, Instacart, Slack, Zoom, Substack
+            online gets paid: <b>Amazon, Shopify, Lyft, DoorDash, Instacart, Slack, Zoom, Substack
             and Kickstarter</b> all run payments through Stripe. It handles hundreds of billions of
             dollars a year and is one of the most heavily regulated, audited payment processors there is.
           </p>
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
             You're not signing up for anything new or paying anything. Connecting just tells Stripe
             which bank account to deposit <i>your</i> commissions into. Stripe asks for your legal name,
-            address, date of birth and bank details — that's the same identity check any employer or
+            address, date of birth and bank details; that's the same identity check any employer or
             bank does before sending you money, and it's required by US law before a payout can be made.
           </p>
 
@@ -201,7 +201,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
             <tr>
               <td style="padding:12px 0;">
                 <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Your details go to</span><br>
-                <span style="color:#fff;font-size:13px;">Stripe — not us. We never see your bank info or SSN.</span>
+                <span style="color:#fff;font-size:13px;">Stripe, not us. We never see your bank info or SSN.</span>
               </td>
             </tr>
             <tr>
@@ -230,7 +230,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const gross = fmtUsd(Number(data.grossAmount || 0));
       const source = escapeHtml(data.source || 'order');
       return {
-        subject: `Commission earned — ${amount}`,
+        subject: `Commission earned: ${amount}`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">YOU EARNED ${amount}</h1>
           <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
@@ -247,12 +247,12 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const amount = fmtUsd(Number(data.amount || 0));
       const transferId = escapeHtml(data.transferId || '');
       return {
-        subject: `Payout sent — ${amount}`,
+        subject: `Payout sent: ${amount}`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">${amount} ON ITS WAY</h1>
           <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
             ${amount} has been transferred to your connected Stripe account. Funds typically land within
-            <b>1–2 business days</b> depending on your bank.
+            <b>1-2 business days</b> depending on your bank.
           </p>
           ${transferId ? `<p style="color:#999;font-size:12px;margin:0;">Transfer id: <code style="color:#888;">${transferId}</code></p>` : ''}
           <p style="color:#999;font-size:12px;margin:24px 0 0 0;">
@@ -265,12 +265,12 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const amount = fmtUsd(Number(data.amount || 0));
       const reason = escapeHtml(data.reason || 'Unknown error');
       return {
-        subject: `Payout failed — please re-check your details`,
+        subject: `Payout failed: please re-check your details`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">PAYOUT FAILED</h1>
           <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
             We tried to send you ${amount} but Stripe rejected the transfer. Reason: <b>${reason}</b>.
-            Your commissions are still in your balance — please review your Stripe Connect status and try again.
+            Your commissions are still in your balance; please review your Stripe Connect status and try again.
           </p>
           <p style="color:#999;font-size:12px;margin:24px 0 0 0;">
             <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;text-decoration:underline;">Open dashboard →</a>
@@ -284,7 +284,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       const clicks = Number(data.weekClicks || 0);
       const balance = fmtUsd(Number(data.availableBalance || 0));
       return {
-        subject: `Weekly summary — ${earnings} earned`,
+        subject: `Weekly summary: ${earnings} earned`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">YOUR WEEK</h1>
           <table style="width:100%;border-collapse:collapse;margin:16px 0 24px 0;">
@@ -300,7 +300,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       };
     }
     default:
-      return { subject: 'TLAU Affiliate Update', content: '<p>—</p>' };
+      return { subject: 'TLAU Affiliate Update', content: '<p>, </p>' };
   }
 }
 

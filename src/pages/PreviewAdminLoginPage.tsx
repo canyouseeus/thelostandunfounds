@@ -1,5 +1,5 @@
 /**
- * PREVIEW ONLY — not a production route.
+ * PREVIEW ONLY, not a production route.
  * Shows the admin login slide-up animation exactly as it will appear
  * when the gallery-homepage branch ships. The animation always plays
  * regardless of login state so you can see it on any device.
@@ -12,7 +12,7 @@ export default function PreviewAdminLoginPage() {
   const [show, setShow] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
-  // Trigger the slide-up a frame after mount — same timing as the real component
+  // Trigger the slide-up a frame after mount; same timing as the real component
   useEffect(() => {
     const timer = setTimeout(() => setShow(true), 50)
     return () => clearTimeout(timer)
@@ -25,7 +25,7 @@ export default function PreviewAdminLoginPage() {
       <div className="fixed top-0 left-0 w-full bg-black z-[999]">
         <div className="h-8 flex items-center justify-center">
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
-            Preview Mode — Admin Login
+            Preview Mode: Admin Login
           </p>
         </div>
         <nav className="h-16 flex items-center px-4 sm:px-6 lg:px-8">
@@ -38,7 +38,7 @@ export default function PreviewAdminLoginPage() {
         </nav>
       </div>
 
-      {/* Slide-up login card — identical to AdminAuthGate */}
+      {/* Slide-up login card: identical to AdminAuthGate */}
       <div
         style={{
           opacity: show ? 1 : 0,

@@ -93,8 +93,8 @@ const sumPayments = (list: InvoicePayment[] | undefined) =>
   (list || []).reduce((s, p) => s + Number(p.amount || 0), 0);
 
 /**
- * Records a payment against an existing invoice. Jobs are routinely part-paid —
- * a deposit lands, the balance follows — so this takes an amount rather than
+ * Records a payment against an existing invoice. Jobs are routinely part-paid:
+ * a deposit lands, the balance follows, so this takes an amount rather than
  * flipping the invoice to 'paid'. Per client-documents: the invoice only
  * becomes 'paid' once the full balance is in; until then the money lives in
  * invoice_payments, which is what the revenue tiles actually sum.
@@ -161,7 +161,7 @@ function RecordPaymentForm({
   if (outstanding < 0.005) {
     return (
       <p className="text-[10px] uppercase tracking-widest text-green-400/70">
-        Paid in full — {fmtUSD(collected)} collected
+        Paid in full: {fmtUSD(collected)} collected
       </p>
     );
   }
@@ -241,7 +241,7 @@ export default function AdminInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Record<string, InvoicePayment[]>>({});
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  // Inline PDF viewer is opt-in per invoice — opening a row shouldn't fetch a PDF.
+  // Inline PDF viewer is opt-in per invoice; opening a row shouldn't fetch a PDF.
   const [showPdf, setShowPdf] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -335,7 +335,7 @@ export default function AdminInvoices() {
   const paidInvoices  = invoices.filter(i => i.status === 'paid');
   // Collected follows money actually recorded, so a deposit on a part-paid job
   // counts. Legacy 'paid' invoices predate invoice_payments and have no rows,
-  // so they fall back to their total — same rule as the revenue tiles.
+  // so they fall back to their total; same rule as the revenue tiles.
   const totalRevenue  = invoices.reduce((s, i) => {
     const recorded = sumPayments(payments[i.id]);
     return s + (recorded > 0 ? recorded : i.status === 'paid' ? i.total : 0);
@@ -471,7 +471,7 @@ export default function AdminInvoices() {
           )}
         </section>
 
-        {/* ── Invoice Detail — fullscreen ExpandableScreen pattern ─────────── */}
+        {/* ── Invoice Detail: fullscreen ExpandableScreen pattern ─────────── */}
         <ExpandableScreen isOpen={!!selectedInvoice} onOpenChange={(open) => { if (!open) setSelectedInvoice(null); }}>
           <ExpandableScreenContent className="overflow-x-hidden">
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -586,7 +586,7 @@ export default function AdminInvoices() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        {/* New invoice — full-screen creation form */}
+        {/* New invoice: full-screen creation form */}
         <ExpandableScreen isOpen={creatingInvoice} onOpenChange={(open) => { if (!open) setCreatingInvoice(false); }}>
           <ExpandableScreenContent className="overflow-x-hidden">
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -601,7 +601,7 @@ export default function AdminInvoices() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        {/* Invoice document — rendered as HTML from the invoice record rather
+        {/* Invoice document: rendered as HTML from the invoice record rather
             than embedding the PDF. An <iframe> to the PDF endpoint relies on a
             browser PDF plugin, which isn't always present (it renders blank in
             embedded/webview browsers). Drawing it ourselves always displays;

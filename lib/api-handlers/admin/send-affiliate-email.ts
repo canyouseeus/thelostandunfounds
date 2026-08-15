@@ -116,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    // Inner body content — sendTransactionalEmail wraps it in the brand template
+    // Inner body content: sendTransactionalEmail wraps it in the brand template
     const innerBody = contentHtml || toHtml(content || '')
 
     const sendResults = []

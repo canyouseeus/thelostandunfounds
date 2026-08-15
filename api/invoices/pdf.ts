@@ -3,7 +3,7 @@
  *
  * Streams the branded TLAU quote / invoice PDF. The token (stored on the
  * invoice row) guards the endpoint so invoices are not enumerable. The PDF is
- * regenerated on each request from the invoice + client rows — no storage.
+ * regenerated on each request from the invoice + client rows, no storage.
  */
 
 import * as dotenv from 'dotenv'

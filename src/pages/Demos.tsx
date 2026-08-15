@@ -5,13 +5,13 @@ import AffiliateBanner from '../components/affiliate/AffiliateBanner';
 import { initAffiliateTracking } from '../utils/affiliate-tracking';
 
 /* ============================================================
-   THE LOST+UNFOUNDS — Demo index. Route: /demos
+   THE LOST+UNFOUNDS: Demo index. Route: /demos
 
    Joshua: "I want to have the option to be able to do both: send a group or
    send them a la carte."
 
    So this page is a directory, not a container. Every demo listed here is its
-   own working URL and always was — this adds one address that gathers them,
+   own working URL and always was; this adds one address that gathers them,
    it does not put them behind anything. Send /demos to somebody shopping
    around; send a single row's link to somebody who asked about one thing.
 
@@ -34,7 +34,7 @@ const DEMOS: Demo[] = [
     kind: 'Website',
     title: 'The Lost+Unfounds',
     blurb:
-      'Our own site, and the clearest example of the customer-facing build: a landing page that carries the work, with booking running inline on it — pick a service, pick a date, and the request lands without leaving the page or bouncing to a third-party scheduler.',
+      'Our own site, and the clearest example of the customer-facing build: a landing page that carries the work, with booking running inline on it; pick a service, pick a date, and the request lands without leaving the page or bouncing to a third-party scheduler.',
     links: [
       { label: 'The site', href: '/' },
     ],
@@ -43,7 +43,7 @@ const DEMOS: Demo[] = [
     kind: 'Interactive kiosk',
     title: 'Flash Kiosk + Studio Dashboard',
     blurb:
-      'A touchscreen on the shop wall showing the work, and the phone tool the shop uses to keep it current. An artist publishes from their phone and it is on the wall — no export, no sync step, nobody has to be at the shop. Both links below are the real software running, not a video.',
+      'A touchscreen on the shop wall showing the work, and the phone tool the shop uses to keep it current. An artist publishes from their phone and it is on the wall; no export, no sync step, nobody has to be at the shop. Both links below are the real software running, not a video.',
     price: 'Per project · from $2,500',
     links: [
       { label: 'Design brief (2 pages, prints to PDF)', href: '/kiosk-demo' },
@@ -57,7 +57,7 @@ const DEMOS: Demo[] = [
         label: 'The studio dashboard',
         href: 'https://kattitude-flash-dashboard.vercel.app/demo.html',
         external: true,
-        note: 'Opens straight in — no sign-in. Upload something.',
+        note: 'Opens straight in: no sign-in. Upload something.',
       },
     ],
   },
@@ -65,7 +65,7 @@ const DEMOS: Demo[] = [
     kind: 'Website + owner dashboard',
     title: 'Kattitude Tattoo Studio',
     blurb:
-      'Tattoo studio. Public site with the artist roster and flash browsing, plus the owner console behind it — bookings, artists, and the content that feeds the wall kiosk.',
+      'Tattoo studio. Public site with the artist roster and flash browsing, plus the owner console behind it; bookings, artists, and the content that feeds the wall kiosk.',
     links: [
       { label: 'The website', href: '/kattitude-preview' },
       { label: 'The owner dashboard', href: '/kattitude-preview/dashboard' },
@@ -86,7 +86,7 @@ const DEMOS: Demo[] = [
     kind: 'Website + owner dashboard',
     title: 'Silva Star Water Solutions',
     blurb:
-      'Service business — grey water disposal, grease removal, event services. Site plus a console with job scheduling and webmail, for an operation that runs off dispatch rather than footfall.',
+      'Service business: grey water disposal, grease removal, event services. Site plus a console with job scheduling and webmail, for an operation that runs off dispatch rather than footfall.',
     links: [
       { label: 'The website', href: '/silva-star' },
       { label: 'The owner dashboard', href: '/silva-star/dashboard' },
@@ -101,7 +101,7 @@ const css = `
    * SHADOWS, and "separation comes from surface tone, never from an outline".
    * So every divider here is a change of surface, not a rule.
    *
-   * The first build of this page used white paper and Kattitude pink — that is
+   * The first build of this page used white paper and Kattitude pink; that is
    * the CLIENT's brand. A page selling our work has to be ours. */
   .dmx{
     --base:#000000;      /* page */
@@ -118,7 +118,7 @@ const css = `
     font-family:'Inter','Helvetica Neue',Arial,sans-serif;
     -webkit-font-smoothing:antialiased;}
 
-  /* Masthead — the logo sits centered exactly as it does in <Layout>'s header,
+  /* Masthead: the logo sits centered exactly as it does in <Layout>'s header,
      and it is the way back to the homepage from this page. /demos renders
      outside <Layout>, so without this there is no exit. */
   .dmx .mast{display:flex;justify-content:center;padding:22px 24px 0;}
@@ -178,7 +178,7 @@ const css = `
 export default function Demos() {
   /* Affiliates hand this page out as their pitch asset, so ?ref=CODE has to
      stick here. Everywhere else that happens in <Layout>, and /demos renders
-     outside it — without this the referral tag on a shared /demos?ref=CODE
+     outside it, without this the referral tag on a shared /demos?ref=CODE
      link is silently dropped and the affiliate never gets credited. The cookie
      it sets is path=/, so the tag survives the click through to a demo, the
      shop, or a booking. */
@@ -189,12 +189,12 @@ export default function Demos() {
   return (
     <>
       <Helmet>
-        <title>THE LOST+UNFOUNDS — Live Demos</title>
+        <title>THE LOST+UNFOUNDS: Live Demos</title>
         <meta
           name="description"
           content="Working demos of the interactive kiosk, business websites and owner dashboards built by The Lost+Unfounds. Real software, running."
         />
-        {/* Indexable, on Joshua's call — this is a sales page and being found
+        {/* Indexable, on Joshua's call: this is a sales page and being found
             in search is the point. The individual CLIENT previews it links to
             keep their own robots rules; nothing here changes those. */}
         <meta name="robots" content="index,follow" />
@@ -203,13 +203,13 @@ export default function Demos() {
       <div className="dmx">
         <style>{css}</style>
 
-        {/* Affiliate program banner — the same strip the homepage runs above its
+        {/* Affiliate program banner: the same strip the homepage runs above its
             nav. /demos renders outside <Layout>, so it has to be placed here
             explicitly; noMargin keeps it flush to the top of the page. */}
         <AffiliateBanner noMargin />
 
         <div className="mast">
-          <Link to="/" aria-label="THE LOST+UNFOUNDS — home">
+          <Link to="/" aria-label="THE LOST+UNFOUNDS; home">
             <img src="/logo.png" alt="THE LOST+UNFOUNDS" />
           </Link>
         </div>

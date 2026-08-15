@@ -8,7 +8,7 @@ interface AffiliateProgramNameProps {
 
 /**
  * Always renders "THE AFFILIATE PROGRAM" with the same weight/tracking/uppercase
- * convention as <BrandName /> — the program name gets the wordmark treatment.
+ * convention as <BrandName />: the program name gets the wordmark treatment.
  */
 export default function AffiliateProgramName({ className, as: Tag = 'span' }: AffiliateProgramNameProps) {
   return (

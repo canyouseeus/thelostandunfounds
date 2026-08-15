@@ -143,7 +143,7 @@ export function wrapEmailContent(
   </style>
 </head>
 <body bgcolor="${BRAND.colors.background}" style="margin: 0; padding: 0; background-color: ${BRAND.colors.background}; color: ${BRAND.colors.text}; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important; height: 100% !important;">
-  <!-- Hidden preheader — keeps email clients from showing title tag or injected text above the banner -->
+  <!-- Hidden preheader: keeps email clients from showing title tag or injected text above the banner -->
   <div style="display:none;max-height:0;max-width:0;overflow:hidden;mso-hide:all;font-size:1px;color:${BRAND.colors.background};line-height:1px;opacity:0;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
   <!-- Full wrapper table for background -->
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="${BRAND.colors.background}" style="border-collapse: collapse; background-color: ${BRAND.colors.background}; background: ${BRAND.colors.background}; margin: 0; padding: 0; width: 100% !important; height: 100% !important;">
@@ -189,7 +189,7 @@ export function processEmailContent(
 ): string {
   // Callers that wrap the result in a footer which already carries an
   // unsubscribe link should pass false, otherwise the message ends up with two
-  // of them — one in the body, one in the footer.
+  // of them: one in the body, one in the footer.
   const { injectUnsubscribeIfMissing = true } = options;
 
   let html = rawHtml || '';
@@ -230,7 +230,7 @@ export function generateNewsletterEmail(
   subscriberEmail: string
 ): string {
   // wrapEmailContent below adds the footer unsubscribe link, so suppress the
-  // body-level one here — otherwise every newsletter carries two.
+  // body-level one here: otherwise every newsletter carries two.
   const processedContent = processEmailContent(bodyContent, subscriberEmail, {
     injectUnsubscribeIfMissing: false,
   });
@@ -258,7 +258,7 @@ export function generateTransactionalEmail(
  * Render a call-to-action button.
  *
  * Buttons are centered. `EMAIL_STYLES.button` is an inline-block, so it cannot
- * centre itself — the centring has to come from a wrapper, and leaving that to
+ * centre itself: the centring has to come from a wrapper, and leaving that to
  * each caller is how buttons drift left one at a time. Use this instead of
  * hand-writing an anchor.
  *
@@ -285,7 +285,7 @@ export const EMAIL_STYLES = {
   paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
   link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
   // Solid white fill with black type. The button must never be filled with
-  // the page colour and made visible by a border — that renders as an empty
+  // the page colour and made visible by a border; that renders as an empty
   // outlined box. See brand-email-manager.
   button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
   divider: `border: none; margin: 30px 0;`,

@@ -60,7 +60,7 @@ export function NewInvoiceForm({
   /**
    * Money already collected on this job. A partial payment is the normal case
    * (deposit taken, balance to follow), so this is an amount rather than a
-   * paid/unpaid flag. Clamped to the total — an invoice can't be overpaid here.
+   * paid/unpaid flag. Clamped to the total: an invoice can't be overpaid here.
    */
   const paidNow = recordPayment ? Math.min(Math.max(parseFloat(paymentAmount) || 0, 0), total) : 0;
   const balance = total - paidNow;
@@ -131,7 +131,7 @@ export function NewInvoiceForm({
           subtotal: total,
           total,
           amount_due: balance,
-          // A part-paid job is still owed money, so it stays a draft/invoice —
+          // A part-paid job is still owed money, so it stays a draft/invoice,
           // only a fully settled one is 'paid'. See client-documents:
           // "Flip to `paid` only when the full balance is in".
           status: paidInFull ? 'paid' : 'draft',
@@ -187,7 +187,7 @@ export function NewInvoiceForm({
             <option value="">Select a client…</option>
             {clients.map(c => (
               <option key={c.id} value={c.id}>
-                {c.business && c.business !== c.name ? `${c.name} — ${c.business}` : c.name}
+                {c.business && c.business !== c.name ? `${c.name}: ${c.business}` : c.name}
               </option>
             ))}
             <option value="__new__">+ New client…</option>
@@ -224,7 +224,7 @@ export function NewInvoiceForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className={field}
-            placeholder="e.g. Headshot session — Andrew Lowe"
+            placeholder="e.g. Headshot session: Andrew Lowe"
           />
         </label>
 
@@ -336,7 +336,7 @@ export function NewInvoiceForm({
               className="accent-white"
             />
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-              Some or all of this is already paid — record the payment now
+              Some or all of this is already paid; record the payment now
             </span>
           </label>
           {recordPayment && (
@@ -373,7 +373,7 @@ export function NewInvoiceForm({
               </button>
               <p className="text-[10px] uppercase tracking-widest text-white/40">
                 {paidInFull
-                  ? 'Settled in full — invoice will be marked paid'
+                  ? 'Settled in full: invoice will be marked paid'
                   : `Balance remaining ${money(balance)}`}
               </p>
             </div>

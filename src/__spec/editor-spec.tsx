@@ -76,7 +76,7 @@ function Grid({ editing, shapes }: { editing: boolean; shapes: Record<string, Sh
   )
 }
 
-/* ?mode=sheet renders only the tile editor — it portals to body, so mounted
+/* ?mode=sheet renders only the tile editor; it portals to body, so mounted
    alongside the grids it covers them and every capture is polluted. */
 const mode = new URLSearchParams(location.search).get('mode')
 

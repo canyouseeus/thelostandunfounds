@@ -1,7 +1,7 @@
 /**
  * IndexNow submitter.
  *
- * Google has no public "please crawl this" API — that lives behind Search
+ * Google has no public "please crawl this" API; that lives behind Search
  * Console and a human login. IndexNow is the equivalent for Bing and Yandex,
  * and it authenticates with a key file hosted on the domain rather than an
  * account, so this runs unattended. Worth having beyond Bing's own traffic:
@@ -12,7 +12,7 @@
  *   npm run indexnow                 # submit every URL in the live sitemap
  *   npm run indexnow -- <url> [...]  # submit specific URLs
  *
- * The key file must be live at https://<host>/<key>.txt before submitting —
+ * The key file must be live at https://<host>/<key>.txt before submitting;
  * IndexNow fetches it to prove ownership and returns 403 if it 404s. Deploy
  * before running this, not after.
  */
@@ -28,7 +28,7 @@ async function urlsFromSitemap(): Promise<string[]> {
     if (!res.ok) throw new Error(`sitemap.xml returned ${res.status}`);
     const xml = await res.text();
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
-    if (locs.length === 0) throw new Error('sitemap.xml parsed to 0 URLs — refusing to submit');
+    if (locs.length === 0) throw new Error('sitemap.xml parsed to 0 URLs; refusing to submit');
     return locs;
 }
 
@@ -42,7 +42,7 @@ async function main() {
     if (!keyRes.ok || keyBody !== KEY) {
         console.error(`❌ Key file check failed at ${KEY_LOCATION}`);
         console.error(`   status=${keyRes.status} body="${keyBody.slice(0, 40)}" expected="${KEY}"`);
-        console.error('   Deploy the key file first — IndexNow will reject the submission without it.');
+        console.error('   Deploy the key file first; IndexNow will reject the submission without it.');
         process.exit(1);
     }
     console.log(`✅ Key file verified at ${KEY_LOCATION}`);

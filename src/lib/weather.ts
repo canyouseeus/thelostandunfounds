@@ -57,7 +57,7 @@ export interface WeatherSnapshot {
   };
 }
 
-/** WMO weather interpretation codes — the subset Open-Meteo actually emits. */
+/** WMO weather interpretation codes: the subset Open-Meteo actually emits. */
 const CONDITIONS: Record<number, string> = {
   0: 'Clear',
   1: 'Mainly Clear',
@@ -93,7 +93,7 @@ export const conditionLabel = (code: number) => CONDITIONS[code] ?? 'Unknown';
 
 /**
  * A single glyph per condition family. The dashboard is monochrome, so these
- * carry the whole visual read of the forecast — keep them legible at the ~40px
+ * carry the whole visual read of the forecast; keep them legible at the ~40px
  * the widget renders them at.
  */
 export const conditionGlyph = (code: number, isDay = true) => {
@@ -132,7 +132,7 @@ export const conditionKind = (code: number): ConditionKind => {
 export const aqiCategory = (aqi: number) => {
   if (aqi <= 50) return 'Good';
   if (aqi <= 100) return 'Moderate';
-  if (aqi <= 150) return 'Unhealthy — Sensitive';
+  if (aqi <= 150) return 'Unhealthy: Sensitive';
   if (aqi <= 200) return 'Unhealthy';
   if (aqi <= 300) return 'Very Unhealthy';
   return 'Hazardous';
@@ -203,7 +203,7 @@ const mapDay = (d: Record<string, unknown[]>, i: number): WeatherDay => ({
 });
 
 /**
- * One snapshot for both the widget face and the detail sheet — they read the
+ * One snapshot for both the widget face and the detail sheet; they read the
  * same object, so the number on the tile can never disagree with the number in
  * the expanded view.
  *
@@ -234,7 +234,7 @@ export async function fetchWeather(place: WeatherPlace, signal?: AbortSignal): P
   const h = forecast.hourly ?? {};
   const daily = (d.time ?? []).map((_: string, i: number) => mapDay(d, i));
 
-  // Start the hourly strip at the current hour rather than at midnight — a
+  // Start the hourly strip at the current hour rather than at midnight; a
   // forecast of hours already past is noise.
   const nowIso = String(c.time ?? '');
   const startIdx = Math.max(0, (h.time ?? []).findIndex((t: string) => t >= nowIso));
@@ -299,6 +299,6 @@ export function savePlace(place: WeatherPlace) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(place));
   } catch {
-    /* private mode — the city just won't persist */
+    /* private mode: the city just won't persist */
   }
 }

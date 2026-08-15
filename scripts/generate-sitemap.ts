@@ -148,7 +148,7 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
-  <!-- Services — the hire-us page. Highest-priority commercial URL on the site. -->
+  <!-- Services: the hire-us page. Highest-priority commercial URL on the site. -->
   <url>
     <loc>${baseUrl}/services</loc>
     <lastmod>${currentDate}</lastmod>
@@ -156,7 +156,7 @@ async function generateSitemap() {
     <priority>0.9</priority>
   </url>
 
-  <!-- Service pages — one per offer, each ranking for its own search -->
+  <!-- Service pages: one per offer, each ranking for its own search -->
   <url>
     <loc>${baseUrl}/services/airbnb-photography</loc>
     <lastmod>${currentDate}</lastmod>

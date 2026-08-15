@@ -1,6 +1,6 @@
 # Workflow: Affiliate Stripe onboarding reminders
 
-An affiliate who signs up but never completes Stripe Connect cannot be paid — commissions
+An affiliate who signs up but never completes Stripe Connect cannot be paid; commissions
 accrue and sit there with nowhere to land. This workflow finds those affiliates and nudges
 them, automatically, with a one-click link that starts Stripe onboarding straight from the
 email.
@@ -22,18 +22,18 @@ An affiliate is a candidate when **all** of these hold:
 
 - `status = 'active'`
 - not flagged (`is_flagged` null or false)
-- `stripe_payouts_enabled` is null or false — i.e. Stripe cannot pay them yet
+- `stripe_payouts_enabled` is null or false, i.e. Stripe cannot pay them yet
 
 Cadence guards, enforced per affiliate off `affiliate_email_log`:
 
-- **24h grace** after signup — never nag someone who is still mid-signup
+- **24h grace** after signup, never nag someone who is still mid-signup
 - **7-day cooldown** between reminders
 - **4 reminders maximum**, then we stop permanently
 
 Each send is logged with `email_type = 'stripe_reminder'` and
 `reference_id = 'stripe_reminder_<n>'`. That log is what enforces the cap and the cooldown,
 so a double-fired cron cannot double-send. If the log lookup errors, the affiliate is
-**skipped**, not mailed — failing open here would mean mailing everyone on every DB blip.
+**skipped**, not mailed: failing open here would mean mailing everyone on every DB blip.
 
 ## The one-click link
 
@@ -43,7 +43,7 @@ account if needed, mints a **fresh** Account Link and 302s to Stripe.
 
 - Signed HMAC-SHA256, 30-day expiry, constant-time comparison.
 - Secret: `AFFILIATE_LINK_SECRET`, falling back to `CRON_SECRET`, then the service role key.
-  Rotating that secret invalidates outstanding links — the affiliate then sees a "link no
+  Rotating that secret invalidates outstanding links; the affiliate then sees a "link no
   longer valid" page pointing at the dashboard button, which does the same thing.
 - The token authorises exactly one action: open Stripe's own KYC flow for one affiliate. It
   grants no session and reads no data.
@@ -76,7 +76,7 @@ evidence of delivery.
 The same handler is mounted on the (ungated) admin router as
 `/api/admin/affiliate-stripe-reminders`. There, a `testEmail` addressed to an **owner address**
 (`thelostandunfounds@gmail.com`, `media@thelostandunfounds.com`) is allowed without
-`CRON_SECRET` — an anonymous caller can at most mail the owner a copy of our own template.
+`CRON_SECRET`: an anonymous caller can at most mail the owner a copy of our own template.
 Everything that touches a real affiliate still needs the secret, and an unauthenticated preview
 may not pass `affiliateId`: it always renders from the recipient's own affiliate row, so the
 live button in the preview can never create a *different* affiliate's Stripe account.
@@ -92,7 +92,7 @@ link is clickable before the change reaches production.
 
 ## Verifying a change
 
-1. `dryRun` and read the `results[]` — every entry states a reason.
+1. `dryRun` and read the `results[]`: every entry states a reason.
 2. `testEmail` to yourself; open it and click CONNECT STRIPE. It must land on Stripe's
    onboarding, not an error page.
 3. After a real send, confirm the row: `select * from affiliate_email_log where email_type =

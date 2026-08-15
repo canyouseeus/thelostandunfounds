@@ -4,7 +4,7 @@ import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
 /**
- * The roster's ask-box — a photographer types a question or a request on their
+ * The roster's ask-box: a photographer types a question or a request on their
  * dashboard and it lands in the owner's inbox with a row behind it.
  *
  * This is the crew-facing cousin of admin SAGE MODE, and it deliberately stops
@@ -17,7 +17,7 @@ import { EMAIL_STYLES } from '../../email-template.js';
  * Josh and hope". A request typed here has a timestamp, a status and a reply
  * the photographer can see on the same page they asked from.
  *
- * Auth is a verified Supabase JWT — the photographer is resolved from the
+ * Auth is a verified Supabase JWT; the photographer is resolved from the
  * token, so `name`, `email` and `photographer_id` on the row are all
  * server-derived and a caller cannot file a request as somebody else.
  *
@@ -106,7 +106,7 @@ async function notifyOwner(request: {
       to: OWNER_INBOX,
       cc: BUSINESS_RECORD_CC,
       replyTo: request.email,
-      subject: `Crew request from ${request.name} — ${KIND_LABEL[request.kind] || request.kind}`,
+      subject: `Crew request from ${request.name}; ${KIND_LABEL[request.kind] || request.kind}`,
       content,
     });
     return { success: result.success, error: result.error };
@@ -215,7 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (!Object.keys(update).length) {
-        return res.status(400).json({ error: 'Nothing to update — send status or reply.' });
+        return res.status(400).json({ error: 'Nothing to update; send status or reply.' });
       }
 
       const { data, error } = await supabase

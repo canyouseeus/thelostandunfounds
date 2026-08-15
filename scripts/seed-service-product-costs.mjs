@@ -26,12 +26,12 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const ROWS = [
-  // Photography (~10% cost — memory cards, editing software allocation, gear wear)
+  // Photography (~10% cost: memory cards, editing software allocation, gear wear)
   { product_id: 'photo-portrait', cost: 25 },
   { product_id: 'photo-event', cost: 60 },
   { product_id: 'photo-halfday', cost: 80 },
   { product_id: 'photo-fullday', cost: 140 },
-  // Web development (~15% cost — template/stock licenses, hosting setup)
+  // Web development (~15% cost: template/stock licenses, hosting setup)
   { product_id: 'webdev-starter', cost: 225 },
   { product_id: 'webdev-professional', cost: 525 },
   { product_id: 'webdev-agency', cost: 900 },
@@ -39,7 +39,7 @@ const ROWS = [
   // Bundles (~10% cost, blended across the web + photo components)
   { product_id: 'bundle-launch', cost: 250 },
   { product_id: 'bundle-brand', cost: 500 },
-  // Kiosk build (~15% cost — software licensing, misc supplies; hardware billed separately)
+  // Kiosk build (~15% cost: software licensing, misc supplies; hardware billed separately)
   { product_id: 'kiosk-build', cost: 375 },
 ];
 

@@ -55,11 +55,11 @@ const NOTIFS = {
   items: [
     { id:'1', type:'deployment', title:'Deployment Succeeded', message:'Layout: clamp saved shapes', severity:'info', read:false, created_at:'2026-08-05T14:22:00Z', deployment:null },
     { id:'2', type:'system', title:'Gallery Sync Complete', message:'214 photos synced', severity:'success', read:false, created_at:'2026-08-05T09:15:00Z', deployment:null },
-    { id:'3', type:'stripe', title:'Refund Issued', message:'$45.00 — gallery order', severity:'warning', read:true, created_at:'2026-08-04T19:03:00Z', deployment:null },
+    { id:'3', type:'stripe', title:'Refund Issued', message:'$45.00; gallery order', severity:'warning', read:true, created_at:'2026-08-04T19:03:00Z', deployment:null },
     { id:'4', type:'deployment', title:'Deployment Succeeded', message:'Notifications: the real feed', severity:'info', read:true, created_at:'2026-08-04T11:40:00Z', deployment:null },
     { id:'5', type:'system', title:'Newsletter Sent', message:'Delivered to 123 subscribers', severity:'success', read:true, created_at:'2026-08-02T09:30:00Z', deployment:null },
     { id:'6', type:'deployment', title:'Deployment Succeeded', message:'CRM: collection dial', severity:'info', read:true, created_at:'2026-08-03T16:02:00Z', deployment:null },
-    { id:'7', type:'system', title:'Booking Confirmed', message:'Silva Star — Aug 12', severity:'success', read:true, created_at:'2026-08-01T14:00:00Z', deployment:null },
+    { id:'7', type:'system', title:'Booking Confirmed', message:'Silva Star; Aug 12', severity:'success', read:true, created_at:'2026-08-01T14:00:00Z', deployment:null },
   ],
 }
 

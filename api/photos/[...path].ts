@@ -15,7 +15,7 @@ import { photoTagsHandler, removePhotoTagHandler } from '../../lib/api-handlers/
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel's routing layer sometimes exposes the catch-all segment under the
   // literal key '...path' instead of 'path' (see api/gallery/[...path].ts,
-  // which has the same fallback) — and in that case as a single slash-joined
+  // which has the same fallback), and in that case as a single slash-joined
   // string rather than an array, so split it back into segments.
   const pathParam = req.query.path || req.query['...path']
   const segments = Array.isArray(pathParam)

@@ -89,7 +89,7 @@ export default function AuthCallback() {
 
       // Admins always land on the admin dashboard, regardless of whatever page
       // triggered the login prompt (e.g. a private-gallery "please log in" modal
-      // stores that gallery's URL as the return URL — an admin shouldn't get
+      // stores that gallery's URL as the return URL; an admin shouldn't get
       // bounced back there instead of into the console).
       try {
         const adminStatus = await isAdmin();
@@ -106,7 +106,7 @@ export default function AuthCallback() {
         }
       }
 
-      // Not an admin — route by return URL or default dashboard
+      // Not an admin: route by return URL or default dashboard
       const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
       navigate(validReturnUrl ? resolveReturnUrl(returnUrl) : '/dashboard');
     } catch (error) {

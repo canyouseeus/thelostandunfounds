@@ -199,7 +199,7 @@ export default function SilvaStarProposal() {
   return (
     <>
       <Helmet>
-        <title>THE LOST+UNFOUNDS — Proposal for Silva Star Water Solutions</title>
+        <title>THE LOST+UNFOUNDS: Proposal for Silva Star Water Solutions</title>
         <meta name="robots" content="noindex, nofollow" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -209,7 +209,7 @@ export default function SilvaStarProposal() {
 
       <div className="proposal-root" style={{ background: '#ffffff', minHeight: '100vh' }}>
 
-        {/* PAGE 1 — COVER */}
+        {/* PAGE 1: COVER */}
         <section className="page">
           <div className="runhead">
             <div className="left">
@@ -262,7 +262,7 @@ export default function SilvaStarProposal() {
           </div>
         </section>
 
-        {/* PAGE 2 — OPPORTUNITY + WHAT YOU GET */}
+        {/* PAGE 2: OPPORTUNITY + WHAT YOU GET */}
         <section className="page">
           <div className="runhead">
             <div className="left">
@@ -290,20 +290,20 @@ export default function SilvaStarProposal() {
           <div className="subhead">02 · What you get</div>
 
           <ul className="list">
-            <li><strong>A professional one-page website</strong> — <span className="lite">custom dark-mode design, mobile-first, built for Austin service businesses. Hero, services, service area, booking CTA, testimonials.</span></li>
-            <li><strong>Online booking system</strong> — <span className="lite">customers request grey water pickup or grease service with date, location, truck count, and event details. Every request hits your dashboard instantly.</span></li>
-            <li><strong>Service management dashboard</strong> — <span className="lite">track every job from scheduled to completed to paid. See today's route, outstanding invoices, repeat customers, revenue trends, fleet status.</span></li>
-            <li><strong>Invoicing with payment tracking</strong> — <span className="lite">create and send invoices, track who has paid and who has not. Stripe integration so customers can pay online. Solves the Square visibility problem.</span></li>
-            <li><strong>Built-in affiliate/referral program</strong> — <span className="lite">food truck operators and friends refer customers, get a commission when the job is completed and paid. Automatic tracking.</span></li>
-            <li><strong>Click-to-call everywhere</strong> — <span className="lite">(512) 967-2787 and danielsilvaatx@gmail.com prominently placed across the site.</span></li>
+            <li><strong>A professional one-page website</strong>; <span className="lite">custom dark-mode design, mobile-first, built for Austin service businesses. Hero, services, service area, booking CTA, testimonials.</span></li>
+            <li><strong>Online booking system</strong>; <span className="lite">customers request grey water pickup or grease service with date, location, truck count, and event details. Every request hits your dashboard instantly.</span></li>
+            <li><strong>Service management dashboard</strong>; <span className="lite">track every job from scheduled to completed to paid. See today's route, outstanding invoices, repeat customers, revenue trends, fleet status.</span></li>
+            <li><strong>Invoicing with payment tracking</strong>; <span className="lite">create and send invoices, track who has paid and who has not. Stripe integration so customers can pay online. Solves the Square visibility problem.</span></li>
+            <li><strong>Built-in affiliate/referral program</strong>; <span className="lite">food truck operators and friends refer customers, get a commission when the job is completed and paid. Automatic tracking.</span></li>
+            <li><strong>Click-to-call everywhere</strong>; <span className="lite">(512) 967-2787 and danielsilvaatx@gmail.com prominently placed across the site.</span></li>
           </ul>
 
           <div className="subhead">Also included</div>
           <ul className="list">
             <li>Platform console with webmail, newsletter, customer management, reports, and settings.</li>
-            <li>Deployed to Vercel with a custom subdomain — <span className="lite">your own domain when ready.</span></li>
+            <li>Deployed to Vercel with a custom subdomain; <span className="lite">your own domain when ready.</span></li>
             <li>Instant email notification on every new booking request.</li>
-            <li>On-page SEO baseline — <span className="lite">meta tags, OpenGraph, optimized for "Austin grey water disposal" and related searches.</span></li>
+            <li>On-page SEO baseline: <span className="lite">meta tags, OpenGraph, optimized for "Austin grey water disposal" and related searches.</span></li>
             <li>30 days of post-launch support.</li>
           </ul>
 
@@ -313,7 +313,7 @@ export default function SilvaStarProposal() {
           </div>
         </section>
 
-        {/* PAGE 3 — INVESTMENT + ACCEPTANCE */}
+        {/* PAGE 3: INVESTMENT + ACCEPTANCE */}
         <section className="page">
           <div className="runhead">
             <div className="left">
@@ -330,7 +330,7 @@ export default function SilvaStarProposal() {
           </div>
 
           <p className="lede">
-            The build is a flat one-time fee. The retainer covers maintenance and minor tweaks only — not new modules. New features are scoped and quoted flat-rate before any work begins, so you always know the cost before we start.
+            The build is a flat one-time fee. The retainer covers maintenance and minor tweaks only, not new modules. New features are scoped and quoted flat-rate before any work begins, so you always know the cost before we start.
           </p>
 
           <table className="invest">
@@ -377,7 +377,7 @@ export default function SilvaStarProposal() {
           </div>
 
           <p className="body" style={{ marginTop: '18px' }}>
-            <strong>Acceptance.</strong> Reply by email or text with <em>"approved"</em> to receive the deposit invoice. Silva Star Water Solutions owns the website, the source code, and all customer data — full export available any time.
+            <strong>Acceptance.</strong> Reply by email or text with <em>"approved"</em> to receive the deposit invoice. Silva Star Water Solutions owns the website, the source code, and all customer data; full export available any time.
           </p>
 
           <div className="sign">

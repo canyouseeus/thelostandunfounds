@@ -3,7 +3,7 @@ import { NotificationsWidget, NotificationItem } from '../ui/notifications-widge
 
 /**
  * The dashboard's notifications tile, fed by the real feed
- * (/api/admin/notifications — admin_notifications plus each deployment
+ * (/api/admin/notifications: admin_notifications plus each deployment
  * notification's commit and error context) and the review queue count.
  */
 export function NotificationsWidgetLive({ size, pendingReviews, onOpenPanel, className }: {

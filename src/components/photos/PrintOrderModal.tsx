@@ -162,7 +162,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         lnInvoice: result.lnInvoice,
         expirationInSec: result.expirationInSec,
         amount: selectedOption.price,
-        description: `${photo.title} — ${selectedOption.size_label}`,
+        description: `${photo.title}: ${selectedOption.size_label}`,
       });
     } catch (error: any) {
       setCheckoutError(error.message || 'Failed to start checkout. Please try again.');

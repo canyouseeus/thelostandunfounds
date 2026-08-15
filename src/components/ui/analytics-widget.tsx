@@ -118,7 +118,7 @@ function analyticsRoot(data: AnalyticsWidgetData, onClose: () => void): StackCar
  * Site analytics tile. The trace is the drawn mass in the widget family's
  * compositions; the views figure carries the face, and the larger shapes
  * spend their room on the page/device/source split. Click or long-press
- * opens the analytics explorer — card-stack drill-down like the registry.
+ * opens the analytics explorer: card-stack drill-down like the registry.
  */
 export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
   size?: string;
@@ -176,7 +176,7 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="Site analytics — open explorer"
+        aria-label="Site analytics: open explorer"
         className={cn(
           'relative bg-black text-white flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -264,7 +264,7 @@ export function AnalyticsWidget({ size = '2x2', data: pinned, className }: {
                     {compact(data.views)}
                   </span>
                   <span className="uppercase tracking-widest tabular-nums opacity-50" style={{ fontSize: u(4.6), lineHeight: 1.2, marginTop: u(2) }}>
-                    {compact(data.visitors)} visitors — {data.bounceRate.toFixed(0)}% bounce
+                    {compact(data.visitors)} visitors: {data.bounceRate.toFixed(0)}% bounce
                   </span>
                 </div>
                 {cols >= 4 && rows === 2 && (

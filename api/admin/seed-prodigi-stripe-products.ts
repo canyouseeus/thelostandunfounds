@@ -4,7 +4,7 @@
  *
  * Creates Stripe Products + Prices for every active prodigi_products row
  * that doesn't already have one, and persists stripe_product_id/
- * stripe_price_id back onto the row. Idempotent — matched by
+ * stripe_price_id back onto the row. Idempotent: matched by
  * metadata.prodigi_product_id, safe to run repeatedly (e.g. after adding a
  * new print to the catalog).
  */

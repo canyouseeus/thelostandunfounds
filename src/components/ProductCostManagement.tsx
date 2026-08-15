@@ -688,7 +688,7 @@ function ProductDetail({
   );
 }
 
-// Fourthwall shop products are managed on Fourthwall — this editor only tracks
+// Fourthwall shop products are managed on Fourthwall; this editor only tracks
 // the cost basis locally for profit-margin / affiliate-commission calculations.
 function ShopProductDetail({
   product,

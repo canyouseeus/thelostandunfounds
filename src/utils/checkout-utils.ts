@@ -115,7 +115,7 @@ export async function pollStrikeInvoiceStatus(
 /**
  * Create a Stripe Checkout Session keyed by a pre-existing Stripe Price ID.
  * Use this for native products configured in the Stripe dashboard (e.g., the
- * Mystery Box). Returns the hosted-checkout URL — the caller should redirect
+ * Mystery Box). Returns the hosted-checkout URL: the caller should redirect
  * the browser to `url`.
  *
  * Compared to `getStripeCheckoutUrl` below, this path delegates pricing and
@@ -272,7 +272,7 @@ export async function getProdigiStrikeInvoice(params: {
 
 /**
  * Create a Stripe Checkout Session to print a gallery photo (any photo, not
- * just the curated Shop catalog) — size/frame resolved dynamically against
+ * just the curated Shop catalog): size/frame resolved dynamically against
  * print_catalog_options, priced with inline price_data server-side.
  */
 export async function getPhotoPrintCheckoutUrl(params: {

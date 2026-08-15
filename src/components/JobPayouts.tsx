@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 /**
- * A contractor's job pay — what they earned on shoots, what has settled, and
+ * A contractor's job pay: what they earned on shoots, what has settled, and
  * what has already landed in their bank.
  *
  * Kept apart from the affiliate dashboard on purpose. Affiliate earnings are
  * commission for referring business; this is pay for doing the work, and the
  * two answer different questions ("how is my link doing" vs "was I paid for
- * Saturday"). Reads `crew_payouts` directly — RLS restricts the table to
+ * Saturday"). Reads `crew_payouts` directly: RLS restricts the table to
  * `auth.uid() = user_id`, so the session is the authorization.
  */
 
@@ -53,7 +53,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
     const [stripeError, setStripeError] = useState<string | null>(null);
     const [connect, setConnect] = useState<ConnectStatus | null>(null);
     const [connecting, setConnecting] = useState(false);
-    // Signed in, but not on the crew — someone who sells gallery photos and has
+    // Signed in, but not on the crew; someone who sells gallery photos and has
     // never worked a booking. They have no job pay to show and nothing to
     // connect for, and the Stripe buttons would only 404 at them.
     const [notContractor, setNotContractor] = useState(false);
@@ -131,7 +131,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
     }, [userId]);
 
     // Ask Stripe where this contractor actually stands, rather than trusting a
-    // stored flag — someone can finish onboarding, or have Stripe reopen a
+    // stored flag: someone can finish onboarding, or have Stripe reopen a
     // requirement, without this app ever hearing about it.
     useEffect(() => {
         let cancelled = false;
@@ -164,7 +164,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
     // Nothing to say to someone who isn't crew. Rendering an empty "Job
     // Payouts" panel with a Stripe button that 404s reads as something broken,
     // when the truth is simply that this section isn't theirs. The payout rows
-    // are still checked first — a ledger entry outlives a photographer record,
+    // are still checked first: a ledger entry outlives a photographer record,
     // and money owed must never be hidden by a missing row.
     if (notContractor && !loading && payouts.length === 0) return null;
 
@@ -175,7 +175,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
                     <h2 className="text-xl font-bold uppercase tracking-tighter text-white">Job Payouts</h2>
                     <p className="text-sm text-zinc-400">
                         Pay for shoots you covered. Sent to your connected Stripe account automatically once the
-                        client's payment settles — you don't need to request it.
+                        client's payment settles: you don't need to request it.
                     </p>
                 </div>
                 <div className="flex gap-8">
@@ -191,7 +191,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
             </div>
 
             <div className="mb-6">
-                {/* Until Stripe answers we show nothing rather than guessing —
+                {/* Until Stripe answers we show nothing rather than guessing;
                     flashing "connect your account" at someone who connected
                     months ago reads as though we lost their details. */}
                 {connect && !connect.payouts_enabled && (
@@ -203,14 +203,14 @@ export default function JobPayouts({ userId }: { userId: string }) {
                         </p>
                         <p className="text-sm text-zinc-300 mt-2">
                             {connect.status === 'not_started'
-                                ? 'Your pay is already being tracked below — it just needs somewhere to land. Takes about a minute.'
+                                ? 'Your pay is already being tracked below; it just needs somewhere to land. Takes about a minute.'
                                 : 'Stripe still needs a couple of details before it can pay you. Your pay keeps accruing below in the meantime and goes out on the next run once this clears.'}
                         </p>
                         <p className="text-sm text-zinc-400 mt-2">
                             <strong className="text-white">Already use Stripe?</strong> Choose{' '}
                             <em>Sign in</em> at the top of the Stripe page instead of filling the form
                             out. It reuses the details you've already verified, and this becomes another
-                            account you can switch between in your Stripe dashboard — nothing changes
+                            account you can switch between in your Stripe dashboard; nothing changes
                             about the accounts you already have.
                         </p>
                         <button

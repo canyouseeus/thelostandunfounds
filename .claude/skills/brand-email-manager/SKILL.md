@@ -10,17 +10,17 @@ This skill ensures that every email sent by the application (transactional, news
 ## Core Principles
 1. **Never Hardcode HTML**: Do not write raw HTML for email bodies in handlers or servers.
 2. **Use the Standard Template**: Always import and use `wrapEmailContent`, `generateNewsletterEmail`, or `generateTransactionalEmail` from `lib/email-template.ts`.
-3. **Mandatory Banner**: Every email must start with the official full-width black banner image — injected automatically by the template.
+3. **Mandatory Banner**: Every email must start with the official full-width black banner image; injected automatically by the template.
 4. **Consistent Typography**: Use the `EMAIL_STYLES` constants for headings, paragraphs, and buttons.
 5. **Left-aligned body**: Body text is left-aligned. The banner is full-width.
 
-## ABSOLUTE RULES — Never violate these
+## ABSOLUTE RULES, Never violate these
 
 ### ❌ Never use SVG data URIs as banner fallbacks
 The historical pattern of `BANNER_URL = "data:image/svg+xml;utf8,<svg...>THE LOST+UNFOUNDS</svg>"` is **banned**. SVG data URIs render as visible white text above the banner in most email clients. If you ever see a `BANNER_URL` constant containing a `data:image/svg` string anywhere in the codebase, replace it immediately:
 
 ```typescript
-// BANNED — causes white text above banner in email clients
+// BANNED: causes white text above banner in email clients
 const BANNER_URL = "data:image/svg+xml;utf8,<svg ...>THE LOST+UNFOUNDS</svg>"
 
 // CORRECT
@@ -28,7 +28,7 @@ const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
 ```
 
 ### ❌ Never call `ensureBannerHtml` directly from a new handler
-`ensureBannerHtml` in `_zoho-email-utils.ts` is a safety net for legacy handlers, not an API. New code must go through `generateTransactionalEmail` or `generateNewsletterEmail` — these call `wrapEmailContent` which already includes the correct banner `<img>` tag.
+`ensureBannerHtml` in `_zoho-email-utils.ts` is a safety net for legacy handlers, not an API. New code must go through `generateTransactionalEmail` or `generateNewsletterEmail`; these call `wrapEmailContent` which already includes the correct banner `<img>` tag.
 
 ### ✅ Buttons are IMAGES, one fixed size, centred
 
@@ -115,7 +115,7 @@ If you see a border in a button style, delete it and set a solid fill.
 Many email clients render `<title>` content as visible preheader text above the banner. The template in `lib/email-template.ts` deliberately omits `<title>`. Do not add it.
 
 ### ❌ No content above the banner
-The `<body>` tag immediately opens into the hidden preheader div (zero-height, zero-opacity), then the banner. Nothing visible comes before the banner — no text, no spacing, no wrapper divs with content.
+The `<body>` tag immediately opens into the hidden preheader div (zero-height, zero-opacity), then the banner. Nothing visible comes before the banner; no text, no spacing, no wrapper divs with content.
 
 ## Banner image URL (canonical)
 
@@ -144,7 +144,7 @@ const body = `
 `;
 
 const html = generateTransactionalEmail(body);
-// Then pass html to sendTransactionalEmail() — see email-delivery skill
+// Then pass html to sendTransactionalEmail(): see email-delivery skill
 ```
 
 ### 2. Newsletter Emails

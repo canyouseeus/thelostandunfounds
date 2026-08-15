@@ -444,7 +444,7 @@ export default async function handler(
     }
 
     // Check sender configuration.
-    // ZOHO_FROM_EMAIL is only required on the Zoho path — sendResendEmail uses RESEND_FROM_EMAIL
+    // ZOHO_FROM_EMAIL is only required on the Zoho path; sendResendEmail uses RESEND_FROM_EMAIL
     // and never reads this value, so a Resend-only environment must not be blocked here.
     const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
     if (!fromEmail && !isResendConfigured()) {
@@ -495,11 +495,11 @@ export default async function handler(
     // Resend is the correct provider for bulk: Zoho Mail is a mailbox product with per-day send
     // caps, and pushing a subscriber list through it burns quota and sending reputation on the
     // same domain that carries transactional mail. Zoho remains a fallback so a missing key does
-    // not block a send outright — but it is a degraded path and must be visible, not silent.
+    // not block a send outright, but it is a degraded path and must be visible, not silent.
     const useResend = isResendConfigured()
     const providerWarning = useResend
       ? undefined
-      : 'RESEND_API_KEY is not set — this newsletter was sent via Zoho Mail, which is rate-capped and risks the domain sending reputation used by transactional email. Set RESEND_API_KEY for bulk sends.'
+      : 'RESEND_API_KEY is not set; this newsletter was sent via Zoho Mail, which is rate-capped and risks the domain sending reputation used by transactional email. Set RESEND_API_KEY for bulk sends.'
 
     console.log(`Using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
     if (providerWarning) console.warn(`[newsletter] ${providerWarning}`)
@@ -510,7 +510,7 @@ export default async function handler(
     let actualFromEmail: string = fromEmail ?? ''
 
     if (!useResend) {
-      // Unreachable in practice — the guard above returns unless at least one
+      // Unreachable in practice: the guard above returns unless at least one
       // provider is configured, and !useResend means it wasn't Resend. Kept as
       // an explicit check so the Zoho path can never send from an empty
       // address, and so fromEmail narrows to string below.
@@ -588,7 +588,7 @@ export default async function handler(
     // This matters: the resume filter above skips anyone already logged 'sent' for this subject
     // within 24h. If logs were only written after the loop finished, a function timeout mid-send
     // (maxDuration is 300s and the loop costs ~550ms/email) would leave real emails delivered but
-    // nothing recorded — and the retry would send to the whole list a second time.
+    // nothing recorded, and the retry would send to the whole list a second time.
     //
     // Flushing in chunks bounds the worst case to FLUSH_EVERY un-recorded sends instead of all of
     // them. A logging failure is reported loudly but does not abort the run.

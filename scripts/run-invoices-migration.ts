@@ -23,7 +23,7 @@ async function run() {
     .from('invoices').select('id').limit(1);
 
   if (probeErr?.code === '42P01') {
-    console.error('invoices table does not exist — DDL must be applied via Supabase dashboard or CLI');
+    console.error('invoices table does not exist; DDL must be applied via Supabase dashboard or CLI');
     console.log('\nSQL to run in Supabase SQL editor:');
     console.log(`
 CREATE TABLE IF NOT EXISTS invoices (
@@ -66,7 +66,7 @@ CREATE POLICY "Service role full access" ON invoices
     .from('invoices')
     .insert({
       client_name: 'Toke Truck',
-      description: 'Photography services — multi-location shoot, 20 photos + 2 reels',
+      description: 'Photography services: multi-location shoot, 20 photos + 2 reels',
       amount_cents: 30000,
       status: 'paid',
       invoice_date: '2026-04-18T00:00:00Z',

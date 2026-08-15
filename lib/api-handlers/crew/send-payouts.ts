@@ -23,12 +23,12 @@ import {
  * contractor's shoot pay should land without anyone remembering to send it.
  *
  * Three guards stand between a ledger row and a transfer:
- *  1. `available_at` — the settlement hold, so we don't try to move money
+ *  1. `available_at`: the settlement hold, so we don't try to move money
  *     Stripe has not yet released from the client's card payment.
- *  2. The platform's available balance — a transfer against an unsettled
+ *  2. The platform's available balance: a transfer against an unsettled
  *     balance fails, and a failure marks the row and stops the retry loop.
  *     Checking first means an early run is a no-op instead of a dead row.
- *  3. `payouts_enabled` on the destination — a contractor who has not finished
+ *  3. `payouts_enabled` on the destination: a contractor who has not finished
  *     onboarding keeps accruing, and gets paid the run after they finish.
  */
 
@@ -97,7 +97,7 @@ export async function runCrewPayouts(options: { payoutId?: string; dryRun?: bool
     .order('created_at', { ascending: true });
 
   if (options.payoutId) {
-    // An admin sending one payout by hand overrides the settlement hold —
+    // An admin sending one payout by hand overrides the settlement hold;
     // they can see the balance and are choosing to release it early.
     query = query.eq('id', options.payoutId);
   } else {
@@ -130,7 +130,7 @@ export async function runCrewPayouts(options: { payoutId?: string; dryRun?: bool
       continue;
     }
     if (amount > balance) {
-      // Funds have not landed yet. Leave the row alone — the next run retries.
+      // Funds have not landed yet. Leave the row alone: the next run retries.
       skipped++;
       results.push({ id: row.id, amount, skipped: 'insufficient_balance', balance });
       continue;

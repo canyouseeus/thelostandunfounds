@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const gearUrl = `https://www.thelostandunfounds.com/gear?token=${token}`;
 
         // Gear leads, gallery follows. The kit list is the thing we actually
-        // need back, it takes two minutes and it depends on nothing — whereas
+        // need back, it takes two minutes and it depends on nothing, whereas
         // gallery setup involves another service and is genuinely optional.
         // Leading with the optional half is what made this read like a chore.
         const button = (href: string, label: string) =>
@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <p style="color: #ffffff;">You're in. Two things and you're set.</p>
 
             <h2 style="color: #ffffff; margin-top: 36px; margin-bottom: 8px; font-size: 18px;">1. Your equipment</h2>
-            <p style="color: #ffffff; margin-top: 0;">What you shoot on — bodies, lenses, lighting, audio, tripods, gimbals. Takes about two minutes, and it's how we know which jobs to send your way. Start here.</p>
+            <p style="color: #ffffff; margin-top: 0;">What you shoot on; bodies, lenses, lighting, audio, tripods, gimbals. Takes about two minutes, and it's how we know which jobs to send your way. Start here.</p>
             <p style="margin: 20px 0;">${button(gearUrl, 'List My Equipment')}</p>
             ${fallbackLink(gearUrl)}
 
@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <li>Set it to <strong>Viewer</strong> &rarr; Send</li>
                 <li>Copy the folder link, paste it into the setup page</li>
             </ul>
-            <p style="color: #ffffff;">Nothing to install and nothing to set up on Google's end — it's the same as sharing a folder with a person.</p>
+            <p style="color: #ffffff;">Nothing to install and nothing to set up on Google's end; it's the same as sharing a folder with a person.</p>
             <p style="margin: 20px 0;">${button(inviteUrl, 'Set Up Gallery')}</p>
             ${fallbackLink(inviteUrl)}
 
@@ -100,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // file even when someone replies to one person only.
             from: 'media@thelostandunfounds.com',
             cc: 'media@thelostandunfounds.com',
-            subject: "You're on the roster — two quick things",
+            subject: "You're on the roster: two quick things",
             content,
         });
 

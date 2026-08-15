@@ -7,7 +7,7 @@
  * there is no path for someone who simply wants to pay.
  *
  * It posts to /api/shop/payments/stripe, which builds a Checkout Session from
- * an inline price_data — no pre-created Stripe Price object is needed, so
+ * an inline price_data: no pre-created Stripe Price object is needed, so
  * amounts are arbitrary and nothing has to be seeded in the dashboard first.
  */
 
@@ -49,8 +49,8 @@ export default function Pay() {
         amount,
         currency: 'USD',
         description: trimmedNote
-          ? `THE LOST+UNFOUNDS — ${trimmedNote}`
-          : 'THE LOST+UNFOUNDS — Support',
+          ? `THE LOST+UNFOUNDS: ${trimmedNote}`
+          : 'THE LOST+UNFOUNDS: Support',
       })
 
       // Hand off to Stripe's hosted checkout page.
@@ -82,7 +82,7 @@ export default function Pay() {
           <h1 className="text-5xl font-bold text-white mb-4 uppercase tracking-tight">Pay</h1>
           <p className="text-lg text-white/70 text-left">
             Support the work, settle an invoice, or send whatever it's worth to
-            you. Card payments are handled securely by Stripe — we never see your
+            you. Card payments are handled securely by Stripe; we never see your
             card details.
           </p>
         </div>

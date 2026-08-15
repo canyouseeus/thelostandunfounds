@@ -69,7 +69,7 @@ const DownloadEmailModal: React.FC<DownloadEmailModalProps> = ({
                         </h2>
                         <p className="text-white/40 text-[11px] leading-relaxed mb-5">
                             Enter your email to download. We use this to track your downloads
-                            and occasionally share new drops — never spam, unsubscribe anytime.
+                            and occasionally share new drops, never spam, unsubscribe anytime.
                         </p>
 
                         <form onSubmit={handleSubmit}>

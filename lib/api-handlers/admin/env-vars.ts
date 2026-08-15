@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { token, projectId } = getVercelCreds()
     const action = req.body?.action as string | undefined
 
-    // GET — list env vars
+    // GET: list env vars
     if (req.method === 'GET') {
       const url = `${VERCEL_API_BASE}/v9/projects/${projectId}/env`
       const r = await fetch(url, { headers: vercelHeaders(token) })
@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(r.status).json({ error: data.error?.message || 'Vercel API error' })
       }
 
-      // Strip actual values — send only metadata + last4
+      // Strip actual values: send only metadata + last4
       const envs = (data.envs || []).map((e: any) => ({
         id: e.id,
         key: e.key,
@@ -120,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true })
       }
 
-      // REDEPLOY — trigger a new deployment
+      // REDEPLOY: trigger a new deployment
       if (action === 'redeploy') {
         // Get latest deployment to redeploy from
         const deploymentsUrl = `${VERCEL_API_BASE}/v6/deployments?projectId=${projectId}&limit=1&target=production`

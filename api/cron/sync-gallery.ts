@@ -13,7 +13,7 @@ const SUBFOLDER_TIME_BUDGET_SECONDS = 230;
 const DISCOVERY_INTERVAL_MINUTES = 30;
 
 // A row left in 'syncing' past this is assumed to be from an invocation that died
-// mid-flight — Vercel killed it, the process crashed, or a deploy cut it off. Without
+// mid-flight: Vercel killed it, the process crashed, or a deploy cut it off. Without
 // this, such a row is invisible to the claim query and never syncs again.
 const STALE_SYNCING_MINUTES = 30;
 
@@ -50,7 +50,7 @@ type LibraryRow = {
  * Ordered least-recently-attempted first. Alphabetical order starves the queue:
  * one row that fails every time keeps sorting to the front and is re-claimed on
  * every run, so nothing behind it is ever reached. Ordering by updated_at means a
- * failed row goes to the back — it still retries, but only after everything else
+ * failed row goes to the back; it still retries, but only after everything else
  * has had a turn.
  */
 async function claimNextSubfolder(supabase: SupabaseClient, librarySlugs: string[]) {

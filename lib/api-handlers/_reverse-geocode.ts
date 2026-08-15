@@ -5,7 +5,7 @@ let lastCallMs = 0;
 const cache = new Map<string, string | null>();
 
 function cacheKey(lat: number, lng: number): string {
-    // ~110m precision — good enough to dedupe neighborhood lookups
+    // ~110m precision: good enough to dedupe neighborhood lookups
     return `${lat.toFixed(3)},${lng.toFixed(3)}`;
 }
 

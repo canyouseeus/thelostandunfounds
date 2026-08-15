@@ -1,5 +1,5 @@
 /**
- * PREVIEW ONLY — not a production route.
+ * PREVIEW ONLY, not a production route.
  * Renders the full Affiliate page (profile + affiliate dashboard) with mock
  * data so it works in Claude Code preview without auth or live API calls.
  *
@@ -140,27 +140,27 @@ const AFFILIATE_API_MOCKS: Record<string, unknown> = {
     { id: 'pay-003', date_requested: '2026-05-01T08:30:00Z', date_paid: '2026-05-03T16:40:00Z', amount: 315.00, status: 'paid',    method: 'Stripe', transaction_id: 'po_3PxQvD2eZvKYlo2C0003', notes: null, error: null },
     { id: 'pay-004', date_requested: '2026-05-12T14:00:00Z', date_paid: null,                   amount: 126.00, status: 'pending', method: 'Stripe', transaction_id: null, notes: null, error: null },
   ] },
-  'request-payout':     { success: true, message: 'Payout request submitted successfully. Funds will be transferred within 2–5 business days.' },
+  'request-payout':     { success: true, message: 'Payout request submitted successfully. Funds will be transferred within 2-5 business days.' },
   'products':           { products: [
-    // Physical — Fourthwall
+    // Physical: Fourthwall
     { id: 'fw-001', title: 'Lost Archives Vol. 1 Poster', type: 'physical', price: 34.99, profit: 18.00, url: '/shop/lost-archives-vol-1', salesCount: 312, isHot: true, isNew: false, category: 'prints', image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400&q=80' },
     { id: 'fw-002', title: 'Midnight Dispatch Tee',       type: 'physical', price: 42.00, profit: 20.00, url: '/shop/midnight-dispatch-tee', salesCount: 204, isHot: true, isNew: false, category: 'apparel', image: 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=400&q=80' },
     { id: 'fw-003', title: 'Field Notes Notebook',        type: 'physical', price: 18.00, profit: 9.50,  url: '/shop/field-notes-notebook', salesCount: 189, isHot: false, isNew: false, category: 'stationery', image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&q=80' },
-    { id: 'fw-004', title: 'Unfound Canvas — 18×24"',     type: 'physical', price: 89.00, profit: 44.00, url: '/shop/unfound-canvas', salesCount: 97, isHot: false, isNew: true, category: 'prints', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80' },
+    { id: 'fw-004', title: 'Unfound Canvas; 18×24"',     type: 'physical', price: 89.00, profit: 44.00, url: '/shop/unfound-canvas', salesCount: 97, isHot: false, isNew: true, category: 'prints', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80' },
     { id: 'fw-005', title: 'Mystery Box',                 type: 'physical', price: 999.00, profit: 499.00, url: '/shop/mystery-box', salesCount: 41, isHot: false, isNew: false, category: 'mystery', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80' },
     { id: 'fw-006', title: 'Dispatch Hoodie',             type: 'physical', price: 68.00, profit: 32.00, url: '/shop/dispatch-hoodie', salesCount: 156, isHot: true, isNew: false, category: 'apparel', image: 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&q=80' },
     { id: 'fw-007', title: 'Archive Print Set (3-Pack)',  type: 'physical', price: 79.00, profit: 38.00, url: '/shop/archive-print-set', salesCount: 88, isHot: false, isNew: true, category: 'prints', image: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=400&q=80' },
     // Digital
-    { id: 'dg-001', title: 'Lightroom Preset Pack — Film', type: 'digital', price: 29.00, profit: 29.00, url: '/shop/lr-preset-film', salesCount: 541, isHot: true, isNew: false, category: 'presets', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80' },
+    { id: 'dg-001', title: 'Lightroom Preset Pack; Film', type: 'digital', price: 29.00, profit: 29.00, url: '/shop/lr-preset-film', salesCount: 541, isHot: true, isNew: false, category: 'presets', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80' },
     { id: 'dg-002', title: 'Street Photography Guide PDF', type: 'digital', price: 19.00, profit: 19.00, url: '/shop/street-guide', salesCount: 378, isHot: false, isNew: false, category: 'guides', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&q=80' },
-    { id: 'dg-003', title: 'Dispatch Zine — Issue 01 (PDF)', type: 'digital', price: 8.00, profit: 8.00, url: '/shop/zine-01', salesCount: 622, isHot: true, isNew: false, category: 'zines', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80' },
-    { id: 'dg-004', title: 'Dispatch Zine — Issue 02 (PDF)', type: 'digital', price: 8.00, profit: 8.00, url: '/shop/zine-02', salesCount: 290, isHot: false, isNew: true, category: 'zines', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80' },
+    { id: 'dg-003', title: 'Dispatch Zine; Issue 01 (PDF)', type: 'digital', price: 8.00, profit: 8.00, url: '/shop/zine-01', salesCount: 622, isHot: true, isNew: false, category: 'zines', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80' },
+    { id: 'dg-004', title: 'Dispatch Zine; Issue 02 (PDF)', type: 'digital', price: 8.00, profit: 8.00, url: '/shop/zine-02', salesCount: 290, isHot: false, isNew: true, category: 'zines', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80' },
     { id: 'dg-005', title: 'Editing Masterclass (Video)',  type: 'digital', price: 79.00, profit: 79.00, url: '/shop/editing-masterclass', salesCount: 134, isHot: false, isNew: true, category: 'courses', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&q=80' },
-    // Gallery — real galleries from the DB
+    // Gallery: real galleries from the DB
     { id: '6d78991a-f350-4221-9fb1-ede0e8a1c552', title: 'LAST NIGHT',      type: 'gallery', price: 20.00, profit: 20.00, url: '/gallery/last-night',      salesCount: 14, isHot: false, isNew: false, category: 'gallery', image: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/gallery-photos/covers/1768620596006_DSCF1391.JPG',  pricingTiers: [{ quantity: 1, price: 20.00 }, { quantity: 3, price: 50.00 }] },
     { id: '54cdcf08-9857-4819-9d2b-9702e14815f7', title: 'LAST NIGHT NOIR', type: 'gallery', price: 10.00, profit: 10.00, url: '/gallery/last-night-noir', salesCount:  8, isHot: false, isNew: false, category: 'gallery', image: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/gallery-photos/covers/1770068827552_DSCF1621.jpeg', pricingTiers: [{ quantity: 1, price: 10.00 }, { quantity: 3, price: 20.00 }, { quantity: 10, price: 50.00 }] },
-    // Events — full ticket price is profit
-    { id: 'ev-001', title: 'Monthly Meetup — June',       type: 'event', price: 25.00, profit: 25.00, url: '/events?ref=', salesCount: 38, isHot: true,  isNew: false, category: 'events', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80' },
+    // Events: full ticket price is profit
+    { id: 'ev-001', title: 'Monthly Meetup; June',       type: 'event', price: 25.00, profit: 25.00, url: '/events?ref=', salesCount: 38, isHot: true,  isNew: false, category: 'events', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80' },
     { id: 'ev-002', title: 'Darkroom Workshop',            type: 'event', price: 85.00, profit: 85.00, url: '/events?ref=', salesCount: 12, isHot: false, isNew: true,  category: 'events', image: 'https://images.unsplash.com/photo-1518982380512-5a3c6c1aacd4?w=400&q=80' },
     { id: 'ev-003', title: 'Street Photography Walk',      type: 'event', price: 40.00, profit: 40.00, url: '/events?ref=', salesCount: 24, isHot: false, isNew: false, category: 'events', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&q=80' },
     { id: 'ev-004', title: 'Year-End Gala (VIP Ticket)',   type: 'event', price: 150.00, profit: 150.00, url: '/events?ref=', salesCount: 7, isHot: true, isNew: true,  category: 'events', image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&q=80' },
@@ -182,7 +182,7 @@ const AFFILIATE_API_MOCKS: Record<string, unknown> = {
     last_updated: new Date().toISOString(),
   },
   'king-midas/stats':   { data: [
-    // Today — all ranked affiliates; component uses profit_generated (not profit)
+    // Today: all ranked affiliates; component uses profit_generated (not profit)
     { id: 'mt1', affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-16', rank: 1, profit_generated: 420.00, pool_share:  73.50 },
     { id: 'mt2', affiliate_id: 'aff-shadow',      date: '2026-05-16', rank: 2, profit_generated: 315.00, pool_share:  44.10 },
     { id: 'mt3', affiliate_id: 'aff-darkroom',    date: '2026-05-16', rank: 3, profit_generated: 280.00, pool_share:  14.70 },
@@ -194,7 +194,7 @@ const AFFILIATE_API_MOCKS: Record<string, unknown> = {
 
 // Supabase table mock responses (PostgREST returns arrays)
 const MOCK_COMMISSIONS = [
-  // May cluster — busy week
+  // May cluster: busy week
   { id: 'c01', affiliate_id: MOCK_AFFILIATE_ID, amount: 84.00,  status: 'available', source: 'stripe',       created_at: '2026-05-10T08:00:00Z' },
   { id: 'c1b', affiliate_id: MOCK_AFFILIATE_ID, amount: 42.00,  status: 'available', source: 'photo_order',  created_at: '2026-05-10T14:22:00Z' },
   { id: 'c1c', affiliate_id: MOCK_AFFILIATE_ID, amount: 63.00,  status: 'available', source: 'event_ticket', created_at: '2026-05-10T19:05:00Z' },
@@ -226,12 +226,12 @@ const MOCK_COMMISSIONS = [
   { id: 'c14', affiliate_id: MOCK_AFFILIATE_ID, amount: 94.50,  status: 'paid',      created_at: '2026-02-05T14:00:00Z' },
 ]
 
-// Click events across 90 days — seeded so counts are stable
+// Click events across 90 days: seeded so counts are stable
 const MOCK_CLICKS = Array.from({ length: 90 }, (_, i) => {
   const d = new Date('2026-05-14')
   d.setDate(d.getDate() - i)
   const dateStr = d.toISOString().slice(0, 10)
-  const count = 10 + ((i * 37 + 13) % 55)   // deterministic 10–64 clicks/day
+  const count = 10 + ((i * 37 + 13) % 55)   // deterministic 10-64 clicks/day
   return Array.from({ length: count }, (__, j) => ({
     id: `clk-${i}-${j}`,
     affiliate_id: MOCK_AFFILIATE_ID,
@@ -244,20 +244,20 @@ const MOCK_CLICKS = Array.from({ length: 90 }, (_, i) => {
 // the leaderboard, ticker, and stats cards all tell a consistent story.
 // Pool = 10.5% of daily profit (matches king_midas_pot: $147 on a $1,400 day).
 const MOCK_MIDAS_STATS = [
-  // ── TODAY (2026-05-16) — matches the ticker exactly ──
+  // ── TODAY (2026-05-16): matches the ticker exactly ──
   { id: 'mt1', affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-16', rank: 1, profit_generated: 420.00, pool_share:  73.50, affiliates: { code: MOCK_CODE   } },
   { id: 'mt2', affiliate_id: 'aff-shadow',      date: '2026-05-16', rank: 2, profit_generated: 315.00, pool_share:  44.10, affiliates: { code: 'SHADOW99'  } },
   { id: 'mt3', affiliate_id: 'aff-darkroom',    date: '2026-05-16', rank: 3, profit_generated: 280.00, pool_share:  14.70, affiliates: { code: 'DARKROOM'  } },
   { id: 'mt4', affiliate_id: 'aff-lensflare',   date: '2026-05-16', rank: 4, profit_generated: 210.00, pool_share:   7.35, affiliates: { code: 'LENSFLARE' } },
   { id: 'mt5', affiliate_id: 'aff-grainwave',   date: '2026-05-16', rank: 5, profit_generated: 175.00, pool_share:   7.35, affiliates: { code: 'GRAINWAVE' } },
-  // ── Our affiliate — prior days ──
+  // ── Our affiliate: prior days ──
   { id: 'm1',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-14', rank: 1, profit_generated: 420.00, pool_share: 107.50, affiliates: { code: MOCK_CODE   } },
   { id: 'm2',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-13', rank: 2, profit_generated: 200.00, pool_share:  64.50, affiliates: { code: MOCK_CODE   } },
   { id: 'm3',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-10', rank: 1, profit_generated: 380.00, pool_share:  95.00, affiliates: { code: MOCK_CODE   } },
   { id: 'm4',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-07', rank: 3, profit_generated: 150.00, pool_share:  28.00, affiliates: { code: MOCK_CODE   } },
   { id: 'm5',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-05-03', rank: 2, profit_generated: 290.00, pool_share:  57.00, affiliates: { code: MOCK_CODE   } },
   { id: 'm6',  affiliate_id: MOCK_AFFILIATE_ID, date: '2026-04-28', rank: 1, profit_generated: 440.00, pool_share: 112.00, affiliates: { code: MOCK_CODE   } },
-  // ── Competitors — prior days ──
+  // ── Competitors: prior days ──
   { id: 'm10', affiliate_id: 'aff-shadow',    date: '2026-05-14', rank: 2, profit_generated: 310.00, pool_share:  79.00, affiliates: { code: 'SHADOW99'  } },
   { id: 'm11', affiliate_id: 'aff-darkroom',  date: '2026-05-14', rank: 3, profit_generated: 240.00, pool_share:  61.00, affiliates: { code: 'DARKROOM'  } },
   { id: 'm12', affiliate_id: 'aff-lensflare', date: '2026-05-14', rank: 4, profit_generated: 185.00, pool_share:  47.00, affiliates: { code: 'LENSFLARE' } },
@@ -408,7 +408,7 @@ export default function PreviewAffiliate() {
   return (
     <div className="min-h-screen bg-black">
       <div className="fixed top-0 left-0 right-0 z-[9999] h-6 bg-white/5 flex items-center justify-center pointer-events-none">
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Preview Mode — Affiliate Dashboard</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Preview Mode; Affiliate Dashboard</p>
       </div>
       <div className="pt-6">
         <AuthContext.Provider value={MOCK_AUTH}>

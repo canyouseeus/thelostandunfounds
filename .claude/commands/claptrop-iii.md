@@ -4,7 +4,7 @@ Paste this into your Mac terminal:
 cd /Users/thelostunfounds/thelostandunfounds && node_modules/.bin/tsx scripts/upload-to-drive.ts
 ```
 
-Same command as `/claptrop` — the difference is intent. Use `/claptrop-iii` when you know there are files already sitting in `~/Desktop/PHOTO UPLOADS/` from a previous session that didn't get uploaded yet. The script will catch and upload all of them alongside any new SD card imports.
+Same command as `/claptrop`: the difference is intent. Use `/claptrop-iii` when you know there are files already sitting in `~/Desktop/PHOTO UPLOADS/` from a previous session that didn't get uploaded yet. The script will catch and upload all of them alongside any new SD card imports.
 
 **To rename photos already in Google Drive and update THE GALLERY:**
 

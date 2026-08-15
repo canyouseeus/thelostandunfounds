@@ -60,7 +60,7 @@ export function findVenueForFolder(
     venues: VenueTag[],
 ): VenueTag | null {
     // Strongest: folder name token-overlaps a venue AND (no GPS, or GPS within radius).
-    // GPS is the verifier — folder name alone isn't enough when we have GPS to check
+    // GPS is the verifier: folder name alone isn't enough when we have GPS to check
     // against, because two unrelated folders can share a token with a venue name.
     for (const v of venues) {
         const score = tokenOverlapScore(folderName, v.name);
@@ -71,7 +71,7 @@ export function findVenueForFolder(
         if (dist <= radius) return v;
     }
     // Weaker: GPS-only match within radius (used when the folder name doesn't
-    // hint at a venue — e.g. a generic "uploads" folder).
+    // hint at a venue, e.g. a generic "uploads" folder).
     if (gps) {
         for (const v of venues) {
             const dist = haversineMeters(gps.latitude, gps.longitude, v.metadata.latitude, v.metadata.longitude);

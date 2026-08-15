@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js'
  * Delivering a shoot meant a human moving files by hand: download the
  * transfer, unzip it, drag the images into Drive, then sync. Everything
  * either side of that is automated, so the manual step in the middle is
- * where deliveries stall — and it is the step that put a zip into Drive
+ * where deliveries stall, and it is the step that put a zip into Drive
  * instead of images, which synced as zero photos because the sync only
  * ingests image/*.
  *
@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js'
  * is NOT NULL with no default, so a storage-only photo row cannot be
  * inserted. The gallery is a Drive-backed system and this follows it.
  *
- * One image per request — Vercel caps a request body at ~4.5MB, and a shoot
+ * One image per request: Vercel caps a request body at ~4.5MB, and a shoot
  * is far larger than that. The caller loops. Rows are not written here: after
  * the images land, POST /api/admin/sync-library with the slug and the normal
  * sync builds the photo rows exactly as it does for every other gallery.
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const contentType = ((req.headers['content-type'] as string) || '').split(';')[0].trim()
   const ext = CONTENT_TYPE_EXT[contentType]
   if (!ext) {
-    return res.status(400).json({ error: `Unsupported type ${contentType || '(none)'} — use JPEG, PNG, or WebP` })
+    return res.status(400).json({ error: `Unsupported type ${contentType || '(none)'}; use JPEG, PNG, or WebP` })
   }
 
   // Drive is happy with almost anything, but a name with a slash reads as a

@@ -28,7 +28,7 @@ import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 
-// Gallery photos are loaded a page at a time to keep database egress low —
+// Gallery photos are loaded a page at a time to keep database egress low;
 // pulling the entire library on every (often bot-driven) page view was the
 // cause of a large Supabase egress overage. Users load more on demand.
 const GALLERY_PAGE_SIZE = 150;
@@ -293,7 +293,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const isAllPublic = librarySlug === 'all-public';
     const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
     const [searchModalOpen, setSearchModalOpen] = useState(false);
-    // Floating console tray — only one card open at a time (bento-design "Platform Console Tray")
+    // Floating console tray, only one card open at a time (bento-design "Platform Console Tray")
     const [openCard, setOpenCard] = useState<'filter' | null>(null);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
@@ -305,7 +305,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Drive-native gallery: true when the API returned 403 (not in invited_emails)
     const [driveAccessDenied, setDriveAccessDenied] = useState(false);
 
-    // Checkout modal state — picks BTC vs Fiat after email is collected
+    // Checkout modal state: picks BTC vs Fiat after email is collected
     const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
     const [checkoutPending, setCheckoutPending] = useState(false);
 
@@ -499,7 +499,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     id: 'all-public',
                     name: 'THE GALLERY',
                     slug: 'all-public',
-                    description: 'Free public photos — organized by album.',
+                    description: 'Free public photos: organized by album.',
                     price: 0,
                     is_private: false,
                 });
@@ -785,7 +785,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         });
     };
 
-    // ── Derived values — must be computed before any early returns (Rules of Hooks) ──
+    // ── Derived values: must be computed before any early returns (Rules of Hooks) ──
     // Same precedence as the server checkout and the header price display:
     // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
     // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
@@ -809,8 +809,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             ? `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(coverPhoto.google_drive_file_id)}&size=1200`
             : 'https://www.thelostandunfounds.com/og-image.png';
 
-        const pageTitle   = `${libName} — ${cityShort} Photography | The Lost+Unfounds`;
-        const pageDesc    = `${libName} — ${cityShort} photography by The Lost+Unfounds. `
+        const pageTitle   = `${libName}: ${cityShort} Photography | The Lost+Unfounds`;
+        const pageDesc    = `${libName}: ${cityShort} photography by The Lost+Unfounds. `
             + `High-resolution photos available for licensing and download. `
             + `Available for event, nightlife, and portrait bookings in ${cityShort} and beyond.`;
         const canonicalUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
@@ -994,7 +994,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
-                    {/* Left Column: Pricing — single-photo price comes from the
+                    {/* Left Column: Pricing: single-photo price comes from the
                         'photo_count=1' pricing option if present, else falls back
                         to library.price. Server-side checkout uses the same
                         precedence, so this matches the tray total. */}
@@ -1067,7 +1067,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 Personal use only
                             </p>
                             <p className="text-[9px] text-white/30 leading-relaxed mt-1">
-                                Purchased downloads are licensed for personal use — social media, wallpapers, personal printing.{' '}
+                                Purchased downloads are licensed for personal use; social media, wallpapers, personal printing.{' '}
                                 <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
                                     Commercial licensing →
                                 </a>
@@ -1077,7 +1077,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
             </div>
 
-            {/* Sticky Toolbar — tabs only. Every browsing tool now lives in the floating
+            {/* Sticky Toolbar: tabs only. Every browsing tool now lives in the floating
                 console tray at the bottom of the viewport (see below). */}
             {user && (
             <div
@@ -1322,7 +1322,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 galleryName={library?.name}
             />
 
-            {/* Map lightbox — for photos clicked on the map that aren't in the current gallery view */}
+            {/* Map lightbox: for photos clicked on the map that aren't in the current gallery view */}
             <PhotoLightbox
                 photo={mapActivePhoto}
                 onClose={() => setMapActivePhoto(null)}
@@ -1335,7 +1335,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 galleryName={library?.name}
             />
 
-            {/* Floating console tray — the customer-facing counterpart to the admin gallery's
+            {/* Floating console tray: the customer-facing counterpart to the admin gallery's
                 tray in AdminPhotosBrowse.tsx. Frosted glass (bg-white/10 backdrop-blur-md
                 rounded-full), fixed so it stays reachable while the grid scrolls underneath.
                 It absorbs the old back-to-top button.
@@ -1345,7 +1345,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 screen, well clear of the browser chrome, and it read as floating in the
                 middle of the photos. bottom-6 sits it where a bottom bar belongs. When the
                 checkout SelectionTray is up (fixed bottom-0), the tray lifts clear of it.
-                See "Platform Console Tray — Variant B" in the bento-design skill. */}
+                See "Platform Console Tray: Variant B" in the bento-design skill. */}
             <div
                 className={cn(
                     "fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300",
@@ -1510,7 +1510,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 totalAmount={computeTotal(selectedPhotos.length)}
             />
 
-            {/* Payment method picker — Card vs Bitcoin */}
+            {/* Payment method picker: Card vs Bitcoin */}
             <AnimatePresence>
                 {paymentPickerOpen && (
                     <motion.div

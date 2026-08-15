@@ -1,11 +1,11 @@
 /**
- * Gallery access — /gallery/:slug/access
+ * Gallery access: /gallery/:slug/access
  *
  * Where an invited client lands from the invite email. A private gallery is
  * gated on photo_libraries.invited_emails, matched against the signed-in user's
  * email, so proving the address is the whole of what access requires. This page
  * asks for that address and nothing else: no password, no signup, no Google,
- * none of the platform chrome. It is deliberately NOT the site's sign-in modal —
+ * none of the platform chrome. It is deliberately NOT the site's sign-in modal;
  * that modal serves visitors and the owner, and its options are noise to a
  * client who was handed a link to their own photos.
  *
@@ -89,7 +89,7 @@ export default function GalleryAccess() {
                 <title>THE LOST+UNFOUNDS | Gallery Access</title>
                 <meta
                     name="description"
-                    content="Open your private gallery from THE LOST+UNFOUNDS. Enter the email address your invite was sent to and we'll email you a sign-in link — no password required."
+                    content="Open your private gallery from THE LOST+UNFOUNDS. Enter the email address your invite was sent to and we'll email you a sign-in link, no password required."
                 />
                 <meta name="robots" content="noindex" />
             </Helmet>
@@ -118,7 +118,7 @@ export default function GalleryAccess() {
                         </Link>
                     </div>
                 ) : user ? (
-                    // Already signed in — no reason to email anybody a link.
+                    // Already signed in: no reason to email anybody a link.
                     <div className="space-y-6 text-center">
                         <p className="text-white/50 text-sm leading-relaxed">
                             You're signed in as <span className="text-white">{user.email}</span>.
@@ -139,7 +139,7 @@ export default function GalleryAccess() {
                         <p className="text-white/50 text-sm leading-relaxed">
                             If <span className="text-white">{email.trim()}</span> is on the invite list
                             for this gallery, a sign-in link is on its way. Open it on this device and
-                            you'll land straight in the gallery — no password needed.
+                            you'll land straight in the gallery; no password needed.
                         </p>
                         <button
                             type="button"
@@ -153,7 +153,7 @@ export default function GalleryAccess() {
                     <form onSubmit={handleSend} className="space-y-5">
                         <p className="text-white/50 text-sm leading-relaxed text-center">
                             Enter the email address your invite was sent to. We'll email you a link
-                            that opens the gallery — there's no password to create.
+                            that opens the gallery: there's no password to create.
                         </p>
 
                         <div>

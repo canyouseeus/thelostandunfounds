@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Product Image — Before & After Background Removal</title>
+<title>Product Image, Before & After Background Removal</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -62,7 +62,7 @@
     background: #000;
   }
 
-  /* The hat SVG — represents a product on grey mockup */
+  /* The hat SVG: represents a product on grey mockup */
   .hat-svg {
     width: 100%;
     height: 100%;
@@ -79,7 +79,7 @@
 </head>
 <body>
 
-<h1>Product Image — Before &amp; After Background Removal</h1>
+<h1>Product Image, Before &amp; After Background Removal</h1>
 
 <div class="comparison">
 
@@ -118,11 +118,11 @@
 
   <!-- AFTER: product on black, transparent background, white outline -->
   <div class="panel">
-    <div class="label">After — Background Removed</div>
+    <div class="label">After: Background Removed</div>
     <div class="image-box after">
       <svg class="hat-svg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg"
         style="filter: drop-shadow(0 0 1px white) drop-shadow(0 0 2px white) drop-shadow(0 0 4px rgba(255,255,255,0.6))">
-        <!-- Transparent background — only the hat silhouette -->
+        <!-- Transparent background, only the hat silhouette -->
         <path d="M40 100 Q40 40 100 35 Q160 40 160 100 Z" fill="#1a1a1a"/>
         <ellipse cx="100" cy="100" rx="75" ry="14" fill="#111"/>
         <ellipse cx="100" cy="102" rx="75" ry="10" fill="#0a0a0a"/>
@@ -139,7 +139,7 @@
 </div>
 
 <p style="font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:0.2em;text-transform:uppercase;text-align:center;max-width:420px;line-height:2">
-  The white outline uses CSS <code style="color:rgba(255,255,255,0.3)">drop-shadow</code> — it traces the alpha channel (transparent areas vs product pixels),<br>
+  The white outline uses CSS <code style="color:rgba(255,255,255,0.3)">drop-shadow</code>; it traces the alpha channel (transparent areas vs product pixels),<br>
   so it follows curves, fabric folds, and brim edges exactly.
 </p>
 

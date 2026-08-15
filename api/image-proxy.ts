@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 /**
- * Server-side image proxy — fetches a remote image and returns it with proper
+ * Server-side image proxy: fetches a remote image and returns it with proper
  * CORS headers so the browser's @imgly/background-removal WebAssembly can read it.
  *
  * Usage: GET /api/image-proxy?url=<encoded-image-url>

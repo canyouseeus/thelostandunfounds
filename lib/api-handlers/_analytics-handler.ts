@@ -8,7 +8,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
  * First-party analytics handlers, extracted from api/admin/[...path].ts.
  *
  * They lived behind the catch-all, and in production Vercel routes only
- * single-segment paths into it — every multi-segment call
+ * single-segment paths into it: every multi-segment call
  * (/api/admin/analytics/record and friends) 404'd, which is why the
  * user_analytics table held one row while the site dutifully posted a page
  * view on every route change. These now back real files under
@@ -248,7 +248,7 @@ export async function handleAnalyticsSiteStats(req: VercelRequest, res: VercelRe
 }
 
 /**
- * Analytics Blog Stats Handler — per-post performance for Blog Management.
+ * Analytics Blog Stats Handler, per-post performance for Blog Management.
  *
  * Two event streams feed this:
  *   - `page_view`          recorded by Layout.tsx on every route change, keyed by pathname
@@ -257,7 +257,7 @@ export async function handleAnalyticsSiteStats(req: VercelRequest, res: VercelRe
  *
  * A post's events are matched by slug: `page_view` rows carry the pathname
  * (/thelostarchives/<slug>), the article events carry the bare slug. Counting
- * views from pathname only is deliberate — BlogPost's own unmount event would
+ * views from pathname only is deliberate; BlogPost's own unmount event would
  * otherwise double-count every visit that lasted more than five seconds.
  */
 export async function handleAnalyticsBlogStats(req: VercelRequest, res: VercelResponse) {

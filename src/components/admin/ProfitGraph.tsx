@@ -92,7 +92,7 @@ export default function ProfitGraph() {
         addToDay(inv.paid_at, Number(inv.total || 0));
       });
 
-      // refunds table may not exist yet if the migration hasn't been applied — ignore silently
+      // refunds table may not exist yet if the migration hasn't been applied; ignore silently
       (refundsRes.data || []).forEach(r => {
         addToDay(r.created_at, -(r.amount_cents || 0) / 100);
       });
@@ -260,7 +260,7 @@ export default function ProfitGraph() {
                 );
               })}
 
-              {/* Area fill — flat, matching the hero revenue chart
+              {/* Area fill: flat, matching the hero revenue chart
                   (DashboardCharts): green-400 ink at ~12%, no gradient. */}
               <path
                 d={generateAreaPath()}
@@ -268,7 +268,7 @@ export default function ProfitGraph() {
                 fillOpacity="0.12"
               />
 
-              {/* Line — same weight and ink as the hero chart. */}
+              {/* Line: same weight and ink as the hero chart. */}
               <path
                 d={generatePath()}
                 fill="none"

@@ -1,5 +1,5 @@
 /**
- * AffiliateRevenueTracker — affiliate-focused hero widget for /dashboard.
+ * AffiliateRevenueTracker: affiliate-focused hero widget for /dashboard.
  *
  * Answers the four questions an affiliate actually has:
  *   1. How much have I earned, what can I withdraw, what's pending?
@@ -38,9 +38,9 @@ interface AffiliateRevenueTrackerProps {
   totalClicks: number;
   totalConversions: number;
   networkSize: number;
-  /** Actual withdrawable wallet balance from the dashboard API — shown in the Available stat. */
+  /** Actual withdrawable wallet balance from the dashboard API; shown in the Available stat. */
   availableBalance?: number;
-  /** Authoritative pending balance from the dashboard API — overrides the computed sum from time-filtered commissions. */
+  /** Authoritative pending balance from the dashboard API; overrides the computed sum from time-filtered commissions. */
   pendingBalance?: number;
 }
 
@@ -149,7 +149,7 @@ export function AffiliateRevenueTracker({
 
   return (
     <div className="bg-[#0a0a0a] p-5 md:p-8 space-y-6 md:space-y-8">
-      {/* Period selector — full-width segmented row */}
+      {/* Period selector: full-width segmented row */}
       <div className="grid grid-cols-4 bg-black">
         {(['7d', '30d', '90d', 'all'] as const).map((p) => (
           <button
@@ -199,7 +199,7 @@ export function AffiliateRevenueTracker({
         <Chart series={series?.[chartTab] ?? []} tab={chartTab} />
       </div>
 
-      {/* Stats — spacing-only grid, no dividers */}
+      {/* Stats: spacing-only grid, no dividers */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         <Stat
           label="Available"
@@ -310,7 +310,7 @@ function Chart({
     return total.toLocaleString();
   })();
 
-  // Format date labels — shorter label for denser series
+  // Format date labels: shorter label for denser series
   const data = series.map((p) => {
     const d = new Date(p.date);
     const label = series.length > 30

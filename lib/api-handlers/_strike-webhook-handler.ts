@@ -76,7 +76,7 @@ export default async function handler(
             return res.status(200).json({ received: true, state: invoice.state })
         }
 
-        // Invoice is PAID — finalize the order
+        // Invoice is PAID: finalize the order
         console.log('💰 Invoice PAID! Processing order:', invoice.invoiceId)
 
         // Initialize Supabase
@@ -123,7 +123,7 @@ export default async function handler(
  * Prodigi and trigger the affiliate commission. The recipient shipping
  * address was already collected client-side at checkout (Strike has no
  * hosted address-collection step), so it's already on the prodigi_orders row.
- * Idempotent — skips if already past 'paid'.
+ * Idempotent: skips if already past 'paid'.
  */
 async function finalizeProdigiStrikeOrder(supabase: any, invoiceId: string) {
     const { data: order, error: orderError } = await supabase
@@ -132,7 +132,7 @@ async function finalizeProdigiStrikeOrder(supabase: any, invoiceId: string) {
         .eq('payment_ref', invoiceId)
         .maybeSingle()
 
-    if (orderError || !order) return // Not a Prodigi order — nothing to do.
+    if (orderError || !order) return // Not a Prodigi order; nothing to do.
     if (order.status !== 'pending_payment') {
         console.log('ℹ️ prodigi_order (strike) already processed, skipping:', order.id, order.status)
         return
