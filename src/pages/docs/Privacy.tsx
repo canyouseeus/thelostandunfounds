@@ -181,7 +181,7 @@ export default function Privacy() {
           <h3 className="text-xl font-semibold text-white mb-2 mt-4">Cookies</h3>
           <p>These are first-party cookies, set by our own site. We set no third-party cookies ourselves.</p>
           <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-            <li><strong>affiliate_ref</strong> (30 days) — set only if you arrive through an affiliate or referral link (a URL containing <code>?ref=</code>, <code>?affiliate=</code> or <code>?aff=</code>). It credits the referring affiliate if you later buy something. If you never use a referral link, this cookie is never set.</li>
+            <li><strong>affiliate_ref</strong> (30 days) — set only if you arrive through an affiliate or referral link (a URL containing <code>?ref=</code>, <code>?affiliate=</code> or <code>?aff=</code>). It credits the referring affiliate if you later buy something. If you never use a referral link, this cookie is never set. In the EU, UK, EEA and Switzerland we ask your permission before writing it, and if you decline we don't.</li>
             <li><strong>nl_done</strong> (10 years) — set only when you successfully subscribe to the newsletter, so we never show you the signup prompt again. Dismissing the prompt without subscribing does not set it.</li>
           </ul>
 
@@ -190,7 +190,7 @@ export default function Privacy() {
             We also use your browser's local storage. This is not technically a cookie, but it stores data on your device in the same way, so we disclose it here.
           </p>
           <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-            <li><strong>tlau_visitor_id</strong> — a random identifier (a UUID) generated in your browser, with no expiry date. It lets us count returning visitors without knowing who you are. It contains no personal information and is not derived from anything about you or your device.</li>
+            <li><strong>tlau_visitor_id</strong> — a random identifier (a UUID) generated in your browser, which <strong>expires after 13 months</strong> and is then replaced with a fresh, unrelated one. It lets us count returning visitors without knowing who you are. It contains no personal information and is not derived from anything about you or your device. We use it purely to measure how many people visit — never to profile you, never to change what you're shown, and never across any other website.</li>
             <li><strong>affiliate_ref</strong>, <strong>affiliate_ref_timestamp</strong>, <strong>affiliate_subid</strong> — a copy of the referral information above, plus any campaign tag on the referral link, kept in case the cookie is cleared.</li>
             <li><strong>Authentication tokens</strong> — if you have an account, these keep you signed in. They are required for login to work.</li>
           </ul>
@@ -215,6 +215,17 @@ export default function Privacy() {
           </p>
           <p className="mt-3">
             When a purchase sends you to <strong>Stripe</strong> or <strong>Fourthwall</strong>, those companies set their own cookies on their own sites, governed by their privacy policies rather than this one.
+          </p>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">Consent, and why you probably haven't seen a banner</h3>
+          <p>
+            We don't show a site-wide cookie banner, and that is a deliberate design decision rather than an oversight.
+          </p>
+          <p className="mt-3">
+            Our visitor counting is built to stay within the first-party audience-measurement exemption recognised by EU data protection authorities: it is strictly first-party, never shared with anyone, never used across other websites, never used to profile you or personalise what you see, and the identifier expires after 13 months. Storage that meets those conditions does not require consent, so we do not interrupt you to ask for it.
+          </p>
+          <p className="mt-3">
+            The one thing that does require consent is affiliate referral tracking, because that serves us rather than you. So if you are in the EU, UK, EEA or Switzerland <em>and</em> you arrive through a referral link, we ask first, and we store nothing until you answer. Everyone else is never interrupted, because for everyone else there is nothing to ask about.
           </p>
 
           <h3 className="text-xl font-semibold text-white mb-2 mt-4">Your choices</h3>
