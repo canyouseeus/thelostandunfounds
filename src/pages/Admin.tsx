@@ -2169,7 +2169,7 @@ export default function Admin() {
                 )}
                 {activePanelSection === 'calendar' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
-                    <AdminCalendarView />
+                    <AdminCalendarView adminEmail={user?.email} />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'invoices' && (

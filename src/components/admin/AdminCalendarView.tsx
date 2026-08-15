@@ -50,14 +50,29 @@ interface CalendarNote {
     note: string;
     created_at: string;
 }
+interface CrewBlock {
+    id: string;
+    date: string;
+    note: string | null;
+    photographerId: string | null;
+    photographerName: string;
+}
 interface CalendarRangeResponse {
     range: { start: string; end: string };
     bookings: CalendarBooking[];
     events: CalendarEventRow[];
     adminBlocked: Array<{ date: string; note: string | null }>;
+    crewBlocked: CrewBlock[];
     notes: CalendarNote[];
     photos: Record<string, CalendarPhoto[]>;
-    summary: { bookingCount: number; eventCount: number; photoCount: number; blockedCount: number; noteCount: number };
+    summary: { bookingCount: number; eventCount: number; photoCount: number; blockedCount: number; crewBlockedCount?: number; noteCount: number };
+}
+
+/** The active roster, so a day can say who IS free as well as who isn't. */
+interface CrewMember {
+    id: string;
+    name: string;
+    email: string;
 }
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -98,8 +113,12 @@ function getWeekStart(d: Date): Date {
     return date;
 }
 
-export default function AdminCalendarView() {
+export default function AdminCalendarView({ adminEmail }: { adminEmail?: string } = {}) {
     const [viewMode, setViewMode] = useState<ViewMode>('month');
+    // The active roster, so "who is free on the 3rd?" can be answered by name
+    // rather than by the absence of a row. Loaded once — names change far more
+    // slowly than the calendar window does.
+    const [crew, setCrew] = useState<CrewMember[]>([]);
     const [focusDate, setFocusDate] = useState<Date>(new Date());
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
@@ -114,6 +133,20 @@ export default function AdminCalendarView() {
         const { start, end } = monthWindow(monthCursor);
         loadMonth(start, end);
     }, [monthCursor]);
+
+    useEffect(() => {
+        let alive = true;
+        const today = toYMD(new Date());
+        // Range is irrelevant here — we only want the roster names back. The
+        // per-date blocks come from /api/calendar/range with everything else.
+        fetch(`/api/crew/availability?roster=1&start=${today}&end=${today}`, {
+            headers: adminEmail ? { 'x-admin-email': adminEmail } : {},
+        })
+            .then(r => (r.ok ? r.json() : null))
+            .then(d => { if (alive && d?.roster) setCrew(d.roster.map((p: any) => ({ id: p.id, name: p.name, email: p.email }))); })
+            .catch(() => { /* the crew panel degrades to "out" only */ });
+        return () => { alive = false; };
+    }, [adminEmail]);
 
     useEffect(() => {
         if (viewMode === 'week') {
@@ -166,9 +199,9 @@ export default function AdminCalendarView() {
     }, [monthCursor, viewMode, focusDate, startDate, endDate]);
 
     const activityByDate = useMemo(() => {
-        const m = new Map<string, { bookings: number; events: number; photos: number; blocked: boolean }>();
+        const m = new Map<string, { bookings: number; events: number; photos: number; blocked: boolean; crewOut: number }>();
         const ensure = (d: string) => {
-            if (!m.has(d)) m.set(d, { bookings: 0, events: 0, photos: 0, blocked: false });
+            if (!m.has(d)) m.set(d, { bookings: 0, events: 0, photos: 0, blocked: false, crewOut: 0 });
             return m.get(d)!;
         };
         if (!monthData) return m;
@@ -176,6 +209,7 @@ export default function AdminCalendarView() {
         for (const e of monthData.events) ensure(e.event_date).events++;
         for (const d of Object.keys(monthData.photos)) ensure(d).photos += monthData.photos[d].length;
         for (const a of monthData.adminBlocked) ensure(a.date).blocked = true;
+        for (const c of monthData.crewBlocked || []) ensure(c.date).crewOut++;
         return m;
     }, [monthData]);
 
@@ -404,6 +438,7 @@ export default function AdminCalendarView() {
                 <DayView
                     focusDate={focusDate}
                     data={detailData}
+                    crew={crew}
                     loading={detailLoading}
                     onPrevDay={() => { const d = new Date(focusDate); d.setDate(d.getDate() - 1); setFocusDate(d); }}
                     onNextDay={() => { const d = new Date(focusDate); d.setDate(d.getDate() + 1); setFocusDate(d); }}
@@ -435,7 +470,56 @@ function ActivityLegend() {
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-green-400 rounded-full" /> Event</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-white/60 rounded-full" /> Upload</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-red-400 rounded-full" /> Blocked</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full" /> Crew Out</span>
         </div>
+    );
+}
+
+/**
+ * Who can shoot on a given day.
+ *
+ * Reads as availability rather than as a block list on purpose: the useful
+ * answer to "can we take Thursday?" is a name you can call, so the people who
+ * are free are listed first and the people who are out are the exception
+ * underneath. Nobody being out is stated explicitly — a silent section would be
+ * indistinguishable from one that failed to load.
+ */
+function CrewAvailability({ crew, blocks }: { crew: CrewMember[]; blocks: CrewBlock[] }) {
+    const outIds = new Set(blocks.map(b => b.photographerId).filter(Boolean) as string[]);
+    const available = crew.filter(person => !outIds.has(person.id));
+
+    return (
+        <Section title={`Crew (${available.length} available)`}>
+            {crew.length === 0 && blocks.length === 0 ? (
+                <EmptyLine>Roster unavailable.</EmptyLine>
+            ) : (
+                <div className="space-y-2">
+                    {available.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                            {available.map(person => (
+                                <span key={person.id} className="bg-green-500/15 text-green-300 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                                    {person.name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    {blocks.length === 0 ? (
+                        <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Nobody has blocked this day out.</p>
+                    ) : (
+                        <div className="space-y-px">
+                            {blocks.map(block => (
+                                <div key={block.id} className="bg-amber-500/10 px-3 py-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                                        {block.photographerName} — unavailable
+                                    </p>
+                                    {block.note && <p className="text-xs text-white/50 mt-1 text-left">{block.note}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </Section>
     );
 }
 
@@ -489,6 +573,7 @@ function WeekView({
                         const dayBookings = data?.bookings.filter(b => b.event_date === ymd) || [];
                         const dayEvents = data?.events.filter(e => e.event_date === ymd) || [];
                         const dayPhotos = (data?.photos[ymd] || []);
+                        const dayCrewOut = data?.crewBlocked?.filter(c => c.date === ymd) || [];
                         const isToday = ymd === todayYmd;
                         const isFocus = ymd === focusYmd;
 
@@ -520,6 +605,14 @@ function WeekView({
                                     {dayEvents.length > 2 && (
                                         <p className="text-[8px] text-green-400/50 px-1">+{dayEvents.length - 2}</p>
                                     )}
+                                    {dayCrewOut.slice(0, 2).map(c => (
+                                        <div key={c.id} className="bg-amber-500/20 px-1 py-0.5">
+                                            <p className="text-[8px] text-amber-300 font-bold truncate leading-none">{c.photographerName} out</p>
+                                        </div>
+                                    ))}
+                                    {dayCrewOut.length > 2 && (
+                                        <p className="text-[8px] text-amber-400/50 px-1">+{dayCrewOut.length - 2} out</p>
+                                    )}
                                 </div>
 
                                 {dayPhotos.length > 0 && (
@@ -539,6 +632,7 @@ function WeekView({
 function DayView({
     focusDate,
     data,
+    crew,
     loading,
     onPrevDay,
     onNextDay,
@@ -548,6 +642,7 @@ function DayView({
 }: {
     focusDate: Date;
     data: CalendarRangeResponse | null;
+    crew: CrewMember[];
     loading: boolean;
     onPrevDay: () => void;
     onNextDay: () => void;
@@ -575,6 +670,7 @@ function DayView({
     const events = data?.events.filter(e => e.event_date === ymd) || [];
     const photos = data?.photos[ymd] || [];
     const notes = data?.notes.filter(n => n.date === ymd) || [];
+    const crewOut = data?.crewBlocked?.filter(c => c.date === ymd) || [];
 
     return (
         <div className="space-y-4">
@@ -625,6 +721,8 @@ function DayView({
                             </div>
                         )}
                     </Section>
+
+                    <CrewAvailability crew={crew} blocks={crewOut} />
 
                     <Section title={`Events (${events.length})`}>
                         {events.length === 0 ? (

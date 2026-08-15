@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = createClient(url, key)
 
     try {
-        const [bookingsRes, eventsRes, photosRes, availabilityRes, notesRes] = await Promise.all([
+        const [bookingsRes, eventsRes, photosRes, availabilityRes, notesRes, crewRes] = await Promise.all([
             supabase
                 .from('bookings')
                 .select('id, name, business_name, email, event_type, event_date, start_time, end_time, location, status, retainer')
@@ -62,6 +62,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .gte('date', start)
                 .lte('date', end)
                 .order('created_at', { ascending: false }),
+            // Crew blocks are a different kind of fact from `adminBlocked`.
+            // An admin block closes the date to the public booking form; a
+            // photographer marking themselves out closes nothing — it says
+            // who cannot cover a job that day. Kept in a separate key so the
+            // calendar can render "Eric is out" without implying the studio is.
+            supabase
+                .from('photographer_availability')
+                .select('id, date, note, photographers(id, name)')
+                .eq('is_blocked', true)
+                .gte('date', start)
+                .lte('date', end)
+                .order('date', { ascending: true }),
         ])
 
         const bookings = bookingsRes.data || []
@@ -69,6 +81,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const photos = photosRes.data || []
         const adminBlocked = availabilityRes.data || []
         const notes = notesRes.data || []
+
+        const crewBlocked = (crewRes.data || []).map((row: any) => ({
+            id: row.id,
+            date: row.date,
+            note: row.note,
+            photographerId: row.photographers?.id || null,
+            photographerName: row.photographers?.name || 'Unknown photographer',
+        }))
 
         // Group photos by effective date (EXIF date_taken when present,
         // else created_at). The grouped bucket is what the "day at a glance"
@@ -96,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             bookings,
             events,
             adminBlocked,
+            crewBlocked,
             notes,
             photos: photosByDateObj,
             summary: {
@@ -103,6 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 eventCount: events.length,
                 photoCount: photos.length,
                 blockedCount: adminBlocked.length,
+                crewBlockedCount: crewBlocked.length,
                 noteCount: notes.length,
             },
         })
