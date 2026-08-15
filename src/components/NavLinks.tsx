@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguagePicker from './LanguagePicker';
 
 type NavLinksProps = {
     user: any;
@@ -24,7 +26,11 @@ export default function NavLinks({
 }: NavLinksProps) {
     const [archivesMenuOpen, setArchivesMenuOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+    const { t } = useLanguage();
 
+    // Column and section names — THE LOST ARCHIVES, GEARHEADS, EDGE OF THE
+    // BORDERLANDS, MAD SCIENTISTS, NEW THEORY, SAGE MODE — are the publication's
+    // own proper nouns and stay in English in every locale.
     const moreSection = (
         <>
             <div
@@ -34,20 +40,20 @@ export default function NavLinks({
                     setMoreMenuOpen(!moreMenuOpen);
                 }}
             >
-                <span className="flex-grow">MORE</span>
+                <span className="flex-grow">{t('nav.more')}</span>
                 <div className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0">
                     {moreMenuOpen ? '▼' : '▶'}
                 </div>
             </div>
             <div className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}>
                 <Link to="/about" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    ABOUT
+                    {t('nav.about')}
                 </Link>
                 <Link to="/privacy-policy" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    PRIVACY POLICY
+                    {t('nav.privacyPolicy')}
                 </Link>
                 <Link to="/terms-of-service" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    TERMS OF SERVICE
+                    {t('nav.termsOfService')}
                 </Link>
             </div>
         </>
@@ -58,19 +64,20 @@ export default function NavLinks({
         return (
             <>
                 <Link to="/" className="menu-item" onClick={onLinkClick}>
-                    HOME
+                    {t('nav.home')}
                 </Link>
                 {moreSection}
+                <LanguagePicker variant="menu" />
                 <Link to="/dashboard" className="menu-item" onClick={onLinkClick}>
                     <div className="flex items-center gap-2">
                         <UserIcon className="w-4 h-4" />
-                        AFFILIATE DASHBOARD
+                        {t('nav.affiliateDashboard')}
                     </div>
                 </Link>
                 <button type="button" className="menu-item w-full text-left" onClick={handleSignOut}>
                     <div className="flex items-center gap-2">
                         <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-                        LOG OUT
+                        {t('nav.logOut')}
                     </div>
                 </button>
             </>
@@ -81,19 +88,19 @@ export default function NavLinks({
     return (
         <>
             <Link to="/" className="menu-item" onClick={onLinkClick}>
-                HOME
+                {t('nav.home')}
             </Link>
             <Link to="/shop" className="menu-item" onClick={onLinkClick}>
-                SHOP
+                {t('nav.shop')}
             </Link>
             <Link to="/gallery" className="menu-item" onClick={onLinkClick}>
-                THE GALLERY
+                {t('nav.gallery')}
             </Link>
             <Link to="/events" className="menu-item" onClick={onLinkClick}>
-                EVENTS
+                {t('nav.events')}
             </Link>
             <Link to="/services" className="menu-item" onClick={onLinkClick}>
-                SERVICES
+                {t('nav.services')}
             </Link>
 
             <div
@@ -110,7 +117,7 @@ export default function NavLinks({
             </div>
             <div className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}>
                 <Link to="/thelostarchives" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    ALL ARTICLES
+                    {t('nav.allArticles')}
                 </Link>
                 <Link to="/gearheads" className="menu-item menu-subitem" onClick={onLinkClick}>
                     GEARHEADS
@@ -128,12 +135,14 @@ export default function NavLinks({
 
             {moreSection}
 
+            <LanguagePicker variant="menu" />
+
             {user && (
                 <>
                     <Link to="/admin" className="menu-item" onClick={onLinkClick}>
                         <div className="flex items-center gap-2">
                             <UserIcon className="w-4 h-4" />
-                            ADMIN DASHBOARD
+                            {t('nav.adminDashboard')}
                         </div>
                     </Link>
                     <button
@@ -148,18 +157,18 @@ export default function NavLinks({
                             SAGE MODE
                         </div>
                         <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
-                            {sageModeState.enabled ? 'ON' : 'OFF'}
+                            {sageModeState.enabled ? t('nav.on') : t('nav.off')}
                         </span>
                     </button>
                     <button type="button" className="menu-item w-full text-left" onClick={handleSignOut}>
                         <div className="flex items-center gap-2">
                             <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-                            LOG OUT
+                            {t('nav.logOut')}
                         </div>
                     </button>
 
                     <div className="menu-item user-info">
-                        <div className="text-white/60 text-xs mb-1">Logged in as:</div>
+                        <div className="text-white/60 text-xs mb-1">{t('nav.loggedInAs')}</div>
                         <div className="text-white text-sm font-medium">
                             {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
                         </div>
@@ -168,7 +177,7 @@ export default function NavLinks({
             )}
             {!user && (
                 <button type="button" className="menu-item" onClick={onLoginClick}>
-                    LOG IN
+                    {t('nav.logIn')}
                 </button>
             )}
         </>

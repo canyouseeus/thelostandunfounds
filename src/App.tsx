@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
 import { GalleryProvider } from './contexts/GalleryContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -136,6 +137,7 @@ function App() {
     <BrowserRouter>
       <NavigationExposer />
       <ScrollToTop />
+      <LanguageProvider>
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
@@ -442,6 +444,7 @@ function App() {
         </SageModeProvider>
         </GalleryProvider>
       </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }
