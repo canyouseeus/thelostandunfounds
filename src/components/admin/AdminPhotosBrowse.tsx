@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import {
@@ -87,6 +88,11 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhotosBrowseProps) {
   const { session } = useAuth();
+  // This component renders under two layouts: /admin (AdminLayout, which mounts
+  // MusicPlayer) and /photographer-dashboard (plain Layout, which does not).
+  // Only the first has a permanent bottom bar for the console tray to clear.
+  const { pathname } = useLocation();
+  const hasPlayerBar = pathname.startsWith('/admin');
   const authHeaders = useCallback(
     () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token || ''}` }),
     [session]
@@ -740,10 +746,33 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
       {/* Floating console tray: frosted glass like the public gallery's back-to-top button
           (bg-white/10 backdrop-blur-md rounded-full), not a solid plate. Fixed at the bottom so
-          it's reachable regardless of scroll position; bottom-24 clears the batch action bar
-          below (bottom-6) when both are visible. See "Platform Console Tray" in the bento-design
-          skill for the pattern this follows. */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
+          it's reachable regardless of scroll position. See "Platform Console Tray" in the
+          bento-design skill for the pattern this follows.
+
+          It rides at the bottom of the viewport, the way a phone app's nav bar does. A standing
+          bottom-24 put it a third of the way up an iPhone screen, where it read as floating in
+          the middle of the page instead of as chrome. Two things can sit under it, so the offset
+          is conditional rather than permanently raised for the worst case:
+
+            · the MusicPlayer bar, fixed bottom-0 and 59px tall (h-0.5 progress + h-14 row +
+              border-t), present only under AdminLayout, and it is z-50 against this tray's
+              z-40, so it would cover the tray outright rather than merely crowd it;
+            · the bulk batch bar, fixed bottom-6, only while a selection is live. bottom-24
+              clears that one and the player bar together.
+
+          The calc() adds the home-indicator inset (index.html sets viewport-fit=cover, so fixed
+          elements can sit under it) and resolves to the bare offset where there is no inset.
+          This conditional lift is the same move the public gallery tray makes for the checkout
+          SelectionTray in PhotoGallery.tsx. */}
+      <div
+        className={`fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300 ${
+          selectionMode && selectedIds.size > 0
+            ? 'bottom-24'
+            : hasPlayerBar
+              ? 'bottom-[calc(5rem+env(safe-area-inset-bottom))]'
+              : 'bottom-[calc(1rem+env(safe-area-inset-bottom))]'
+        }`}
+      >
         <AnimatePresence>
           {openCard && (
             <motion.div
