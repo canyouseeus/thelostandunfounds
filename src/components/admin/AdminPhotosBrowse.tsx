@@ -740,10 +740,24 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
       {/* Floating console tray — frosted glass like the public gallery's back-to-top button
           (bg-white/10 backdrop-blur-md rounded-full), not a solid plate. Fixed at the bottom so
-          it's reachable regardless of scroll position; bottom-24 clears the batch action bar
-          below (bottom-6) when both are visible. See "Platform Console Tray" in the bento-design
-          skill for the pattern this follows. */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
+          it's reachable regardless of scroll position. See "Platform Console Tray" in the
+          bento-design skill for the pattern this follows.
+
+          It rides at the very bottom of the viewport, the way a phone app's nav bar does — a
+          standing bottom-24 put it a third of the way up an iPhone screen, where it read as
+          floating in the middle of the page instead of as chrome. The calc() adds the
+          home-indicator inset (index.html sets viewport-fit=cover, so fixed elements can sit
+          under it) and resolves to a plain 1rem anywhere there is no inset. Only when the bulk
+          batch bar is up (fixed bottom-6, selection mode with photos picked) does the tray lift
+          to bottom-24 to clear it — same conditional lift the public gallery tray uses for the
+          checkout SelectionTray in PhotoGallery.tsx. */}
+      <div
+        className={`fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300 ${
+          selectionMode && selectedIds.size > 0
+            ? 'bottom-24'
+            : 'bottom-[calc(1rem+env(safe-area-inset-bottom))]'
+        }`}
+      >
         <AnimatePresence>
           {openCard && (
             <motion.div
