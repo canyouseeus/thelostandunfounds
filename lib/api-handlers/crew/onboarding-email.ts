@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin } from './_shared.js';
+import { getSupabaseAdmin, resolveVerifiedAdmin } from './_shared.js';
 import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
@@ -30,6 +30,8 @@ import { EMAIL_STYLES } from '../../email-template.js';
  *                    ungated admin router can't be turned into a relay.
  *   { emails: [] } → restrict the send to these roster addresses
  *   { dryRun }     → report who would get what, send nothing
+ *   { confirm }    → required to actually send; without it the call reports
+ *                    how many it would have mailed and stops
  *
  * There is no send log and no cooldown: this is a one-off announcement, not a
  * recurring sweep, so running it twice mails everyone twice. That is also why
@@ -384,11 +386,22 @@ async function loadRoster(supabase: ReturnType<typeof getSupabaseAdmin>): Promis
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const body = (req.body || {}) as { testEmail?: string; emails?: string[]; dryRun?: boolean };
+  const body = (req.body || {}) as {
+    testEmail?: string;
+    emails?: string[];
+    dryRun?: boolean;
+    confirm?: boolean;
+  };
 
   const testEmail = typeof body.testEmail === 'string' ? body.testEmail.trim() : '';
   const isOwnerPreview = !!testEmail && OWNER_ADDRESSES.has(testEmail.toLowerCase());
-  if (!isAuthorized(req) && !isOwnerPreview) {
+
+  // Two ways to authorise a real roster send: the cron secret, or a Supabase
+  // session that verifies as the owner. The `x-admin-email` header the other
+  // admin routes accept is deliberately NOT one of them — it is caller-supplied,
+  // and this route mails five contractors from Joshua's address.
+  const admin = await resolveVerifiedAdmin(req);
+  if (!isAuthorized(req) && !admin && !isOwnerPreview) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -435,6 +448,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? new Set(body.emails.map((e) => String(e).toLowerCase().trim()))
       : null;
     const targets = only ? roster.filter((p) => only.has(p.email.toLowerCase())) : roster;
+
+    // There is no send log and no cooldown, so a second call mails everybody a
+    // second time. An explicit confirm is what stands between a mistyped
+    // request and five people getting the same email twice.
+    if (!body.dryRun && body.confirm !== true) {
+      return res.status(400).json({
+        error: 'Pass confirm: true to actually send. Use dryRun: true to see who would be mailed.',
+        wouldSend: targets.length,
+      });
+    }
 
     if (body.dryRun) {
       return res.status(200).json({
