@@ -1343,13 +1343,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 DELIBERATELY NOT bottom-24, which is what Variant B specifies and what the
                 back-to-top button used: on a phone that lands a third of the way up the
                 screen, well clear of the browser chrome, and it read as floating in the
-                middle of the photos. bottom-6 sits it where a bottom bar belongs. When the
+                middle of the photos. This sits it where a bottom bar belongs. When the
                 checkout SelectionTray is up (fixed bottom-0), the tray lifts clear of it.
-                See "Platform Console Tray — Variant B" in the bento-design skill. */}
+                See "Platform Console Tray — Variant B" in the bento-design skill.
+
+                The resting offset carries the home-indicator inset, matching the admin tray
+                in AdminPhotosBrowse.tsx and the SAGE MODE button that shares this page. The
+                flat bottom-6 it replaces did not: index.html sets viewport-fit=cover, so on a
+                notched phone with the browser chrome hidden the tray held at 24px and sat
+                inside the indicator strip while everything else moved clear of it.
+
+                The lifted state stays flat on purpose. It clears the SelectionTray, which is
+                itself fixed bottom-0 without an inset, so its top edge does not move — adding
+                env() here would over-lift by the height of the inset. */}
             <div
                 className={cn(
                     "fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300",
-                    selectedPhotos.length > 0 ? "bottom-[8.5rem] md:bottom-28" : "bottom-6"
+                    selectedPhotos.length > 0
+                        ? "bottom-[8.5rem] md:bottom-28"
+                        : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"
                 )}
             >
                 <AnimatePresence>

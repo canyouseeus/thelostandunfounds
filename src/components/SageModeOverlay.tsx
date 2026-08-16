@@ -287,10 +287,31 @@ export default function SageModeOverlay() {
           aria-pressed={enabled}
           aria-label={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
           title={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
-          // Frosted circle above the transport bar. bg-white/10 + backdrop-blur-md
-          // are the floating-tray glass values from bento-design, which also
-          // forbids a shadow — separation comes from the blur, not elevation.
-          className="fixed bottom-24 right-4 z-[100000] h-12 w-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md transition-colors"
+          // Frosted circle on the same bottom line as the gallery console tray,
+          // off to its right. bg-white/10 + backdrop-blur-md are the
+          // floating-tray glass values from bento-design, which also forbids a
+          // shadow — separation comes from the blur, not elevation.
+          //
+          // It used to sit at a standing bottom-24, which on a phone floats it a
+          // third of the way up the screen. The one place that offset earned its
+          // keep is /admin: AdminLayout mounts MusicPlayer, whose player bar is
+          // fixed bottom-0 and 59px tall (h-0.5 progress + h-14 row + border-t),
+          // so the button would land on top of it. Everywhere else
+          // there is no bottom bar and it rides at the bottom edge. The calc()
+          // adds the home-indicator inset — index.html sets viewport-fit=cover,
+          // so fixed elements can sit under it — and resolves to the bare offset
+          // where there is no inset.
+          //
+          // Below 375px it stacks above the line instead of sharing it. The
+          // gallery console tray is a fixed 208px centred pill, so on a 320px
+          // screen its right edge reaches 264px while this button starts at
+          // 256px — an 8px overlap, and at z-[100000] this button wins and eats
+          // the tray's last icon. From 375px up the gap is 20px or more.
+          className={`fixed right-4 z-[100000] h-12 w-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md transition-colors ${
+            location.pathname.startsWith('/admin')
+              ? 'bottom-[calc(5rem+env(safe-area-inset-bottom))]'
+              : 'bottom-[calc(1rem+env(safe-area-inset-bottom))] max-[374px]:bottom-[calc(5rem+env(safe-area-inset-bottom))]'
+          }`}
         >
           {/* Triangle outline — gold when armed, white when idle. Points are
               centred on the circle: the bounding box spans x 7–18, so it sits
