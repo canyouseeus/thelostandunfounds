@@ -199,7 +199,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
             className="bg-transparent text-sm text-white placeholder-white/30 focus:outline-none w-full"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search gear — gimbal, wireless lav, full-frame, drone…"
+            placeholder="Search gear: gimbal, wireless lav, full-frame, drone…"
           />
         </div>
         <button
@@ -306,7 +306,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-white/40 text-left">
-                  No equipment listed — send them the gear link.
+                  No equipment listed. Send them the gear link.
                 </p>
               )}
 

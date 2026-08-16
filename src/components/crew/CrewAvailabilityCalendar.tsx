@@ -228,8 +228,8 @@ export default function CrewAvailabilityCalendar() {
                                     }}
                                     title={
                                         past ? 'In the past'
-                                            : blocked ? `${formatDay(ymd)} — tap to free up`
-                                                : `${formatDay(ymd)} — tap to block out`
+                                            : blocked ? `${formatDay(ymd)}: tap to free up`
+                                                : `${formatDay(ymd)}: tap to block out`
                                     }
                                     className={`aspect-square flex items-center justify-center text-[11px] font-bold transition-colors
                                         ${past
@@ -262,7 +262,7 @@ export default function CrewAvailabilityCalendar() {
                                 type="text"
                                 value={note}
                                 onChange={e => setNote(e.target.value)}
-                                placeholder="Reason (optional) — travelling, day job, another shoot…"
+                                placeholder="Reason (optional): travelling, day job, another shoot…"
                                 className="w-full bg-white/5 px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none"
                                 style={{ borderRadius: 0 }}
                             />
@@ -295,7 +295,7 @@ export default function CrewAvailabilityCalendar() {
                         <p className="text-xs uppercase tracking-[0.3em] text-white/30">Loading…</p>
                     ) : upcoming.length === 0 ? (
                         <p className="text-sm text-white/40">
-                            Nothing blocked out — you're showing as available for everything coming up.
+                            Nothing blocked out. You're showing as available for everything coming up.
                         </p>
                     ) : (
                         <ul className="space-y-px">
@@ -319,8 +319,8 @@ export default function CrewAvailabilityCalendar() {
                         </ul>
                     )}
                     <p className="text-xs text-white/30 mt-4">
-                        This feeds the studio's master calendar, so blocking a day here is enough —
-                        no text needed. It doesn't close the date for anyone else on the roster.
+                        This feeds the studio's master calendar, so blocking a day here is enough.
+                        No text needed. It doesn't close the date for anyone else on the roster.
                     </p>
                 </div>
             </div>
