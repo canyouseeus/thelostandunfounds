@@ -27,6 +27,25 @@ export function isAdmin(req: VercelRequest): boolean {
   return host.includes('localhost') || host.includes('127.0.0.1');
 }
 
+/**
+ * Prove the caller is the owner, from a token rather than a claim.
+ *
+ * `isAdmin` above trusts an `x-admin-email` header, which the caller sets. That
+ * is fine for reading the roster; it is not fine for a route that mails the
+ * whole crew from Joshua's own address. Anyone who guessed the path could send
+ * repeatedly, and the domain being burned is the one that also carries client
+ * invoices.
+ *
+ * So this verifies the Supabase session server-side and checks the returned
+ * email against the admin list, the same way `api/admin/sage-request.ts` does
+ * for the route that can write to the repository.
+ */
+export async function resolveVerifiedAdmin(req: VercelRequest): Promise<string | null> {
+  const identity = await resolveIdentity(req);
+  if (!identity?.email) return null;
+  return ADMIN_EMAILS.includes(identity.email) ? identity.email : null;
+}
+
 export function isCronAuthorized(req: VercelRequest): boolean {
   const expected = process.env.CRON_SECRET;
   if (!expected) return false;

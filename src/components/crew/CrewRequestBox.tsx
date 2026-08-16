@@ -111,8 +111,8 @@ export default function CrewRequestBox() {
             <div className="mb-5 text-left">
                 <h2 className="text-lg font-black uppercase tracking-tight">Ask For Anything</h2>
                 <p className="text-xs text-white/40 mt-1">
-                    A question, something that isn't working, or a feature you want built;
-                    type it here and it goes straight to the studio.
+                    A question, something that isn't working, or a feature you want built.
+                    Type it here and it goes straight to the studio.
                 </p>
             </div>
 
@@ -138,7 +138,7 @@ export default function CrewRequestBox() {
                 onChange={e => { setMessage(e.target.value); setSent(false); }}
                 rows={4}
                 maxLength={4000}
-                placeholder="What do you need? Be as specific as you like; nobody is grading it."
+                placeholder="What do you need? Be as specific as you like. Nobody is grading it."
                 className="w-full bg-white/5 px-3 py-3 text-sm text-white placeholder-white/25 focus:outline-none resize-y text-left"
                 style={{ borderRadius: 0 }}
             />
@@ -155,7 +155,7 @@ export default function CrewRequestBox() {
                 </button>
                 {sent && (
                     <span className="text-[10px] font-black uppercase tracking-widest text-green-400">
-                        Sent: you'll get a reply by email.
+                        Sent. You'll get a reply by email.
                     </span>
                 )}
                 {error && <span className="text-xs text-red-300">{error}</span>}

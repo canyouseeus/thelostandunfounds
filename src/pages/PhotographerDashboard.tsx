@@ -17,6 +17,7 @@ import { LoadingOverlay } from '../components/Loading';
 import JobPayouts from '../components/JobPayouts';
 import CrewAvailabilityCalendar from '../components/crew/CrewAvailabilityCalendar';
 import CrewRequestBox from '../components/crew/CrewRequestBox';
+import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -33,6 +34,10 @@ export default function PhotographerDashboard() {
 
     return (
         <div className="container mx-auto py-8 text-white px-4">
+            {/* Picks up where the email left off. The email carries one button;
+                the steps get explained here, where they can be acted on. */}
+            {user && <CrewOnboardingModal userId={user.id} />}
+
             <div className="mb-6">
                 <h1 className="text-3xl font-bold uppercase tracking-tighter">PHOTOGRAPHER DASHBOARD</h1>
                 <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
@@ -43,7 +48,7 @@ export default function PhotographerDashboard() {
 
             {/* Availability first: it is the thing the studio needs from you,
                 rather than the thing you came to look up. */}
-            <div className="mb-6">
+            <div className="mb-6" id="crew-calendar">
                 <CrewAvailabilityCalendar />
             </div>
 

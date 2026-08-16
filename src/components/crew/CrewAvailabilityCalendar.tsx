@@ -295,7 +295,7 @@ export default function CrewAvailabilityCalendar() {
                         <p className="text-xs uppercase tracking-[0.3em] text-white/30">Loading…</p>
                     ) : upcoming.length === 0 ? (
                         <p className="text-sm text-white/40">
-                            Nothing blocked out: you're showing as available for everything coming up.
+                            Nothing blocked out. You're showing as available for everything coming up.
                         </p>
                     ) : (
                         <ul className="space-y-px">
@@ -319,8 +319,8 @@ export default function CrewAvailabilityCalendar() {
                         </ul>
                     )}
                     <p className="text-xs text-white/30 mt-4">
-                        This feeds the studio's master calendar, so blocking a day here is enough;
-                        no text needed. It doesn't close the date for anyone else on the roster.
+                        This feeds the studio's master calendar, so blocking a day here is enough.
+                        No text needed. It doesn't close the date for anyone else on the roster.
                     </p>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin } from './_shared.js';
+import { getSupabaseAdmin, resolveVerifiedAdmin } from './_shared.js';
 import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
@@ -30,6 +30,8 @@ import { EMAIL_STYLES } from '../../email-template.js';
  *                    ungated admin router can't be turned into a relay.
  *   { emails: [] } → restrict the send to these roster addresses
  *   { dryRun }     → report who would get what, send nothing
+ *   { confirm }    → required to actually send; without it the call reports
+ *                    how many it would have mailed and stops
  *
  * There is no send log and no cooldown: this is a one-off announcement, not a
  * recurring sweep, so running it twice mails everyone twice. That is also why
@@ -133,8 +135,8 @@ export function buildOnboardingEmail(person: Recipient): {
 
   const doneBlock = done.length
     ? `<p style="${EMAIL_STYLES.paragraph}">
-         You've already got ${done.length === 1 ? done[0] : `${done.slice(0, -1).join(', ')} and ${done[done.length - 1]}`}
-         thank you, that's the part most people never get round to.
+         You've already got ${done.length === 1 ? done[0] : `${done.slice(0, -1).join(', ')} and ${done[done.length - 1]}`}.
+         Thank you for that. It's the part most people never get round to.
        </p>`
     : '';
 
@@ -151,13 +153,13 @@ export function buildOnboardingEmail(person: Recipient): {
       body: `
         <p style="${EMAIL_STYLES.paragraph}">
           You don't have a login yet, and it's the only thing standing between you and everything
-          below. <strong>Sign in with this exact email address</strong>; that's what connects the
+          below. <strong>Sign in with this exact email address.</strong> That's what connects the
           account to your spot on the roster. Use a different address and you'll land on an empty
           dashboard while all your work sits somewhere you can't see it.
         </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'SIGN IN & OPEN YOUR DASHBOARD')}</p>
         <p style="${EMAIL_STYLES.paragraph}">
-          Once you're in, everything below takes about five minutes total.
+          Once you're in, the dashboard walks you through the rest one step at a time. The whole
+          thing takes about five minutes.
         </p>`,
     });
   }
@@ -172,8 +174,7 @@ export function buildOnboardingEmail(person: Recipient): {
           it's the difference between getting called and not: we search the gear list to decide who
           to send. A rooftop job goes to whoever has the drone, a talking-head to whoever has the
           lav. An empty list means you don't come up in that search at all.
-        </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(`${SITE}/gear`, 'ADD YOUR GEAR')}</p>`,
+        </p>`,
     });
   }
 
@@ -189,10 +190,9 @@ export function buildOnboardingEmail(person: Recipient): {
           button on your dashboard.
         </p>
         <p style="${EMAIL_STYLES.paragraph}">
-          Same account covers both kinds of money; job pay for shoots we send you on, and your
-          gallery sales. You only do it once.
-        </p>
-        <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'CONNECT STRIPE')}</p>`,
+          The same account covers both kinds of money: job pay for shoots we send you on, and
+          your gallery sales. You only do it once.
+        </p>`,
     });
   }
 
@@ -200,14 +200,14 @@ export function buildOnboardingEmail(person: Recipient): {
   const calendarBlock = `
     <h2 style="${EMAIL_STYLES.heading2}">BLOCK OUT YOUR DATES</h2>
     <p style="${EMAIL_STYLES.paragraph}">
-      This is brand new, and it's the reason for this email. Your dashboard now has a calendar;
-      tap any day to mark yourself unavailable, tap it again to free it up. It feeds straight into
+      This is brand new, and it's the reason for this email. Your dashboard now has a calendar.
+      Tap any day to mark yourself unavailable, tap it again to free it up. It feeds straight into
       the studio's master calendar, so we can see who's actually free before we start calling. No
       text needed${person.hasLogin ? '' : ' once you\'re signed in'}.
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
       Blocking a day only blocks <em>you</em>. It doesn't close the date for anyone else on the
-      roster and it doesn't stop the studio taking the work; it just means we don't call you about it.
+      roster and it doesn't stop the studio taking the work. It just means we don't call you about it.
     </p>`;
 
   const galleryBlock = `
@@ -215,19 +215,19 @@ export function buildOnboardingEmail(person: Recipient): {
     <p style="${EMAIL_STYLES.paragraph}">
       ${
         person.galleries > 0
-          ? `You've got ${person.galleries} up already; keep going. `
+          ? `You've got ${person.galleries} up already, so keep going. `
           : 'You can post galleries and sell prints and digitals through the platform. '
       }
       <strong>You keep 100% of your gallery sales.</strong> We take nothing off the top; you just
-      pay Stripe's processing fee, same as you would anywhere. That's separate from job pay:
-      shoots we send you on are the usual 80/20 split, and both land on the same dashboard.
+      pay Stripe's processing fee, same as you would anywhere. That's separate from job pay,
+      where shoots we send you on are the usual 80/20 split. Both land on the same dashboard.
     </p>`;
 
   const askBlock = `
     <h2 style="${EMAIL_STYLES.heading2}">ASK FOR ANYTHING</h2>
     <p style="${EMAIL_STYLES.paragraph}">
       There's a box at the bottom of your dashboard. Type a question, something that's broken, or a
-      feature you want built, and send it; it comes straight to us and the reply shows up in the
+      feature you want built, and send it. It comes straight to us and the reply shows up in the
       same place. You don't need to know whether something is possible. Ask, and we'll tell you;
       if enough of you want the same thing, we'll build it.
     </p>
@@ -243,7 +243,7 @@ export function buildOnboardingEmail(person: Recipient): {
   if (!missing.length) {
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName}: thank you again for signing up. You're one of the few who is completely
+        Hey ${firstName}, thank you again for signing up. You're one of the few who is completely
         set up: login, gear list and Stripe all done. Nothing to chase you for, so this is just the
         new stuff.
       </p>`;
@@ -251,7 +251,7 @@ export function buildOnboardingEmail(person: Recipient): {
   } else if (missing.length === 3) {
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName}: thank you again for signing up. You're on the roster, but nothing's
+        Hey ${firstName}, thank you again for signing up. You're on the roster, but nothing's
         switched on yet, so right now we can't call you for work and couldn't pay you if we did.
         Here's exactly what's left, shortest path first.
       </p>`;
@@ -263,8 +263,8 @@ export function buildOnboardingEmail(person: Recipient): {
     const one = missing.length === 1;
     opener = `
       <p style="${EMAIL_STYLES.paragraph}">
-        Hey ${firstName}: thank you again for signing up. You're nearly there:
-        ${one ? 'the only thing still missing is' : "there are two things left; "} ${label}.
+        Hey ${firstName}, thank you again for signing up. You're nearly there:
+        ${one ? 'the only thing still missing is' : 'there are two things left,'} ${label}.
         Here's what that takes.
       </p>`;
     subject = one
@@ -276,6 +276,22 @@ export function buildOnboardingEmail(person: Recipient): {
     .map((step) => `<h2 style="${EMAIL_STYLES.heading2}">${step.heading}</h2>${step.body}`)
     .join('\n');
 
+  // One button, at the end, after everything that explains why it's worth
+  // pressing. Earlier versions put a call to action on every step, which meant
+  // handing somebody three or four competing destinations and asking them to
+  // pick, and for anyone without a login, three of them led to the same login
+  // wall anyway. The dashboard walks them through the steps once they're in,
+  // so the email's only job is to get them there.
+  const cta = `
+    <p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'OPEN MY DASHBOARD')}</p>
+    <p style="${EMAIL_STYLES.muted}">
+      ${
+        missing.length
+          ? "It'll walk you through what's left as soon as you're in, and you can skip anything and come back to it."
+          : 'Everything above is waiting for you there.'
+      }
+    </p>`;
+
   const content = `
     <h1 style="${EMAIL_STYLES.heading1}">YOU'RE ON THE ROSTER</h1>
 
@@ -283,16 +299,16 @@ export function buildOnboardingEmail(person: Recipient): {
     ${doneBlock}
     ${stepsBlock}
     ${calendarBlock}
-    ${missing.length ? '' : `<p style="${EMAIL_STYLES.paragraph}">${button(dashboard, 'OPEN YOUR DASHBOARD')}</p>`}
     ${galleryBlock}
     ${askBlock}
+    ${cta}
 
-    <p style="${EMAIL_STYLES.paragraph}">; Joshua / THE LOST+UNFOUNDS</p>
+    <p style="${EMAIL_STYLES.paragraph}">Joshua / THE LOST+UNFOUNDS</p>
 
     <hr style="${EMAIL_STYLES.divider}" />
 
     <p style="${EMAIL_STYLES.muted}">
-      This one comes straight from me; reply to it and it lands in my inbox. Anything about a
+      This one comes straight from me, so reply to it and it lands in my inbox. Anything about a
       shoot, a payment or a date can go here or in the box on the dashboard, whichever is quicker
       for you.
     </p>
@@ -370,11 +386,22 @@ async function loadRoster(supabase: ReturnType<typeof getSupabaseAdmin>): Promis
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const body = (req.body || {}) as { testEmail?: string; emails?: string[]; dryRun?: boolean };
+  const body = (req.body || {}) as {
+    testEmail?: string;
+    emails?: string[];
+    dryRun?: boolean;
+    confirm?: boolean;
+  };
 
   const testEmail = typeof body.testEmail === 'string' ? body.testEmail.trim() : '';
   const isOwnerPreview = !!testEmail && OWNER_ADDRESSES.has(testEmail.toLowerCase());
-  if (!isAuthorized(req) && !isOwnerPreview) {
+
+  // Two ways to authorise a real roster send: the cron secret, or a Supabase
+  // session that verifies as the owner. The `x-admin-email` header the other
+  // admin routes accept is deliberately NOT one of them; it is caller-supplied,
+  // and this route mails five contractors from Joshua's address.
+  const admin = await resolveVerifiedAdmin(req);
+  if (!isAuthorized(req) && !admin && !isOwnerPreview) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -421,6 +448,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? new Set(body.emails.map((e) => String(e).toLowerCase().trim()))
       : null;
     const targets = only ? roster.filter((p) => only.has(p.email.toLowerCase())) : roster;
+
+    // There is no send log and no cooldown, so a second call mails everybody a
+    // second time. An explicit confirm is what stands between a mistyped
+    // request and five people getting the same email twice.
+    if (!body.dryRun && body.confirm !== true) {
+      return res.status(400).json({
+        error: 'Pass confirm: true to actually send. Use dryRun: true to see who would be mailed.',
+        wouldSend: targets.length,
+      });
+    }
 
     if (body.dryRun) {
       return res.status(200).json({
