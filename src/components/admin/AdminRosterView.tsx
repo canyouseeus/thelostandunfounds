@@ -6,6 +6,7 @@ import {
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import AdminCrewRequests from './AdminCrewRequests';
+import CrewOnboardingSend from './CrewOnboardingSend';
 
 /**
  * The roster, read as a deployment tool rather than a contact list.
@@ -211,6 +212,8 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
           Refresh
         </button>
       </div>
+
+      <CrewOnboardingSend />
 
       {!loading && roster.length > 0 && (
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4 text-left">
