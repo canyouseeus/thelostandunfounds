@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return row ? usd(row.amount) : 0
     }
 
-    const account = await stripe.accounts.retrieve()
+    const account = await stripe.accounts.retrieve(undefined as any)
     const schedule = (account as any)?.settings?.payouts?.schedule || null
 
     const payouts = await stripe.payouts.list({ limit: 5 })
