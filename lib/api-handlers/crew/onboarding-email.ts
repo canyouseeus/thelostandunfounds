@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin, resolveVerifiedAdmin } from './_shared.js';
+import { getSupabaseAdmin, resolveVerifiedAdmin, isCronAuthorized } from './_shared.js';
 import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
@@ -33,9 +33,16 @@ import { EMAIL_STYLES } from '../../email-template.js';
  *   { confirm }    → required to actually send; without it the call reports
  *                    how many it would have mailed and stops
  *
- * There is no send log and no cooldown: this is a one-off announcement, not a
- * recurring sweep, so running it twice mails everyone twice. That is also why
- * it is deliberately not wired to a cron.
+ * Every delivery is recorded in `crew_email_log`, keyed on (photographer,
+ * campaign), and the send skips anyone already recorded. That unique index is
+ * what makes a re-run a no-op rather than a duplicate, which is what makes this
+ * safe to drive from a schedule — and it means a photographer added to the
+ * roster next month gets welcomed on the next sweep without anybody
+ * remembering to do it.
+ *
+ * `force: true` sends regardless of the log. That is the only way to mail
+ * somebody the same campaign twice, and it exists for a genuinely failed send
+ * rather than for convenience.
  */
 
 const SITE = (process.env.SITE_URL || 'https://www.thelostandunfounds.com').replace(/\/$/, '');
@@ -81,6 +88,8 @@ const button = (href: string, label: string) =>
   `<a href="${href}" style="${EMAIL_STYLES.button}">${label}</a>`;
 
 export interface Recipient {
+  /** Roster row id, needed to key the send log. */
+  id: string;
   name: string;
   email: string;
   hasLogin: boolean;
@@ -322,6 +331,25 @@ export function buildOnboardingEmail(person: Recipient): {
   };
 }
 
+/**
+ * Which announcement this is. Bump it only for a genuinely new send: the log is
+ * keyed on it, so reusing a key means nobody gets the new one and changing it
+ * means everybody gets mailed again.
+ */
+export const CAMPAIGN = 'setup_v1';
+
+/** Photographer ids already mailed for this campaign. */
+async function alreadySent(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  campaign: string
+): Promise<Set<string>> {
+  const { data } = await supabase
+    .from('crew_email_log')
+    .select('photographer_id')
+    .eq('campaign', campaign);
+  return new Set((data || []).map((row: any) => row.photographer_id));
+}
+
 /** Everyone on the active roster, with the real state each email is built from. */
 async function loadRoster(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<Recipient[]> {
   const { data: people, error } = await supabase
@@ -373,6 +401,7 @@ async function loadRoster(supabase: ReturnType<typeof getSupabaseAdmin>): Promis
   }
 
   return roster.map((p) => ({
+    id: p.id,
     name: p.name,
     email: p.email,
     hasLogin: Boolean(p.user_id),
@@ -391,6 +420,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     emails?: string[];
     dryRun?: boolean;
     confirm?: boolean;
+    force?: boolean;
   };
 
   const testEmail = typeof body.testEmail === 'string' ? body.testEmail.trim() : '';
@@ -406,7 +436,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const roster = await loadRoster(getSupabaseAdmin());
+    // One client for the whole request: the roster read, the send-log lookup
+    // and the per-send log writes all go through it.
+    const supabase = getSupabaseAdmin();
+    const roster = await loadRoster(supabase);
 
     // ── Preview: one copy of each distinct variant, to the owner ───────
     // Sending only the first person's copy would hide exactly what this
@@ -447,7 +480,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const only = Array.isArray(body.emails)
       ? new Set(body.emails.map((e) => String(e).toLowerCase().trim()))
       : null;
-    const targets = only ? roster.filter((p) => only.has(p.email.toLowerCase())) : roster;
+    const selected = only ? roster.filter((p) => only.has(p.email.toLowerCase())) : roster;
+
+    // Anyone already mailed for this campaign drops out here. This is the
+    // whole safety property: a second run has nothing left to do.
+    const sentIds = body.force === true ? new Set<string>() : await alreadySent(supabase, CAMPAIGN);
+    const skipped = selected.filter((p) => sentIds.has(p.id));
+    const targets = selected.filter((p) => !sentIds.has(p.id));
 
     // There is no send log and no cooldown, so a second call mails everybody a
     // second time. An explicit confirm is what stands between a mistyped
@@ -462,7 +501,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (body.dryRun) {
       return res.status(200).json({
         mode: 'dryRun',
+        campaign: CAMPAIGN,
         wouldSend: targets.length,
+        alreadySent: skipped.map((p) => ({ name: p.name, email: p.email })),
         recipients: targets.map((person) => {
           const email = buildOnboardingEmail(person);
           return {
@@ -500,6 +541,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           provider: result.provider,
           error: result.error,
         });
+
+        // Logged immediately rather than after the loop. This route can be
+        // killed mid-run by the function timeout, and the newsletter sender
+        // already learned what end-of-loop logging costs: real emails
+        // delivered, nothing recorded, and the retry mails the list again.
+        if (result.success) {
+          const { error: logError } = await supabase.from('crew_email_log').insert({
+            photographer_id: person.id,
+            campaign: CAMPAIGN,
+            email: person.email,
+            provider: result.provider || null,
+          });
+          // 23505 = already logged, which a force send will hit. Not a failure.
+          if (logError && (logError as any).code !== '23505') {
+            console.warn('[crew/onboarding-email] could not log send:', logError.message);
+          }
+        }
       } catch (err: any) {
         results.push({
           email: person.email,
@@ -514,7 +572,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       mode: 'send',
+      campaign: CAMPAIGN,
       attempted: results.length,
+      skippedAlreadySent: skipped.length,
       sent: results.filter((r) => r.success).length,
       failed: results.filter((r) => !r.success),
       results,
