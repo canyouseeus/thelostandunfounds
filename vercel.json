@@ -64,6 +64,10 @@
     {
       "path": "/api/cron/crew-payouts",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/crew-onboarding",
+      "schedule": "*/15 * * * *"
     }
   ],
   "redirects": [
