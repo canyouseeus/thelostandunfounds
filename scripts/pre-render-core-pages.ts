@@ -27,7 +27,7 @@ const CORE_PAGES = [
     { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
     { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' },
     // Public routes that existed in the router but not here, so the Vercel
-    // catch-all served them the noindex shell — telling Google not to index
+    // catch-all served them the noindex shell; telling Google not to index
     // real, public pages. Any new public route must be added to this list.
     // The services offer. Until this existed the whole hire-us page lived behind a
     // React state flag on the homepage, so the raw HTML at /?view=services was
@@ -200,7 +200,7 @@ async function preRenderCorePages() {
                         .eq('is_private', false);
 
                     // One cover photo per collection. Without these the gallery
-                    // index shipped zero <img> tags — the hub page most likely to
+                    // index shipped zero <img> tags: the hub page most likely to
                     // rank for "austin photographer" showed Google no photographs
                     // at all. Served through /api/gallery/stream so the images are
                     // credited to this domain rather than Google's CDN, same as
@@ -242,13 +242,13 @@ async function preRenderCorePages() {
             }
 
             // Services pre-render. Mirrors PHOTO_SERVICES / WEB_SERVICES in
-            // src/pages/BookingPage.tsx — display only. If a price or package
+            // src/pages/BookingPage.tsx: display only. If a price or package
             // changes there, change it here too or the crawled page goes stale.
             if (page.path.startsWith('services')) {
                 // Each sub-page advertises only its own offer. Three pages
                 // listing all five services would be near-duplicates, and
                 // Google resolves duplicates by keeping one and dropping the
-                // rest — picking for itself which of the three survives.
+                // rest: picking for itself which of the three survives.
                 const FOCUS: Record<string, string[]> = {
                     'services/airbnb-photography': ['Airbnb & Short-Term Rental Photography'],
                     'services/real-estate-photography': ['Real Estate & Multifamily Photography'],
@@ -259,44 +259,44 @@ async function preRenderCorePages() {
                     {
                         name: 'Airbnb & Short-Term Rental Photography',
                         price: '195',
-                        summary: 'Listing photography for Austin short-term rentals and Airbnb hosts. 25–35 edited photos, 24–72 hour delivery.',
+                        summary: 'Listing photography for Austin short-term rentals and Airbnb hosts. 25-35 edited photos, 24-72 hour delivery.',
                         detail: 'Studio / 1BR from $195 · 2BR $265 · 3BR $335 · 4BR+ / luxury from $425. Twilight +$125 · Drone +$150 · 3D tour +$200.',
                     },
                     {
                         name: 'Real Estate & Multifamily Photography',
                         price: '225',
                         summary: 'Leasing and listing photography for Austin apartment communities, property managers, and agents.',
-                        detail: 'Single model unit or vacant listing $225 (20–30 edited photos) · Property package $850 covering exteriors, amenities and 2 model units · Portfolio retainer from $1,600/mo · Drone +$150 · Twilight +$125 · 3D tour +$200 · Floor plan +$75.',
+                        detail: 'Single model unit or vacant listing $225 (20-30 edited photos) · Property package $850 covering exteriors, amenities and 2 model units · Portfolio retainer from $1,600/mo · Drone +$150 · Twilight +$125 · 3D tour +$200 · Floor plan +$75.',
                     },
                     {
                         name: 'Small Business Website Design',
                         price: '1500',
                         summary: 'Website design and development for Austin small businesses, artists, and brands. Mobile responsive, SEO optimized.',
-                        detail: 'Starter $1,500 (5–8 pages) · Professional $3,500 (custom branding, admin dashboard, booking system, SEO) · Agency $6,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $150–300/mo.',
+                        detail: 'Starter $1,500 (5-8 pages) · Professional $3,500 (custom branding, admin dashboard, booking system, SEO) · Agency $6,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $150-300/mo.',
                     },
                     {
                         name: 'Short-Form Video & Brand Reels',
                         price: '450',
-                        summary: 'Standalone video for Austin brands — vertical reels, hero brand films, and full video content days.',
+                        summary: 'Standalone video for Austin brands; vertical reels, hero brand films, and full video content days.',
                         detail: 'Reel Pack $450 (2 hrs, 3 reels, 5-day delivery) · Brand Video $1,200 (4 hrs, one 60-90s hero plus 3 cutdowns) · Video Content Day $2,000 (8 hrs, hero plus 6-8 reels) · Monthly Reel Retainer $900/mo for 4 reels.',
                     },
                     {
                         name: 'Event Photography & Video',
                         price: '600',
-                        summary: 'Event coverage across Austin — venues, brand activations, nightlife, and private events.',
-                        detail: '3 hours from $600 · 20–30 curated photos next-day · event highlight reel within 48 hours · +$175/hr for additional hours.',
+                        summary: 'Event coverage across Austin: venues, brand activations, nightlife, and private events.',
+                        detail: '3 hours from $600 · 20-30 curated photos next-day · event highlight reel within 48 hours · +$175/hr for additional hours.',
                     },
                     {
                         name: 'Brand Content Days',
                         price: '800',
-                        summary: 'Half-day and full-day content production for brands — photography plus short-form video.',
-                        detail: 'Half-day $800 (4 hrs, 30–50 photos, 2–3 reels) · Full-day $1,400 (8 hrs, 50+ photos, 2–3 reels).',
+                        summary: 'Half-day and full-day content production for brands; photography plus short-form video.',
+                        detail: 'Half-day $800 (4 hrs, 30-50 photos, 2-3 reels) · Full-day $1,400 (8 hrs, 50+ photos, 2-3 reels).',
                     },
                     {
                         name: 'Lifestyle Portrait Session',
                         price: '250',
                         summary: 'Candid lifestyle portraits in downtown Austin with same-day delivery.',
-                        detail: '30–45 minutes · 10–15 curated photos · same-day delivery.',
+                        detail: '30-45 minutes · 10-15 curated photos · same-day delivery.',
                     },
                 ];
 
@@ -308,7 +308,7 @@ async function preRenderCorePages() {
                     : allOfferings;
                 if (wanted && offerings.length !== wanted.length) {
                     // A renamed offering would silently empty the page it backs.
-                    throw new Error(`Service focus for ${page.path} matched ${offerings.length} of ${wanted.length} offerings — check the names in FOCUS.`);
+                    throw new Error(`Service focus for ${page.path} matched ${offerings.length} of ${wanted.length} offerings; check the names in FOCUS.`);
                 }
 
                 shadowSchema = {
@@ -319,7 +319,7 @@ async function preRenderCorePages() {
                     "url": `https://www.thelostandunfounds.com/${page.path}`,
                     "areaServed": { "@type": "City", "name": "Austin", "addressRegion": "TX", "addressCountry": "US" },
                     "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" },
-                    "priceRange": "$195–$6,000+",
+                    "priceRange": "$195-$6,000+",
                     "hasOfferCatalog": {
                         "@type": "OfferCatalog",
                         "name": "Photography & Web Design Services",

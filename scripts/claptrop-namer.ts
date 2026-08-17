@@ -2,11 +2,11 @@
  * CLAPTROP Naming Engine
  * Builds @tlau.photos_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext
  * filenames for all TLAU assets. The leading IG handle + brand name are
- * deliberate — they ride along on every uploaded file for SEO so reverse
+ * deliberate: they ride along on every uploaded file for SEO so reverse
  * image search and Drive link captions surface the brand instead of opaque
  * camera serial numbers.
  *
- * No external dependencies — pure Node.js EXIF parsing + Nominatim geocoding.
+ * No external dependencies: pure Node.js EXIF parsing + Nominatim geocoding.
  */
 
 import fs from 'fs';
@@ -30,10 +30,10 @@ export interface ClaptropMeta {
   seq: string;      // 001
 }
 
-// Naming convention version. Bump when the wire format changes — any structural
+// Naming convention version. Bump when the wire format changes; any structural
 // change MUST be accompanied by a one-shot migration over all files atomically.
 //   v1 = "@tlau_"                            (legacy, pre-SEO)
-//   v2 = "@tlau.photos_thelostandunfounds_"  (superseded — handle retired)
+//   v2 = "@tlau.photos_thelostandunfounds_"  (superseded: handle retired)
 //   v3 = "@tlau.media_thelostandunfounds_"   (current)
 export const NAME_VERSION = 3;
 
@@ -51,7 +51,7 @@ export const NAME_PREFIX = '@tlau.media_thelostandunfounds';
 // Legacy v1 prefix. Retained for migration / upgrade-in-place logic only.
 export const LEGACY_NAME_PREFIX = '@tlau';
 
-// Recognizes every prefix generation — v3 `.media`, v2 `.photos`, and the bare
+// Recognizes every prefix generation: v3 `.media`, v2 `.photos`, and the bare
 // legacy `@tlau_` that pre-dated the SEO update. Used by the sync layer's
 // filename location parser. Anything matching this is in some claptrop format,
 // current or not. Older generations must keep matching: a file that stops being
@@ -60,7 +60,7 @@ export function isClaptropName(name: string | null | undefined): boolean {
   if (!name) return false;
   // Any handle, not just ours: a library shot by another photographer carries
   // their handle (photo_libraries.photographer_handle). Hardcoding @tlau here
-  // made every such file unrecognisable — location parsing silently lost.
+  // made every such file unrecognisable: location parsing silently lost.
   return CLAPTROP_ANY_HANDLE.test(name) || /^@tlau_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
@@ -69,7 +69,7 @@ export const CLAPTROP_ANY_HANDLE = /^@[a-z0-9._-]+_thelostandunfounds_\d{4}-\d{2
 
 // Strict check used by the retrograde rename: only the current prefix counts as
 // "already done". v1 and v2 files match isClaptropName but fail isCurrentName,
-// so the next retrograde pass upgrades them — which is exactly how the v1 → v2
+// so the next retrograde pass upgrades them; which is exactly how the v1 → v2
 // migration ran, and how v2 → v3 will.
 export function isCurrentName(name: string | null | undefined, handle?: string): boolean {
   if (!name) return false;
@@ -153,7 +153,7 @@ export function parseExifFromBuffer(buf: Buffer): ExifData {
     const segLen = buf.readUInt16BE(pos);
     const segEnd = pos + segLen;
 
-    // APP1 — look for Exif header
+    // APP1: look for Exif header
     if (marker === 0xe1 && segLen > 10 &&
         buf.slice(pos + 2, pos + 8).toString('ascii') === 'Exif\0\0') {
 
@@ -205,11 +205,11 @@ export function parseExifFromBuffer(buf: Buffer): ExifData {
           const tag  = R16(e);
           const type = R16(e + 2);
 
-          // LatRef / LonRef — single ASCII char, stored inline
+          // LatRef / LonRef: single ASCII char, stored inline
           if (tag === 0x0001) latRef = String.fromCharCode(t[e + 8]);
           if (tag === 0x0003) lonRef = String.fromCharCode(t[e + 8]);
 
-          // Latitude / Longitude — 3 RATIONALs at valueOffset
+          // Latitude / Longitude: 3 RATIONALs at valueOffset
           if ((tag === 0x0002 || tag === 0x0004) && type === 5) {
             const vo = R32(e + 8);
             if (vo + 24 <= t.length) {
@@ -301,11 +301,11 @@ const GENERIC_FOLDER = /^(\d{3}[_a-z][a-z0-9_]*|jpg|raf|mov|raw|dcim|photos?|vid
 
 export interface BuildNameOpts {
   /** Photographer handle for this library, e.g. '@tlau.media'. Defaults to
-   *  NAME_PREFIX's handle when absent. Never guess it — see photo_libraries
+   *  NAME_PREFIX's handle when absent. Never guess it: see photo_libraries
    *  .photographer_handle, which is NULL when attribution is unknown. */
   handle?: string;
   originalName: string;   // original filename (with extension)
-  filePath?: string;      // local path — used for EXIF reading + mtime fallback
+  filePath?: string;      // local path: used for EXIF reading + mtime fallback
   date?: Date;            // date override (e.g. from Drive metadata)
   lat?: number | null;    // GPS override
   lon?: number | null;    // GPS override
@@ -365,8 +365,8 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
   // Sequence + collision handling
   let seq      = nextSeq(dateStr, location, subject);
   // The handle is the photographer credit. A library shot by someone else must
-  // carry their handle, or the filename — and therefore the alt text Google
-  // reads — credits the wrong person for their work.
+  // carry their handle, or the filename, and therefore the alt text Google
+  // reads: credits the wrong person for their work.
   const prefix = opts.handle ? `${opts.handle}_thelostandunfounds` : NAME_PREFIX;
   let stem     = `${prefix}_${dateStr}_${location}_${subject}_${seq}`;
   let filename = `${stem}${ext}`;
@@ -399,7 +399,7 @@ export function getAvailableBytes(dir: string): number {
     const stat = fs.statfsSync(dir);
     return stat.bavail * stat.bsize;
   } catch {
-    return Infinity; // can't check — don't block
+    return Infinity; // can't check: don't block
   }
 }
 

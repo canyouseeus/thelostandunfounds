@@ -11,7 +11,7 @@ function isAdmin(req: VercelRequest): boolean {
 }
 
 /**
- * GET /api/admin/prodigi-orders — list recent Prodigi fulfillment orders for
+ * GET /api/admin/prodigi-orders: list recent Prodigi fulfillment orders for
  * the admin dashboard (status, tracking, recipient). Admin only, read-only.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {

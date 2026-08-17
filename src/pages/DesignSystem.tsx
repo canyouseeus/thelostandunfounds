@@ -1032,7 +1032,7 @@ function BlogSection() {
 
           <div className="space-y-6 text-white/90 leading-relaxed font-serif text-lg">
             <p>
-              <strong className="text-white font-sans uppercase tracking-widest mr-2">Abstract —</strong>
+              <strong className="text-white font-sans uppercase tracking-widest mr-2">Abstract; </strong>
               Digital minimalism is not about rejecting technology, but about clearing away the clutter to make room for what truly matters.
             </p>
             <p>

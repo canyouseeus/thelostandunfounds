@@ -163,7 +163,7 @@ function checkPageMeta() {
     const titleMatches = [...src.matchAll(/<title>([^<]+)<\/title>/g)];
     for (const t of titleMatches) {
       const raw = t[1].trim();
-      // Skip JSX expressions wrapping the brand — they're hard to statically resolve
+      // Skip JSX expressions wrapping the brand; they're hard to statically resolve
       // but we still flag obvious "X | THE LOST+UNFOUNDS" suffix patterns.
       if (raw.includes('{') && raw.includes('}')) {
         if (raw.includes('| THE LOST+UNFOUNDS') && !raw.startsWith('THE LOST+UNFOUNDS')) {
@@ -177,7 +177,7 @@ function checkPageMeta() {
       }
     }
 
-    // SEOHead title prop — detect strings already containing the brand.
+    // SEOHead title prop: detect strings already containing the brand.
     const seoTitleMatches = [...src.matchAll(/<SEOHead[\s\S]*?title=(["'])([^"']+?)\1/g)];
     for (const m of seoTitleMatches) {
       const raw = m[2];
@@ -185,7 +185,7 @@ function checkPageMeta() {
         record(
           'error',
           file,
-          `SEOHead title="${raw}" includes the brand; pass only the page name — SEOHead prefixes the brand for you.`
+          `SEOHead title="${raw}" includes the brand; pass only the page name; SEOHead prefixes the brand for you.`
         );
       }
     }
@@ -205,7 +205,7 @@ function checkPageMeta() {
         const inner = (block.match(/<title>/g) || []).length;
         if (inner > 1) {
           // Check if it's wrapped in a JSX conditional ({cond ? <title>…</title> : <title>…</title>})
-          // — those render only one. Otherwise flag it.
+          //; those render only one. Otherwise flag it.
           const isConditional = /\{\s*[A-Za-z0-9_]+\s*\?\s*\(\s*<title>/.test(block);
           if (!isConditional) {
             record('error', file, 'Helmet block contains multiple <title> tags.');

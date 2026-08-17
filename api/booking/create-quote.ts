@@ -7,10 +7,10 @@
  *   - a branded email to the client with the pay button + quote PDF link
  *
  * Body (JSON):
- *   bookingId    string                 — UUID of the booking
- *   totalPrice   number                 — full project price in USD
- *   depositPct?  number                 — deposit percentage, default 50
- *   lineItems?   Array<LineItem>         — optional itemised breakdown
+ *   bookingId    string: UUID of the booking
+ *   totalPrice   number: full project price in USD
+ *   depositPct?  number: deposit percentage, default 50
+ *   lineItems?   Array<LineItem>: optional itemised breakdown
  *   description? string
  *
  * Auth: x-admin-secret, x-admin-email, or localhost.
@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'No client email available to send the quote to' })
     }
 
-    // Normalise line items — synthesize one if the caller didn't itemise.
+    // Normalise line items: synthesize one if the caller didn't itemise.
     const items: BookingLineItem[] =
       Array.isArray(lineItems) && lineItems.length > 0
         ? lineItems.map((li) => ({
@@ -117,7 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }))
         : [
             {
-              description: `Photography — ${booking.event_type || 'shoot'}`,
+              description: `Photography: ${booking.event_type || 'shoot'}`,
               quantity: 1,
               unit_price: totalPrice,
               amount: totalPrice,
@@ -144,7 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         invoice_type: 'quote',
         date: new Date().toISOString().slice(0, 10),
         event_date: booking.event_date || null,
-        description: description || `Photography services — ${booking.event_type || 'shoot'}`,
+        description: description || `Photography services: ${booking.event_type || 'shoot'}`,
         line_items: items,
         subtotal,
         total,
@@ -163,8 +163,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const link = await createPaymentLink(stripe, {
       amountCents: depositCents,
-      productName: `Deposit (${pct}%) — ${booking.event_type || 'Photography'} — ${invoiceNumber}`,
-      description: `${invoiceNumber} deposit — booking ${bookingId}`,
+      productName: `Deposit (${pct}%): ${booking.event_type || 'Photography'}; ${invoiceNumber}`,
+      description: `${invoiceNumber} deposit: booking ${bookingId}`,
       metadata: {
         source: BOOKING_PAYMENT_SOURCE,
         kind: 'quote',

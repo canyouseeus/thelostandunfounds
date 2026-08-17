@@ -66,7 +66,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
         window.location.href = data.onboarding_url;
         return;
       }
-      // No URL returned — surface the error but the affiliate row exists, so
+      // No URL returned: surface the error but the affiliate row exists, so
       // the dashboard will let them retry from the payout-settings panel.
       showError(data.message || data.error || 'Failed to start Stripe onboarding. You can finish setup from your dashboard.');
     } catch (err) {
@@ -131,7 +131,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
           Choose Your Affiliate Code
         </h1>
         <p className="text-white/70 mb-6">
-          Your affiliate code is your unique identifier. Choose wisely — it cannot be changed later.
+          Your affiliate code is your unique identifier. Choose wisely: it cannot be changed later.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">

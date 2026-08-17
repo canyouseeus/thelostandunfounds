@@ -30,7 +30,7 @@ const EMAIL_STYLES = {
     paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
     link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
     // Solid white fill, black type, no border. A border here renders as an
-    // empty outlined box in clients that drop the background colour — see the
+    // empty outlined box in clients that drop the background colour; see the
     // brand-email-manager skill, which bans it outright.
     button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background} !important; text-decoration: none; font-weight: bold; font-size: 16px;`,
     divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
@@ -235,7 +235,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // Build a branded download filename: the_lost_and_unfounds_llc_joshua_abram_greene_[title].jpg
 /**
  * Give an invited client ownership of every photo in a zero-priced private
- * gallery — the delivery equivalent of a completed checkout.
+ * gallery: the delivery equivalent of a completed checkout.
  *
  * Idempotent, and it must stay that way: this runs on every load of the
  * gallery, so a plain insert would pile up a duplicate entitlement per page
@@ -251,7 +251,7 @@ async function grantDeliveryEntitlements(
     // The email belongs in the key: photo_orders.paypal_order_id is UNIQUE, so
     // a per-gallery reference collides as soon as a second person is invited to
     // the same gallery. The insert throws, this function swallows it, and that
-    // client silently never gets their entitlements — the gallery just stays
+    // client silently never gets their entitlements; the gallery just stays
     // locked for everyone after the first.
     const reference = `delivery_${librarySlug}_${normalized}`;
 
@@ -269,7 +269,7 @@ async function grantDeliveryEntitlements(
         .maybeSingle();
 
     if (!order) {
-        // 'completed' because nothing is owed — and because the CHECK on
+        // 'completed' because nothing is owed, and because the CHECK on
         // photo_orders permits only pending/completed/failed/refunded.
         const { data: created, error } = await adminClient
             .from('photo_orders')
@@ -317,7 +317,7 @@ function buildDownloadFilename(rawTitle: string): string {
  * A Drive access token for reading a file the public CDN will not serve.
  *
  * lh3 only serves files shared "anyone with the link", and it stops serving
- * full resolution well before it stops serving thumbnails — so a private
+ * full resolution well before it stops serving thumbnails, so a private
  * client gallery previews correctly and then fails on download, which reads
  * like a broken button rather than a credentials problem.
  *
@@ -409,7 +409,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'A valid email is required to download.' });
         }
 
-        // Look up photo (id + title) from DB — id goes into the download event log,
+        // Look up photo (id + title) from DB; id goes into the download event log,
         // title drives the branded filename.
         let downloadFilename = buildDownloadFilename('photo');
         let photoIdForEvent: string | null = null;
@@ -424,7 +424,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
                 if (photo?.title) downloadFilename = buildDownloadFilename(photo.title);
                 if (photo?.id) photoIdForEvent = photo.id as string;
             } catch {
-                // Non-fatal — fall back to generic filename
+                // Non-fatal: fall back to generic filename
             }
 
             // Fire-and-forget: write the download event.
@@ -448,7 +448,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        // Try lh3 first (direct link) — use full resolution for downloads
+        // Try lh3 first (direct link): use full resolution for downloads
         const fetchSize = isDownload ? 'w4096-h4096' : (size || 1600);
         const lh3Url = `https://lh3.googleusercontent.com/d/${fileId}=s${fetchSize}`;
 
@@ -647,7 +647,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     </p>
 
                     <p style="${EMAIL_STYLES.paragraph}">
-                      Open the link below and enter this email address — <strong style="color: #ffffff;">${email}</strong> — and we'll send you a sign-in link. There's no password to create.
+                      Open the link below and enter this email address; <strong style="color: #ffffff;">${email}</strong>, and we'll send you a sign-in link. There's no password to create.
                     </p>
 
                     <div style="margin: 40px 0;">
@@ -655,7 +655,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     </div>
 
                     <p style="${EMAIL_STYLES.paragraph}">
-                      The gallery stays available — come back and pull anything you need, whenever you need it. There's no expiry on it.
+                      The gallery stays available: come back and pull anything you need, whenever you need it. There's no expiry on it.
                     </p>
 
                     <hr style="${EMAIL_STYLES.divider}">
@@ -670,7 +670,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                 const result = await sendZohoEmail({
                     auth,
                     to: email,
-                    // Business record — client correspondence stays on file.
+                    // Business record: client correspondence stays on file.
                     cc: 'media@thelostandunfounds.com',
                     subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
                     htmlContent: generateTransactionalEmail(body)
@@ -704,7 +704,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
 
 /**
  * Public, pre-auth metadata for the gallery access page: the gallery's name and
- * whether it is private. Nothing else — no photos, no invited_emails, no owner.
+ * whether it is private. Nothing else: no photos, no invited_emails, no owner.
  *
  * The access page needs to say WHICH gallery it is letting someone into before
  * anyone is signed in, and every other gallery read requires a session. Naming
@@ -907,7 +907,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
             // client paid by invoice; the photos are already theirs.
             //
             // Without this the gallery still routes them through checkout, and
-            // a $0.00 cart cannot be paid — Stripe rejects a zero-amount
+            // a $0.00 cart cannot be paid; Stripe rejects a zero-amount
             // charge, so "pay with card" fails and the gallery is unopenable
             // at the final step. A client hit exactly that on a shoot she had
             // already paid for in full.
@@ -919,7 +919,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
                 try {
                     await grantDeliveryEntitlements(adminClient, library.id, library.slug, userEmail!);
                 } catch (err) {
-                    // Never block access on this — a failure here costs the
+                    // Never block access on this: a failure here costs the
                     // download button, not the gallery.
                     console.error('[gallery] delivery entitlement grant failed:', err);
                 }

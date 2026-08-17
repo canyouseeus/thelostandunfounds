@@ -23,7 +23,7 @@ import { cn } from '@/components/ui/utils';
 const PINK = '#E91E8C';
 /* The logo's yellow, sampled from assets/brand/kattitude-logo.png in the
  * kiosk's styles.css, where it is the canonical --yellow / --gold.
- * Was #B8860B (CSS DarkGoldenrod) — a brown-gold that is not this
+ * Was #B8860B (CSS DarkGoldenrod): a brown-gold that is not this
  * brand's yellow and never was. Both Kattitude templates share this
  * token, so the site and the console cannot drift apart again. */
 const GOLD = '#FDE446';
@@ -94,7 +94,7 @@ const ALL_DEPOSITS_INIT: Deposit[] = [
 ];
 
 const CLIENTS: Client[] = [
-  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@example.com',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Single Needle', preferredArtist:'Barbie', since:'Oct 2023', note:'Wants full sleeve eventually — fine line botanicals. Very loyal.' },
+  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@example.com',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Single Needle', preferredArtist:'Barbie', since:'Oct 2023', note:'Wants full sleeve eventually; fine line botanicals. Very loyal.' },
   { name:'Camila Vega',    phone:'(512) 555-0181', email:'camilav@example.com',     instagram:'@camila.tatted',   sessions:5, lastVisit:'Jun 21', spend:1240, favStyle:'Fine Line',     preferredArtist:'Kat',   since:'Nov 2023', note:'Fine line only. Loves delicate botanical work. Refers friends often.' },
   { name:'Tyler Brooks',   phone:'(512) 555-0391', email:'tyler@example.com',      instagram:'@tbrooks_ink',     sessions:4, lastVisit:'Jun 20', spend:1750, favStyle:'Large Scale Fine Line', preferredArtist:'Alena', since:'Jan 2024', note:'Building a Japanese-inspired sleeve with Alena. Large scale fine line work.' },
   { name:'Devon Santos',   phone:'(512) 555-0167', email:'devon.santos@example.com',  instagram:'@devonsantos_atx', sessions:4, lastVisit:'Jun 19', spend:1020, favStyle:'Traditional',   preferredArtist:'Kat',   since:'Feb 2024', note:'Classic American traditional. Interested in chest panel next.' },
@@ -103,7 +103,7 @@ const CLIENTS: Client[] = [
   { name:'Mia Chen',       phone:'(512) 555-0488', email:'mia.chen@example.com',      instagram:'@mia_fineline',    sessions:2, lastVisit:'Jun 18', spend:470,  favStyle:'Single Needle', preferredArtist:'Jen', since:'Apr 2024', note:'Minimalist single needle. Wants matching pieces with her sister.' },
   { name:'Maya Kim',       phone:'(512) 555-0278', email:'maya@example.com',        instagram:'@mayakim.art',     sessions:2, lastVisit:'Jun 14', spend:600,  favStyle:'Illustrative',  preferredArtist:'Kat',   since:'May 2024', note:'Illustrative character work. Shows up with very detailed briefs.' },
   { name:'Marcus Bell',    phone:'(512) 555-0115', email:'marcusbell@example.com',   instagram:'@bellinkd',        sessions:2, lastVisit:'Jun 10', spend:620,  favStyle:'Cover-Up',      preferredArtist:'Kat',   since:'May 2024', note:'Has 2 cover-up areas. First done. Second (back piece) scheduled Jun 26.' },
-  { name:'Rina Park',      phone:'(512) 555-0362', email:'rinapark@example.com',      instagram:'@rinapark_tats',   sessions:1, lastVisit:'Jun 21', spend:620,  favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Jun 2024', note:'First session was a portrait — very happy. Wants second session.' },
+  { name:'Rina Park',      phone:'(512) 555-0362', email:'rinapark@example.com',      instagram:'@rinapark_tats',   sessions:1, lastVisit:'Jun 21', spend:620,  favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Jun 2024', note:'First session was a portrait; very happy. Wants second session.' },
 ];
 
 const ARTISTS_DATA: ArtistRecord[] = [
@@ -143,7 +143,7 @@ const ARTISTS_DATA: ArtistRecord[] = [
     bookingRate:70, rating:4.7, sessionsMonth:7, revenueMonth:2180, nextAvail:'Jun 26',
     status:'available', bio:'Single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
   },
-  /* Ally was missing from this roster entirely — six artists here against seven
+  /* Ally was missing from this roster entirely; six artists here against seven
    * active in the database. Added so the console matches the studio.
    *
    * HER NUMBERS ARE INVENTED, exactly like everyone else's on this page. The
@@ -188,9 +188,9 @@ const busyDays = [
   { day:'Fri', appts:11 }, { day:'Sat', appts:14 }, { day:'Sun', appts:0 },
 ];
 const depositAging = [
-  { bracket:'0–3 days', amount:360 },
-  { bracket:'4–7 days', amount:75 },
-  { bracket:'8–14 days', amount:0 },
+  { bracket:'0-3 days', amount:360 },
+  { bracket:'4-7 days', amount:75 },
+  { bracket:'8-14 days', amount:0 },
   { bracket:'15+ days',  amount:0 },
 ];
 
@@ -343,7 +343,7 @@ function CreateAppointmentModal({ onClose }: { onClose: () => void }) {
               <option value="Miranda">Miranda (Junior)</option>
               <option value="Jen">Jen (Junior)</option>
               <option value="Naomi">Naomi (Junior)</option>
-              <option value="Any">Any Artist — Best Fit</option>
+              <option value="Any">Any Artist: Best Fit</option>
             </select>
           </div>
           <div>
@@ -1239,11 +1239,11 @@ function PortfolioPanel() {
 function SettingsPanel() {
   const [hours, setHours] = useState({
     monday:    'Closed',
-    tuesday:   '11:00 AM – 7:00 PM',
-    wednesday: '11:00 AM – 7:00 PM',
-    thursday:  '11:00 AM – 7:00 PM',
-    friday:    '11:00 AM – 7:00 PM',
-    saturday:  '10:00 AM – 6:00 PM',
+    tuesday:   '11:00 AM: 7:00 PM',
+    wednesday: '11:00 AM: 7:00 PM',
+    thursday:  '11:00 AM: 7:00 PM',
+    friday:    '11:00 AM: 7:00 PM',
+    saturday:  '10:00 AM: 6:00 PM',
     sunday:    'Closed',
   });
   const [saved, setSaved] = useState(false);

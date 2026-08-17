@@ -4,21 +4,21 @@
  * The rename failed 418 times with `invalid_client` and the panel could only
  * repeat what Google said. That is a dead end: invalid_client means the
  * client_id and client_secret are not a valid pair, or the refresh token was
- * issued by a different client — and none of those are distinguishable from
+ * issued by a different client, and none of those are distinguishable from
  * the error alone. This endpoint performs the token exchange in isolation and
  * reports which of the three is at fault.
  *
  * NEVER returns the client secret or the refresh token, only their lengths and
  * a fingerprint of the last four characters, which is enough to tell "the
  * value changed" from "the value is the same as before" without disclosing it.
- * The client_id is deliberately returned in full — it is public by design,
+ * The client_id is deliberately returned in full; it is public by design,
  * shipped in every browser OAuth flow, and comparing it against Google Cloud
  * Console is the entire point.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { requireAdminUser } from '../../lib/api-handlers/_gallery-admin-ops.js';
 
-/** The client that issued the original refresh token — see scripts/setup-google-oauth.ts. */
+/** The client that issued the original refresh token; see scripts/setup-google-oauth.ts. */
 const EXPECTED_CLIENT_ID = '817758642642-j65tb1kscmmaiaocg5jg1qc4qbu4rsbt.apps.googleusercontent.com';
 
 const fingerprint = (v: string | undefined) =>
@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const report: Record<string, unknown> = {
         // Which deployment answered, and which environment's variables it holds.
         // A secret that "was updated" but still reads the same value means the
-        // function never received it — set on the wrong environment, or a
+        // function never received it: set on the wrong environment, or a
         // redeploy that reused an earlier build's env snapshot. Without this
         // the report cannot tell those apart from a genuinely wrong secret.
         deployment: {
@@ -113,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 meaning: json.error === 'invalid_client'
                     ? 'Google does not recognise this client_id + client_secret pair. Either the client_id is not a real client (deleted, or from a different project), or the secret does not belong to it.'
                     : json.error === 'invalid_grant'
-                        ? 'The client is valid, but the refresh token is not — revoked, expired, or issued by a different client_id.'
+                        ? 'The client is valid, but the refresh token is not; revoked, expired, or issued by a different client_id.'
                         : null,
             },
         });

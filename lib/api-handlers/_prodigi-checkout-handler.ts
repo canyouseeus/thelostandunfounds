@@ -159,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (prodigiInsertError) {
             console.error('❌ Failed to pre-create prodigi_orders row:', prodigiInsertError)
-            // Non-fatal for the customer — the payment can still proceed; the
+            // Non-fatal for the customer: the payment can still proceed; the
             // webhook will log the mismatch if it can't find this row.
         }
 

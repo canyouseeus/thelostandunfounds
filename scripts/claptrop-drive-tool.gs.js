@@ -1,5 +1,5 @@
 /**
- * CLAPTROP Drive Tool — Google Apps Script
+ * CLAPTROP Drive Tool: Google Apps Script
  *
  * Paste into a new project at script.google.com, save, authorize the prompted
  * Drive scope on first run, then run one of the entrypoints below from the
@@ -10,7 +10,7 @@
  *                       @tlau.photos_thelostandunfounds_YYYY-MM-DD_austin_<venue>_fuji_###.jpg
  *   removeDuplicates()  Index JPG Archive by md5+size, trash NEW UPLOADS files
  *                       (recursively) whose md5+size already exist in the archive.
- *   dryRunRename()      Same as renameAllPhotos() but logs only — no writes.
+ *   dryRunRename()      Same as renameAllPhotos() but logs only; no writes.
  *   runAll()            renameAllPhotos() then removeDuplicates().
  *
  * Idempotent: files already in canonical format are skipped, trashed dupes are
@@ -25,7 +25,7 @@ const ARCHIVE_FOLDER_ID     = '1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4';
 const NEW_UPLOADS_FOLDER_ID = '1NwQJFj9YYsQrfQgHMWqzLjGWZHL7B2Ym';
 
 const NAME_PREFIX  = '@tlau.media_thelostandunfounds';
-// v2. Files still carrying it are upgraded in place to NAME_PREFIX — same
+// v2. Files still carrying it are upgraded in place to NAME_PREFIX; same
 // rename path the legacy short prefix takes. Must stay here until no file in
 // Drive carries it, or those files read as unnamed and get renumbered.
 const PRIOR_PREFIX = '@tlau.photos_thelostandunfounds';
@@ -68,7 +68,7 @@ function removeDuplicates() {
     let pageToken = null;
     do {
       if (Date.now() - start > TIMEOUT_MS) {
-        log(`⏱ timeout — scanned=${counts.scanned} trashed=${counts.trashed}`);
+        log(`⏱ timeout: scanned=${counts.scanned} trashed=${counts.trashed}`);
         return false;
       }
       let url = 'https://www.googleapis.com/drive/v3/files'
@@ -124,7 +124,7 @@ function _runRename(dryRun) {
 
   while (venueFolders.hasNext()) {
     if (Date.now() - start > TIMEOUT_MS) {
-      log('⏱ timeout — bailing out (re-run to resume)');
+      log('⏱ timeout: bailing out (re-run to resume)');
       break;
     }
     const folder = venueFolders.next();
@@ -242,7 +242,7 @@ function _buildArchiveIndex(start, log) {
   const folders = archive.getFolders();
   while (folders.hasNext()) {
     if (Date.now() - start > TIMEOUT_MS) {
-      log('⏱ timeout while indexing archive — partial index');
+      log('⏱ timeout while indexing archive; partial index');
       return index;
     }
     const f = folders.next();
@@ -292,7 +292,7 @@ function _forEachJpgRecursive(folder, cb) {
   }
 }
 
-// Walk folders recursively — calls cb(folder) on the folder itself and all subfolders
+// Walk folders recursively: calls cb(folder) on the folder itself and all subfolders
 function _forEachFolderRecursive(folder, cb) {
   const cont = cb(folder);
   if (cont === false) return false;
@@ -332,7 +332,7 @@ function _parseSeqFromCurrent(name) {
 }
 
 // Convert a v2 (.photos) file to the current prefix. Everything after the
-// prefix — date, location, venue, camera tag, sequence — is preserved exactly,
+// prefix (date, location, venue, camera tag, sequence) is preserved exactly,
 // so the tail stays identical and upload dedup still matches the two as one
 // photo. A handle change must not renumber the archive.
 function _upgradePriorPrefixName(name) {

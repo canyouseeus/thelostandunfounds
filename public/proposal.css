@@ -1,20 +1,20 @@
 /* ============================================================
-   THE LOST+UNFOUNDS — Client Proposal Stylesheet
+   THE LOST+UNFOUNDS: Client Proposal Stylesheet
    Shared by every public/<client>-proposal.html document.
 
    Edit here, not in the HTML files. A proposal should carry at
    most a small local <style> block for genuine per-document
-   additions — never a copy of this file.
+   additions, never a copy of this file.
 
    See the client-documents skill for the full spec.
    ============================================================ */
 
 /* ── Inter, embedded ──────────────────────────────────────────────
-   Variable fonts (weight 100–900), latin subset, base64-inlined.
+   Variable fonts (weight 100-900), latin subset, base64-inlined.
 
    Embedded rather than linked to fonts.googleapis.com so a proposal
    renders in Inter when it is emailed as an attachment, opened
-   offline, or printed to PDF — none of which can rely on a network
+   offline, or printed to PDF: none of which can rely on a network
    fetch. Do not replace these with a <link> to Google Fonts.
 
    Source: Inter v20 latin subset, fonts.gstatic.com
@@ -61,7 +61,7 @@
   @media print{
     /* min-height, NOT height, and overflow must stay visible.
        A fixed 11in height combined with the overflow:hidden above does not
-       "fit" an overlong page — it silently deletes whatever sits past the
+       "fit" an overlong page: it silently deletes whatever sits past the
        11in mark. That is how several proposals shipped with their signature
        block missing from the PDF while the HTML looked complete.
        With min-height an overlong page spills onto a second sheet instead:
@@ -72,11 +72,11 @@
 
   /* ── .page.dense ──────────────────────────────────────────────────
      A page that runs a little past 11in gets tighter vertical rhythm
-     instead of losing a sentence. Type sizes never change — only the
-     space between blocks — so a dense page still reads as the same
+     instead of losing a sentence. Type sizes never change, only the
+     space between blocks, so a dense page still reads as the same
      document sitting beside a normal one.
 
-     Worth about 60–70px on a typical page. Past that, compressing
+     Worth about 60-70px on a typical page. Past that, compressing
      starts to show: split the page instead and renumber. Never reach
      for this to cram a page that is 150px over. */
   .page.dense .pagehead{margin-bottom:12px;}

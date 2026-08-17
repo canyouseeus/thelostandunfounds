@@ -3,7 +3,7 @@
  *
  * Full-screen overlay panel opened from a booking card.
  *
- * Desktop  : two-column — invoice form left, email thread chatbox right.
+ * Desktop  : two-column: invoice form left, email thread chatbox right.
  * Mobile   : single-column form + floating "Emails" button that expands a
  *            full-screen chatbot drawer from the bottom.
  */
@@ -113,7 +113,7 @@ const EmailThread: React.FC<EmailThreadProps> = ({
   const [loading, setLoading] = useState(false);
   const [compose, setCompose] = useState('');
   const [subject, setSubject] = useState(
-    `Re: ${booking.event_type} Booking — ${clientName}`
+    `Re: ${booking.event_type} Booking, ${clientName}`
   );
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -138,7 +138,7 @@ const EmailThread: React.FC<EmailThreadProps> = ({
       msgs.sort((a, b) => (a.receivedTime || a.sentDateInGMT || 0) - (b.receivedTime || b.sentDateInGMT || 0));
       setEmails(msgs);
     } catch {
-      // silently fail — Zoho may not be connected
+      // silently fail: Zoho may not be connected
     } finally {
       setLoading(false);
     }
@@ -392,7 +392,7 @@ const BookingInvoicePanel: React.FC<Props> = ({ booking, onClose, onInvoiceCreat
             unit_price: parseFloat(li.amount),
             amount: parseFloat(li.amount),
           })),
-          description: `${eventType || booking.event_type} — ${clientName}`,
+          description: `${eventType || booking.event_type}; ${clientName}`,
           // Pass through any updated fields for context
           overrideName: clientName !== booking.name ? clientName : undefined,
           adminNotes: notes || undefined,
@@ -411,7 +411,7 @@ const BookingInvoicePanel: React.FC<Props> = ({ booking, onClose, onInvoiceCreat
       } else {
         setFeedback({
           type: 'success',
-          msg: `Invoice ${data.invoiceNumber} created${data.emailed ? ' and emailed to client' : ' — email failed, share PDF manually'}.`,
+          msg: `Invoice ${data.invoiceNumber} created${data.emailed ? ' and emailed to client' : ': email failed, share PDF manually'}.`,
           pdfUrl: data.pdfUrl,
         });
         onInvoiceCreated();

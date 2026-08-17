@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        // No session found — in dev on localhost, attempt auto-login so the
+        // No session found, in dev on localhost, attempt auto-login so the
         // Claude Code preview button works without manual eval injection.
         if (import.meta.env.DEV && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
           try {
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           } catch {
-            // Non-fatal — fall through to unauthenticated state
+            // Non-fatal: fall through to unauthenticated state
           }
         }
         setUser(null);

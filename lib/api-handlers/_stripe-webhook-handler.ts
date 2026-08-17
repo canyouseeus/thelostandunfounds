@@ -156,7 +156,7 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
     }
 
     // Flip any pre-existing pending affiliate commission to confirmed (legacy
-    // path — the new flow writes a 'photo_order' / 'booking' source row via
+    // path: the new flow writes a 'photo_order' / 'booking' source row via
     // triggerReferralCommission and skips this).
     const { data: updated, error } = await supabase
         .from('affiliate_commissions')
@@ -180,7 +180,7 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
  * the charge's payment_intent, then use its metadata/payment_link to figure
  * out which order type it belongs to. Gallery and booking rows aren't
  * mutated here (their status columns weren't designed for a 'refunded'
- * value) — the ledger row is the source of truth for those.
+ * value): the ledger row is the source of truth for those.
  */
 async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -444,7 +444,7 @@ async function finalizeShopOrder(
             console.log('📧 Digital delivery email sent for shop_order:', shopOrderId)
         } catch (emailErr: any) {
             console.error('⚠️ Failed to send digital delivery email:', emailErr?.message || emailErr)
-            // Don't throw — the order is paid; resend can be triggered manually.
+            // Don't throw: the order is paid; resend can be triggered manually.
         }
     }
 }
@@ -548,7 +548,7 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
             .from('prodigi_orders')
             .update({ status: 'error', error_message: prodigiErr?.message || 'Prodigi submission failed' })
             .eq('id', order.id)
-        // Don't throw — the customer paid, so this needs to surface to admins
+        // Don't throw: the customer paid, so this needs to surface to admins
         // for manual retry rather than failing the whole webhook (which would
         // make Stripe retry indefinitely on our end while charging succeeded).
     }
@@ -662,7 +662,7 @@ async function finalizeEventOrder(supabase: any, session: Stripe.Checkout.Sessio
         return
     }
 
-    // Create event_ticket record(s) — one per quantity
+    // Create event_ticket record(s): one per quantity
     const qty = Number(order.quantity) || 1
     const ticketRows = Array.from({ length: qty }, () => ({
         event_id: order.event_id,
@@ -683,12 +683,12 @@ async function finalizeEventOrder(supabase: any, session: Stripe.Checkout.Sessio
 
     if (ticketError) {
         console.error('❌ Failed to create event_tickets:', ticketError)
-        // Don't return — commission should still fire; tickets can be created manually
+        // Don't return: commission should still fire; tickets can be created manually
     } else {
         console.log('✅ Event tickets created:', { eventOrderId, qty })
     }
 
-    // Trigger affiliate commission — profit = full ticket price (no cost tracked for events)
+    // Trigger affiliate commission: profit = full ticket price (no cost tracked for events)
     if (customerEmail) {
         const grossAmount = (Number(order.amount_cents) || 0) / 100
         if (grossAmount > 0) {
@@ -738,7 +738,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
         .eq('stripe_payment_link_id', paymentLinkId)
         .maybeSingle()
 
-    // Not one of ours (some other payment link) — nothing to do.
+    // Not one of ours (some other payment link); nothing to do.
     if (!invoice) return
 
     if (invoice.status === 'paid') {
@@ -785,7 +785,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
 
     // A quote's Stripe link collects the DEPOSIT, not the total. Marking the
     // quote 'paid' on that payment claimed the whole total had arrived, so one
-    // job showed a paid quote and a paid final invoice — double the billing for
+    // job showed a paid quote and a paid final invoice; double the billing for
     // a single fee. Settle against what has actually been received.
     const { data: priorPayments } = await supabase
         .from('invoice_payments')
@@ -835,7 +835,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
         console.log('✅ Booking fully paid:', booking.id)
 
         // Final payment triggers the affiliate commission on the full project
-        // total. Idempotent — no-op if no referral or already triggered.
+        // total. Idempotent: no-op if no referral or already triggered.
         try {
             const grossAmount = (Number(booking.total_amount_cents) || 0) / 100
             if (booking.email && grossAmount > 0) {
@@ -891,7 +891,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
 }
 
 /**
- * Tell the photographer the shoot is on — once the deposit has landed.
+ * Tell the photographer the shoot is on, once the deposit has landed.
  *
  * This used to fire the moment a booking was created, which announced jobs
  * that were not yet paid for and could still evaporate. A deposit is what
@@ -947,7 +947,7 @@ async function notifyPhotographerOnce(supabase: any, booking: any, invoice: any)
 
         console.log('✅ Photographer notified for booking', booking.id)
     } catch (err: any) {
-        // Never fail the webhook over an email — Stripe would retry a payment
+        // Never fail the webhook over an email; Stripe would retry a payment
         // that has already been recorded.
         console.warn('⚠️ Photographer assignment email failed:', err?.message)
     }

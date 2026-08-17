@@ -1,10 +1,10 @@
 /**
- * Public contract signing page — /sign/:token
+ * Public contract signing page: /sign/:token
  *
  * The token in the URL is the entire credential, so this page never asks for
  * a login. It fetches the document, records the view, and takes a signature.
  *
- * Design: Noir — pure black, uppercase headings, square corners, and NO
+ * Design: Noir: pure black, uppercase headings, square corners, and NO
  * borders or shadows (`no-border-design` is the authority; separation comes
  * from surface tone and spacing alone).
  *
@@ -397,7 +397,7 @@ export default function SignContract() {
 
           {mode === 'draw' ? (
             <div className="mb-6">
-              {/* White pad, black ink — matches the printed PDF. */}
+              {/* White pad, black ink: matches the printed PDF. */}
               <div className="relative bg-white" style={{ borderRadius: 0 }}>
                 <canvas
                   ref={canvasRef}
@@ -492,7 +492,7 @@ export default function SignContract() {
                 value={declineReason}
                 onChange={e => setDeclineReason(e.target.value)}
                 rows={3}
-                placeholder="Optional — let us know why"
+                placeholder="Optional: let us know why"
                 className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:bg-white/10 transition-colors mb-4"
                 style={{ borderRadius: 0 }}
               />

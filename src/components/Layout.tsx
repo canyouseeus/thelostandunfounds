@@ -27,7 +27,7 @@ import { useGallery } from '../contexts/GalleryContext'
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
-  // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
+  // Derived synchronously from auth state: no extra DB round-trip needed for UI gating
   const userIsAdmin = !loading && !!user && isAdminUser(user)
   // Header widgets (clock + date) stand in for the dashboard's full-size ones,
   // so they belong to the signed-in admin dashboard only. Being on an /admin
@@ -52,7 +52,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
     const measure = () => {
       frame = 0
       // Track only the first row (clock / calendar / calculator), not the whole
-      // grid — anchoring to the full grid kept the ticker up until every one of
+      // grid: anchoring to the full grid kept the ticker up until every one of
       // the twelve cells had scrolled past.
       const grid = document.getElementById('dashboard-widgets')
       const el = grid?.firstElementChild
@@ -95,7 +95,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [isRouteLoading, setIsRouteLoading] = useState(false)
   const previousPathRef = useRef(location.pathname)
   const menuRef = useRef<HTMLDivElement>(null)
-  // Any signed-in user gets the nav menu — it's the entry point for the role
+  // Any signed-in user gets the nav menu; it's the entry point for the role
   // switcher, profile, and sign-out. Previously gated to admins only.
   const showHeaderMenu = !loading && !!user
   // Show advertising banner above nav for visitors on the homepage
@@ -200,7 +200,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
       return
     }
 
-    // Root page, visitor (non-admin): show header immediately — no animation to wait for
+    // Root page, visitor (non-admin): show header immediately; no animation to wait for
     if (!userIsAdmin) {
       setHomeHeaderReady(true)
       return
@@ -311,7 +311,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
         data-sage-chrome
         className="fixed top-0 left-0 w-full bg-black z-[999]"
       >
-        {/* THE AFFILIATE PROGRAM banner — sits above the nav for homepage visitors */}
+        {/* THE AFFILIATE PROGRAM banner: sits above the nav for homepage visitors */}
         {showAdBanner && <AffiliateBanner noMargin />}
 
         <nav className="w-full backdrop-blur-md">
@@ -326,7 +326,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 minHeight: '84px',
               }}
             >
-              {/* Persistent back button — shown in nav whenever a gallery is open */}
+              {/* Persistent back button: shown in nav whenever a gallery is open */}
               {activeGallery && location.pathname === '/' && (
                 <button
                   onClick={closeGallery}
@@ -336,7 +336,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 </button>
               )}
 
-              {/* Admin header widgets — absolutely centered to the page, so they
+              {/* Admin header widgets: absolutely centered to the page, so they
                   sit mid-header regardless of the logo and menu on either side.
                   ClockWidget draws its face with `absolute inset-0`, so it needs
                   an explicit width or it collapses to nothing.
@@ -344,7 +344,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   The slot always shows something: while the full-size clock and
                   calendar are on screen the mini versions are redundant, so it
                   crossfades to the daily verse. Both layers stay mounted and
-                  stacked — mounting/unmounting can't crossfade. */}
+                  stacked: mounting/unmounting can't crossfade. */}
               {isAdminRoute && (
                 <div className="absolute left-1/2 -translate-x-1/2 top-3 z-10 h-[46px] w-[55vw] max-w-[520px] leading-none pointer-events-none">
                   <div
@@ -358,7 +358,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                       title="Open master calendar"
                       // Matched to the mini clock's digits rather than styled
                       // on its own: the clock draws them at 15cqw of its 64px
-                      // box — 9.6px, bold, mono, tabular — so the date is the
+                      // box: 9.6px, bold, mono, tabular, so the date is the
                       // same face at the same size instead of a larger,
                       // lighter, letter-spaced one beside it.
                       className="flex items-center h-[46px] font-mono font-bold tabular-nums text-white hover:text-white/70 transition-colors"
@@ -377,10 +377,10 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 </div>
               )}
 
-              {/* Logo — centered for visitors, left-aligned when the menu shows */}
+              {/* Logo: centered for visitors, left-aligned when the menu shows */}
               <Link
                 to="/"
-                // `sage-brand` is the hook SAGE MODE tints gold — see index.css.
+                // `sage-brand` is the hook SAGE MODE tints gold; see index.css.
                 className={`sage-brand flex items-center hover:opacity-70 transition-opacity ${
                   showHeaderMenu ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-0'
                 }`}
@@ -397,7 +397,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   {/* Admin-only header widgets: clock at roughly logo height with
                       the date beneath it. ClockWidget draws its face with
                       `absolute inset-0`, so it needs an explicit width or it
-                      collapses to nothing. Label hidden to keep the bar sleek —
+                      collapses to nothing. Label hidden to keep the bar sleek;
                       tapping the face still cycles clock → stopwatch → timer. */}
                   <div className="header-nav" ref={menuRef}>
                     <button

@@ -22,7 +22,7 @@ interface DashboardCategoryCardProps {
   size?: string;
 }
 
-/** Standardized dashboard tile — matches SiteAnalyticsCard's ExpandableScreen pattern. */
+/** Standardized dashboard tile: matches SiteAnalyticsCard's ExpandableScreen pattern. */
 export function DashboardCategoryCard({ icon, title, footer, content, span, primary, caption, aside, light, size }: DashboardCategoryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,7 +30,7 @@ export function DashboardCategoryCard({ icon, title, footer, content, span, prim
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         {/* `block w-full h-full` is what makes these tiles fill their cell. The
-            trigger is a button — inline-block, height from its content — so the
+            trigger is a button (inline-block, height from its content) so the
             tile's own h-full resolved against a box the size of the text and the
             widget sat short in a full-height cell, unlike the drawn widgets. */}
         <ExpandableScreenTrigger className={`block w-full h-full text-left cursor-pointer ${span ?? ''}`}>

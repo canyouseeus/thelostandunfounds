@@ -1,6 +1,6 @@
 ---
 name: client-documents
-description: Canonical branding and generation rules for client-facing documents — invoices, quotes, and proposals. Use whenever asked to create, send, or restyle an invoice or a proposal for any client. Triggers on "invoice", "proposal", "quote", "estimate", "bill the client", "send them a quote", or any named-client document request.
+description: Canonical branding and generation rules for client-facing documents; invoices, quotes, and proposals. Use whenever asked to create, send, or restyle an invoice or a proposal for any client. Triggers on "invoice", "proposal", "quote", "estimate", "bill the client", "send them a quote", or any named-client document request.
 ---
 
 # Client Documents (Invoices & Proposals)
@@ -17,7 +17,7 @@ has to say "make it like the one for Andrew" or "style it like Toke Truck", this
 **An invoice is a row in the `invoices` table. It is never a hand-written document.**
 
 Do not author invoice HTML. Do not build a PDF. Do not write a one-off script that renders an
-invoice. The visual design is not yours to make — it already exists in code and is applied
+invoice. The visual design is not yours to make; it already exists in code and is applied
 automatically.
 
 ### The canonical flow
@@ -39,25 +39,25 @@ payment_method, pdf_token
 
 ### Always CC media@thelostandunfounds.com
 
-Every client-facing send — invoice, quote, proposal, shoot confirmation — CCs
+Every client-facing send: invoice, quote, proposal, shoot confirmation; CCs
 `media@thelostandunfounds.com`. `/api/invoices/send` takes `cc_email` (comma-separated for
 multiple recipients) and passes it to `sendZohoEmail`, which maps it to Zoho's `ccAddress`.
 It is the business address of record; the thread has to stay on file regardless of who replies.
 CC, never BCC. A personal address is not a substitute.
 
-Confirm the CC landed rather than trusting the 200 — the API returns success whether or not Zoho
+Confirm the CC landed rather than trusting the 200; the API returns success whether or not Zoho
 honoured the field, and a dropped CC leaves a stakeholder silently off the thread.
 
-### Deposit paid, balance outstanding — the standing rule
+### Deposit paid, balance outstanding: the standing rule
 
 A job where the deposit has landed but the balance has not is the normal case, not an exception.
 Handle it the same way every time:
 
-- **Status stays `sent`, never `paid`.** `api/invoices/send.ts` picks the subject line off status —
-  `paid` sends "Receipt — INV-xxx". Calling a half-paid job a receipt misleads the client, so the
+- **Status stays `sent`, never `paid`.** `api/invoices/send.ts` picks the subject line off status;
+  `paid` sends "Receipt: INV-xxx". Calling a half-paid job a receipt misleads the client, so the
   invoice stays an invoice until the balance clears.
 - **Record the deposit in `invoice_payments`** (`invoice_id`, `amount`, `method`, `notes`) the
-  moment it is received. That table — not invoice status — is the record of money collected.
+  moment it is received. That table, not invoice status, is the record of money collected.
 - **Revenue follows collected money, not status.** The admin dashboard sums `invoice_payments`
   per invoice, capped at the site's share (`total − contractor_payout`), so a deposit shows up as
   income immediately without anyone having to lie about the invoice's state.
@@ -69,16 +69,16 @@ Never resolve the tension by marking an unpaid invoice `paid` to make a number a
 
 `invoices.contractor_payout` / `contractor_name` exist so the dashboard can report *net* revenue
 when part of a job's total is owed to a subcontracted shooter. They are deliberately **not** passed
-to `generateInvoicePdf` and never appear in the client's PDF or email — the client sees the full
+to `generateInvoicePdf` and never appear in the client's PDF or email; the client sees the full
 project total and what they owe, and nothing about how it is split internally. Keep it that way.
 
 ### Always show the full scope of work
 
-An invoice that only shows the price paid, with no deliverables, is incomplete — the client can't
+An invoice that only shows the price paid, with no deliverables, is incomplete; the client can't
 tell what they're owed from it alone. Every invoice's `description` and/or `line_items` must state
-what was actually agreed: what gets delivered (e.g. "25–35 edited photos"), the turnaround (e.g.
-"24–72 hour delivery"), and any other scope terms negotiated in the deal (portfolio-use rights,
-golden-hour timing, etc.). Pull this from the actual negotiation — never invent deliverables that
+what was actually agreed: what gets delivered (e.g. "25-35 edited photos"), the turnaround (e.g.
+"24-72 hour delivery"), and any other scope terms negotiated in the deal (portfolio-use rights,
+golden-hour timing, etc.). Pull this from the actual negotiation, never invent deliverables that
 weren't agreed to, and never omit ones that were. A deposit invoice for a job that already has
 defined deliverables states them too, not just the deposit line.
 
@@ -87,28 +87,28 @@ defined deliverables states them too, not just the deposit line.
 `generateInvoicePdf()` in **`lib/api-handlers/_invoice-pdf.ts`** owns every visual decision:
 
 - the brand banner, read from `public/brand/banner.png` **on disk** (cached per container).
-  It is deliberately not fetched over HTTP — see the warning below.
-- `BRAND` — name `THE LOST+UNFOUNDS`, tagline `CAN YOU SEE US?`, website,
+  It is deliberately not fetched over HTTP; see the warning below.
+- `BRAND`: name `THE LOST+UNFOUNDS`, tagline `CAN YOU SEE US?`, website,
   `media@thelostandunfounds.com`
 - the palette: `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`
 - page geometry: 56pt margins, 612pt page width, letter-spaced uppercase headings
 
-Both live entry points — `api/invoices/pdf.ts` and `api/invoices/send.ts` — call it. **Create the
+Both live entry points: `api/invoices/pdf.ts` and `api/invoices/send.ts`; call it. **Create the
 row and correct branding is automatic.** That is why the existing invoices all match.
 
-### Brand assets are read from disk, never fetched — and the wordmark lives in the banner
+### Brand assets are read from disk, never fetched, and the wordmark lives in the banner
 
 Two rules in `_invoice-pdf.ts` that are easy to undo by accident:
 
 **1. Never make a brand asset depend on a network fetch at render time.** The banner used to be
 pulled from `https://www.thelostandunfounds.com/brand/banner.png` on every render, inside a bare
-`catch {}`. When the site was down, every invoice rendered bannerless — structurally perfect, no
+`catch {}`. When the site was down, every invoice rendered bannerless; structurally perfect, no
 error, no log line. It read as "the agent ignored our branding" when the generator was working
 exactly as written. It now reads `public/brand/banner.png` from disk; HTTP is a fallback only, and
 a total miss logs `[invoice-pdf] BANNER MISSING`.
 
 **2. The banner artwork already contains the wordmark.** `BRAND.name` is only drawn as text when
-the banner is *absent*. Rendering both prints "THE LOST+UNFOUNDS" twice — once inside the image,
+the banner is *absent*. Rendering both prints "THE LOST+UNFOUNDS" twice, once inside the image,
 once beneath it. If you add a header element, check it against a rendered page, not just the code.
 
 **3. Don't compute layout offsets from `doc.y` after `doc.image()`.** pdfkit does not advance the
@@ -116,7 +116,7 @@ cursor past an image placed at explicit coordinates, so `doc.y` still points at 
 page and the header draws *over* the banner in dark-on-black. Derive the drawn height from the
 image's own aspect ratio (`pngSize()`).
 
-> **Verify by rendering.** After touching this file, generate a PDF and look at the whole page —
+> **Verify by rendering.** After touching this file, generate a PDF and look at the whole page,
 > not just the thing you changed. Bugs 2 and 3 were both invisible while bug 1 was active, and
 > both were obvious the moment a page was actually rendered and viewed.
 
@@ -125,7 +125,7 @@ image's own aspect ratio (`pngSize()`).
 Asked to "create an invoice for [client]" with no skill loaded, an agent doesn't discover the
 `invoices` table or `generateInvoicePdf`, so it writes its own HTML from scratch. The result is
 off-brand and inconsistent with every invoice already sent. This has happened. If you find
-yourself writing `<table>` markup for an invoice, stop — you are on the wrong path.
+yourself writing `<table>` markup for an invoice, stop; you are on the wrong path.
 
 ### Invoice email body
 
@@ -151,11 +151,11 @@ Not a React component. These are the real deliverables:
 | `public/kattitude-phase2-proposal.html` | 613 |
 | `public/silva-star-proposal.html` | 431 |
 
-**All five share the same design system** — identical palette, identical font stack, and the same
+**All five share the same design system**; identical palette, identical font stack, and the same
 20 CSS class names. Kattitude's shares 19 of its 20 classes with Silva Star's. This system is
 working; do not reinvent it.
 
-### The stylesheet — one source, inlined into every document
+### The stylesheet: one source, inlined into every document
 
 **`public/proposal.css` is the single source of truth.** Edit it there, never inside an HTML file,
 then run:
@@ -178,26 +178,26 @@ npm run proposal:css:check    # verify they're in sync (non-zero exit if stale)
 saved to disk. An external stylesheet would arrive completely unstyled. Every document must stay
 self-contained. Never replace the inlined block with a `<link>`.
 
-Per-document overrides go **after** the end marker and survive the sync. Keep them minimal —
+Per-document overrides go **after** the end marker and survive the sync. Keep them minimal:
 genuine deviations only, not a second copy of the shared rules. Current overrides:
 
-- `silva-star-proposal.html` — larger display type (`.cover-h1` 38px, `.pagehead h2` 32px /
+- `silva-star-proposal.html`: larger display type (`.cover-h1` 38px, `.pagehead h2` 32px /
   `max-width:18ch`) and a glyph bullet instead of the square block
-- `kattitude-phase2-proposal.html` — `.pagehead h2{max-width:24ch}`, plus `.dep-grid` and `.flow`
+- `kattitude-phase2-proposal.html`: `.pagehead h2{max-width:24ch}`, plus `.dep-grid` and `.flow`
   components that exist only in that document
 
 > `max-width` on headings belongs to **`.pagehead h2`**, not `.subhead`. Putting it on the wrong
 > selector changes where headings wrap and is not obvious from reading the CSS.
 
-### Fonts are embedded — do not link to Google Fonts
+### Fonts are embedded: do not link to Google Fonts
 
-`public/proposal.css` carries **Inter as base64 `@font-face` rules** (variable, weight 100–900,
-roman + italic, latin subset — about 133 KB).
+`public/proposal.css` carries **Inter as base64 `@font-face` rules** (variable, weight 100-900,
+roman + italic, latin subset, about 133 KB).
 
 Proposals used to `<link>` Inter from `fonts.googleapis.com`. That fetch has to succeed at the
 moment the document is displayed, which fails in exactly the cases that matter: attached to an
 email, opened offline, or printed to PDF. A proposal rendered without it silently falls back to
-Arial/Liberation and loses the letterforms the whole design depends on — this was confirmed by
+Arial/Liberation and loses the letterforms the whole design depends on; this was confirmed by
 inspecting a generated PDF, which had embedded `LiberationSans` rather than Inter.
 
 **Never reintroduce a Google Fonts `<link>`, and never strip the `@font-face` blocks to save
@@ -210,14 +210,14 @@ npm run proposal:pdf              # render every proposal to public/<client>-pro
 node scripts/proposal-pdf.mjs kattitude   # or filter to one
 ```
 
-PDFs are committed and served statically, so each has a stable URL —
-`https://www.thelostandunfounds.com/kattitude-proposal.pdf` — that can be linked in an email or
+PDFs are committed and served statically, so each has a stable URL;
+`https://www.thelostandunfounds.com/kattitude-proposal.pdf`; that can be linked in an email or
 attached directly.
 
 There is deliberately **no runtime PDF endpoint**. Proposals are static files, so changing one
 already requires a deploy; generating ahead of time avoids shipping a headless browser into a
 serverless function (`@sparticuz/chromium` is ~50 MB and sits near Vercel's limit). Invoices are
-different — they hold per-client data, so they genuinely need `/api/invoices/pdf` at runtime.
+different: they hold per-client data, so they genuinely need `/api/invoices/pdf` at runtime.
 
 **Regenerate the PDFs whenever a proposal or `proposal.css` changes**, otherwise the committed PDF
 and the HTML drift apart. Verify page counts match the document's `.page` sections.
@@ -226,7 +226,7 @@ and the HTML drift apart. Verify page counts match the document's `.page` sectio
 
 **Copy the most recent `public/*-proposal.html` and rewrite the content.** The markers and the
 inlined stylesheet come along with it; run `npm run proposal:css` afterwards to be certain it
-matches. Do not start from a blank file, and do not build one as a React component — that is a
+matches. Do not start from a blank file, and do not build one as a React component; that is a
 different, smaller lineage (see below) and is not the deliverable format.
 
 ### Verifying a change
@@ -235,7 +235,7 @@ These are client-facing documents. After editing `proposal.css`, confirm nothing
 
 ```bash
 npm run proposal:css
-# render before/after and compare — headless_shell is at
+# render before/after and compare: headless_shell is at
 # /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
 #   --headless --disable-gpu --no-sandbox --hide-scrollbars \
 #   --virtual-time-budget=4000 --window-size=1100,9000 --screenshot=out.png file://…
@@ -255,7 +255,7 @@ the first page and will hide regressions further down.
 .callout  .compare  .invest  .sign            content blocks
 ```
 
-### Palette — defined as CSS custom properties
+### Palette: defined as CSS custom properties
 
 ```css
 :root{
@@ -268,16 +268,16 @@ the first page and will hide regressions further down.
 }
 ```
 
-Use the variables, never literal hex. `#1a1a1a` is `--rule` — it is the standard, not a variant.
+Use the variables, never literal hex. `#1a1a1a` is `--rule`: it is the standard, not a variant.
 
 ### Other conventions
 
 - **Print-first**: `@page { size: Letter; margin: 0 }` plus `print-color-adjust:exact`. These are
-  documents meant to be saved as PDF — keep both.
-- **Font**: Inter from Google Fonts, weights 400–800, stack
+  documents meant to be saved as PDF; keep both.
+- **Font**: Inter from Google Fonts, weights 400-800, stack
   `'Inter','Helvetica Neue',Arial,sans-serif`.
-- **Title convention**: `THE LOST+UNFOUNDS — Proposal for <Client Name>`.
-- **Typography**: uppercase with heavy letter-spacing (`.22em`–`.42em`) at small sizes (8–13px)
+- **Title convention**: `THE LOST+UNFOUNDS: Proposal for <Client Name>`.
+- **Typography**: uppercase with heavy letter-spacing (`.22em`–`.42em`) at small sizes (8-13px)
   for labels, eyebrows and running heads. Headline sentences are sentence case.
 - **Structure**: cover → positioning line → scope → comparison → pricing → sign-off. The
   positioning line is second person and names the client's work
@@ -290,7 +290,7 @@ Use the variables, never literal hex. `#1a1a1a` is `--rule` — it is the standa
 > app-wide `no-border-design` rule, which governs the web UI, not client documents. Do not strip
 > rules out of a proposal or invoice in the name of that skill.
 
-### The React preview lineage — separate, don't confuse them
+### The React preview lineage: separate, don't confuse them
 
 `src/templates/<client>/` holds in-app preview routes: `Landing`, `Dashboard`, and for two clients
 a `Proposal` component (`SilvaStarProposal.tsx`, `FadeboxProposal.tsx`, routed at
@@ -315,10 +315,10 @@ deviation forward.
 - [ ] `npm run proposal:css:check` passes
 - [ ] `npm run proposal:pdf` re-run so the committed PDFs match the HTML
 - [ ] Inter still embedded as `@font-face`; no Google Fonts `<link>` reintroduced
-- [ ] Document still self-contained — inlined `<style>`, no `<link>` to an external sheet
+- [ ] Document still self-contained: inlined `<style>`, no `<link>` to an external sheet
 - [ ] Uses the shared class system and `--ink`/`--muted`/`--rule` variables, not literal hex
 - [ ] `@page` Letter + `print-color-adjust:exact` retained
-- [ ] Title reads `THE LOST+UNFOUNDS — Proposal for <Client>`
+- [ ] Title reads `THE LOST+UNFOUNDS: Proposal for <Client>`
 - [ ] No `rounded-*`, no `shadow-*`
 - [ ] Rendered before/after at 1100×9000 and compared, if the shared CSS changed
 - [ ] Sent through the `email-delivery` path, with `brand-email-manager` rules applied
@@ -327,14 +327,14 @@ deviation forward.
 
 **Invoice brand identity is duplicated.** There are two `BRAND` objects:
 
-- `lib/email-template.ts` exports the shared one — name, logo, website, and a dark-mode palette
+- `lib/email-template.ts` exports the shared one; name, logo, website, and a dark-mode palette
   (`background #000000`, `text #ffffff`, `textMuted #999999`, `border #1a1a1a`). `api/invoices/send.ts`
   correctly imports it for the email body.
-- `lib/api-handlers/_invoice-pdf.ts` defines its **own private** `BRAND` — name, tagline, website,
-  email — plus `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`.
+- `lib/api-handlers/_invoice-pdf.ts` defines its **own private** `BRAND`; name, tagline, website,
+  email, plus `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`.
 
 The palettes *should* differ: the email is dark, the PDF is ink-on-paper. But the identity fields
-are duplicated and have already drifted — `website` is `https://www.thelostandunfounds.com` in one
+are duplicated and have already drifted; `website` is `https://www.thelostandunfounds.com` in one
 and `thelostandunfounds.com` in the other, and the muted grey is `#999999` vs `#888888`. Lifting
 name/website/tagline into a shared `lib/brand.ts` would fix it; the two palettes stay separate.
 

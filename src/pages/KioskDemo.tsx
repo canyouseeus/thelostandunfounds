@@ -1,14 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 
 /* ============================================================
-   THE LOST+UNFOUNDS — Interactive Kiosk Build
+   THE LOST+UNFOUNDS: Interactive Kiosk Build
    Public demo + design brief. Route: /kiosk-demo
 
    WHY THIS PAGE EXISTS
    Joshua: "I just want to be able to send it to my homies and be like, yo,
    hey, check this out, or send it to a potential client."
 
-   So it does two jobs at once. The top half is a launcher — two buttons into
+   So it does two jobs at once. The top half is a launcher; two buttons into
    software that is genuinely running, not a video and not a mockup. The
    bottom half is the design brief, one section per tab, laid out at Letter
    size so Cmd-P saves a PDF a client can forward to a partner.
@@ -44,19 +44,19 @@ const TABS: Brief[] = [
     who: 'Every artist',
     line: 'Drop a batch of flash in, tag it all at once.',
     detail:
-      'Multi-select from the camera roll, then tag the whole batch together rather than one file at a time. Sizes are enforced on the way in — 2048×2048 for a single design, 2160×3840 for a full sheet — and an off-size file is refused with the exact size it needed. Nothing is silently resized, because cropping somebody else’s artwork is not the software’s call.',
+      'Multi-select from the camera roll, then tag the whole batch together rather than one file at a time. Sizes are enforced on the way in (2048×2048 for a single design, 2160×3840 for a full sheet) and an off-size file is refused with the exact size it needed. Nothing is silently resized, because cropping somebody else’s artwork is not the software’s call.',
   },
   {
     tab: 'My Designs',
     who: 'Every artist',
     line: 'Everything you have uploaded, and what still needs finishing.',
     detail:
-      'Each design carries its own state — draft, published, needs a category. An artist sees only their own work here; the owner sees the whole shop. Publishing is one tap, and it is what puts a piece on the wall.',
+      'Each design carries its own state; draft, published, needs a category. An artist sees only their own work here; the owner sees the whole shop. Publishing is one tap, and it is what puts a piece on the wall.',
   },
   {
     tab: 'Requests',
     who: 'Artists ask, the owner answers',
-    line: 'One tab, two jobs — deliberately not split in half.',
+    line: 'One tab, two jobs: deliberately not split in half.',
     detail:
       'An artist asks for a tag they actually want to use: a theme like “summertime”, a subject like “snakes”, a drawing style. The owner approves it, merges it into one the shop already has, or rejects it with a note so the artist knows why. Approval is what keeps the kiosk from ending up with three spellings of the same thing.',
   },
@@ -65,7 +65,7 @@ const TABS: Brief[] = [
     who: 'Owner only',
     line: 'The roster, and the only place an invite comes from.',
     detail:
-      'Adding an artist’s email is what sends their sign-in link — there is no separate invite screen to forget about. Seniority sets the order they appear on the kiosk, and an artist can be hidden from the wall without deleting anything they have made.',
+      'Adding an artist’s email is what sends their sign-in link; there is no separate invite screen to forget about. Seniority sets the order they appear on the kiosk, and an artist can be hidden from the wall without deleting anything they have made.',
   },
   {
     tab: 'Categories',
@@ -86,12 +86,12 @@ const TABS: Brief[] = [
     who: 'Owner only',
     line: 'An optional gate between “uploaded” and “on the wall”.',
     detail:
-      'Off by default — artists publish straight to the kiosk, which is what a shop that trusts its artists wants. One setting turns it into a queue where nothing reaches the wall until the owner has seen it. No migration, no rebuild; the column is already there.',
+      'Off by default: artists publish straight to the kiosk, which is what a shop that trusts its artists wants. One setting turns it into a queue where nothing reaches the wall until the owner has seen it. No migration, no rebuild; the column is already there.',
   },
 ];
 
 const css = `
-  /* NOIR — ours, not the client's. noir-design: background ALWAYS #000000,
+  /* NOIR: ours, not the client's. noir-design: background ALWAYS #000000,
    * text #ffffff, NO BORDERS, NO SHADOWS, separation by surface tone only.
    * The first cut of this page was white paper with Kattitude's pink on it,
    * which is the wrong company's identity on a page selling our work. */
@@ -183,10 +183,10 @@ export default function KioskDemo() {
   return (
     <>
       <Helmet>
-        <title>THE LOST+UNFOUNDS — Interactive Kiosk Build, Live Demo</title>
+        <title>THE LOST+UNFOUNDS: Interactive Kiosk Build, Live Demo</title>
         <meta
           name="description"
-          content="A working demo of the interactive flash kiosk and the studio dashboard behind it. Real software, running — not a mockup."
+          content="A working demo of the interactive flash kiosk and the studio dashboard behind it. Real software, running, not a mockup."
         />
         <meta name="robots" content="index,follow" />
       </Helmet>
@@ -194,7 +194,7 @@ export default function KioskDemo() {
       <div className="kdemo">
         <style>{css}</style>
 
-        {/* ── Page 1 — launcher ──────────────────────────────── */}
+        {/* ── Page 1: launcher ──────────────────────────────── */}
         <section className="page">
           <div className="eyebrow">The Lost+Unfounds · Service Demo</div>
           <h1>Interactive Kiosk Build</h1>
@@ -260,7 +260,7 @@ export default function KioskDemo() {
           </div>
         </section>
 
-        {/* ── Page 2 — the brief ─────────────────────────────── */}
+        {/* ── Page 2: the brief ─────────────────────────────── */}
         <section className="page">
           <div className="eyebrow">Design Brief</div>
           <h1>Tab by Tab</h1>

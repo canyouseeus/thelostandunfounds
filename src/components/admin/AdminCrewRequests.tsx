@@ -9,7 +9,7 @@ import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
  * the whole reason the request is a row rather than an email: an email answer
  * is visible to exactly one person until somebody forwards it.
  *
- * Open first, deliberately — the queue is only useful if the unanswered end of
+ * Open first, deliberately: the queue is only useful if the unanswered end of
  * it is the end you land on.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Fire-and-forget signup attempt logging. Never throws, never blocks —
+ * Fire-and-forget signup attempt logging. Never throws, never blocks:
  * a logging failure must not affect the actual auth flow.
  */
 
@@ -29,7 +29,7 @@ export function logSignupEvent(event: SignupEvent): void {
         path: typeof window !== 'undefined' ? window.location.pathname : undefined,
       }),
     }).catch(() => {
-      // Non-fatal — telemetry should never surface to the user.
+      // Non-fatal: telemetry should never surface to the user.
     });
   } catch {
     // Non-fatal

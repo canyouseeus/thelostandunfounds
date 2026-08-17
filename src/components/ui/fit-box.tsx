@@ -4,7 +4,7 @@ import { cn } from './utils';
 interface FitBoxProps {
   /** Edge of the square the children are laid out against, in CSS px. */
   base?: number;
-  /** Width and height of a non-square design box — e.g. 220x440 for a half square. */
+  /** Width and height of a non-square design box, e.g. 220x440 for a half square. */
   baseWidth?: number;
   baseHeight?: number;
   className?: string;
@@ -16,7 +16,7 @@ interface FitBoxProps {
  * scaled to fit it.
  *
  * Some widgets (the calendar, the calculator) size their internals in fixed px
- * — a 240px column of 40px day rows — so they simply don't fit a small cell:
+ *, a 240px column of 40px day rows, so they simply don't fit a small cell:
  * squeeze the cell and the day grid overlaps itself and spills out the bottom.
  * `zoom` doesn't fix that, because the element still lays out at the cell's
  * width and only paints smaller afterwards.

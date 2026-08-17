@@ -1,5 +1,5 @@
 /**
- * Scheduling buffer — the single implementation of "how far apart two shoots
+ * Scheduling buffer: the single implementation of "how far apart two shoots
  * must be".
  *
  * Photography is subcontracted and the photographer has to physically get to
@@ -8,7 +8,7 @@
  *
  * This lives in one place because it was previously in none. The server did not
  * check conflicts at all, BookingPage.tsx checked raw overlap client-side, and
- * ExpressBookingModal.tsx checked nothing — three different answers to one
+ * ExpressBookingModal.tsx checked nothing: three different answers to one
  * question. Import from here; do not re-derive the arithmetic at a call site.
  */
 
@@ -49,7 +49,7 @@ export function withinBuffer(
   const aE = toMinutes(endA)
   const bS = toMinutes(startB)
   const bE = toMinutes(endB)
-  // An open-ended range cannot be reasoned about — treat it as no conflict
+  // An open-ended range cannot be reasoned about; treat it as no conflict
   // rather than silently blocking the whole day.
   if (aS === null || aE === null || bS === null || bE === null) return false
   return aS < bE + bufferMinutes && bS - bufferMinutes < aE
@@ -58,7 +58,7 @@ export function withinBuffer(
 /**
  * Is a candidate window in conflict with any booking already on the day?
  *
- * `taken` should already be filtered to bookings that hold the date — i.e.
+ * `taken` should already be filtered to bookings that hold the date, i.e.
  * status in ('pending', 'confirmed'). Cancelled bookings do not reserve time.
  */
 export function conflictsWithBuffer(

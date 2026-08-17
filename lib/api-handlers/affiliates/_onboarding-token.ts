@@ -8,7 +8,7 @@ import crypto from 'crypto';
  * one. Instead the email carries this token; /api/affiliates/stripe-resume
  * verifies it and mints a fresh Account Link server-side, then redirects.
  *
- * The token authorises exactly one thing — starting Stripe onboarding for one
+ * The token authorises exactly one thing; starting Stripe onboarding for one
  * affiliate id. It grants no session and reads no data.
  */
 

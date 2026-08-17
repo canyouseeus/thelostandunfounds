@@ -2,28 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE LOST+UNFOUNDS — Phase 2 Proposal for Kattitude Tattoo Studio</title>
+<title>THE LOST+UNFOUNDS: Phase 2 Proposal for Kattitude Tattoo Studio</title>
 <!-- proposal-css:start -->
 <style>
-/* GENERATED from public/proposal.css — do not edit here.
+/* GENERATED from public/proposal.css: do not edit here.
    Edit the stylesheet, then run: npm run proposal:css */
 /* ============================================================
-   THE LOST+UNFOUNDS — Client Proposal Stylesheet
+   THE LOST+UNFOUNDS: Client Proposal Stylesheet
    Shared by every public/<client>-proposal.html document.
 
    Edit here, not in the HTML files. A proposal should carry at
    most a small local <style> block for genuine per-document
-   additions — never a copy of this file.
+   additions, never a copy of this file.
 
    See the client-documents skill for the full spec.
    ============================================================ */
 
 /* ── Inter, embedded ──────────────────────────────────────────────
-   Variable fonts (weight 100–900), latin subset, base64-inlined.
+   Variable fonts (weight 100-900), latin subset, base64-inlined.
 
    Embedded rather than linked to fonts.googleapis.com so a proposal
    renders in Inter when it is emailed as an attachment, opened
-   offline, or printed to PDF — none of which can rely on a network
+   offline, or printed to PDF: none of which can rely on a network
    fetch. Do not replace these with a <link> to Google Fonts.
 
    Source: Inter v20 latin subset, fonts.gstatic.com
@@ -70,7 +70,7 @@
   @media print{
     /* min-height, NOT height, and overflow must stay visible.
        A fixed 11in height combined with the overflow:hidden above does not
-       "fit" an overlong page — it silently deletes whatever sits past the
+       "fit" an overlong page: it silently deletes whatever sits past the
        11in mark. That is how several proposals shipped with their signature
        block missing from the PDF while the HTML looked complete.
        With min-height an overlong page spills onto a second sheet instead:
@@ -81,11 +81,11 @@
 
   /* ── .page.dense ──────────────────────────────────────────────────
      A page that runs a little past 11in gets tighter vertical rhythm
-     instead of losing a sentence. Type sizes never change — only the
-     space between blocks — so a dense page still reads as the same
+     instead of losing a sentence. Type sizes never change, only the
+     space between blocks, so a dense page still reads as the same
      document sitting beside a normal one.
 
-     Worth about 60–70px on a typical page. Past that, compressing
+     Worth about 60-70px on a typical page. Past that, compressing
      starts to show: split the page instead and renumber. Never reach
      for this to cram a page that is 150px over. */
   .page.dense .pagehead{margin-bottom:12px;}
@@ -285,7 +285,7 @@
 </style>
 <!-- proposal-css:end -->
 <style>
-  /* Local overrides — Kattitude Phase 2 only. Hand-edited; not touched by the sync script. */
+  /* Local overrides: Kattitude Phase 2 only. Hand-edited; not touched by the sync script. */
   .pagehead h2{ max-width:24ch; }
 
   /* Dependency grid */
@@ -318,14 +318,14 @@
   .flow-content span{ color:var(--soft); }
 
   /* Page 4 stacks three subhead + list groups. After .dense, the gaps between
-     those groups are the only slack left — close them rather than cut a bullet. */
+     those groups are the only slack left; close them rather than cut a bullet. */
   .page.dense ul.list{ margin-bottom:9px; }
   .page.dense ul.list + .subhead{ margin-top:0; }
 </style>
 </head>
 <body>
 
-<!-- ====================== PAGE 1 — COVER ====================== -->
+<!-- ====================== PAGE 1: COVER ====================== -->
 <section class="page">
   <div class="runhead">
     <div class="left">
@@ -376,7 +376,7 @@
     </p>
     <p style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;
               color:#7a7a7a;margin:0 0 40px;font-family:'Inter',sans-serif;">
-      Prerequisite: Phase 1 — Studio Operations Platform
+      Prerequisite: Phase 1: Studio Operations Platform
     </p>
 
     <div class="cover-grid">
@@ -400,7 +400,7 @@
     <div class="cover-dates">
       <div class="d">Proposal Date<span>June 21, 2026</span></div>
       <div class="d">Phase 1 Target<span>3 weeks from acceptance</span></div>
-      <div class="d">Phase 2 Target<span>4–6 weeks after Phase 1</span></div>
+      <div class="d">Phase 2 Target<span>4-6 weeks after Phase 1</span></div>
     </div>
   </div>
 
@@ -410,7 +410,7 @@
   </div>
 </section>
 
-<!-- ====================== PAGE 2 — WHY PHASE 1 FIRST ====================== -->
+<!-- ====================== PAGE 2: WHY PHASE 1 FIRST ====================== -->
 <section class="page">
   <div class="runhead">
     <div class="left">
@@ -427,10 +427,10 @@
   </div>
 
   <p class="lede">
-    The AI booking system is a client-facing flow. When a client submits a request, uploads reference photos, receives an estimate, signs a waiver, and pays a deposit — all of that data writes somewhere. That somewhere is the Phase 1 dashboard. This is a technical dependency — the sequencing is structural.
+    The AI booking system is a client-facing flow. When a client submits a request, uploads reference photos, receives an estimate, signs a waiver, and pays a deposit; all of that data writes somewhere. That somewhere is the Phase 1 dashboard. This is a technical dependency: the sequencing is structural.
   </p>
   <p class="body">
-    Phase 2 connects to infrastructure that Phase 1 builds and runs. Every booking that flows through the system writes to four places simultaneously — the appointment calendar, the deposit ledger, the client record, and the artist's schedule. Phase 1 builds all four. Phase 2 uses all four.
+    Phase 2 connects to infrastructure that Phase 1 builds and runs. Every booking that flows through the system writes to four places simultaneously; the appointment calendar, the deposit ledger, the client record, and the artist's schedule. Phase 1 builds all four. Phase 2 uses all four.
   </p>
 
   <hr class="rule">
@@ -440,29 +440,29 @@
   <div class="dep-grid">
     <div class="dep-card">
       <div class="dep-q">Where do bookings go?</div>
-      <div class="dep-a">The appointment system — tracking confirmed sessions, start times, and assigned artist.</div>
+      <div class="dep-a">The appointment system; tracking confirmed sessions, start times, and assigned artist.</div>
       <div class="dep-arrow">Connects to Dashboard · Appointments (Phase 1)</div>
     </div>
     <div class="dep-card">
       <div class="dep-q">Where are deposits tracked?</div>
-      <div class="dep-a">The deposit ledger — showing paid, outstanding, and total revenue by artist and date.</div>
+      <div class="dep-a">The deposit ledger; showing paid, outstanding, and total revenue by artist and date.</div>
       <div class="dep-arrow">Connects to Dashboard · Deposits (Phase 1)</div>
     </div>
     <div class="dep-card">
       <div class="dep-q">How does the artist see their schedule?</div>
-      <div class="dep-a">The artist portal — their upcoming sessions, client reference photos, and session notes.</div>
+      <div class="dep-a">The artist portal; their upcoming sessions, client reference photos, and session notes.</div>
       <div class="dep-arrow">Connects to Dashboard · Artist Portal (Phase 1)</div>
     </div>
     <div class="dep-card">
       <div class="dep-q">Where does client info live?</div>
-      <div class="dep-a">The client record — contact info, session history, signed waivers, and uploaded reference photos.</div>
+      <div class="dep-a">The client record; contact info, session history, signed waivers, and uploaded reference photos.</div>
       <div class="dep-arrow">Connects to Dashboard · Clients (Phase 1)</div>
     </div>
   </div>
 
   <div class="callout">
     <div class="k">What happens if Phase 2 comes first</div>
-    <div class="v">Building Phase 2 standalone means building appointment management, deposit tracking, client records, and artist scheduling inside the booking system itself — the same four systems Phase 1 already builds. The result is duplicate infrastructure, a longer timeline, and a higher cost. Phase 1 first means Phase 2 plugs into a foundation that already exists and already works. The build is faster, the cost is lower, and the result is a single connected system rather than two parallel ones.</div>
+    <div class="v">Building Phase 2 standalone means building appointment management, deposit tracking, client records, and artist scheduling inside the booking system itself; the same four systems Phase 1 already builds. The result is duplicate infrastructure, a longer timeline, and a higher cost. Phase 1 first means Phase 2 plugs into a foundation that already exists and already works. The build is faster, the cost is lower, and the result is a single connected system rather than two parallel ones.</div>
   </div>
 
   <div class="runfoot">
@@ -471,7 +471,7 @@
   </div>
 </section>
 
-<!-- ====================== PAGE 3 — WHAT PHASE 2 BUILDS ====================== -->
+<!-- ====================== PAGE 3: WHAT PHASE 2 BUILDS ====================== -->
 <section class="page">
   <div class="runhead">
     <div class="left">
@@ -488,7 +488,7 @@
   </div>
 
   <p class="lede">
-    A client discovers Kattitude, picks up their phone, and books — reference photos uploaded, estimate received, waiver signed, deposit paid. By the time they walk through the door, their appointment is confirmed, their artist knows what they're getting, and everything is already in the dashboard.
+    A client discovers Kattitude, picks up their phone, and books; reference photos uploaded, estimate received, waiver signed, deposit paid. By the time they walk through the door, their appointment is confirmed, their artist knows what they're getting, and everything is already in the dashboard.
   </p>
 
   <div class="subhead">The Full Booking Flow</div>
@@ -505,7 +505,7 @@
       <div class="flow-num">02</div>
       <div class="flow-content">
         <strong>Reference Photo Upload</strong>
-        <span>Client uploads 1–5 reference images. Photos attach to their client record in the dashboard and are visible to the assigned artist before the session.</span>
+        <span>Client uploads 1-5 reference images. Photos attach to their client record in the dashboard and are visible to the assigned artist before the session.</span>
       </div>
     </div>
     <div class="flow-step">
@@ -519,7 +519,7 @@
       <div class="flow-num">04</div>
       <div class="flow-content">
         <strong>Artist Selection &amp; Scheduling</strong>
-        <span>Client picks a preferred artist or "first available." Real availability is drawn from each artist's schedule in the Phase 1 dashboard — only open slots are shown.</span>
+        <span>Client picks a preferred artist or "first available." Real availability is drawn from each artist's schedule in the Phase 1 dashboard, only open slots are shown.</span>
       </div>
     </div>
     <div class="flow-step">
@@ -540,7 +540,7 @@
       <div class="flow-num">07</div>
       <div class="flow-content">
         <strong>Confirmation &amp; Dashboard Update</strong>
-        <span>Booking confirmed. Appointment appears in the dashboard, artist schedule updates, client record is created or updated, deposit is logged — all simultaneously, all automatically.</span>
+        <span>Booking confirmed. Appointment appears in the dashboard, artist schedule updates, client record is created or updated, deposit is logged; all simultaneously, all automatically.</span>
       </div>
     </div>
   </div>
@@ -551,7 +551,7 @@
   </div>
 </section>
 
-<!-- ====================== PAGE 4 — THE ESTIMATION ENGINE ====================== -->
+<!-- ====================== PAGE 4: THE ESTIMATION ENGINE ====================== -->
 <section class="page dense">
   <div class="runhead">
     <div class="left">
@@ -568,30 +568,30 @@
   </div>
 
   <p class="lede">
-    The estimate step starts with the artist. Over time, as session data flows through the Phase 1 dashboard — actual time vs. estimated time, complexity scores, each artist's pace — the AI layer calibrates. Quotes get more accurate with every session that runs through the system.
+    The estimate step starts with the artist. Over time, as session data flows through the Phase 1 dashboard; actual time vs. estimated time, complexity scores, each artist's pace; the AI layer calibrates. Quotes get more accurate with every session that runs through the system.
   </p>
 
   <div class="subhead">AI Image Analysis</div>
   <ul class="list">
-    <li><strong>Reference photo processing</strong> — <span class="lite">the AI analyzes each uploaded reference image for complexity (linework density, shading depth, color count), estimates surface area based on placement selection, and classifies the style (traditional, realism, blackwork, watercolor, etc.).</span></li>
-    <li><strong>Complexity scoring</strong> — <span class="lite">each piece receives a 1–10 complexity score that maps to a time estimate. Fine-line portrait realism scores higher than a simple flash piece. The score is visible to the client, making estimates transparent rather than opaque.</span></li>
+    <li><strong>Reference photo processing</strong>; <span class="lite">the AI analyzes each uploaded reference image for complexity (linework density, shading depth, color count), estimates surface area based on placement selection, and classifies the style (traditional, realism, blackwork, watercolor, etc.).</span></li>
+    <li><strong>Complexity scoring</strong>: <span class="lite">each piece receives a 1-10 complexity score that maps to a time estimate. Fine-line portrait realism scores higher than a simple flash piece. The score is visible to the client, making estimates transparent rather than opaque.</span></li>
   </ul>
 
   <div class="subhead">Artist Performance Profiles</div>
   <ul class="list">
-    <li><strong>Speed profiles built from Phase 1 data</strong> — <span class="lite">the Phase 1 clock-in/clock-out system tracks actual session duration for every appointment. Each artist's average time per complexity point is derived from real sessions — grounded in actual data. Artist A might average 45 minutes per point, Artist B 30 minutes. Quotes adjust per artist accordingly.</span></li>
-    <li><strong>Precedent-based pricing</strong> — <span class="lite">as more sessions complete and log actual vs. estimated times, the AI calibrates to your studio's real history. A quote for a medium-complexity blackwork sleeve in six months is grounded in dozens of similar sessions your artists have already completed.</span></li>
+    <li><strong>Speed profiles built from Phase 1 data</strong>; <span class="lite">the Phase 1 clock-in/clock-out system tracks actual session duration for every appointment. Each artist's average time per complexity point is derived from real sessions; grounded in actual data. Artist A might average 45 minutes per point, Artist B 30 minutes. Quotes adjust per artist accordingly.</span></li>
+    <li><strong>Precedent-based pricing</strong>; <span class="lite">as more sessions complete and log actual vs. estimated times, the AI calibrates to your studio's real history. A quote for a medium-complexity blackwork sleeve in six months is grounded in dozens of similar sessions your artists have already completed.</span></li>
   </ul>
 
   <div class="subhead">Availability Engine</div>
   <ul class="list">
-    <li><strong>Real schedule integration</strong> — <span class="lite">the scheduler reads from the Phase 1 artist portal: existing bookings, working hours, estimated session duration based on complexity score and artist speed profile, and a configurable buffer between clients (default 30 minutes for cleanup and reset).</span></li>
-    <li><strong>Live slot generation</strong> — <span class="lite">clients see only genuinely available appointment slots. As bookings confirm and schedules fill, the available times update in real time. Every slot shown is confirmed open.</span></li>
+    <li><strong>Real schedule integration</strong>; <span class="lite">the scheduler reads from the Phase 1 artist portal: existing bookings, working hours, estimated session duration based on complexity score and artist speed profile, and a configurable buffer between clients (default 30 minutes for cleanup and reset).</span></li>
+    <li><strong>Live slot generation</strong>; <span class="lite">clients see only genuinely available appointment slots. As bookings confirm and schedules fill, the available times update in real time. Every slot shown is confirmed open.</span></li>
   </ul>
 
   <div class="callout">
     <div class="k">How the AI Gets Better Over Time</div>
-    <div class="v">Phase 2 launches with artist-reviewed estimates — the AI suggests, the artist confirms. Every confirmed session creates a data point: complexity score, estimated time, actual time, artist. After 30–50 sessions, the AI's estimates become reliable enough to send directly to clients for review, with the artist approving rather than generating. The system earns its autonomy through your studio's real data.</div>
+    <div class="v">Phase 2 launches with artist-reviewed estimates; the AI suggests, the artist confirms. Every confirmed session creates a data point: complexity score, estimated time, actual time, artist. After 30-50 sessions, the AI's estimates become reliable enough to send directly to clients for review, with the artist approving rather than generating. The system earns its autonomy through your studio's real data.</div>
   </div>
 
   <div class="runfoot">
@@ -600,7 +600,7 @@
   </div>
 </section>
 
-<!-- ====================== PAGE 5 — INVESTMENT & TIMELINE ====================== -->
+<!-- ====================== PAGE 5: INVESTMENT & TIMELINE ====================== -->
 <section class="page">
   <div class="runhead">
     <div class="left">
@@ -634,10 +634,10 @@
           <small>Client-facing booking flow, reference photo upload, AI image analysis, complexity scoring, artist speed profiles, smart scheduling, digital waiver integration, deposit payment, and full dashboard write-through.</small>
         </td>
         <td class="freq">One-time</td>
-        <td class="price">$3,000 – $5,000<small>fixed price agreed before work starts</small></td>
+        <td class="price">$3,000-$5,000<small>fixed price agreed before work starts</small></td>
       </tr>
       <tr>
-        <td class="item">AI API Credits — Development &amp; Testing
+        <td class="item">AI API Credits; Development &amp; Testing
           <small>Covers image analysis requests during the full build and testing phase. Included in the Phase 2 build cost.</small>
         </td>
         <td class="freq">One-time</td>
@@ -645,7 +645,7 @@
       </tr>
       <tr>
         <td class="item">Ongoing AI API Costs
-          <small>Each image analysis request draws a small amount from AI API credits. Covered by allocating a small percentage of each deposit processed — agreed on together before Phase 2 launches so costs stay predictable.</small>
+          <small>Each image analysis request draws a small amount from AI API credits. Covered by allocating a small percentage of each deposit processed; agreed on together before Phase 2 launches so costs stay predictable.</small>
         </td>
         <td class="freq">Per booking</td>
         <td class="price" style="font-size:11px; font-weight:600;">% of deposit<small>self-sustaining</small></td>
@@ -655,7 +655,7 @@
 
   <div class="callout">
     <div class="k">Timeline</div>
-    <div class="v"><strong>Phase 2 launches 4–6 weeks after Phase 1 is delivered and running.</strong> The exact scope and fixed price are confirmed after Phase 1 is live and 2–4 weeks of real usage data is flowing through the system. That window gives us real booking volume, artist pace data from the clock-in system, and a clear picture of scheduling complexity — all of which inform the Phase 2 build scope directly.</div>
+    <div class="v"><strong>Phase 2 launches 4-6 weeks after Phase 1 is delivered and running.</strong> The exact scope and fixed price are confirmed after Phase 1 is live and 2-4 weeks of real usage data is flowing through the system. That window gives us real booking volume, artist pace data from the clock-in system, and a clear picture of scheduling complexity; all of which inform the Phase 2 build scope directly.</div>
   </div>
 
   <div class="runfoot">
@@ -664,7 +664,7 @@
   </div>
 </section>
 
-<!-- ====================== PAGE 6 — NEXT STEPS ====================== -->
+<!-- ====================== PAGE 6: NEXT STEPS ====================== -->
 <section class="page">
   <div class="runhead">
     <div class="left">
@@ -682,16 +682,16 @@
 
   <div class="callout">
     <div class="k">Why a Range, and When It Becomes a Fixed Price</div>
-    <div class="v">The $3,000–$5,000 range reflects differences in studio size, artist roster complexity, and booking volume. A studio with 2 artists and a predictable weekly schedule lands closer to $3,000. A multi-artist studio with variable availability and high booking volume sits closer to $5,000. Once Phase 1 is live, we spend two weeks reviewing real patterns together and scope Phase 2 precisely — with a fixed price and fixed timeline agreed before any work begins.</div>
+    <div class="v">The $3,000-$5,000 range reflects differences in studio size, artist roster complexity, and booking volume. A studio with 2 artists and a predictable weekly schedule lands closer to $3,000. A multi-artist studio with variable availability and high booking volume sits closer to $5,000. Once Phase 1 is live, we spend two weeks reviewing real patterns together and scope Phase 2 precisely, with a fixed price and fixed timeline agreed before any work begins.</div>
   </div>
 
   <div class="callout" style="margin-top:14px;">
     <div class="k">Next Steps</div>
     <div class="v">
-      <strong>Step 1 — Accept Phase 1.</strong> Reply "approved" to the Phase 1 proposal to receive the deposit invoice and start the clock.<br><br>
-      <strong>Step 2 — Run Phase 1.</strong> 2–4 weeks of live operation gives the dashboard real data: actual session times, deposit flows, booking patterns, and artist schedules.<br><br>
-      <strong>Step 3 — Scope Phase 2 precisely.</strong> A short working session reviews real usage, finalizes scope, and produces a fixed-price Phase 2 agreement.<br><br>
-      <strong>Step 4 — Build Phase 2.</strong> 4–6 weeks. The booking system plugs into the Phase 1 dashboard and goes live.
+      <strong>Step 1: Accept Phase 1.</strong> Reply "approved" to the Phase 1 proposal to receive the deposit invoice and start the clock.<br><br>
+      <strong>Step 2: Run Phase 1.</strong> 2-4 weeks of live operation gives the dashboard real data: actual session times, deposit flows, booking patterns, and artist schedules.<br><br>
+      <strong>Step 3: Scope Phase 2 precisely.</strong> A short working session reviews real usage, finalizes scope, and produces a fixed-price Phase 2 agreement.<br><br>
+      <strong>Step 4: Build Phase 2.</strong> 4-6 weeks. The booking system plugs into the Phase 1 dashboard and goes live.
     </div>
   </div>
 

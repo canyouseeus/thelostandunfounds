@@ -1,4 +1,4 @@
-// Catch-all for the client asset intake. One function, several routes — the
+// Catch-all for the client asset intake. One function, several routes: the
 // same pattern as api/gallery/[...path].ts, which keeps the deployment's
 // serverless function count down.
 //
@@ -30,7 +30,7 @@ import {
     signUploads,
 } from '../../lib/api-handlers/_client-uploads-handler.js';
 
-// Vercel doesn't reliably populate req.query.path for a catch-all — it may
+// Vercel doesn't reliably populate req.query.path for a catch-all; it may
 // arrive under '...path' or 'slug', or not at all, depending on the runtime
 // version. api/gallery/[...path].ts hit the same thing. The URL itself is the
 // one source that's always there, so read that first and treat the query keys

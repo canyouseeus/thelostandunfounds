@@ -73,7 +73,7 @@ export default async function handler(
             supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
         if (!supabase) {
-            console.warn('⚠️ Supabase not configured — checkout continues without commission tracking')
+            console.warn('⚠️ Supabase not configured; checkout continues without commission tracking')
         }
 
         // Get product cost if productId provided (for affiliate commission math).
@@ -125,7 +125,7 @@ export default async function handler(
             // payment_method_types is deliberately omitted so Checkout uses the
             // account's Dashboard payment method configuration. Hardcoding
             // ['card'] overrides it and drops Link, Cash App, Klarna and Amazon
-            // Pay — all enabled on this account and offered by its payment
+            // Pay: all enabled on this account and offered by its payment
             // links, but never by the site. (Apple/Google Pay ride along with
             // card either way.)
             line_items: [
@@ -140,7 +140,7 @@ export default async function handler(
                     },
                 },
             ],
-            // Anything we want to recover in the webhook goes in metadata —
+            // Anything we want to recover in the webhook goes in metadata;
             // Stripe will echo this back on checkout.session.completed.
             metadata: {
                 productId: productId || '',
@@ -177,7 +177,7 @@ export default async function handler(
         // be able to fail the request: if the database is unreachable (e.g. a
         // paused Supabase project) an unhandled throw here would return a 500
         // and strand the customer on our side of a session Stripe already
-        // created — losing a sale to bookkeeping. Commission tracking is
+        // created: losing a sale to bookkeeping. Commission tracking is
         // best-effort; the webhook reconciles from Stripe metadata regardless.
         if (affiliateRef && supabase) {
             try {

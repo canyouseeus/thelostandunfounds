@@ -73,7 +73,7 @@ export const TEST_PRODUCTS = [
   },
   {
     id: 'prodigi-test-fine-art-print',
-    title: 'Fine Art Print — Dev Mockup',
+    title: 'Fine Art Print: Dev Mockup',
     description: 'Prodigi print-on-demand test product with a mockup template preview.',
     price: 65,
     compareAtPrice: undefined,

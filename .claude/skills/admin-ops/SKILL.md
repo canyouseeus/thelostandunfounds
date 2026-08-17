@@ -37,7 +37,7 @@ The dashboard uses a 4-column Bento grid:
 - **Small Cards**: 1x1 (Users, Subscriptions, Products, Blog, Newsletter, Mail, System)
 
 ### Standard Styles
-- Cards: `.noir-card` or a custom Bento card — **borderless and shadowless**, separated by surface
+- Cards: `.noir-card` or a custom Bento card; **borderless and shadowless**, separated by surface
   tone (`bg-white/5`), never by an outline. Square corners.
 - Buttons: White background with black text for primary actions; `bg-white/10` for secondary. No
   borders, no shadows (see `no-border-design`).
@@ -45,7 +45,7 @@ The dashboard uses a 4-column Bento grid:
 
 ## Global Debug Report Button
 
-> **NON-NEGOTIABLE**: Every admin dashboard — without exception — must mount the Debug Report button. This is a brand standard, not an optional enhancement. No admin page ships without it.
+> **NON-NEGOTIABLE**: Every admin dashboard, without exception, must mount the Debug Report button. This is a brand standard, not an optional enhancement. No admin page ships without it.
 
 Every admin page mounts a **"DEBUG REPORT"** button (`src/components/admin/CopyDebugReport.tsx`) in the header, next to the profile icon. It is wired up in `src/pages/Admin.tsx`.
 
@@ -81,10 +81,10 @@ logError(err.message);
 - [ ] No `rounded` or `rounded-*` classes. Two sanctioned exceptions only: the Platform Console
       Tray / tool-dock pill and its icon buttons, and profile avatars (always `rounded-full`).
       See `noir-design` → No Rounded Corners.
-- [ ] No `border-*` classes and no `shadow-*` — separation is surface tone and spacing only.
+- [ ] No `border-*` classes and no `shadow-*`; separation is surface tone and spacing only.
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
 - [ ] Desktop and mobile layouts are aligned correctly.
-- [ ] **`CopyDebugReport` is present in the admin header** — this is a hard requirement, not optional. No dashboard ships without it.
+- [ ] **`CopyDebugReport` is present in the admin header**; this is a hard requirement, not optional. No dashboard ships without it.
 - [ ] `installGlobalListeners` called in the page's root `useEffect` (captures JS errors + unhandled rejections).
 - [ ] All API calls inside the view use `logApiCall()` so they appear in the debug report.

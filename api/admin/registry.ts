@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js'
  *
  * GET /api/admin/registry?section=users|photos|posts|products|writers|affiliates|subscribers
  *
- * Every section returns { total, rows } — rows are the most recent dozen,
+ * Every section returns { total, rows }: rows are the most recent dozen,
  * each with a name, a supporting line, and a timestamp. Users come from
  * auth.users via the service key (real accounts with real emails), which is
  * the census the dashboard's old max-of-three-side-tables guess never was.
@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         if (section === 'users') {
-            // Real accounts. listUsers pages at 50 — plenty for a platform this
+            // Real accounts. listUsers pages at 50: plenty for a platform this
             // size; the count comes from the same call.
             const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 50 })
             if (error) throw error
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 line: [
                     u.app_metadata?.provider ? `via ${u.app_metadata.provider}` : null,
                     u.last_sign_in_at ? `last seen ${u.last_sign_in_at.slice(0, 10)}` : 'never signed in',
-                ].filter(Boolean).join(' — '),
+                ].filter(Boolean).join(' · '),
                 at: when(u.created_at),
                 fields: {
                     Email: u.email ?? '(no email)',
@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .limit(12)
             return out(count ?? 0, (data ?? []).map(p => ({
                 name: p.title,
-                line: [p.author_name, p.blog_column].filter(Boolean).join(' — '),
+                line: [p.author_name, p.blog_column].filter(Boolean).join(' · '),
                 at: when(p.published_at),
                 fields: {
                     Author: p.author_name ?? '—',
@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .limit(12)
             return out(count ?? 0, (data ?? []).map(p => ({
                 name: p.name || p.title || '(unnamed)',
-                line: [p.price != null ? `$${Number(p.price).toFixed(2)}` : null, p.status].filter(Boolean).join(' — '),
+                line: [p.price != null ? `$${Number(p.price).toFixed(2)}` : null, p.status].filter(Boolean).join(' · '),
                 at: when(p.created_at),
                 fields: {
                     Price: p.price != null ? `$${Number(p.price).toFixed(2)}` : '—',
@@ -148,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .limit(12)
             return out(count ?? 0, (data ?? []).map(a => ({
                 name: [a.first_name, a.last_name].filter(Boolean).join(' ') || a.paypal_email || a.code || '(unnamed)',
-                line: [a.status, `${a.total_conversions ?? 0} conversions`].filter(Boolean).join(' — '),
+                line: [a.status, `${a.total_conversions ?? 0} conversions`].filter(Boolean).join(' · '),
                 at: when(a.created_at),
                 fields: {
                     Name: [a.first_name, a.last_name].filter(Boolean).join(' ') || '—',
@@ -169,7 +169,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .limit(12)
             return out(count ?? 0, (data ?? []).map(s => ({
                 name: s.email,
-                line: [s.source, s.verified ? 'verified' : 'unverified'].filter(Boolean).join(' — '),
+                line: [s.source, s.verified ? 'verified' : 'unverified'].filter(Boolean).join(' · '),
                 at: when(s.subscribed_at ?? s.created_at),
                 fields: {
                     Email: s.email,

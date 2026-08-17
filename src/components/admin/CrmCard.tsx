@@ -17,7 +17,7 @@ export function CrmCard({ span, light, size }: TileShape = {}) {
   return (
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        {/* `block w-full h-full` — see DashboardCategoryCard: without it the
+        {/* `block w-full h-full`: see DashboardCategoryCard: without it the
             button sizes to its content and the tile sits short in its cell. */}
         <ExpandableScreenTrigger className={`block w-full h-full text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile

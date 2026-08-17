@@ -19,7 +19,7 @@ mcp__e1627760-fb4d-4619-8413-df82f44de129__get_logs
 Look for the actual error message. Common ones and their fixes:
 
 ### "invalid_client" / "The provided client secret is invalid"
-**Root cause:** The Google OAuth client secret in Supabase is wrong or expired — NOT a code issue.
+**Root cause:** The Google OAuth client secret in Supabase is wrong or expired, NOT a code issue.
 
 **Fix:**
 1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
@@ -36,7 +36,7 @@ Look for the actual error message. Common ones and their fixes:
 ### "invalid_grant" / code expired
 **Root cause:** The OAuth code expired before Supabase could exchange it (usually >60s delay).
 
-**Fix:** Usually transient — check if Supabase project is paused or having latency issues.
+**Fix:** Usually transient: check if Supabase project is paused or having latency issues.
 
 ---
 
@@ -44,9 +44,9 @@ Look for the actual error message. Common ones and their fixes:
 
 If the auth logs show the Google exchange is succeeding but the user is landing at the wrong page, the issue is in `src/pages/AuthCallback.tsx`. Check:
 
-- `auth_return_url` in localStorage — is it set correctly before OAuth?
-- `resolveReturnUrl()` — does it map the return URL to the right destination?
-- PKCE race condition — only resolve the session promise when `s` is non-null (not on INITIAL_SESSION with null)
+- `auth_return_url` in localStorage: is it set correctly before OAuth?
+- `resolveReturnUrl()`: does it map the return URL to the right destination?
+- PKCE race condition, only resolve the session promise when `s` is non-null (not on INITIAL_SESSION with null)
 
 ---
 
@@ -54,7 +54,7 @@ If the auth logs show the Google exchange is succeeding but the user is landing 
 
 - Do NOT change `signInWithGoogle` queryParams (`access_type: 'offline'`, `prompt: 'consent'`) without proof they're causing the issue
 - Do NOT change `signOut()` scope without proof
-- Do NOT make blind code changes based on symptoms — check logs first, every time
+- Do NOT make blind code changes based on symptoms; check logs first, every time
 
 ## Helper script
 
@@ -65,5 +65,5 @@ If the auth logs show the Google exchange is succeeding but the user is landing 
 npx tsx scripts/update-google-secret.ts
 ```
 
-Updating `.env.local` alone does **not** fix a login failure — the secret Supabase uses lives in
+Updating `.env.local` alone does **not** fix a login failure; the secret Supabase uses lives in
 the Supabase dashboard (Step 1 above). Change it in both places or the mismatch persists.

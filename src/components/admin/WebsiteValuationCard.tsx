@@ -121,7 +121,7 @@ export function WebsiteValuationCard() {
             <div className="flex items-end gap-3 mb-4">
               <div className="text-3xl font-bold text-white">
                 {loading ? (
-                  <span className="text-white/30">—</span>
+                  <span className="text-white/30">: </span>
                 ) : (
                   <AnimatedNumber value={currentValuation} format="currency" />
                 )}
@@ -190,7 +190,7 @@ export function WebsiteValuationCard() {
             )}
 
             {!loading && !latest && (
-              <p className="text-white/30 text-xs">No valuation data — add rows to website_valuation_history.</p>
+              <p className="text-white/30 text-xs">No valuation data; add rows to website_valuation_history.</p>
             )}
 
             {!isExpanded && !loading && latest && (

@@ -78,7 +78,7 @@ export function tokensMatch(supplied: string, stored: string | null | undefined)
 /**
  * Substitute {{variable}} placeholders in a template body.
  *
- * Unknown placeholders are left visibly intact rather than silently blanked —
+ * Unknown placeholders are left visibly intact rather than silently blanked;
  * an obviously unfilled `{{event_date}}` in a draft preview is a bug you catch,
  * whereas an empty gap is one you send to a client.
  */
@@ -208,7 +208,7 @@ export function validateSignaturePayload(payload: {
     }
     // A blank pad still produces a valid tiny PNG; require real ink.
     if (data.length < 1500) {
-      return 'Your signature looks empty — please sign in the box.'
+      return 'Your signature looks empty: please sign in the box.'
     }
     return null
   }

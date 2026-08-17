@@ -6,10 +6,10 @@ import Stripe from 'stripe'
  * POST /api/prodigi/photo-print-checkout
  *
  * Print-on-demand checkout for ANY public gallery photo (not just the
- * curated prodigi_products catalog) — size + optional black frame + mat,
+ * curated prodigi_products catalog): size + optional black frame + mat,
  * picked from print_catalog_options. Unlike _prodigi-checkout-handler.ts,
  * there's no pre-seeded product row per photo (that would mean one Stripe
- * product per photo x option, i.e. tens of thousands) — everything is
+ * product per photo x option, i.e. tens of thousands): everything is
  * resolved dynamically and priced with an inline Stripe price_data block.
  *
  * The resulting prodigi_orders row is identical in shape to the curated-
@@ -17,9 +17,9 @@ import Stripe from 'stripe'
  * Prodigi order submission, and affiliate commission code untouched.
  *
  * Body:
- *   photoId       string  required — photos.id
- *   printOptionId string  required — print_catalog_options.id
- *   orientation   'landscape' | 'portrait'  required — resolved client-side
+ *   photoId       string  required: photos.id
+ *   printOptionId string  required: print_catalog_options.id
+ *   orientation   'landscape' | 'portrait'  required: resolved client-side
  *                 from the photo's actual pixel dimensions, since that's
  *                 already loaded in the lightbox and used to fit the
  *                 artwork correctly on order submission (see order_attributes
@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (optionError || !option) return res.status(404).json({ error: 'Print option not found' })
 
         // Orientation picks which of the (now-identical) sku_landscape/
-        // sku_portrait columns we read — kept as two columns since Prodigi
+        // sku_portrait columns we read: kept as two columns since Prodigi
         // does offer real orientation-swapped SKUs for some product lines,
         // even though the ones in the current catalog turned out to be a
         // single physical shape (see order_attributes/sizing comment below).
@@ -85,9 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Real Prodigi product data (GET /v4.0/products/{sku}) showed the
         // classic frame's mount/mountColor attributes have exactly one valid
-        // value each — there's no "no mount" choice, so a mat toggle was
+        // value each: there's no "no mount" choice, so a mat toggle was
         // never real and isn't offered. "color" is the one real per-order
-        // choice; hardcoded to black (lowercase — Prodigi's enum is
+        // choice; hardcoded to black (lowercase: Prodigi's enum is
         // lowercase) since the brand only offers black frames.
         const orderAttributes: Record<string, string> = option.framed ? { color: option.frame_color || 'black' } : {}
 
@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ).replace(/\/$/, '')
 
         const assetUrl = `${origin}/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=4096`
-        const productName = `${photo.title} — ${option.size_label}`
+        const productName = `${photo.title}: ${option.size_label}`
 
         const successUrl = `${origin}/shop/success?session_id={CHECKOUT_SESSION_ID}`
         const cancelUrl = `${origin}/gallery`

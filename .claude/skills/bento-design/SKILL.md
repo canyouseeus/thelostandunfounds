@@ -12,18 +12,18 @@ This skill provides the core design principles, component patterns, and implemen
 1.  **Pure Black Base**: Use absolute black (`#000000`) for the primary background.
 2.  **Bento Card Structure**: Logical groupings of information should be encapsulated in `AdminBentoCard` (or similar containers) with:
     *   Header background: `#0a0a0a` (slightly lighter than base).
-    *   Subtle hover effects: Lift (`-translate-y-0.5`) and scale (`scale-[1.01]`) only — no shadow.
+    *   Subtle hover effects: Lift (`-translate-y-0.5`) and scale (`scale-[1.01]`) only; no shadow.
     *   No radius: All corners MUST be square/none. (The Platform Console Tray below is the *only*
-        sanctioned `rounded-*` in the system — it does not license rounding anything else.)
+        sanctioned `rounded-*` in the system: it does not license rounding anything else.)
 3.  **Left-Aligned Content**: All body text, headers (within cards), and descriptions MUST be left-aligned (`text-left`).
 4.  **Premium Typography**:
     *   Use `Inter` as the primary font.
     *   Large headings should be uppercase with wide tracking (e.g., `uppercase tracking-widest`).
     *   Small labels/metadata should use `text-[10px]` with wide tracking (`tracking-[0.2em]`).
 5.  **Subtle Accents**:
-    *   **No borders — ever.** See the `no-border-design` skill; it is the authority. Bento cards
+    *   **No borders: ever.** See the `no-border-design` skill; it is the authority. Bento cards
         separate by surface tone (`bg-white/5`, `bg-white/10`) and spacing, never by an outline.
-        `border-white/10` and `border-white/20` are retired — do not reintroduce them.
+        `border-white/10` and `border-white/20` are retired; do not reintroduce them.
     *   Text colors: `text-white/80` for labels, `text-white/60` or `text-white/40` for metadata.
     *   Primary Action: White background with black text for buttons, or subtle high-contrast accents.
 
@@ -36,22 +36,22 @@ This skill provides the core design principles, component patterns, and implemen
 
 ## Platform Console Tray
 
-A named pattern for icon-only tool docks. There are two variants — pick based on whether the dock
+A named pattern for icon-only tool docks. There are two variants: pick based on whether the dock
 sits on static page chrome or floats over scrolling content.
 
 **Rule: a console tray is icon-only, never a row of always-visible controls.** Each icon expands
-its own focused card on tap — a search icon opens a search card, a filter icon opens a filter
+its own focused card on tap; a search icon opens a search card, a filter icon opens a filter
 card, and so on. Never lay out inline search bars, chip rows, or labeled text buttons
-side-by-side in the tray itself — that reads as clutter, not a console.
+side-by-side in the tray itself; that reads as clutter, not a console.
 
 **Rule: the tray's surface is frosted glass, never a solid plate.** Content underneath should
 blur and show through the tray, the same way it shows through the back-to-top button. Don't wrap
-a console tray in an opaque `bg-black` band to solve a "content peeking through" problem — that
+a console tray in an opaque `bg-black` band to solve a "content peeking through" problem; that
 defeats the pattern. If content showing through is a problem, the tray is in the wrong spot or
 needs a stronger blur, not a solid backing.
 
-### Variant A — static dock (page chrome, nothing scrolls under it)
-Reference: `src/pages/Admin.tsx` (search "Premium Dock" / "Platform Console") — the dashboard's
+### Variant A: static dock (page chrome, nothing scrolls under it)
+Reference: `src/pages/Admin.tsx` (search "Premium Dock" / "Platform Console"); the dashboard's
 app switcher. It sits on the dashboard's own static black background, so a lighter, more diffuse
 glass treatment reads fine:
 ```tsx
@@ -64,32 +64,32 @@ multiple rows on narrow screens (many icons); a dock that always fits a single r
 pill. Its expandable-card content can use the ordinary inline collapsible (height-animated,
 pushes content below it) since nothing needs to stay reachable while scrolling.
 
-### Variant B — floating tray (in-page toolbar over scrolling content)
+### Variant B: floating tray (in-page toolbar over scrolling content)
 Reference: `src/components/photos/PhotoGallery.tsx`, the "Back to Top Button" (search that
-comment) — `fixed bottom-24 left-1/2 -translate-x-1/2 z-40 ... bg-white/10 backdrop-blur-md ...
+comment): `fixed bottom-24 left-1/2 -translate-x-1/2 z-40 ... bg-white/10 backdrop-blur-md ...
 rounded-full`. And `src/components/admin/AdminPhotosBrowse.tsx` (All Photos tab), which applies
 the same treatment to a multi-icon dock.
 
 Use this variant whenever the tray needs to stay reachable while the user scrolls a grid or list
 underneath it (photo grids, long tables). It is `fixed`, not `sticky`, and floats at the bottom
-of the viewport — matching where the back-to-top button already lives — rather than pinning to
+of the viewport, matching where the back-to-top button already lives, rather than pinning to
 the top of the scroll area:
 ```tsx
 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
-  {/* expandable card, if one is open, floats directly above the dock — see below */}
+  {/* expandable card, if one is open, floats directly above the dock; see below */}
   <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
     {/* icon buttons */}
   </div>
 </div>
 ```
-- `bg-white/10 backdrop-blur-md` — reuse these exact values; they're what makes it read as glass
+- `bg-white/10 backdrop-blur-md`; reuse these exact values; they're what makes it read as glass
   rather than a bar. This is intentionally more transparent than Variant A's dock, because it's
   meant to be seen through content, not sit on a flat background.
 - `fixed` + `bottom-24` reuses the back-to-top button's own screen position verbatim. If the view
   also has another `fixed bottom-*` bar (e.g. a batch-selection action bar at `bottom-6`),
-  `bottom-24` keeps the two from colliding — don't invent a new offset, match the existing one.
+  `bottom-24` keeps the two from colliding; don't invent a new offset, match the existing one.
 - **No shadow.** Separation from the content behind comes from `backdrop-blur-md` plus the
-  `bg-white/10` tone — never a `shadow-*`. If the tray reads as flat against busy content,
+  `bg-white/10` tone, never a `shadow-*`. If the tray reads as flat against busy content,
   strengthen the blur; do not add elevation.
 
 ### Icon button (both variants)
@@ -114,7 +114,7 @@ the top of the scroll area:
   </span>
 </button>
 ```
-- Active state inverts to solid white + scales up 110% — never a border, underline, or ring.
+- Active state inverts to solid white + scales up 110%, never a border, underline, or ring.
 - Badge is a small red circle top-right with a count, matching the notification-count treatment
   used elsewhere (submission counts, selection counts).
 - No borders anywhere in the dock or its buttons.
@@ -141,7 +141,7 @@ standard collapsible:
 ```
 
 For **Variant B** (floating tray), the dock isn't anchored in document flow, so its card can't
-push content below it — it floats as its own panel directly above the dock instead, inside the
+push content below it: it floats as its own panel directly above the dock instead, inside the
 same `fixed` wrapper:
 ```tsx
 <AnimatePresence>
@@ -158,7 +158,7 @@ same `fixed` wrapper:
   )}
 </AnimatePresence>
 ```
-The card's own surface can be more opaque (`bg-black/80`) than the dock pill (`bg-white/10`) —
+The card's own surface can be more opaque (`bg-black/80`) than the dock pill (`bg-white/10`);
 the frosted-glass requirement is about the dock itself being seen through, not every panel it
 opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to stay legible.
 
@@ -166,7 +166,7 @@ opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to st
 
 ### 1. Migrating a Basic List to Bento Style
 
-**Before (Basic — note the `border`, which is exactly what this migration removes):**
+**Before (Basic: note the `border`, which is exactly what this migration removes):**
 ```tsx
 <div className="bg-black/50 border border-white p-6">
   <h3 className="text-white text-lg font-bold mb-4">Items</h3>
@@ -202,7 +202,7 @@ opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to st
 ```
 
 ### 2. Form Implementation
-*   Inputs: `bg-white/5 text-white focus:bg-white/10 transition-colors outline-none` — borderless.
+*   Inputs: `bg-white/5 text-white focus:bg-white/10 transition-colors outline-none`; borderless.
     Note `outline-none` removes the focus ring, so the surface change *is* the focus affordance;
     don't drop it or the field becomes unfocusable-looking.
 *   Buttons: `px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition`.

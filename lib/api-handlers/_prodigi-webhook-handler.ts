@@ -11,7 +11,7 @@ const STAGE_TO_STATUS: Record<string, string> = {
  * POST /api/prodigi/webhook
  *
  * Receives Prodigi's CloudEvents-shaped order status webhooks
- * (callbackUrl set at order creation — see _stripe-webhook-handler.ts /
+ * (callbackUrl set at order creation: see _stripe-webhook-handler.ts /
  * _strike-webhook-handler.ts). Updates the matching prodigi_orders row's
  * status and, when present, shipment/tracking info.
  *

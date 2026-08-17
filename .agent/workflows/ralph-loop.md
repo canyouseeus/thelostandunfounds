@@ -2,7 +2,7 @@
 description: Self-verification loop inspired by the Ralph Loop pattern. Use this after any code change to validate your own work before declaring done.
 ---
 
-# Ralph Loop — Self-Verification Workflow
+# Ralph Loop: Self-Verification Workflow
 
 > "Software is clay on the pottery wheel. If something isn't right, throw it back on the wheel."
 
@@ -67,9 +67,9 @@ Review your own diff against the relevant rules:
 
 ## Key Principle
 
-> "When you see a failure domain — put on your engineering hat and resolve the problem so it never happens again."
+> "When you see a failure domain; put on your engineering hat and resolve the problem so it never happens again."
 
-If the loop reveals a recurring issue, don't just fix it — encode the fix:
+If the loop reveals a recurring issue, don't just fix it; encode the fix:
 - Add a rule to the relevant skill's `SKILL.md`
 - Add a check to `.agent/workflows/preflight-check.md`
 - Update `CLAUDE.md` if it's a new critical invariant

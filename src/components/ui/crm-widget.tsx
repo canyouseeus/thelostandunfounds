@@ -42,7 +42,7 @@ const shortDate = (iso: string | null) =>
   iso ? iso.slice(0, 10) : '—';
 
 const STATUS_LINE = (inv: CrmInvoiceRow) =>
-  [inv.status ?? 'unknown', inv.amount_due > 0 ? `${money(inv.amount_due)} due` : 'settled'].join(' — ');
+  [inv.status ?? 'unknown', inv.amount_due > 0 ? `${money(inv.amount_due)} due` : 'settled'].join(' · ');
 
 /** The dossier's invoice drill: a client's invoices, then one invoice's fields. */
 function ClientInvoices({ clientId, fetchInvoices, nav }: {
@@ -91,11 +91,11 @@ function ClientInvoices({ clientId, fetchInvoices, nav }: {
 }
 
 /**
- * CRM tile. The ring is its instrument — collected against billed, the dial
- * exception the clock also uses — and the client roster fills the larger
+ * CRM tile. The ring is its instrument: collected against billed, the dial
+ * exception the clock also uses, and the client roster fills the larger
  * shapes as share bars on the book's scale. Click or long-press opens the
  * client explorer: roster → dossier, cards with a way back at every level.
- * Accent: amber, the hero's bookings hue — CRM money is booking money.
+ * Accent: amber, the hero's bookings hue; CRM money is booking money.
  */
 export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
   size?: string;
@@ -115,7 +115,7 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
   const maxBilled = Math.max(...data.clients.map(c => c.billed), 1);
 
   const invoicesCard = (c: CrmWidgetClient): StackCard => ({
-    title: `${c.name} — Invoices`,
+    title: `${c.name}: Invoices`,
     render: nav => <ClientInvoices clientId={c.id} fetchInvoices={fetchInvoices} nav={nav} />,
   });
 
@@ -167,7 +167,7 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
             <StackRow
               key={c.id}
               label={c.name}
-              sub={[c.business, `${c.invoiceCount} invoice${c.invoiceCount === 1 ? '' : 's'}`].filter(Boolean).join(' — ')}
+              sub={[c.business, `${c.invoiceCount} invoice${c.invoiceCount === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}
               value={money(c.billed)}
               onPress={() => nav.push(dossier(c))}
             />
@@ -195,7 +195,7 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="CRM — open client explorer"
+        aria-label="CRM: open client explorer"
         className={cn(
           'relative bg-black text-white flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -209,8 +209,8 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
       >
         <div className="relative flex-1 min-h-0 flex flex-col" style={{ padding: '7cqmin' }}>
           {cols === 2 && rows === 2 ? (
-            /* The face: the ring holds the upper right — collected against
-               billed — and the client count holds the bottom-left. */
+            /* The face: the ring holds the upper right; collected against
+               billed, and the client count holds the bottom-left. */
             <div className="flex-1 min-h-0 relative">
               <div className="absolute text-amber-500" style={{ top: 0, right: 0, width: '42cqmin', height: '42cqmin' }}>
                 <RingGauge value={totals.collected} max={Math.max(totals.billed, 1)} className="w-full h-full" />
@@ -239,7 +239,7 @@ export function CrmWidget({ size = '2x2', data, fetchInvoices, className }: {
                 </div>
               ) : (
                 /* Two units wide: count and dial share the top row, the money
-                   figures take their own line — four across doesn't fit. */
+                   figures take their own line: four across doesn't fit. */
                 <div className="flex flex-col" style={{ gap: u(4) }}>
                   <div className="flex items-center justify-between" style={{ gap: u(6) }}>
                     {figure('Clients', String(totals.clients), true)}

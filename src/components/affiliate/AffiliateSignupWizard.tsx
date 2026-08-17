@@ -43,7 +43,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
 
     const totalSteps = 3;
 
-    // Check enrollment exactly once when the modal first opens — keyed on
+    // Check enrollment exactly once when the modal first opens; keyed on
     // isOpen changing to true, NOT on the user object reference, which
     // Supabase can swap on session refresh and would re-run this mid-flow.
     useEffect(() => {

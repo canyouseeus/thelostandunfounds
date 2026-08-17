@@ -7,7 +7,7 @@ description: Enforce no-border design philosophy across the site. Use when styli
 
 ## Overview
 **This site uses a no-border, no-shadow design philosophy.** All UI components must be flat: no
-visible borders, no elevation effects. This skill is the **authority** on the question — where
+visible borders, no elevation effects. This skill is the **authority** on the question; where
 `noir-design`, `bento-design`, `commerce-engine`, or `frontend-style-guide` appear to suggest an
 outline or a shadow, this skill wins.
 
@@ -19,10 +19,10 @@ outline or a shadow, this skill wins.
 - ❌ `border-white`, `border-white/10`, `border-white/20`, etc.
 - ❌ `border-red-500`, `border-yellow-400`, etc.
 - ❌ Any `border-*` utility class
-- ❌ `divide-x`, `divide-y` — these compile to `border-*-width` on children. Same rule, same ban.
-- ❌ `ring`, `ring-*`, `outline` — outlines in all but name
+- ❌ `divide-x`, `divide-y`: these compile to `border-*-width` on children. Same rule, same ban.
+- ❌ `ring`, `ring-*`, `outline`: outlines in all but name
 
-> **Not a border — `border-radius`.** `border-radius: 0` / `style={{ borderRadius: 0 }}` sets a
+> **Not a border: `border-radius`.** `border-radius: 0` / `style={{ borderRadius: 0 }}` sets a
 > corner radius, not a border. It is required by `noir-design` and must not be stripped in the
 > name of this rule despite the property name containing "border".
 >
@@ -38,7 +38,7 @@ outline or a shadow, this skill wins.
 - ✅ `bg-white/5` or `bg-white/10` background differences
 - ✅ Spacing (`gap-*`, `space-y-*`, `mb-*`, `mt-*`, generous padding)
 - ✅ Subtle background color changes (`#0a0a0a` for raised chrome)
-- ✅ `backdrop-blur-*` on overlays — blur separates without an outline or a shadow
+- ✅ `backdrop-blur-*` on overlays: blur separates without an outline or a shadow
 
 ### When editing components:
 1. Search for any `border` classes in the file

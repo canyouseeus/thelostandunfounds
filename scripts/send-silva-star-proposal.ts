@@ -24,11 +24,11 @@ const bodyContent = `
   <h1 style="${EMAIL_STYLES.heading1}">YOUR PROPOSAL IS READY</h1>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    Daniel —
+    Daniel:
   </p>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    Your custom proposal is live. It covers everything we discussed: the website build, the service dashboard, invoicing with Stripe, the built-in referral program, and the full pricing breakdown — flat-rate fees, no surprises.
+    Your custom proposal is live. It covers everything we discussed: the website build, the service dashboard, invoicing with Stripe, the built-in referral program, and the full pricing breakdown; flat-rate fees, no surprises.
   </p>
 
   <p style="${EMAIL_STYLES.paragraph}">
@@ -40,11 +40,11 @@ const bodyContent = `
   </div>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    To accept, reply with <strong style="color: #ffffff;">"approved"</strong> and we will send the deposit invoice within the hour. The deposit is $1,000 — balance due on launch day. Site goes live within 3 weeks of deposit clearing.
+    To accept, reply with <strong style="color: #ffffff;">"approved"</strong> and we will send the deposit invoice within the hour. The deposit is $1,000: balance due on launch day. Site goes live within 3 weeks of deposit clearing.
   </p>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    Questions? Text or call — (512) 967-2787. We will be in touch.
+    Questions? Text or call: (512) 967-2787. We will be in touch.
   </p>
 
   <hr style="${EMAIL_STYLES.divider}">

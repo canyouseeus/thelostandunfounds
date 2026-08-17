@@ -2,12 +2,12 @@
 --
 -- Two complementary passes:
 --
--- 1) GPS check — drop a (photo, venue) tag when the photo has GPS and that
+-- 1) GPS check: drop a (photo, venue) tag when the photo has GPS and that
 --    GPS is outside the venue's radius (default 75m, or per-venue override).
 --    Catches the dramatically wrong cases (e.g. photos tagged "Electric
 --    Church" but shot 2km away from the church).
 --
--- 2) Folder check — drop a venue tag when the photo lives in a Drive folder
+-- 2) Folder check: drop a venue tag when the photo lives in a Drive folder
 --    whose name token-matches a *different* venue. Folder name is recorded
 --    as the photo's 'collection' tag during sync. This catches photos shot
 --    at venue B whose GPS happens to fall inside venue A's radius (dense
@@ -47,7 +47,7 @@ WHERE pt.photo_id = gw.photo_id AND pt.tag_id = gw.tag_id;
 -- For each (photo, venue) pair: keep it if the photo has *any* collection
 -- tag whose name shares a significant word (>=4 chars) with the venue
 -- name. Otherwise, only drop it when the photo has another venue tag that
--- *does* match a collection tag — that means we're confident which venue
+-- *does* match a collection tag: that means we're confident which venue
 -- the photo belongs to, and the unmatched ones are wrong.
 WITH venue_words AS (
   SELECT id, name,
@@ -87,7 +87,7 @@ folder_wrong AS (
           WHERE m.photo_id = pt.photo_id AND m.tag_id = pt.tag_id
         )
     AND EXISTS (
-          -- photo has some other venue tag that matched a collection — so
+          -- photo has some other venue tag that matched a collection, so
           -- we know which venue this photo really belongs to
           SELECT 1 FROM photo_venue_match m2
           WHERE m2.photo_id = pt.photo_id

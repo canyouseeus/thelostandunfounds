@@ -21,7 +21,7 @@ export interface AffiliateProduct {
   id: string;
   title: string;
   type: ProductType;
-  price: number;           // retail price (USD) — lowest tier or base price
+  price: number;           // retail price (USD): lowest tier or base price
   profit: number;          // estimated profit per sale after costs
   image?: string;
   url: string;             // relative path e.g. /shop/poster-1
@@ -164,7 +164,7 @@ function ProductCard({
           </div>
         )}
 
-        {/* Bundle pricing tiers — gallery only */}
+        {/* Bundle pricing tiers: gallery only */}
         {product.pricingTiers && product.pricingTiers.length > 1 && (
           <div className="mb-3 space-y-px">
             {product.pricingTiers.map((tier) => {
@@ -464,7 +464,7 @@ export default function DeepLinkGenerator({
                   affiliateCode={affiliateCode}
                   onLinkGenerated={(link) => {
                     setGeneratedLink(link);
-                    // Don't switch tabs — just show confirmation in place
+                    // Don't switch tabs, just show confirmation in place
                   }}
                 />
               ))}

@@ -8,7 +8,7 @@ import { sendAffiliateEmail } from './_emails.js';
  * Stripe onboarding reminders.
  *
  * Sweeps every active affiliate who signed up but never finished Stripe
- * Connect onboarding — they cannot be paid until they do — and emails them a
+ * Connect onboarding, they cannot be paid until they do, and emails them a
  * one-click resume link.
  *
  * Cadence, per affiliate:
@@ -17,7 +17,7 @@ import { sendAffiliateEmail } from './_emails.js';
  *   - at most MAX_REMINDERS in total, then we stop and leave them alone
  *
  * Sends are recorded in affiliate_email_log with reference_id
- * `stripe_reminder_<n>`, which is also what enforces the cap and the cooldown —
+ * `stripe_reminder_<n>`, which is also what enforces the cap and the cooldown,
  * so a double-fire of the cron cannot double-send.
  *
  * POST body (all optional):
@@ -108,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ---- preview mode: render the real template to one address, log nothing ----
   if (testEmail) {
     // Render from the recipient's own affiliate row when they have one. The
-    // preview's button is a live link — pointing it at someone else's account
+    // preview's button is a live link; pointing it at someone else's account
     // would create *their* Stripe account when the previewer clicks it.
     let sample: { id: string; code: string | null; affiliate_code: string | null; first_name: string | null } | null = null;
 
@@ -228,7 +228,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (logErr) {
         // Failing open here would let a DB blip mail everyone repeatedly.
         skipped++;
-        note('log lookup failed — skipping to avoid duplicate sends', { error: logErr.message });
+        note('log lookup failed: skipping to avoid duplicate sends', { error: logErr.message });
         continue;
       }
 

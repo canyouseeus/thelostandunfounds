@@ -47,7 +47,7 @@ export default function BlogGettingStarted() {
                 Pure writing and personal expression. Essays, reflections, stories, and philosophical or cultural commentary.
               </p>
               <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 6–8 paragraphs • <strong>Affiliates:</strong> None
+                <strong>Structure:</strong> 6-8 paragraphs • <strong>Affiliates:</strong> None
               </p>
             </div>
 
@@ -57,7 +57,7 @@ export default function BlogGettingStarted() {
                 Curated reading experiences. Share insights on books and how they've shaped your thinking.
               </p>
               <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 books per post • <strong>Affiliates:</strong> Amazon books required
+                <strong>Structure:</strong> 4-8 books per post • <strong>Affiliates:</strong> Amazon books required
               </p>
             </div>
 
@@ -77,7 +77,7 @@ export default function BlogGettingStarted() {
                 Travel experiences and practical adventure insights. Stories of journeys, what you brought, and lessons learned.
               </p>
               <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 items per post • <strong>Affiliates:</strong> Amazon/travel/Bitcoin required
+                <strong>Structure:</strong> 4-8 items per post • <strong>Affiliates:</strong> Amazon/travel/Bitcoin required
               </p>
             </div>
 
@@ -87,7 +87,7 @@ export default function BlogGettingStarted() {
                 Deep dives into scientific concepts and discoveries. Physics, quantum theory, biology, emerging sciences.
               </p>
               <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 6–8 paragraphs (flexible) • <strong>Affiliates:</strong> None
+                <strong>Structure:</strong> 6-8 paragraphs (flexible) • <strong>Affiliates:</strong> None
               </p>
             </div>
 
@@ -97,7 +97,7 @@ export default function BlogGettingStarted() {
                 Practical application of technology and systems thinking in everyday life. Nutrition, household systems, habits, DIY experiments.
               </p>
               <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 items or 6–8 paragraphs • <strong>Affiliates:</strong> Optional (gear/tools)
+                <strong>Structure:</strong> 4-8 items or 6-8 paragraphs • <strong>Affiliates:</strong> Optional (gear/tools)
               </p>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function BlogGettingStarted() {
               <li>Select items that are listed on Amazon (or relevant retailers for travel/adventure items).</li>
             </ul>
             <p className="text-white/60 text-sm mt-4 italic">
-              Note: Main Blog and MAD SCIENTISTS don't use affiliate links—focus purely on ideas and knowledge.
+              Note: Main Blog and MAD SCIENTISTS don't use affiliate links, focus purely on ideas and knowledge.
             </p>
           </div>
         </div>
@@ -224,7 +224,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-3">GearHeads</h4>
               <p className="text-white/90 font-medium mb-4">
-                Share <span className="text-yellow-400">1–8 products</span> with Amazon affiliate links, focusing on how items combine to create experiences.
+                Share <span className="text-yellow-400">1-8 products</span> with Amazon affiliate links, focusing on how items combine to create experiences.
               </p>
               <p className="text-white/80 text-sm">
                 Focus on workflows, hobbies, lifestyle practices, and how gear choices influence outcomes.
@@ -234,7 +234,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-3">Edge of the Borderlands</h4>
               <p className="text-white/90 font-medium mb-4">
-                Share <span className="text-yellow-400">4–8 items</span> (gear, tools, services) with affiliate links, combined with travel narratives.
+                Share <span className="text-yellow-400">4-8 items</span> (gear, tools, services) with affiliate links, combined with travel narratives.
               </p>
               <p className="text-white/80 text-sm">
                 Blend stories of journeys with practical recommendations for tools, services, or resources used during travel.
@@ -244,7 +244,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-3">Main Blog & MAD SCIENTISTS</h4>
               <p className="text-white/90 font-medium mb-4">
-                Pure writing format: <span className="text-yellow-400">6–8 paragraphs</span> of thoughtful content.
+                Pure writing format: <span className="text-yellow-400">6-8 paragraphs</span> of thoughtful content.
               </p>
               <p className="text-white/80 text-sm">
                 No affiliate links required. Focus on ideas, insights, and knowledge sharing.
@@ -254,7 +254,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-3">NEW THEORY</h4>
               <p className="text-white/90 font-medium mb-4">
-                Flexible format: <span className="text-yellow-400">4–8 items</span> (collection) or <span className="text-yellow-400">6–8 paragraphs</span> (narrative).
+                Flexible format: <span className="text-yellow-400">4-8 items</span> (collection) or <span className="text-yellow-400">6-8 paragraphs</span> (narrative).
               </p>
               <p className="text-white/80 text-sm">
                 Affiliate links are optional. Focus on practical applications of science and systems thinking in daily life.
@@ -336,7 +336,7 @@ export default function BlogGettingStarted() {
                 <li>Decide how your voice should come across: reflective, conversational, analytical, etc.</li>
                 <li>Use the pre-crafted AI prompt as a starting point.</li>
                 <li>Iteratively refine instructions, working with AI to rewrite sections to match your style.</li>
-                <li className="italic text-white/50 mt-2">Example: "This paragraph is too wordy—simplify it." or "Make this reflection sound more like I would say it."</li>
+                <li className="italic text-white/50 mt-2">Example: "This paragraph is too wordy, simplify it." or "Make this reflection sound more like I would say it."</li>
               </ul>
             </div>
 
@@ -389,7 +389,7 @@ export default function BlogGettingStarted() {
               <li>Iterate: revise drafts repeatedly until they express your ideas precisely.</li>
               <li>Challenge AI outputs: ask it to improve phrasing, clarify ideas, or add depth.</li>
               <li>Add actionable insights: show readers how to apply lessons.</li>
-              <li>Sometimes, traditional research or reading methods are necessary—don't skip foundational work in favor of AI shortcuts.</li>
+              <li>Sometimes, traditional research or reading methods are necessary, don't skip foundational work in favor of AI shortcuts.</li>
             </ul>
           </div>
 
@@ -442,10 +442,10 @@ export default function BlogGettingStarted() {
                 No. You can reference key passages, chapters, or ideas that resonate with you. Sometimes a single passage provides enough insight for reflection.
               </p>
               <p className="text-white/70 text-sm mb-2">
-                Yes, deeper reading helps. Reading a book fully—or multiple times—allows stronger analysis and greater authority.
+                Yes, deeper reading helps. Reading a book fully, or multiple times, allows stronger analysis and greater authority.
               </p>
               <p className="text-white/70 text-sm">
-                Audiobooks are fine. How you consume the material—print, digital, or audio—is up to you.
+                Audiobooks are fine. How you consume the material, print, digital, or audio, is up to you.
               </p>
             </div>
 

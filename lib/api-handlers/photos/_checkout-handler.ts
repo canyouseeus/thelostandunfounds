@@ -118,7 +118,7 @@ export default async function handler(
       return res.status(500).json({ error: 'Unable to compute a valid price' })
     }
 
-    const description = `${library.name} — ${count} photo${count === 1 ? '' : 's'}`
+    const description = `${library.name}: ${count} photo${count === 1 ? '' : 's'}`
 
     if (paymentMethod === 'stripe') {
       return await createStripeCheckout({

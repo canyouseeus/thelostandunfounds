@@ -3,7 +3,7 @@
  *
  * Streams the branded contract PDF with signature blocks and the certificate
  * of completion. The token stored on the contract row guards the endpoint so
- * contracts are not enumerable. Regenerated per request — nothing is stored.
+ * contracts are not enumerable. Regenerated per request: nothing is stored.
  */
 
 import * as dotenv from 'dotenv'

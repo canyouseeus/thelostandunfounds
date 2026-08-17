@@ -63,7 +63,7 @@ The system uses intelligent fuzzy matching to find book titles in text, handling
 
 2. **Punctuation Variations**
    - Apostrophes: "Ender's Game" matches "Ender's Game" or "Ender's Game"
-   - Hyphens: "T-Shirt" matches "T-Shirt" or "T—Shirt"
+   - Hyphens: "T-Shirt" matches "T-Shirt" or "T, Shirt"
    - Commas: "The Lion, the Witch and the Wardrobe" matches with or without comma spacing
 
 3. **Word Order**

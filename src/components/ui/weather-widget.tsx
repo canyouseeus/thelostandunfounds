@@ -24,7 +24,7 @@ import {
 const round = (n: number) => Math.round(n);
 
 /**
- * Condition glyphs are emoji, which most platforms render in full colour —
+ * Condition glyphs are emoji, which most platforms render in full colour;
  * `grayscale` holds them to the monochrome palette the dashboard is built on.
  */
 const GLYPH = 'grayscale';
@@ -58,7 +58,7 @@ function LocationPicker({ onPick }: { onPick: (p: WeatherPlace) => void }) {
       try {
         setResults(await searchPlaces(query, ctrl.signal));
       } catch {
-        /* aborted or offline — leave the previous results in place */
+        /* aborted or offline: leave the previous results in place */
       }
     }, 250);
     return () => { window.clearTimeout(t); ctrl.abort(); };
@@ -156,14 +156,14 @@ function WeatherDetail({
               <h2 className="text-2xl font-black uppercase tracking-widest text-white pr-10">{data.place.name}</h2>
               <p className="mt-1 text-[11px] uppercase tracking-widest text-white/40">
                 {[data.place.admin, data.place.country].filter(Boolean).join(', ')}
-                {isDefault && ' — Default'}
+                {isDefault && ': Default'}
               </p>
               <div className="mt-6 flex items-end gap-4">
                 <span className={cn('text-6xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
                 <span className="text-6xl font-black leading-none text-white tabular-nums">{round(data.current.temperature)}°</span>
               </div>
               <p className="mt-3 text-sm font-bold uppercase tracking-widest text-white/70">
-                {conditionLabel(data.current.code)} — H {round(data.today.max)}° L {round(data.today.min)}°
+                {conditionLabel(data.current.code)}: H {round(data.today.max)}° L {round(data.today.min)}°
               </p>
             </div>
 
@@ -266,12 +266,12 @@ function WeatherDetail({
 
 /**
  * Dashboard weather tile. Sits in the widget row alongside the clock and
- * calendar; a long press (touch) or a click (mouse) opens the full sheet —
+ * calendar; a long press (touch) or a click (mouse) opens the full sheet;
  * hourly strip, 7-day forecast, air quality and the rest of the conditions.
  */
 export function WeatherWidget({ className, size = '2x2' }: { className?: string; size?: string }) {
   // Two separate ideas: the city the dashboard opens on, and the city you're
-  // currently looking at. Searching only moves the second one — the first
+  // currently looking at. Searching only moves the second one; the first
   // changes when you pin it.
   const [savedDefault, setSavedDefault] = useState<WeatherPlace | null>(() => loadSavedPlace());
   const [place, setPlace] = useState<WeatherPlace>(() => loadSavedPlace() ?? DEFAULT_PLACE);
@@ -296,7 +296,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
 
   // With no city explicitly chosen, follow the device. Austin is only the
   // fallback for a denied prompt, a timeout, or a browser with no location
-  // service — it shows immediately either way, so the tile is never blank
+  // service: it shows immediately either way, so the tile is never blank
   // while the fix is pending. A geolocated place isn't saved: saving is for
   // deliberate choices, and persisting a fix would pin the widget to wherever
   // you happened to be the first time it loaded.
@@ -308,7 +308,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
         const located = await describeCoords(pos.coords.latitude, pos.coords.longitude);
         if (alive) setPlace(located);
       },
-      () => { /* denied or unavailable — the default city stands */ },
+      () => { /* denied or unavailable: the default city stands */ },
       { timeout: 10_000, maximumAge: 900_000 },
     );
     return () => { alive = false; };
@@ -345,7 +345,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="Weather — open detailed forecast"
+        aria-label="Weather: open detailed forecast"
         className={cn(
           'relative bg-black flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -354,7 +354,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
         // `cq*` units below. Every dimension inside this widget is a percentage
         // of the tile's own shorter edge, so a 2x1 looks the same on a phone
         // (173x80.5) as on desktop (264x120) even though those are not the same
-        // aspect ratio — which is why FitBox, with its single fixed ratio, can
+        // aspect ratio: which is why FitBox, with its single fixed ratio, can
         // only serve the square-only widgets.
         // No padding here on purpose: `cq*` units resolve against the nearest
         // *ancestor* container, so a `cqmin` padding on the container itself
@@ -367,7 +367,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        {/* Ambient conditions, full-bleed behind the padding — but only where
+        {/* Ambient conditions, full-bleed behind the padding, but only where
             the tile is big enough for weather to read as weather. Below a
             four-unit edge the cloud and fog bands lose their softness and come
             out as grey bars behind the readout, so the effect is skipped
@@ -377,7 +377,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
         )}
 
         {/* Absolutely-positioned siblings paint over static in-flow content, so
-            the readout is positioned too — otherwise the canvas covers it. */}
+            the readout is positioned too: otherwise the canvas covers it. */}
         <div className="relative flex-1 min-h-0 flex flex-col" style={{ padding: '7cqmin' }}>
         {error ? (
           <div className="flex-1 min-h-0 flex items-center">
@@ -392,10 +392,10 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
             </span>
           </div>
         ) : (cols === 1 && rows === 1) || (cols === 2 && rows === 2) ? (
-          /* 1x1 and 2x2 — the diagonal face (variation F): the glyph big in
+          /* 1x1 and 2x2: the diagonal face (variation F): the glyph big in
              the top-right, city and temperature anchored bottom-left, the two
              masses holding opposite corners. The same cqmin percentages serve
-             both, so the 2x2 is the 1x1 exactly doubled — with the condition
+             both, so the 2x2 is the 1x1 exactly doubled, with the condition
              animation running behind it, which the 1x1 skips. */
           <div className="flex-1 min-h-0 relative">
             <span
@@ -458,8 +458,8 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
           </div>
         ) : cols === 1 ? (
           /* One unit wide. The reading holds the top; the rest of the height
-             goes to forecast — two day rows for the 1x2, five stacked
-             mini-cards for the 1x4 — so the column fills instead of leaving
+             goes to forecast: two day rows for the 1x2, five stacked
+             mini-cards for the 1x4, so the column fills instead of leaving
              its lower half dead. */
           <div className="flex-1 min-h-0 flex flex-col justify-between text-left">
             <div className="flex flex-col" style={{ gap: '3cqmin' }}>
@@ -524,7 +524,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
             )}
             style={{ gap: `${8 * S}cqmin` }}
           >
-            {/* Current conditions — the part every size above 1x1 shows. */}
+            {/* Current conditions: the part every size above 1x1 shows. */}
             <div className={cn('flex flex-col text-left shrink-0', cols >= 4 && rows === 2 ? 'w-1/3 justify-center' : 'justify-start')}>
               <div className={cn('leading-none', GLYPH)} style={{ fontSize: `${14 * S}cqmin` }}>
                 {conditionGlyph(data.current.code, data.current.isDay)}
@@ -545,7 +545,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
                 className="uppercase tracking-widest text-white/40 truncate"
                 style={{ fontSize: `${4.8 * S}cqmin`, lineHeight: 1.3 }}
               >
-                {conditionLabel(data.current.code)} — H {round(data.today.max)}° L {round(data.today.min)}°
+                {conditionLabel(data.current.code)}: H {round(data.today.max)}° L {round(data.today.min)}°
               </div>
             </div>
 
@@ -583,7 +583,7 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
 
             {/* Tall tiles spend everything below the hours on six days, each
                 with a temperature range bar placed on the week's shared scale
-                — Apple's large-widget device. The list is flex-1/justify-evenly
+                Apple's large-widget device. The list is flex-1/justify-evenly
                 so it stretches to the tile's floor instead of leaving the
                 bottom half dead. */}
             {rows >= 4 && (() => {

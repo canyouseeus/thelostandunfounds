@@ -7,7 +7,7 @@ import { conflictsWithBuffer } from '../../../lib/booking-buffer';
  * Express booking for a client we already have on file.
  *
  * A returning client sent a personal booking link should not be walked through
- * the five-step wizard asking their name, business and service — we hold all of
+ * the five-step wizard asking their name, business and service; we hold all of
  * that in the CRM. This modal greets them by name and asks only what we cannot
  * know: when, where, and how to get into the unit. Submitting generates the
  * invoice and Stripe deposit link straight away.
@@ -21,11 +21,11 @@ interface Client { id: string; name: string; email: string; business?: string | 
 interface TimeSlot { label: string; start: string; end: string; display: string }
 
 const TIME_SLOTS: TimeSlot[] = [
-    { label: 'Early Morning', start: '06:00', end: '08:00', display: '6AM – 8AM' },
-    { label: 'Morning', start: '09:00', end: '12:00', display: '9AM – 12PM' },
-    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
-    { label: 'Evening', start: '17:00', end: '20:00', display: '5PM – 8PM' },
-    { label: 'Night', start: '20:00', end: '23:00', display: '8PM – 11PM' },
+    { label: 'Early Morning', start: '06:00', end: '08:00', display: '6AM; 8AM' },
+    { label: 'Morning', start: '09:00', end: '12:00', display: '9AM; 12PM' },
+    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM; 5PM' },
+    { label: 'Evening', start: '17:00', end: '20:00', display: '5PM; 8PM' },
+    { label: 'Night', start: '20:00', end: '23:00', display: '8PM, 11PM' },
 ];
 
 const BEDROOM_OPTIONS = [
@@ -208,7 +208,7 @@ export default function ExpressBookingModal({
                         {!loading && !loadError && done && (
                             <div>
                                 <p className="text-white text-sm leading-relaxed mb-4">
-                                    Thanks {client?.name?.split(' ')[0]} — your shoot is booked and
+                                    Thanks {client?.name?.split(' ')[0]}; your shoot is booked and
                                     {done.invoiceNumber ? ` invoice ${done.invoiceNumber}` : ' your invoice'} is on its way
                                     to {client?.email}.
                                 </p>
@@ -231,7 +231,7 @@ export default function ExpressBookingModal({
                         {!loading && !loadError && !done && (
                             <>
                                 <p className="text-white/60 text-sm leading-relaxed mb-6">
-                                    Thanks for booking again. We have your details on file — just add
+                                    Thanks for booking again. We have your details on file, just add
                                     the last few things and we'll generate your invoice.
                                 </p>
 
@@ -284,7 +284,7 @@ export default function ExpressBookingModal({
                                         <p className="text-white text-sm font-bold mb-1">What time?</p>
                                         <p className="text-white/40 text-xs mb-3">
                                             {openSlots.length === 0
-                                                ? 'Nothing open on that day — try another.'
+                                                ? 'Nothing open on that day: try another.'
                                                 : 'These are the windows we can cover.'}
                                         </p>
                                         <div className="grid grid-cols-1 gap-2">

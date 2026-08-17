@@ -14,7 +14,7 @@ interface CalendarWidgetProps {
     /**
      * 'default' (≈240px column, used in date pickers and sidebars),
      * 'large' (scales up at md/lg breakpoints, for full-width admin master calendar), or
-     * 'fill' (fixed metrics tuned to fill a 440px square — the dashboard tile,
+     * 'fill' (fixed metrics tuned to fill a 440px square; the dashboard tile,
      * which renders inside a FitBox and is scaled to the cell afterwards, so
      * absolute px here are a design size rather than a screen size).
      */

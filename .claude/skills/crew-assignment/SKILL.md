@@ -5,7 +5,7 @@ description: Where a photographer's assignment to a shoot actually lives, how th
 
 # Crew Assignment & Payouts
 
-## RULE 1 — Assignment lives on the INVOICE, not the booking
+## RULE 1: Assignment lives on the INVOICE, not the booking
 
 `bookings` has **no** photographer column. None. Checking there and finding
 nothing means you looked in the wrong place, not that nobody is assigned.
@@ -22,7 +22,7 @@ Corroborated by a row in `crew_payouts` pointing at that invoice.
 
 This was gotten wrong in front of the owner: the booking record was read, no
 photographer field was found, and he was told the photographer "still doesn't
-know about Thursday" — twice. The photographer was assigned the whole time.
+know about Thursday": twice. The photographer was assigned the whole time.
 
 ```sql
 -- What "is this shoot assigned?" actually looks like
@@ -33,14 +33,14 @@ select i.invoice_number, i.contractor_name, i.contractor_payout,
  where i.booking_id = '<booking-id>';
 ```
 
-## RULE 2 — Nothing records whether the photographer was NOTIFIED
+## RULE 2: Nothing records whether the photographer was NOTIFIED
 
 There is no email log for crew notifications. Not in `activity_logs`, not in
-`admin_notifications` — that was checked; the tables exist for other things.
+`admin_notifications`: that was checked; the tables exist for other things.
 
 So the honest answer to "does he know?" is one of:
 
-- **"Yes — here is the sent email"**, having found it in Zoho's Sent folder, or
+- **"Yes: here is the sent email"**, having found it in Zoho's Sent folder, or
 - **"I can't tell from here."**
 
 **Never** assert that someone has not been notified. Absence of a record is not
@@ -59,7 +59,7 @@ curl -sS "$SITE/api/mail/messages?folderId=<sent-id>&limit=60" \
 Bear in mind the list view does **not** reliably populate `ccAddress`, so a
 notification sent as a CC can be invisible here. Not finding it proves nothing.
 
-## RULE 3 — Which endpoints notify, and which do not
+## RULE 3: Which endpoints notify, and which do not
 
 | Path | Creates booking | Assigns contractor | Emails photographer |
 |---|---|---|---|
@@ -68,10 +68,10 @@ notification sent as a CC can be invisible here. Not finding it proves nothing.
 | `create-final-invoice` | no | carries forward | no |
 
 A negotiated quote produces a fully assigned, fully payable job with no email
-to the person shooting it. That is worth saying out loud when raising one —
+to the person shooting it. That is worth saying out loud when raising one,
 but say it as "this path does not send one", not as "he has not been told".
 
-## RULE 4 — The split is 80/20, and the deposit pays out proportionally
+## RULE 4: The split is 80/20, and the deposit pays out proportionally
 
 The house takes **20%** for booking the session; the photographer keeps **80%**.
 This applies to every photography subcontractor, not just one.
@@ -89,7 +89,7 @@ Balance $75 collected → payout row $60
 `crew_payouts` rows hold what is actually being moved now ($60). They are
 different numbers on purpose; do not "correct" one to match the other.
 
-## RULE 5 — A pending payout is usually Stripe settlement, not a bug
+## RULE 5: A pending payout is usually Stripe settlement, not a bug
 
 `crew_payouts.available_at` is the settlement hold, roughly two days after the
 charge. The cron at `/api/cron/crew-payouts` runs **hourly** and pays anything
@@ -111,10 +111,10 @@ Reading the result:
 | `no_connected_account` | The photographer has no Stripe Connect account. Real blocker. |
 | `payouts_not_enabled` | Connect account exists but is not cleared to receive. Real blocker. |
 
-Passing `payoutId` **overrides the hold** — an admin choosing to release early.
+Passing `payoutId` **overrides the hold**: an admin choosing to release early.
 It cannot conjure funds: if the balance is short it still skips.
 
-## RULE 6 — Quote times and payout times in CENTRAL, always
+## RULE 6: Quote times and payout times in CENTRAL, always
 
 The owner operates in Austin. `available_at` is stored UTC and reporting it
 that way has been explicitly rejected. Convert before it reaches him:
@@ -132,9 +132,9 @@ Same for shoot times: a booking stored as `19:00` is 7:00 PM to everyone
 involved, and an AM/PM ambiguity in a request is worth one question rather
 than a wrong photographer call time.
 
-## RULE 7 — Zoho's mail API rate-limits, and then nothing works
+## RULE 7: Zoho's mail API rate-limits, and then nothing works
 
 Repeated calls earn `You have made too many requests continuously`, and the
-token refresh itself starts failing — so mail reads AND sends break together.
+token refresh itself starts failing, so mail reads AND sends break together.
 Poll it once, not in a loop. If it is already limited, stop calling and say so;
 it clears on its own.

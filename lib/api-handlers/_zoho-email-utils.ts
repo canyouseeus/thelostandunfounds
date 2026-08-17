@@ -15,7 +15,7 @@ export interface ZohoAuthContext {
 /**
  * Attachment descriptor used by sendZohoEmail. Either supply a file already
  * uploaded via Zoho's attachment store (storeName/attachmentPath/attachmentName
- * from `uploadZohoAttachment`) — or supply raw bytes plus filename/mimeType
+ * from `uploadZohoAttachment`), or supply raw bytes plus filename/mimeType
  * and sendZohoEmail will upload it for you.
  */
 export interface ZohoEmailAttachment {
@@ -23,7 +23,7 @@ export interface ZohoEmailAttachment {
   storeName?: string
   attachmentPath?: string
   attachmentName?: string
-  /** Raw file data — used when storeName/attachmentPath are not provided. */
+  /** Raw file data: used when storeName/attachmentPath are not provided. */
   data?: Buffer | Uint8Array
   fileName?: string
   mimeType?: string
@@ -42,7 +42,7 @@ export interface ZohoSendEmailParams {
   cc?: string
   /**
    * Visible sender. Defaults to the OAuth account's own address (admin@), which
-   * is right for platform notices and wrong for business correspondence — a
+   * is right for platform notices and wrong for business correspondence; a
    * client or contractor replying to a booking thread should land on media@,
    * the address of record. Must be an address the Zoho account is allowed to
    * send as, or Zoho rejects the message.
@@ -68,7 +68,7 @@ const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token'
 const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts'
 // Inline SVG banner to avoid remote fetch failures in email clients
 const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
-// Domains/paths used by the standard email template banner — if any are present
+// Domains/paths used by the standard email template banner, if any are present
 // the email is already branded and ensureBannerHtml should not inject again.
 const BRAND_LOGO_DOMAINS = [
   'nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/',
@@ -263,7 +263,7 @@ export async function uploadZohoAttachment(
   fileName: string,
   mimeType: string = 'application/octet-stream'
 ): Promise<ZohoUploadedAttachment> {
-  // Zoho's "Method 1" multipart upload — more permissive than the raw-binary
+  // Zoho's "Method 1" multipart upload: more permissive than the raw-binary
   // variant (which can return HTTP 415 depending on the file/runtime). FormData
   // sets the multipart Content-Type + boundary automatically.
   const url = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages/attachments?uploadType=multipart&isInline=false`

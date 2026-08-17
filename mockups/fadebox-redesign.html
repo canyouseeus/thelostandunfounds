@@ -1,4 +1,4 @@
-<title>Fadebox — Redesign Mockup</title>
+<title>Fadebox: Redesign Mockup</title>
 <style>
   /* ============ TOKENS ============ */
   :root{
@@ -296,7 +296,7 @@
     <div class="sec-head">
       <span class="eyebrow">Reserve your chair</span>
       <h2 class="display">Barber first.<br>Everything else follows.</h2>
-      <p>You come for your barber, not just any open chair. So that's where we start — pick your studio, choose your barber, then lock a service and time. Booked in under a minute.</p>
+      <p>You come for your barber, not just any open chair. So that's where we start: pick your studio, choose your barber, then lock a service and time. Booked in under a minute.</p>
     </div>
 
     <div class="booking-shell">
@@ -307,7 +307,7 @@
       </div>
       <!-- STEP 2: BARBER -->
       <div class="step">
-        <div class="step-label"><span class="step-num mono">2</span><span class="step-title">Pick your barber</span><span class="step-hint" id="barberHint">—</span></div>
+        <div class="step-label"><span class="step-num mono">2</span><span class="step-title">Pick your barber</span><span class="step-hint" id="barberHint">; </span></div>
         <div class="barber-grid" id="barberGrid"></div>
       </div>
       <!-- STEP 3: SERVICE -->
@@ -325,7 +325,7 @@
       <div class="summary" id="summary">
         <div class="sum-txt" id="sumTxt"><b>Start above</b><br><span class="muted">Pick a studio to begin.</span></div>
         <div class="sum-cta">
-          <span class="price-big" id="sumPrice">—</span>
+          <span class="price-big" id="sumPrice">; </span>
           <button class="btn-confirm" id="confirmBtn" disabled>Confirm booking</button>
         </div>
       </div>
@@ -351,7 +351,7 @@
     <div class="why-grid">
       <div class="why-cell"><div class="n">4.6★</div><div class="l">Google rating</div><div class="x">Averaged across 78 reviews and climbing every week.</div></div>
       <div class="why-cell"><div class="n">78+</div><div class="l">Five-star reviews</div><div class="x">From first-timers to regulars who've been in the chair for years.</div></div>
-      <div class="why-cell"><div class="n">4</div><div class="l">Studios across Austin</div><div class="x">Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.</div></div>
+      <div class="why-cell"><div class="n">4</div><div class="l">Studios across Austin</div><div class="x">Triangle, Off-5th, Box Boyz & Studio, with San Antonio coming soon.</div></div>
       <div class="why-cell"><div class="n">26</div><div class="l">Barbers to choose from</div><div class="x">Every specialty covered, from skin fades to beard sculpts.</div></div>
     </div>
   </div>
@@ -363,7 +363,7 @@
     <div class="sec-head">
       <span class="eyebrow">The menu</span>
       <h2 class="display">Clean list.<br>No surprises.</h2>
-      <p>Every service, every price, up front. What you see is what you pay at the chair — no surprises.</p>
+      <p>Every service, every price, up front. What you see is what you pay at the chair; no surprises.</p>
     </div>
     <div class="svc-list" id="menuList"></div>
   </div>
@@ -410,7 +410,7 @@
   </div>
 </footer>
 
-<div class="mock-ribbon">Preview — bookings aren't live yet</div>
+<div class="mock-ribbon">Preview: bookings aren't live yet</div>
 
 <div class="toast" id="toast">
   <div class="tk">✓</div>
@@ -454,10 +454,10 @@
     ["Attention to detail is unreal. Every fade is razor sharp.","Tony G.","5"],
     ["These guys are true professionals. Never a rushed cut.","Sam K.","5"],
     ["Found my barber for life. Ralphh does textured crops perfectly.","Luis F.","5"],
-    ["Hospitality first, skill second — and the skill is elite.","Jordan P.","5"],
+    ["Hospitality first, skill second, and the skill is elite.","Jordan P.","5"],
     ["On time, on point, every single visit. Worth the drive.","Nate B.","5"],
     ["Beard sculpt with the hot towel is a whole experience.","Omar D.","5"],
-    ["The vibe, the cuts, the crew — Fadebox is the standard.","Eli V.","5"]
+    ["The vibe, the cuts, the crew; Fadebox is the standard.","Eli V.","5"]
   ];
 
   var $ = function(id){return document.getElementById(id);};
@@ -494,7 +494,7 @@
     return '<button class="studio-tab" role="tab" data-i="'+i+'" aria-selected="false">'+
       '<span class="sn">'+s.name+'</span><span class="sa">'+s.addr+'</span></button>';
   }).join("") +
-    '<div class="studio-tab" aria-disabled="true" title="San Antonio — coming soon" style="cursor:not-allowed;background:transparent;box-shadow:inset 0 0 0 1px var(--hair);text-align:center">'+
+    '<div class="studio-tab" aria-disabled="true" title="San Antonio; coming soon" style="cursor:not-allowed;background:transparent;box-shadow:inset 0 0 0 1px var(--hair);text-align:center">'+
       '<span class="sn" style="color:var(--ink-faint)">San Antonio</span>'+
       '<span class="sa">Coming soon</span></div>';
 
@@ -609,7 +609,7 @@
   $("confirmBtn").addEventListener("click",function(){
     if(this.disabled) return;
     var st=STUDIOS[state.studio], bn=st.barbers[state.barber][0], sv=SERVICES[state.service], day=DAYS[state.day].label;
-    $("toastSub").textContent = sv.name+' with '+bn+' · '+day+' '+state.slot+' — confirmation on its way.';
+    $("toastSub").textContent = sv.name+' with '+bn+' · '+day+' '+state.slot+'; confirmation on its way.';
     toast.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer=setTimeout(function(){toast.classList.remove("show");},3800);

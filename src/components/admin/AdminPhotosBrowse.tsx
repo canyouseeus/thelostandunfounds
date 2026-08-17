@@ -116,7 +116,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
   const [filterDateTo, setFilterDateTo] = useState('');
   const [cameraModels, setCameraModels] = useState<string[]>([]);
 
-  // Console tray — which expandable card (if any) is open below the icon dock
+  // Console tray: which expandable card (if any) is open below the icon dock
   const [openCard, setOpenCard] = useState<'search' | 'filter' | 'library' | null>(null);
 
   // Batch selection
@@ -744,18 +744,18 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
       {dragRectStyle && <div style={dragRectStyle} />}
 
-      {/* Floating console tray — frosted glass like the public gallery's back-to-top button
+      {/* Floating console tray: frosted glass like the public gallery's back-to-top button
           (bg-white/10 backdrop-blur-md rounded-full), not a solid plate. Fixed at the bottom so
           it's reachable regardless of scroll position. See "Platform Console Tray" in the
           bento-design skill for the pattern this follows.
 
-          It rides at the bottom of the viewport, the way a phone app's nav bar does — a standing
+          It rides at the bottom of the viewport, the way a phone app's nav bar does. A standing
           bottom-24 put it a third of the way up an iPhone screen, where it read as floating in
           the middle of the page instead of as chrome. Two things can sit under it, so the offset
           is conditional rather than permanently raised for the worst case:
 
             · the MusicPlayer bar, fixed bottom-0 and 59px tall (h-0.5 progress + h-14 row +
-              border-t), present only under AdminLayout — and it is z-50 against this tray's
+              border-t), present only under AdminLayout, and it is z-50 against this tray's
               z-40, so it would cover the tray outright rather than merely crowd it;
             · the bulk batch bar, fixed bottom-6, only while a selection is live. bottom-24
               clears that one and the player bar together.

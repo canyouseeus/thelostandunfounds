@@ -2,12 +2,12 @@ import type { VercelRequest } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Crew payouts — money owed to someone who *worked* a booking.
+ * Crew payouts: money owed to someone who *worked* a booking.
  *
  * Deliberately separate from `affiliate_commissions`. An affiliate commission
  * is paid for sending business in; a crew payout is paid for doing the job.
  * Filing shoot pay as commission would put it on the affiliate leaderboard,
- * into the King Midas pot and onto the affiliate's lifetime earnings — three
+ * into the King Midas pot and onto the affiliate's lifetime earnings; three
  * numbers that are supposed to describe referral performance, not wages.
  *
  * The two do share one thing: the person's Stripe Connect account. Nobody
@@ -62,7 +62,7 @@ export function isCronAuthorized(req: VercelRequest): boolean {
  * Every crew route that hands back access to someone's money must prove who is
  * asking. The `x-admin-email` header the older admin routes use is
  * caller-supplied and cannot do that, so these routes verify the session token
- * with Supabase and look the contractor up from the returned user id only —
+ * with Supabase and look the contractor up from the returned user id only,
  * never from a request body a caller controls.
  */
 export async function resolveUserId(req: VercelRequest): Promise<string | null> {
@@ -71,7 +71,7 @@ export async function resolveUserId(req: VercelRequest): Promise<string | null> 
 }
 
 /**
- * The verified session behind a request — id, email, and whether that email has
+ * The verified session behind a request; id, email, and whether that email has
  * actually been confirmed.
  *
  * `resolveUserId` throws the last two away, which is fine when all you need is
@@ -106,7 +106,7 @@ export async function resolveIdentity(
  * `photographers.user_id` is only populated when somebody happened to be
  * invited through a flow that set it. In practice most of the roster was typed
  * in by the owner and the column is null, so a photographer who signs up later
- * — with the exact address the owner used — logs in and is told they are not on
+ *, with the exact address the owner used, logs in and is told they are not on
  * the roster. Their kit, their payouts and their calendar are all sitting there
  * under a row nothing connects them to.
  *
@@ -114,7 +114,7 @@ export async function resolveIdentity(
  * The match claims the row by writing `user_id`, which is what makes it a
  * one-time repair rather than a lookup that has to run forever.
  *
- * The claim is gated on a **verified** email for the obvious reason — an
+ * The claim is gated on a **verified** email for the obvious reason; an
  * unverified signup with somebody else's address would otherwise walk straight
  * into their earnings. It is also gated on the row being unclaimed: an existing
  * `user_id` is never overwritten, so this can't move a roster entry between
@@ -145,7 +145,7 @@ export async function resolveCrewMember(
     .maybeSingle();
   if (!byEmail) return null;
 
-  // Claim it. A failure here is not fatal — the caller still gets their row,
+  // Claim it. A failure here is not fatal; the caller still gets their row,
   // and the next request retries the link.
   const { error } = await supabase
     .from('photographers')
@@ -191,7 +191,7 @@ export const PHOTOGRAPHER_SELECT = 'id, name, email, user_id, stripe_account_id,
  * Find the Stripe Connect account to pay a contractor on.
  *
  * Prefers the id stored on `photographers`, then falls back to the affiliate
- * record for the same person — most of the crew signed up as affiliates first
+ * record for the same person: most of the crew signed up as affiliates first
  * and already finished Stripe onboarding there. Returns null (rather than
  * throwing) so a payout can be accrued and shown on their dashboard before
  * they have connected anything; the transfer is what needs the account, not
@@ -230,7 +230,7 @@ export async function resolveConnectAccount(
  * Accrue a contractor's share of a client payment.
  *
  * Called when an invoice payment is recorded. The contractor's cut is
- * proportional to how much of the invoice the client just paid — a 50% deposit
+ * proportional to how much of the invoice the client just paid; a 50% deposit
  * on a $300 job with a $240 contractor split accrues $120 now and $120 when the
  * balance lands. That mirrors how the money actually arrives, so we never owe
  * out more than has come in.
@@ -297,7 +297,7 @@ export async function accrueCrewPayout(
     invoice_payment_id: args.invoicePaymentId || null,
     booking_id: invoice.booking_id,
     description:
-      `${invoice.invoice_number || 'Invoice'} — ${invoice.description || 'photography job'}`.slice(0, 300),
+      `${invoice.invoice_number || 'Invoice'}: ${invoice.description || 'photography job'}`.slice(0, 300),
     amount,
     status: 'pending',
     available_at: availableAt.toISOString(),

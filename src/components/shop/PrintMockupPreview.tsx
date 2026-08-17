@@ -3,7 +3,7 @@
  * framed print on a wall) using admin-configured percentage bounds for
  * where the art sits within the template image. Prodigi's API has no
  * mockup-rendering endpoint, so this is done client-side with plain CSS
- * absolute positioning — no canvas needed since mockup templates are shot
+ * absolute positioning: no canvas needed since mockup templates are shot
  * straight-on (no perspective warp to correct for).
  *
  * Falls back to just showing the artwork when no template is configured.

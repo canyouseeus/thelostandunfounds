@@ -346,7 +346,7 @@ export default function BlogManagement() {
       return;
     }
     if (slugConflict) {
-      showError(`Slug already used by "${slugConflict.title}" — pick another`);
+      showError(`Slug already used by "${slugConflict.title}", pick another`);
       return;
     }
 
@@ -752,7 +752,7 @@ export default function BlogManagement() {
 
                 <div>
                   <label className="block text-white/80 text-xs uppercase tracking-wider mb-2 font-medium">
-                    Excerpt (optional — auto-generated if blank)
+                    Excerpt (optional: auto-generated if blank)
                   </label>
                   <textarea
                     value={formData.excerpt}
@@ -811,7 +811,7 @@ export default function BlogManagement() {
                       className={inputClass}
                     />
                     <p className="text-white/30 text-[10px] mt-2 tracking-tight text-left">
-                      Leave blank to stamp the current time on publish. Back-dating changes ordering only — posts go live as soon as they are published.
+                      Leave blank to stamp the current time on publish. Back-dating changes ordering only: posts go live as soon as they are published.
                     </p>
                   </div>
                 </div>
@@ -1026,7 +1026,7 @@ export default function BlogManagement() {
                 <option value="newest" className="bg-black">Newest</option>
                 <option value="oldest" className="bg-black">Oldest</option>
                 <option value="updated" className="bg-black">Recently edited</option>
-                <option value="title" className="bg-black">Title A–Z</option>
+                <option value="title" className="bg-black">Title A, Z</option>
               </select>
             </div>
           </div>
@@ -1073,7 +1073,7 @@ export default function BlogManagement() {
           <div id="lost-archives-posts" className="space-y-1">
             {visiblePosts.length === 0 ? (
               <p className="text-white/40 text-sm py-6 text-left">
-                {posts.length === 0 ? 'No posts yet — start one with NEW POST.' : 'No posts match these filters.'}
+                {posts.length === 0 ? 'No posts yet: start one with NEW POST.' : 'No posts match these filters.'}
               </p>
             ) : (
               visiblePosts.map((post) => (
@@ -1260,7 +1260,7 @@ export default function BlogManagement() {
                 ) : !analytics?.totals ? (
                   <p className="text-white/40 text-sm text-left">
                     No blog traffic recorded in this window yet. Views are collected on every article
-                    page load — figures appear here once readers arrive.
+                    page load: figures appear here once readers arrive.
                   </p>
                 ) : (
                   <>
@@ -1389,7 +1389,7 @@ export default function BlogManagement() {
 }
 
 /**
- * At-a-glance face for a management screen. Clicking it opens the full screen —
+ * At-a-glance face for a management screen. Clicking it opens the full screen;
  * it is a face, not a collapsible panel, so nothing expands in place.
  */
 function ConsoleTile({

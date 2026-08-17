@@ -236,7 +236,7 @@ export default function AdminUsersView({ users: allUsers, stats, onNavigateToSec
                               {user.tier.toUpperCase()}
                             </span>
 
-                            {/* Resource Badges (informational — open the card for actions) */}
+                            {/* Resource Badges (informational: open the card for actions) */}
                             {user.resources?.hasBlog && (
                               <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-tighter">
                                 <BookOpenIcon className="w-2.5 h-2.5" />

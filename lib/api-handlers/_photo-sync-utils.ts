@@ -243,12 +243,12 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
         created_at: finalCreatedAt,
         metadata,
     };
-    // Don't overwrite existing GPS/location with null — the migration backfill
+    // Don't overwrite existing GPS/location with null; the migration backfill
     // and retrograde rename may have set these from a more accurate source.
     if (latitude != null) payload.latitude = latitude;
     if (longitude != null) payload.longitude = longitude;
 
-    // Check for existing row first — the DB unique constraint may not yet be in place,
+    // Check for existing row first: the DB unique constraint may not yet be in place,
     // so we can't rely on onConflict alone. Manual check prevents duplicate insertions.
     const { data: existing } = await ctx.supabase
         .from('photos')
@@ -303,7 +303,7 @@ function parseLocationFromClaptropTitle(title: string | null | undefined): strin
 /**
  * Find every venue whose canonical coords are within radius of the photo's GPS.
  * Used as a fallback ONLY when the parent folder didn't already resolve to a
- * specific venue — folder is the authoritative signal.
+ * specific venue: folder is the authoritative signal.
  */
 async function applyPhotoLevelVenueTags(
     ctx: SyncCtx,
@@ -332,7 +332,7 @@ function photoSupportsFolderVenue(
     latitude: number | null,
     longitude: number | null,
 ): boolean {
-    if (latitude == null || longitude == null) return true; // no GPS — trust folder
+    if (latitude == null || longitude == null) return true; // no GPS; trust folder
     const dist = haversineMeters(latitude, longitude, venue.metadata.latitude, venue.metadata.longitude);
     const radius = venue.metadata.radius_meters || DEFAULT_VENUE_RADIUS_M;
     return dist <= radius * 2;
@@ -474,7 +474,7 @@ async function processFolder(
 
         // GPS-only venue tagging is a fallback for photos whose folder didn't
         // resolve to a venue (e.g. a generic "uploads" or year-named folder).
-        // Folder is the authoritative signal — when it identified a venue, we
+        // Folder is the authoritative signal, when it identified a venue, we
         // don't second-guess it with overlapping nearby venue radii.
         if (!folderVenue) {
             const perPhotoVenues = await applyPhotoLevelVenueTags(ctx, photoId, latitude, longitude);
@@ -542,7 +542,7 @@ function normalizePrivateKey(raw: string): string {
         const wrapped = (body.match(/.{1,64}/g) ?? []).join('\n');
         key = `-----BEGIN ${keyType}-----\n${wrapped}\n-----END ${keyType}-----`;
     } else {
-        // No markers at all — wrap the raw content as PKCS8
+        // No markers at all: wrap the raw content as PKCS8
         const body = key.replace(/\s+/g, '');
         const wrapped = (body.match(/.{1,64}/g) ?? []).join('\n');
         key = `-----BEGIN PRIVATE KEY-----\n${wrapped}\n-----END PRIVATE KEY-----`;
@@ -577,7 +577,7 @@ function resolveCreds(): ResolvedCreds {
         throw new Error('Missing Supabase credentials for sync');
     }
     // Google credentials are checked in buildDrive(), which can fall back to
-    // OAuth — demanding a service account here would rule that out.
+    // OAuth: demanding a service account here would rule that out.
     return { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_EMAIL, GOOGLE_KEY };
 }
 
@@ -589,7 +589,7 @@ function resolveCreds(): ResolvedCreds {
  *
  * It is not always usable, though. Its private key is passed through an env
  * var, and a mangled one fails deep inside the JWT signer as
- * `DECODER routines::unsupported` — which reads like a corrupt file rather
+ * `DECODER routines::unsupported`: which reads like a corrupt file rather
  * than a config problem. And a folder created by the owner's own account is
  * not shared with the service account at all, so even a valid key lists it
  * as empty and the sync reports zero photos rather than an error.
@@ -620,7 +620,7 @@ function buildDrive(GOOGLE_EMAIL: string, GOOGLE_KEY: string) {
     const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
         throw new Error(
-            'No usable Google credentials for sync — the service account key is missing or malformed and no OAuth refresh token is configured',
+            'No usable Google credentials for sync; the service account key is missing or malformed and no OAuth refresh token is configured',
         );
     }
     const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
@@ -731,7 +731,7 @@ export async function listLibrarySubfolders(librarySlug: string): Promise<{
  * Sync a single subfolder of a library (or the library's root if no subfolderId
  * is provided). Each invocation is bounded by `timeBudgetSeconds`. Returns
  * `timedOut: true` if the budget ran out before the folder was fully processed
- * — caller can re-invoke to resume (the upserts are idempotent).
+ *; caller can re-invoke to resume (the upserts are idempotent).
  *
  * No orphaned-photo cleanup happens here; call `cleanupOrphanedPhotos` after
  * all subfolders have synced.
@@ -815,7 +815,7 @@ export async function syncGalleryPhotos(
 
     await processFolder(ctx, folderId, null, 0);
 
-    // Cleanup: remove photos no longer present in Drive — only if we walked the
+    // Cleanup: remove photos no longer present in Drive, only if we walked the
     // full tree without timing out (otherwise we'd delete photos in unscanned
     // subfolders).
     let deletedCount = 0;

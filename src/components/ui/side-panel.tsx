@@ -61,7 +61,7 @@ export function SidePanel({
         onClick={onClose}
       />
 
-      {/* Panel — sits above the site nav (z-[999]), same pattern as ExpandableScreen */}
+      {/* Panel: sits above the site nav (z-[999]), same pattern as ExpandableScreen */}
       <div
         className={cn(
           'fixed top-0 bottom-0 z-[99999]',

@@ -1,6 +1,6 @@
 /**
  * Native products sold via Stripe Checkout (price-ID based).
- * Each entry maps to a Stripe Price object — the checkout backend looks
+ * Each entry maps to a Stripe Price object; the checkout backend looks
  * up tax/shipping/inventory from there rather than from this file.
  */
 export interface StripeProduct {
@@ -21,13 +21,13 @@ export interface StripeProduct {
 }
 
 export const STRIPE_PRODUCTS: StripeProduct[] = [
-    // Mystery Box removed — placeholder listing with a broken dummy image.
+    // Mystery Box removed: placeholder listing with a broken dummy image.
     // Re-add a real entry here (with a valid Stripe price ID and image) to
     // feature a native Stripe-checkout product in the shop again.
 ]
 
 /**
- * Booked services (photography, web dev, bundles, kiosk builds) — sold via
+ * Booked services (photography, web dev, bundles, kiosk builds); sold via
  * quotes/invoices, not the merch checkout. Prices mirror BookingPage.tsx.
  * stripeProductId/stripePriceId are filled in by /api/admin/seed-stripe-products
  * once the catalog is seeded to Stripe.
@@ -52,7 +52,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'photography',
         price: 250,
         priceType: 'one_time',
-        description: '30–45 min lifestyle portrait session in downtown Austin, 10–15 curated photos, same-day delivery.',
+        description: '30-45 min lifestyle portrait session in downtown Austin, 10-15 curated photos, same-day delivery.',
     },
     {
         id: 'photo-event',
@@ -60,7 +60,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'photography',
         price: 600,
         priceType: 'one_time',
-        description: '3 hours of event coverage at your venue, 20–30 curated photos and a highlight reel within 48 hrs.',
+        description: '3 hours of event coverage at your venue, 20-30 curated photos and a highlight reel within 48 hrs.',
     },
     {
         id: 'photo-halfday',
@@ -68,7 +68,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'photography',
         price: 800,
         priceType: 'one_time',
-        description: '4 hours on location, 30–50 curated photos plus 2–3 short-form reels.',
+        description: '4 hours on location, 30-50 curated photos plus 2-3 short-form reels.',
     },
     {
         id: 'photo-fullday',
@@ -76,7 +76,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'photography',
         price: 1400,
         priceType: 'one_time',
-        description: '8 hours on location, 50+ curated photos plus 2–3 short-form reels.',
+        description: '8 hours on location, 50+ curated photos plus 2-3 short-form reels.',
     },
     // Web development
     {
@@ -85,7 +85,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'web-dev',
         price: 1500,
         priceType: 'one_time',
-        description: 'Template-based site, 5–8 pages, mobile responsive, Vercel deployment.',
+        description: 'Template-based site, 5-8 pages, mobile responsive, Vercel deployment.',
     },
     {
         id: 'webdev-professional',
@@ -119,7 +119,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'bundle',
         price: 2500,
         priceType: 'one_time',
-        description: 'Starter website (5–8 pages) + lifestyle portrait session + product/space photography for the site.',
+        description: 'Starter website (5-8 pages) + lifestyle portrait session + product/space photography for the site.',
     },
     {
         id: 'bundle-brand',
@@ -134,18 +134,18 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'kiosk-build',
         name: 'Kiosk Build',
         category: 'kiosk',
-        /* A FLOOR, and this is sold PER PROJECT — never as a fixed-price
+        /* A FLOOR, and this is sold PER PROJECT, never as a fixed-price
          * product. Anywhere it is shown to a customer it must read "from" or
          * "per project", never a bare $2,500.
          *
          * WHAT DOES AND DOES NOT MOVE THE NUMBER, because this was written
          * wrong once already: the software build does NOT scale with artist
-         * count, category count or catalog size — that is the same work either
+         * count, category count or catalog size; that is the same work either
          * way and is not billed per seat. What varies is the ROOM: how many
          * touchscreens, what size, and the mounting and setup that go with
          * them. Hardware is quoted separately and bought at cost. */
         price: 2500,
         priceType: 'one_time',
-        description: 'Interactive kiosk build, installation and setup. Quoted per project from $2,500 — hardware billed separately at cost; the quote varies with the number and size of screens, not with how many artists use it.',
+        description: 'Interactive kiosk build, installation and setup. Quoted per project from $2,500; hardware billed separately at cost; the quote varies with the number and size of screens, not with how many artists use it.',
     },
 ]

@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
  *
  * A gallery must never point at a folder that contains other shoots. The
  * sync walks subfolders, so pointing a library at a client's parent folder
- * makes it claim every shoot beneath it — and because a photo row belongs to
+ * makes it claim every shoot beneath it, and because a photo row belongs to
  * one library, claiming them MOVES them out of the gallery they were in.
  * That silently emptied a delivered gallery: 39 photos left the first shoot's
  * library and reappeared in the second's.
@@ -74,8 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .maybeSingle()
     if (!library) return res.status(404).json({ error: `No gallery with slug ${slug}` })
 
-    // Only this library's own files move. Anything else under the parent —
-    // another shoot's folder, the client's own uploads — is left alone.
+    // Only this library's own files move. Anything else under the parent:
+    // another shoot's folder, the client's own uploads; is left alone.
     const { data: photos } = await supabase
       .from('photos')
       .select('google_drive_file_id')
@@ -153,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       alreadyThere,
       failed: failures.length,
       failures: failures.slice(0, 10),
-      // Repointing is skipped on any failure — a library pointing at a folder
+      // Repointing is skipped on any failure; a library pointing at a folder
       // that holds only some of its photos loses the rest on the next sync.
       libraryRepointed: repointLibrary && failures.length === 0,
     })

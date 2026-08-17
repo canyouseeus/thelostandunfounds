@@ -1,7 +1,7 @@
 /**
- * Content request — /upload/:token
+ * Content request: /upload/:token
  *
- * Whoever you asked for content opens this from a link in an email — a client,
+ * Whoever you asked for content opens this from a link in an email; a client,
  * a contributor, a business with photos on a phone. No account, no sign-in: the
  * token in the URL is the whole credential. They drop files, the files go
  * straight to storage via signed URLs, and the server mirrors them into the
@@ -181,7 +181,7 @@ export default function ClientUpload() {
         );
     }
 
-    const title = meta.project_name ? `${meta.client_name} — ${meta.project_name}` : meta.client_name;
+    const title = meta.project_name ? `${meta.client_name}: ${meta.project_name}` : meta.client_name;
 
     if (sent !== null) {
         return (
@@ -190,7 +190,7 @@ export default function ClientUpload() {
                     <CheckCircleIcon className="w-12 h-12 text-white mb-6" />
                     <h1 className="text-4xl font-black uppercase tracking-widest mb-4">GOT THEM</h1>
                     <p className="text-white/70 text-base leading-relaxed mb-8">
-                        {sent} file{sent === 1 ? '' : 's'} received. We'll take it from here — you'll hear from us once
+                        {sent} file{sent === 1 ? '' : 's'} received. We'll take it from here: you'll hear from us once
                         they're in the build.
                     </p>
                     <button
@@ -224,7 +224,7 @@ export default function ClientUpload() {
                 <p className="text-white/70 text-base leading-relaxed mb-2">{title}</p>
                 <p className="text-white/60 text-base leading-relaxed mb-10">
                     {meta.intro ||
-                        `Drop in anything you've got — photos, your logo, brand colors, a mood board, screenshots of work you like. If there's content sitting on your phone or a hard drive that never made it onto a site, send that too. We can work it into the build.`}
+                        `Drop in anything you've got: photos, your logo, brand colors, a mood board, screenshots of work you like. If there's content sitting on your phone or a hard drive that never made it onto a site, send that too. We can work it into the build.`}
                 </p>
 
                 <div
@@ -302,7 +302,7 @@ export default function ClientUpload() {
                 </button>
 
                 <p className="mt-6 text-xs text-white/30 leading-relaxed">
-                    This link is private to you. Files go straight to our working folder for this project — they're
+                    This link is private to you. Files go straight to our working folder for this project; they're
                     never published anywhere without your say-so.
                 </p>
             </div>

@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
 /**
- * Trash a redundant Drive folder — a duplicate copy of a shoot, a staging
+ * Trash a redundant Drive folder: a duplicate copy of a shoot, a staging
  * folder left behind by an upload.
  *
  * Trash, never delete. A folder that turns out to have been the only copy of
@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
  *
  * The guard is the point of the endpoint: it refuses if any file inside is
  * referenced by a photos row. A gallery serves images straight from Drive by
- * file id, so trashing a referenced file does not merely tidy up — it breaks
+ * file id, so trashing a referenced file does not merely tidy up; it breaks
  * a delivered gallery, and the rows keep pointing at files that no longer
  * resolve. Deleting the wrong one of two identical-looking copies is exactly
  * the mistake that is easy to make by eye.
@@ -125,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: `No folder named ${folderName} under that parent` })
       }
       if (found.files.length > 1) {
-        return res.status(409).json({ error: `More than one folder named ${folderName} — pass folderId to be explicit` })
+        return res.status(409).json({ error: `More than one folder named ${folderName}; pass folderId to be explicit` })
       }
       targetId = found.files[0].id!
     }
@@ -151,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (referenced.length > 0) {
       return res.status(409).json({
-        error: 'Refusing to trash — a gallery serves files from this folder',
+        error: 'Refusing to trash: a gallery serves files from this folder',
         folderId: targetId,
         folderName: meta.data.name,
         fileCount: files.length,
@@ -173,7 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       trashed: { folderId: targetId, folderName: meta.data.name, fileCount: files.length },
-      note: 'Moved to Drive trash — recoverable for 30 days',
+      note: 'Moved to Drive trash: recoverable for 30 days',
     })
   } catch (err: any) {
     console.error('[drive-cleanup] failed:', err)

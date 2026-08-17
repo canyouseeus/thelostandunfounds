@@ -28,7 +28,7 @@ export default function AffiliateGuide() {
                             <div className="flex items-start gap-3 p-3 bg-white/5">
                                 <CurrencyDollarIcon className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
                                 <div>
-                                    <h4 className="text-white text-[10px] uppercase tracking-[0.25em] font-black mb-1">42% of Profit — Direct Commission</h4>
+                                    <h4 className="text-white text-[10px] uppercase tracking-[0.25em] font-black mb-1">42% of Profit; Direct Commission</h4>
                                     <p className="text-white/40 text-xs">Earn 42% of the profit on every sale generated through your direct link.</p>
                                 </div>
                             </div>

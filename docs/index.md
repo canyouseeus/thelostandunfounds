@@ -1,4 +1,4 @@
-# Documentation Index — THE LOST+UNFOUNDS
+# Documentation Index: THE LOST+UNFOUNDS
 
 > Master index for all project documentation. Last updated: 2026-02-19.
 
@@ -79,7 +79,7 @@
 | security-initial-report-20251110-141836.md | Initial security report |
 
 ## Archive (`docs/archive/`)
-One-time status docs, resolved issues, and completed tasks — kept for historical reference.
+One-time status docs, resolved issues, and completed tasks; kept for historical reference.
 
 21 files archived including: deployment checks, CLI commands, Vercel issues, parsing fixes, completed implementation records, and resolved bugs.
 
@@ -89,4 +89,4 @@ One-time status docs, resolved issues, and completed tasks — kept for historic
 | README.md | Project overview |
 | CLAUDE.md | Agent entry point / table of contents |
 | ARCHITECTURE.md | Codebase architecture map |
-| BLOG_POST_STYLE_GUIDE.md | Blog formatting rules (kept in root — referenced by `CLAUDE.md`) |
+| BLOG_POST_STYLE_GUIDE.md | Blog formatting rules (kept in root; referenced by `CLAUDE.md`) |

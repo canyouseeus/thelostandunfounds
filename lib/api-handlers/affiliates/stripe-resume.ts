@@ -16,7 +16,7 @@ import {
  * Account Link (they expire in minutes, so it must happen here, not in the
  * email) and 302s the affiliate to Stripe.
  *
- * No login required — the token is the authorisation, and all it can do is
+ * No login required: the token is the authorisation, and all it can do is
  * open Stripe's own KYC flow for one affiliate.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -69,7 +69,7 @@ function errorPage(origin: string, reason: string): string {
     <h1 style="font-size:22px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">LINK NO LONGER VALID</h1>
     <p style="color:#aaa;font-size:15px;line-height:1.6;margin:0 0 28px 0;">
       We couldn't start your Stripe setup from this link (${safeReason}). Sign in to your affiliate
-      dashboard and use the CONNECT STRIPE button there — it does exactly the same thing.
+      dashboard and use the CONNECT STRIPE button there; it does exactly the same thing.
     </p>
     <a href="${origin}/affiliate-dashboard" style="display:inline-block;padding:14px 28px;background:#fff;color:#000;font-weight:bold;font-size:14px;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">Open dashboard</a>
   </div>

@@ -6,8 +6,8 @@ import { createClient } from '@supabase/supabase-js'
  *
  * GET /api/calendar/recap?date=YYYY-MM-DD
  *
- * Returns every sale that landed on the date — shop orders, gallery orders,
- * event tickets, invoice payments — each with its source, customer, amount,
+ * Returns every sale that landed on the date; shop orders, gallery orders,
+ * event tickets, invoice payments, each with its source, customer, amount,
  * and where to follow it (the invoice, the CRM contact, the payment intent),
  * plus the day's deployments so the business record and the code record sit
  * on the same page.

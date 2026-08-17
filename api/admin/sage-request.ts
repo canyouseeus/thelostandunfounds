@@ -6,7 +6,7 @@
  * is both the durable record and the handoff point for a coding agent.
  *
  * Auth is a verified Supabase JWT, not the `x-admin-email` header the older admin
- * endpoints use — that header is caller-supplied and this route can write to the
+ * endpoints use: that header is caller-supplied and this route can write to the
  * repository.
  */
 
@@ -59,7 +59,7 @@ function buildIssue(body: SageRequestBody, author: string) {
         '',
         source
             ? `**Source:** \`${source}\``
-            : '**Source:** _not stamped — the element had no `data-tlu-src` ancestor._',
+            : '**Source:** _not stamped: the element had no `data-tlu-src` ancestor._',
         pageUrl ? `**Page:** ${pageUrl}` : null,
         '',
         '### Element',
@@ -95,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
     if (!token) {
         return res.status(500).json({
-            error: 'GITHUB_TOKEN is not configured — add it in the Vercel dashboard so SAGE MODE can open issues.',
+            error: 'GITHUB_TOKEN is not configured; add it in the Vercel dashboard so SAGE MODE can open issues.',
         })
     }
 

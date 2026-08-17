@@ -1,5 +1,5 @@
 /**
- * Retrograde rename — brings a library's Drive filenames up to the current
+ * Retrograde rename: brings a library's Drive filenames up to the current
  * claptrop convention (see scripts/claptrop-namer.ts).
  *
  * The filename is not decoration. Sync derives photos.title from it on every
@@ -14,7 +14,7 @@
  *
  * Preview is mandatory. Committing is only possible after a dry run of the
  * same library has returned, and any change to the selection clears that
- * permission — so "apply" can never act on a preview you didn't see.
+ * permission, so "apply" can never act on a preview you didn't see.
  */
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -33,8 +33,8 @@ interface RenameResult {
 }
 
 export default function RetrogradeRenameTool({ librarySlug, libraryName }: { librarySlug?: string; libraryName: string }) {
-    // No slug means every library. The endpoint already worked this way — it
-    // filters by slug only when one is given — but the UI only ever offered
+    // No slug means every library. The endpoint already worked this way; it
+    // filters by slug only when one is given, but the UI only ever offered
     // one gallery at a time, which turned a single job into eight.
     const scopeKey = librarySlug ?? '__all__';
     const [busy, setBusy] = useState<'preview' | 'apply' | null>(null);
@@ -59,7 +59,7 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
 
     const callRename = async (dryRun: boolean): Promise<RenameResult> => {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) throw new Error('Session expired — sign in again.');
+        if (!session?.access_token) throw new Error('Session expired; sign in again.');
         const res = await fetch('/api/admin/retrograde-rename', {
             method: 'POST',
             headers: {
@@ -98,7 +98,7 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                 setTotalRenamed(carried);
                 setPasses(i + 1);
 
-                if (json.authError) break;          // credentials — retrying cannot help
+                if (json.authError) break;          // credentials: retrying cannot help
                 if (json.remaining === 0) break;    // done
                 if (cancelled.current) break;
                 // No progress and nothing failed means the run is stuck rather
@@ -148,7 +148,7 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
             <h3 className="text-lg font-black uppercase tracking-tight text-white mb-2">{libraryName}</h3>
             <p className="text-white/40 text-xs leading-relaxed mb-5">
                 Renames Drive files to the current naming convention. Filenames become the alt text on
-                every gallery image, so this is what search engines read. Preview first — nothing changes
+                every gallery image, so this is what search engines read. Preview first: nothing changes
                 until you apply.
             </p>
 
@@ -179,8 +179,8 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
                     <div className="flex-1 min-w-0">
                         <p className="text-white/60 text-xs">
                             {busy === 'apply'
-                                ? `Renaming — ${totalRenamed} done, pass ${passes + 1}, ${elapsed}s elapsed.`
-                                : `Working — ${elapsed}s elapsed.`}
+                                ? `Renaming: ${totalRenamed} done, pass ${passes + 1}, ${elapsed}s elapsed.`
+                                : `Working: ${elapsed}s elapsed.`}
                         </p>
                         {busy === 'apply' && (
                             <p className="text-white/30 text-[11px] mt-1">
@@ -278,7 +278,7 @@ export default function RetrogradeRenameTool({ librarySlug, libraryName }: { lib
 
                     {!result.dryRun && result.remaining > 0 && (
                         <p className="text-white/40 text-xs">
-                            {result.remaining} left — the run stops at its time budget. Apply again to continue.
+                            {result.remaining} left: the run stops at its time budget. Apply again to continue.
                         </p>
                     )}
                 </div>

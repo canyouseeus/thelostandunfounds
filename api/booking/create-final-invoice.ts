@@ -10,7 +10,7 @@
  * already paid against its invoices (i.e. the deposit).
  *
  * Body (JSON):
- *   bookingId    string   — UUID of the booking
+ *   bookingId    string: UUID of the booking
  *   description? string
  *
  * Auth: x-admin-secret, x-admin-email, or localhost.
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    // Existing invoices for this booking — to compute what is already paid.
+    // Existing invoices for this booking, to compute what is already paid.
     const { data: bookingInvoices } = await supabase
       .from('invoices')
       .select('id, invoice_type, status')
@@ -119,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (balanceCents < 50) {
       return res.status(400).json({
-        error: 'Remaining balance is below Stripe minimum ($0.50) — nothing to invoice.',
+        error: 'Remaining balance is below Stripe minimum ($0.50); nothing to invoice.',
         total,
         paidSoFar,
       })
@@ -143,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const lineItems = [
       {
-        description: `Remaining balance — ${booking.event_type || 'photography'}`,
+        description: `Remaining balance: ${booking.event_type || 'photography'}`,
         quantity: 1,
         unit_price: balance,
         amount: balance,
@@ -162,7 +162,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         invoice_type: 'final',
         date: new Date().toISOString().slice(0, 10),
         event_date: booking.event_date || null,
-        description: description || `Final invoice — ${booking.event_type || 'shoot'}`,
+        description: description || `Final invoice: ${booking.event_type || 'shoot'}`,
         line_items: lineItems,
         subtotal: balance,
         total,
@@ -170,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'sent',
         // Carry the photographer forward from the quote. The final invoice is
         // the one that gets marked paid, so a job settled without this has no
-        // record of who is owed what — and the payout reads as zero.
+        // record of who is owed what, and the payout reads as zero.
         contractor_name: priorQuote?.contractor_name || null,
         contractor_payout: priorQuote?.contractor_payout || null,
         payment_method: 'Stripe',
@@ -186,8 +186,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const link = await createPaymentLink(stripe, {
       amountCents: balanceCents,
-      productName: `Final balance — ${booking.event_type || 'Photography'} — ${invoiceNumber}`,
-      description: `${invoiceNumber} balance — booking ${bookingId}`,
+      productName: `Final balance: ${booking.event_type || 'Photography'}; ${invoiceNumber}`,
+      description: `${invoiceNumber} balance: booking ${bookingId}`,
       metadata: {
         source: BOOKING_PAYMENT_SOURCE,
         kind: 'final',
@@ -216,7 +216,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (quoteIds.length > 0) {
       // The deposit was collected against the quote. Superseding the quote drops
-      // it out of every "billed" rollup — and its payment rows go with it, so
+      // it out of every "billed" rollup, and its payment rows go with it, so
       // the client reads as still owing the deposit they already paid. Kelly's
       // $150 deposit sat on a superseded quote and showed as due on the CRM.
       // The money follows the invoice that now carries the fee.

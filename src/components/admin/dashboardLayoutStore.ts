@@ -8,7 +8,7 @@ export interface StoredLayout {
   backgrounds: Record<string, 'black' | 'white'>;
   /**
    * Which generation of the designed default this layout descends from. When
-   * the shipped default changes shape — new widgets, new size catalogues — a
+   * the shipped default changes shape: new widgets, new size catalogues; a
    * layout saved under an older generation is arrangement from a different
    * dashboard, and keeping it strands tiles at sizes that no longer compose.
    * Bump LAYOUT_GENERATION and saved layouts adopt the new default once.
@@ -28,7 +28,7 @@ export const LAYOUT_GENERATION = 2;
  *
  * Every remote call is allowed to fail quietly. If the table hasn't been created
  * yet, or the request is offline, the dashboard behaves exactly as it does with
- * local storage alone — a layout that doesn't sync is a much smaller problem
+ * local storage alone: a layout that doesn't sync is a much smaller problem
  * than a dashboard that won't render.
  */
 
@@ -48,7 +48,7 @@ export function writeLocal(layout: StoredLayout) {
   try {
     localStorage.setItem(KEY, JSON.stringify(layout));
   } catch {
-    /* private mode — the layout just won't persist here */
+    /* private mode: the layout just won't persist here */
   }
 }
 

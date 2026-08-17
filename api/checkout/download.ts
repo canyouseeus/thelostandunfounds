@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(302).end()
     }
 
-    // No file URL configured yet — return order info so support can deliver
+    // No file URL configured yet: return order info so support can deliver
     // manually. Once a digital product is registered with metadata.file_url,
     // the 302 above will fire automatically.
     return res.status(200).json({

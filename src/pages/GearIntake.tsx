@@ -4,12 +4,12 @@ import { PlusIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 
 /**
- * "What's in your bag?" — the form behind the roster's equipment list.
+ * "What's in your bag?": the form behind the roster's equipment list.
  *
  * Reachable two ways, because the roster fills up from two directions: an
  * invite link (`/gear?token=…`) mailed to someone who has only ever sent an
  * email address, and the same page opened by an already signed-in photographer
- * updating their kit. The token path is the important one — it has to work for
+ * updating their kit. The token path is the important one; it has to work for
  * a person with no account, on a phone, in one sitting.
  *
  * Rows are typed as a flat list rather than a fixed set of named fields
@@ -185,7 +185,7 @@ export default function GearIntake() {
         </h1>
         <p className="mt-3 text-sm text-white/60 text-left max-w-2xl">
           List what you shoot on so we know which jobs to send you. Bodies, lenses, lighting,
-          audio, tripods and gimbals — the whole bag.
+          audio, tripods and gimbals: the whole bag.
         </p>
         <p className="mt-2 text-sm text-white/40 text-left max-w-2xl">
           {token
@@ -252,7 +252,7 @@ export default function GearIntake() {
                       style={{ borderRadius: 0 }}
                       value={row.model}
                       onChange={(event) => update(row.key, { model: event.target.value })}
-                      placeholder="Model — required"
+                      placeholder="Model: required"
                     />
                   </div>
                   <div className="sm:col-span-2 flex items-center gap-2">
@@ -282,7 +282,7 @@ export default function GearIntake() {
                       style={{ borderRadius: 0 }}
                       value={row.details}
                       onChange={(event) => update(row.key, { details: event.target.value })}
-                      placeholder={`Specs — ${hint}`}
+                      placeholder={`Specs: ${hint}`}
                     />
                   </div>
                 </div>
@@ -336,7 +336,7 @@ export default function GearIntake() {
           {saved && (
             <span className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-green-400">
               <CheckIcon className="w-4 h-4" />
-              Saved — you're on the roster
+              Saved: you're on the roster
             </span>
           )}
         </div>

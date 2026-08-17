@@ -3,7 +3,7 @@
  * POST /api/admin/seed-stripe-products
  *
  * One-time endpoint: creates Stripe Products + Prices for the real service
- * catalog (SERVICE_PRODUCTS in src/data/stripe-products.ts). Idempotent —
+ * catalog (SERVICE_PRODUCTS in src/data/stripe-products.ts). Idempotent:
  * safe to run more than once. Existing products are matched by
  * metadata.service_id rather than recreated.
  */

@@ -103,7 +103,7 @@ function notificationsRoot(data: NotificationsWidgetData, onOpenPanel?: (panel: 
             <StackRow
               key={n.id}
               label={n.title}
-              sub={`${n.severity}${n.read ? '' : ' — unread'} — ${when(n.created_at)}`}
+              sub={`${n.severity}${n.read ? '' : ', unread'}, ${when(n.created_at)}`}
               onPress={() => nav.push(itemCard(n))}
             />
           ))}
@@ -115,7 +115,7 @@ function notificationsRoot(data: NotificationsWidgetData, onOpenPanel?: (panel: 
 
 /**
  * Notifications tile: the things that want attention, from the real feed
- * (admin_notifications — deploys and anything webhooks report) plus the
+ * (admin_notifications: deploys and anything webhooks report) plus the
  * review queue. The face is the unread count with severity marks; larger
  * shapes list the latest items. No accent hue: severity IS the color here,
  * drawn as square marks per noir-design.
@@ -143,7 +143,7 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="Notifications — open"
+        aria-label="Notifications: open"
         className={cn(
           'relative bg-black text-white flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -158,7 +158,7 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
         <div className="relative flex-1 min-h-0 flex flex-col" style={{ padding: '7cqmin' }}>
           {cols === 2 && rows === 2 ? (
             /* The face: severity marks of the latest items top-right, the
-               unread count bottom-left — the family composition. */
+               unread count bottom-left: the family composition. */
             <div className="flex-1 min-h-0 relative">
               <div className="absolute top-0 right-0 grid grid-cols-4" style={{ gap: '3cqmin' }}>
                 {data.items.slice(0, 8).map(n => (
@@ -177,7 +177,7 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
             </div>
           ) : (
             /* Composed: count and the latest item's title on top, then the
-               list — mark, title, date — filling the height. */
+               list (mark, title, date) filling the height. */
             <div className="flex-1 min-h-0 flex flex-col justify-between" style={{ gap: u(5) }}>
               <div className="flex items-baseline justify-between" style={{ gap: u(6) }}>
                 <div className="flex flex-col text-left shrink-0">
@@ -206,7 +206,7 @@ export function NotificationsWidget({ size = '2x2', data, onOpenPanel, className
                           style={{ fontSize: u(5.4), lineHeight: 1.2 }}>
                       {n.title}
                     </span>
-                    {/* Two units wide, the date costs the title its ending —
+                    {/* Two units wide, the date costs the title its ending;
                         the explorer carries the timestamps. */}
                     {cols >= 4 && (
                       <span className="shrink-0 tabular-nums opacity-30" style={{ fontSize: u(4.6) }}>{when(n.created_at)}</span>

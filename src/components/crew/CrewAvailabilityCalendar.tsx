@@ -5,8 +5,8 @@ import { supabase } from '../../lib/supabase';
 /**
  * A photographer blocking out their own dates.
  *
- * Same gesture the owner already has on the admin booking calendar — tap a day
- * to close it, tap again to reopen it — pointed at `photographer_availability`
+ * Same gesture the owner already has on the admin booking calendar; tap a day
+ * to close it, tap again to reopen it; pointed at `photographer_availability`
  * instead of `booking_availability`. The difference matters: the owner's blocks
  * shut the public booking form; these do not. Marking Saturday out here tells
  * the studio not to send *you* on Saturday, and the master calendar reads it as

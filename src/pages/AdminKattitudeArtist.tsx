@@ -1,5 +1,5 @@
 /**
- * Kattitude — Per-Artist Dashboard
+ * Kattitude, Per-Artist Dashboard
  * Route: /admin/kattitude/artist/:artistId
  */
 
@@ -700,7 +700,7 @@ export default function AdminKattitudeArtist() {
             <PhotoIcon className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/30 text-sm uppercase tracking-widest font-bold mb-2">Portfolio Upload</p>
             <p className="text-white/20 text-xs max-w-xs mx-auto">
-              Photo portfolio management coming soon — upload tattoo photos to showcase on the public site.
+              Photo portfolio management coming soon: upload tattoo photos to showcase on the public site.
             </p>
           </div>
         </motion.div>

@@ -186,7 +186,7 @@ export default function AdminPrintShopView() {
       })
       .then((data) => {
         // Failed orders (customer charged, Prodigi submission never
-        // happened) need eyes on them first — always float to the top.
+        // happened) need eyes on them first, always float to the top.
         const rows: ProdigiOrder[] = data.data || [];
         rows.sort((a, b) => (a.status === 'error' ? -1 : 0) - (b.status === 'error' ? -1 : 0));
         setOrders(rows);
@@ -371,7 +371,7 @@ export default function AdminPrintShopView() {
         <div className="bg-white/5 p-4 mb-6 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
-              Catalog Verification {verifyCheckedAt ? `— ${new Date(verifyCheckedAt).toLocaleString()}` : ''}
+              Catalog Verification {verifyCheckedAt ? `; ${new Date(verifyCheckedAt).toLocaleString()}` : ''}
             </p>
             <button onClick={() => setVerifyResults(null)} className="text-white/40 hover:text-white"><XMarkIcon className="w-4 h-4" /></button>
           </div>
@@ -413,7 +413,7 @@ export default function AdminPrintShopView() {
 
       {activeTab === 'catalog' ? (
         products.length === 0 ? (
-          <p className="text-white/30 text-xs uppercase tracking-widest text-center py-12">No prints yet — add one to get started</p>
+          <p className="text-white/30 text-xs uppercase tracking-widest text-center py-12">No prints yet; add one to get started</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {products.map((product) => {
@@ -882,11 +882,11 @@ function SizeOptionRow({ option, onSaved }: { option: PrintOption; onSaved: (row
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU — Landscape</label>
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU; Landscape</label>
           <input type="text" value={skuLandscape} onChange={(e) => setSkuLandscape(e.target.value)} className="w-full bg-white/5 px-2.5 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300" />
         </div>
         <div>
-          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU — Portrait</label>
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU; Portrait</label>
           <input type="text" value={skuPortrait} onChange={(e) => setSkuPortrait(e.target.value)} className="w-full bg-white/5 px-2.5 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300" />
         </div>
       </div>
@@ -986,7 +986,7 @@ function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onS
     <div className="bg-white/5 p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <SwatchIcon className="w-4 h-4 text-white/40" />
-        <span className="text-white font-black uppercase tracking-wide text-sm capitalize">{template.frame_color} — {template.orientation}</span>
+        <span className="text-white font-black uppercase tracking-wide text-sm capitalize">{template.frame_color}; {template.orientation}</span>
         {template.has_mat && <span className="text-[9px] font-black uppercase tracking-widest text-white/30">With Mat</span>}
       </div>
 

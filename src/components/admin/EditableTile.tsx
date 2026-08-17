@@ -5,7 +5,7 @@ import { SHAPE_LABEL, ShapeName, shapeOptions } from './useDashboardLayout';
 
 interface EditableTileProps {
   id: string;
-  /** Grid shape classes for this tile — `col-span-*`, `aspect-*`, and so on. */
+  /** Grid shape classes for this tile; `col-span-*`, `aspect-*`, and so on. */
   className: string;
   editing: boolean;
   shape: ShapeName;
@@ -15,8 +15,8 @@ interface EditableTileProps {
   onToggleBackground: (id: string) => void;
   /**
    * Whether hovering the cell washes the whole tile. True for the data
-   * widgets, where the tile is the thing you click. False for the tools —
-   * clock, calendar, calculator — where the target is a key, a day or a
+   * widgets, where the tile is the thing you click. False for the tools:
+   * clock, calendar, calculator: where the target is a key, a day or a
    * control, and each already lights on its own hover. Washing those too
    * highlighted the whole instrument to say you were over one key of it.
    */
@@ -27,8 +27,8 @@ interface EditableTileProps {
 const dims = (s: ShapeName) => s.split('x').map(Number) as [number, number];
 
 /**
- * One option in the shape picker: the shape drawn where it lives — filled
- * cells inside a miniature four-column lattice — instead of a label you have
+ * One option in the shape picker: the shape drawn where it lives; filled
+ * cells inside a miniature four-column lattice, instead of a label you have
  * to imagine. Tapping the option is picking the shape.
  */
 function ShapeOption({ shape, current, onPick }: {
@@ -38,7 +38,7 @@ function ShapeOption({ shape, current, onPick }: {
 }) {
   const [c, r] = dims(shape);
   // Every option is drawn on the same four-by-four reference lattice, so the
-  // footprints are comparable — sized to their own aspect, a 4x2's cells came
+  // footprints are comparable: sized to their own aspect, a 4x2's cells came
   // out twice a 4x4's and the shapes couldn't be read against each other.
   const rows = 4;
   const cells = [];
@@ -77,7 +77,7 @@ function ShapeOption({ shape, current, onPick }: {
         'text-[10px] font-black uppercase tracking-widest tabular-nums',
         current ? 'text-white' : 'text-white/50',
       )}>
-        {SHAPE_LABEL[shape]}{current ? ' — current' : ''}
+        {SHAPE_LABEL[shape]}{current ? ', current' : ''}
       </span>
     </button>
   );
@@ -109,7 +109,7 @@ export function TileEditorSheet({ id, title, shape, light, onSetShape, onToggleB
         </button>
         <h2 className="text-lg font-black uppercase tracking-widest text-white pr-10 mb-1 truncate">{title}</h2>
         <p className="text-[11px] uppercase tracking-widest text-white/30 mb-5">
-          Size — as it sits in the four-column phone lattice
+          Size, as it sits in the four-column phone lattice
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
           {options.map(s => (
@@ -140,7 +140,7 @@ export function TileEditorSheet({ id, title, shape, light, onSetShape, onToggleB
                   <span className={cn('block w-full h-full', bg === 'white' ? 'bg-white' : 'bg-black')} />
                 </span>
                 <span className={cn('text-[10px] font-black uppercase tracking-widest', active ? 'text-white' : 'text-white/50')}>
-                  {bg}{active ? ' — current' : ''}
+                  {bg}{active ? ', current' : ''}
                 </span>
               </button>
             );
@@ -154,10 +154,10 @@ export function TileEditorSheet({ id, title, shape, light, onSetShape, onToggleB
 /**
  * Wraps a dashboard widget so it can be arranged in edit mode.
  *
- * Out of edit mode this is just the grid cell — no handlers, no chrome. In
+ * Out of edit mode this is just the grid cell; no handlers, no chrome. In
  * edit mode the widget dims and stops taking its own taps; tapping the tile
  * opens its editor sheet (the shape catalogue drawn on the lattice, plus the
- * background), and dragging reorders. The old tap-to-cycle is gone — it
+ * background), and dragging reorders. The old tap-to-cycle is gone; it
  * changed the layout before you knew what you were choosing.
  */
 export function EditableTile({
@@ -176,8 +176,8 @@ export function EditableTile({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Hover lifts the tile a shade rather than inverting it. Inverting turned
-  // every widget white and flipped its accents — the green went magenta, the
-  // amber went blue — which read as a different design, not a highlight. A
+  // every widget white and flipped its accents; the green went magenta, the
+  // amber went blue: which read as a different design, not a highlight. A
   // low white wash over the top keeps the widget's own colours and still says
   // "this one". Gated on real hover so a phone never sticks after a tap.
   if (!editing) return (
@@ -211,7 +211,7 @@ export function EditableTile({
           if (dragged && dragged !== id) onDropBefore(dragged, id);
         }}
       >
-        {/* The widget stays legible — you are arranging these, so you need to
+        {/* The widget stays legible: you are arranging these, so you need to
             see which is which. It just stops responding to its own taps. */}
         <div className="w-full h-full pointer-events-none opacity-60">{children}</div>
 

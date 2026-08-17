@@ -22,8 +22,8 @@ const DownloadPortal: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     // The delivery email already went to this address, so asking the recipient
-    // to type it again — or worse, mailing them a second link to prove they
-    // can read the first — is friction that buys nothing. When the link
+    // to type it again, or worse, mailing them a second link to prove they
+    // can read the first: is friction that buys nothing. When the link
     // carries the address, the page opens straight onto the photos.
     const linkEmail = (searchParams.get('email') || '').trim();
 
@@ -109,7 +109,7 @@ const DownloadPortal: React.FC = () => {
                     if (photo.storage_path && photo.thumbnail_url) {
                         response = await fetch(photo.thumbnail_url);
                     } else {
-                        // The stream refuses a download without an address — omitting it
+                        // The stream refuses a download without an address; omitting it
                         // returned 400 and every photo was skipped, so "Download All"
                         // produced an empty zip.
                         const dlEmail = encodeURIComponent((linkEmail || email).trim().toLowerCase());
@@ -274,7 +274,7 @@ const DownloadPortal: React.FC = () => {
                             Return to Gallery
                         </button>
 
-                        {/* Optional vault prompt — shown after download, only for guests */}
+                        {/* Optional vault prompt: shown after download, only for guests */}
                         {downloadComplete && !user && !vaultPromptDismissed && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}

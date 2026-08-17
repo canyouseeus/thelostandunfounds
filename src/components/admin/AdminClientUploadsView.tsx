@@ -1,7 +1,7 @@
 /**
- * Content Requests — admin panel.
+ * Content Requests: admin panel.
  *
- * Mint a link per person you're asking content from — a client, a contributor,
+ * Mint a link per person you're asking content from; a client, a contributor,
  * a photographer, a business that has photos sitting on a phone. Copy it into
  * an email, or have the platform send the email. Then review whatever comes
  * back. "Copy brief" produces a plain-text block naming every file and where it
@@ -144,7 +144,7 @@ export default function AdminClientUploadsView() {
             });
             setForm({ client_name: '', client_email: '', project_name: '', intro: '', expires_in_days: '' });
             setShowForm(false);
-            flash(body.drive_error ? `Link created — Drive folder failed: ${body.drive_error}` : 'Link created');
+            flash(body.drive_error ? `Link created: Drive folder failed: ${body.drive_error}` : 'Link created');
             loadLinks();
         } catch (err: any) {
             setError(err.message);
@@ -211,7 +211,7 @@ export default function AdminClientUploadsView() {
     // them into a landing page.
     function briefFor(link: UploadLink): string {
         const lines = [
-            `Content request — ${link.client_name}${link.project_name ? ` (${link.project_name})` : ''}`,
+            `Content request: ${link.client_name}${link.project_name ? ` (${link.project_name})` : ''}`,
             link.drive_folder_url ? `Drive folder: ${link.drive_folder_url}` : 'Drive folder: (not created)',
             `Files: ${uploads.length}`,
             '',
@@ -294,7 +294,7 @@ export default function AdminClientUploadsView() {
                         value={form.intro}
                         onChange={e => setForm({ ...form, intro: e.target.value })}
                         rows={2}
-                        placeholder="What you're asking them for — shown on their upload page"
+                        placeholder="What you're asking them for; shown on their upload page"
                         className="w-full bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none resize-none"
                         style={surface}
                     />
@@ -323,7 +323,7 @@ export default function AdminClientUploadsView() {
                                     <p className="text-sm font-bold text-white">
                                         {link.client_name}
                                         {link.project_name && (
-                                            <span className="text-white/40 font-normal"> — {link.project_name}</span>
+                                            <span className="text-white/40 font-normal">; {link.project_name}</span>
                                         )}
                                         {!link.is_active && (
                                             <span className="ml-2 px-2 py-0.5 bg-white/10 text-[9px] font-black uppercase tracking-widest text-white/60">

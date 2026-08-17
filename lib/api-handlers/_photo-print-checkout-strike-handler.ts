@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const sku = orientation === 'landscape' ? option.sku_landscape : option.sku_portrait
 
         // See _photo-print-checkout-handler.ts for why there's no mat
-        // toggle — Prodigi's mount/mountColor attributes have exactly one
+        // toggle: Prodigi's mount/mountColor attributes have exactly one
         // valid value each, so it was never a real customer choice.
         const orderAttributes: Record<string, string> = option.framed ? { color: option.frame_color || 'black' } : {}
 
@@ -93,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             headers: { Authorization: `Bearer ${strikeApiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 correlationId,
-                description: `${photo.title} — ${option.size_label}`,
+                description: `${photo.title}: ${option.size_label}`,
                 amount: { amount: Number(option.price).toFixed(2), currency: (option.currency || 'USD').toUpperCase() },
             }),
         })

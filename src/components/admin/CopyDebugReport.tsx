@@ -11,7 +11,7 @@ export default function CopyDebugReport() {
     setState('loading');
 
     // Fetch server logs
-    let serverSection = '_VERCEL_ACCESS_TOKEN not configured — server logs unavailable_';
+    let serverSection = '_VERCEL_ACCESS_TOKEN not configured; server logs unavailable_';
     try {
       const r = await fetch('/api/admin/logs?since=' + (Date.now() - 30 * 60 * 1000), {
         headers: {

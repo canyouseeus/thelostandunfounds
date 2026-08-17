@@ -102,7 +102,7 @@ export default function AdminTagsPanel() {
             }
             setRecentTagIds(ordered);
         } catch {
-            // Non-critical — silently skip if the query fails
+            // Non-critical: silently skip if the query fails
         }
     }
 

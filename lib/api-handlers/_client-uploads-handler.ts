@@ -1,4 +1,4 @@
-// Client asset intake — "send me your photos" links.
+// Client asset intake: "send me your photos" links.
 //
 // Shape of the thing: an admin mints a link for a client, the client opens
 // /upload/<token> with no account and no login, drops files, and the files land
@@ -22,7 +22,7 @@ const SITE = 'https://www.thelostandunfounds.com';
 const ADMIN_NOTIFY_EMAIL = 'thelostandunfounds@gmail.com';
 const MEDIA_EMAIL = 'media@thelostandunfounds.com';
 
-// Deliberately broad — clients send phone photos, screenshots, PDFs of old
+// Deliberately broad: clients send phone photos, screenshots, PDFs of old
 // brand guides, and the occasional short video clip. Anything executable stays
 // out.
 const ALLOWED_MIME = /^(image\/|video\/|application\/pdf$|application\/zip$|application\/postscript$)/;
@@ -108,7 +108,7 @@ async function getDrive() {
     return google.drive({ version: 'v3', auth });
 }
 
-// No fallback to DRIVE_FOLDER_ID on purpose — that one points at the music
+// No fallback to DRIVE_FOLDER_ID on purpose; that one points at the music
 // library, and dropping client folders in there would be worse than dropping
 // them at the root of Drive.
 function parentFolderId(): string | undefined {
@@ -158,13 +158,13 @@ export async function createLink(
     const clientName = (body.client_name || '').trim();
     if (!clientName) throw new HttpError(400, 'client_name is required');
 
-    // 32 random bytes, base64url — the link IS the credential, so it has to be
+    // 32 random bytes, base64url: the link IS the credential, so it has to be
     // wide enough that guessing is hopeless.
     const token = randomBytes(32).toString('base64url');
     const slug = slugify(clientName);
     const folderName = body.project_name
-        ? `${clientName} — ${body.project_name}`
-        : `${clientName} — Uploads`;
+        ? `${clientName}: ${body.project_name}`
+        : `${clientName}: Uploads`;
 
     let drive: { id: string; url: string } | null = null;
     let driveError: string | null = null;
@@ -324,7 +324,7 @@ export async function recordBatch(
     const files = (body.files || []).filter(f => f.path && f.name);
     if (!files.length) throw new HttpError(400, 'No files to record.');
 
-    // Only paths inside this link's own prefix — a token can't be used to claim
+    // Only paths inside this link's own prefix; a token can't be used to claim
     // another client's objects.
     for (const file of files) {
         if (!file.path!.startsWith(`${link.storage_prefix}/`)) {
@@ -381,7 +381,7 @@ export async function recordBatch(
         })
         .eq('id', link.id);
 
-    // The notification is the point of the feature — but a mail outage must not
+    // The notification is the point of the feature, but a mail outage must not
     // make a successful upload look failed to the client.
     let emailed = false;
     try {
@@ -409,7 +409,7 @@ async function notifyAdminOfUploads(
     uploads: Array<{ file_name: string; drive_view_url: string | null; drive_status: string }>,
     note: string | null
 ): Promise<boolean> {
-    const label = link.project_name ? `${link.client_name} — ${link.project_name}` : link.client_name;
+    const label = link.project_name ? `${link.client_name}: ${link.project_name}` : link.client_name;
     const folderUrl = link.drive_folder_url || `${SITE}/admin`;
     const failed = uploads.filter(u => u.drive_status === 'failed');
 
@@ -435,12 +435,12 @@ async function notifyAdminOfUploads(
           <a href="${SITE}/admin?panel=clientuploads&link=${link.id}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
         </p>
         <ul style="color:#ffffff;font-size:15px;line-height:1.6;padding-left:20px;margin:0 0 24px 0;">${fileList}</ul>
-        ${failed.length ? `<p style="color:#ffffff;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage — retry the mirror from the dashboard.</p>` : ''}
+        ${failed.length ? `<p style="color:#ffffff;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage: retry the mirror from the dashboard.</p>` : ''}
     `;
 
     const result = await sendTransactionalEmail({
         to: ADMIN_NOTIFY_EMAIL,
-        subject: `New uploads received — ${label} (${uploads.length} file${uploads.length === 1 ? '' : 's'})`,
+        subject: `New uploads received: ${label} (${uploads.length} file${uploads.length === 1 ? '' : 's'})`,
         content,
     });
     if (!result.success) console.error('[client-uploads] Admin email failed:', result.error);
@@ -463,7 +463,7 @@ export async function sendInvite(
 
     const link = data as UploadLinkRow;
     const to = (body.email || link.client_email || '').trim();
-    if (!to) throw new HttpError(400, 'No client email on file — add one first.');
+    if (!to) throw new HttpError(400, 'No client email on file; add one first.');
 
     const url = uploadUrlFor(link.token);
     const custom = (body.message || '').trim();
@@ -475,7 +475,7 @@ export async function sendInvite(
         <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 20px 0;letter-spacing:0.1em;">SEND US YOUR CONTENT</h1>
         <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">Hi ${escapeHtml(link.client_name)},</p>
         <p style="color:#ffffff;font-size:16px;line-height:1.6;margin:0 0 20px 0;text-align:left;">
-          ${custom ? escapeHtml(custom).replace(/\n/g, '<br>') : `Click the link below to send your content over — no account, no sign-in, just drop the files in. Photos, logos, a mood board, brand colors, anything you already have.<br><br>And if there's content sitting on your phone or a hard drive that has never made it onto a website, send that too. We can work it into the build.`}
+          ${custom ? escapeHtml(custom).replace(/\n/g, '<br>') : `Click the link below to send your content over; no account, no sign-in, just drop the files in. Photos, logos, a mood board, brand colors, anything you already have.<br><br>And if there's content sitting on your phone or a hard drive that has never made it onto a website, send that too. We can work it into the build.`}
         </p>
         <p style="margin:0 0 24px 0;">
           <a href="${url}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">SEND YOUR CONTENT</a>
@@ -484,11 +484,11 @@ export async function sendInvite(
         ${expiryLine}
     `;
 
-    // media@ is the business address of record — it stays on the thread as a
+    // media@ is the business address of record; it stays on the thread as a
     // visible recipient so client correspondence is on file.
     const result = await sendTransactionalEmail({
         to: [to, MEDIA_EMAIL],
-        subject: `Send your content — ${link.project_name || 'THE LOST+UNFOUNDS'}`,
+        subject: `Send your content: ${link.project_name || 'THE LOST+UNFOUNDS'}`,
         content,
     });
     if (!result.success) throw new HttpError(502, result.error || 'Email failed to send');
@@ -538,8 +538,8 @@ export async function retryMirror(supabase: ServiceSupabaseClient, linkId: strin
 
     if (!link.drive_folder_id) {
         const folderName = link.project_name
-            ? `${link.client_name} — ${link.project_name}`
-            : `${link.client_name} — Uploads`;
+            ? `${link.client_name}: ${link.project_name}`
+            : `${link.client_name}: Uploads`;
         const folder = await createDriveFolder(folderName);
         link.drive_folder_id = folder.id;
         await supabase

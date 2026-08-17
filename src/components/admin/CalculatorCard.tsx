@@ -25,7 +25,7 @@ const fmt = (n: number) => {
  *
  * Defined at module scope, not inside CalculatorCard. As a nested component it
  * was a new component type on every render, so React unmounted and remounted
- * all twenty buttons whenever any state changed — the click landed on a node
+ * all twenty buttons whenever any state changed; the click landed on a node
  * that had already been replaced, and the keypad visibly re-rendered under the
  * finger. Hoisting it makes the buttons stable elements that simply re-render.
  */
@@ -53,14 +53,14 @@ function Key({ label, onClick, variant = 'default', wide, pressed, onPressStart,
         // Wide mode gets the room of a full-width row, so the keys grow to a
         // real touch target instead of the 32px a 1/3-width cell allowed.
         wide ? 'h-14 sm:h-16 text-xl sm:text-2xl' : 'h-8 text-[11px]',
-        // No key plates. The keypad is type on black — weight and tone carry
+        // No key plates. The keypad is type on black; weight and tone carry
         // the hierarchy: operators bright, digits plain, utilities dim.
         variant === 'accent' ? 'font-black text-white'
           : variant === 'op' ? 'font-bold text-white/50'
           : 'font-bold text-white/90',
         // Hover is gated behind a hover-capable pointer. A plain `hover:` sticks
         // after a tap on iOS, leaving a pressed key inverted until you touched
-        // something else — the key that "kept blinking with no touches".
+        // something else: the key that "kept blinking with no touches".
         '[@media(hover:hover)]:hover:bg-white [@media(hover:hover)]:hover:text-black',
         // The press state is on while the key is held and off the moment it is
         // released. No transition, so it snaps rather than fading in and out.
@@ -75,7 +75,7 @@ function Key({ label, onClick, variant = 'default', wide, pressed, onPressStart,
 }
 
 /**
- * Inline calculator widget — same shape and rhythm as ClockWidget and
+ * Inline calculator widget: same shape and rhythm as ClockWidget and
  * CalendarWidget so the three read as one row: black card, centered content,
  * live and usable in place rather than behind a modal.
  */
@@ -84,7 +84,7 @@ export function CalculatorCard({ className, wide = false, compact = false, faceS
   wide?: boolean;
   /** Too small for a keypad: show a face that opens the calculator full screen. */
   compact?: boolean;
-  /** Which cell the face is filling — 1x1 or a phone's 2x2. */
+  /** Which cell the face is filling; 1x1 or a phone's 2x2. */
   faceSize?: 'sm' | 'lg';
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -190,7 +190,7 @@ export function CalculatorCard({ className, wide = false, compact = false, faceS
     </div>
   );
 
-  // At 1x1 the keys would be a few pixels across — too small to hit and too
+  // At 1x1 the keys would be a few pixels across; too small to hit and too
   // small to read. The tile becomes a face you tap, and the calculator opens
   // full screen, the same expandable pattern the other widgets use.
   if (compact) {
@@ -203,7 +203,7 @@ export function CalculatorCard({ className, wide = false, compact = false, faceS
                 icon, stays black so it doesn't shout in a field of black tiles,
                 and rhymes with the keypad it opens.
 
-                Two type scales because this face now covers two cell sizes —
+                Two type scales because this face now covers two cell sizes;
                 1x1 at 81-120px, and 2x2 on a phone at 173px, where a keypad's
                 keys would be 39x25 and too small for a thumb. */}
             <div

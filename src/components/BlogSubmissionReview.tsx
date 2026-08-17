@@ -980,7 +980,7 @@ export default function BlogSubmissionReview() {
         )}
       </div>
 
-      {/* Review — fullscreen ExpandableScreen pattern */}
+      {/* Review: fullscreen ExpandableScreen pattern */}
       <ExpandableScreen
         isOpen={!!selectedSubmission}
         onOpenChange={(open) => {

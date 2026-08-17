@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSupabaseAdmin, resolveUserId, resolveCrewMember, isAdmin } from './_shared.js';
 
 /**
- * The roster's equipment list — what each photographer actually owns.
+ * The roster's equipment list: what each photographer actually owns.
  *
  * Booking someone is a question about kit before it is a question about
  * availability: a multifamily walkthrough needs a wide on a full-frame body, a
@@ -12,13 +12,13 @@ import { getSupabaseAdmin, resolveUserId, resolveCrewMember, isAdmin } from './_
  *
  * Three ways in, deliberately, because the roster is filled from three places:
  *
- *  - `?token=` — an invite token from `gallery_invitations`. This is the link
+ *  - `?token=`: an invite token from `gallery_invitations`. This is the link
  *    that goes out in the onboarding email, so someone who replied to an
  *    Instagram story with nothing but an email address can list their kit
  *    before they have an account. Submitting through a token also *creates*
- *    the roster row if they don't have one yet — that is the onboarding.
- *  - Bearer JWT — the signed-in photographer editing their own kit later.
- *  - Admin headers — the owner reading or correcting the whole roster.
+ *    the roster row if they don't have one yet; that is the onboarding.
+ *  - Bearer JWT: the signed-in photographer editing their own kit later.
+ *  - Admin headers: the owner reading or correcting the whole roster.
  *
  * A caller is never trusted for identity. The token is looked up server-side
  * and the photographer is resolved from the invited email; the JWT is verified
@@ -31,7 +31,7 @@ import { getSupabaseAdmin, resolveUserId, resolveCrewMember, isAdmin } from './_
  *   PUT  /api/crew/gear               → replace the caller's kit wholesale
  *
  * PUT replaces rather than patches. The form is a list the photographer edits
- * as a whole — deleting a sold lens has to actually remove it, and a diffing
+ * as a whole: deleting a sold lens has to actually remove it, and a diffing
  * endpoint would need stable client-side ids for rows that were only just
  * typed. The replace runs delete-then-insert inside one request; a failure
  * mid-way is recoverable by resubmitting the same form.
@@ -103,7 +103,7 @@ async function emailFromToken(
     .maybeSingle();
 
   if (!data?.email) return null;
-  // Accepted invitations still open the gear form — the token is how someone
+  // Accepted invitations still open the gear form; the token is how someone
   // gets back to their kit list before they have set a password.
   if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) return null;
   return String(data.email).toLowerCase();
@@ -174,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = getSupabaseAdmin();
 
   try {
-    // Admin roster read — every photographer with their kit attached, which is
+    // Admin roster read: every photographer with their kit attached, which is
     // the view the owner actually deploys from.
     if (req.method === 'GET' && req.query?.roster) {
       if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
@@ -203,7 +203,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // don't come up in a search, and without Stripe they can be assigned and
       // accrued but never actually paid. Three separate walls, all invisible
       // from a contact list, all of which have to be answered by someone
-      // eventually — so the panel answers them instead of the owner guessing.
+      // eventually, so the panel answers them instead of the owner guessing.
       //
       // Stripe counts either way round: most of the crew onboarded as
       // affiliates first and `resolveConnectAccount` reuses that account.
@@ -245,7 +245,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       const { photographer, error, status } = await resolveCaller(supabase, req, { create: false });
       if (!photographer) {
-        // A token holder with no roster row yet is not an error — it is a blank
+        // A token holder with no roster row yet is not an error; it is a blank
         // form waiting to be filled in.
         if (status === 404 && req.query?.token) {
           return res.status(200).json({ photographer: null, items: [], gear_notes: '' });

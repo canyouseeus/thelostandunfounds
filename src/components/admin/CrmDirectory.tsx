@@ -44,7 +44,7 @@ const shortDate = (iso: string | null) =>
  * "Collected" mirrors the revenue-tile logic: prefer real invoice_payments
  * rows, and fall back to the invoice total for legacy 'paid' invoices that
  * predate invoice_payments being populated. Unlike the revenue tiles this is
- * NOT net of contractor payout — a CRM answers "what has this client paid me",
+ * NOT net of contractor payout: a CRM answers "what has this client paid me",
  * not "what did the site keep".
  */
 export function useCrmClients() {
@@ -52,7 +52,7 @@ export function useCrmClients() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /** Patch one client in place after a successful save — avoids a full refetch. */
+  /** Patch one client in place after a successful save; avoids a full refetch. */
   const applyClientUpdate = (id: string, patch: Partial<CrmClient>) =>
     setClients(prev => prev.map(c => (c.id === id ? { ...c, ...patch } : c)));
 
@@ -75,11 +75,11 @@ export function useCrmClients() {
         }
 
         // Only issued invoices count toward what a client has been billed.
-        // A draft was never sent, and void/cancelled were withdrawn — counting
+        // A draft was never sent, and void/cancelled were withdrawn; counting
         // either overstates billed and leaves phantom money outstanding. A test
         // invoice raised in error showed as $301.50 owed until this.
         // deposit_paid is a real, issued invoice with money against it. superseded is
-        // a quote replaced by its final invoice — the same fee, already counted once.
+        // a quote replaced by its final invoice; the same fee, already counted once.
         const COUNTS_AS_BILLED = new Set(['sent', 'deposit_paid', 'paid', 'overdue']);
 
         const byClient = new Map<string, { count: number; billed: number; collected: number; last: string | null }>();
@@ -184,7 +184,7 @@ function ClientEditor({
     setSaving(true);
     setErr(null);
 
-    // Blank inputs are stored as NULL, not '' — keeps "missing" a single state.
+    // Blank inputs are stored as NULL, not ''; keeps "missing" a single state.
     const patch = {
       name: draft.name.trim(),
       business: draft.business.trim() || null,
@@ -388,7 +388,7 @@ export function CrmDirectory() {
         ))}
       </div>
 
-      {/* Editor — full-screen card, same pattern as the rest of the dashboard */}
+      {/* Editor: full-screen card, same pattern as the rest of the dashboard */}
       <ExpandableScreen isOpen={!!editing} onOpenChange={(open) => { if (!open) setEditing(null); }}>
         <ExpandableScreenContent className="overflow-x-hidden">
           <div className="flex-1 overflow-y-auto overflow-x-hidden">

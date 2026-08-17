@@ -3,7 +3,7 @@
  * POST /api/admin/update-stripe-product
  *
  * Syncs an edited SERVICE_PRODUCTS entry to Stripe: updates the product's
- * name/description/active flag, and — since Stripe prices are immutable —
+ * name/description/active flag, and, since Stripe prices are immutable;
  * creates a new Price when the amount changed, points the product's
  * default_price at it, and archives the old default price.
  *

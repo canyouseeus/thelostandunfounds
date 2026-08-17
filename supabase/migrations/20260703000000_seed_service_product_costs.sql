@@ -16,13 +16,13 @@ ALTER TABLE product_costs ADD COLUMN IF NOT EXISTS product_type TEXT DEFAULT 'ph
 INSERT INTO product_costs (product_id, variant_id, source, cost, product_type)
 SELECT v.product_id, NULL, 'local', v.cost, 'digital'
 FROM (VALUES
-  -- Photography (~10% cost — memory cards, editing software allocation, gear wear)
+  -- Photography (~10% cost: memory cards, editing software allocation, gear wear)
   ('photo-portrait',      25),
   ('photo-event',         60),
   ('photo-halfday',       80),
   ('photo-fullday',       140),
 
-  -- Web development (~15% cost — template/stock licenses, hosting setup)
+  -- Web development (~15% cost: template/stock licenses, hosting setup)
   ('webdev-starter',      225),
   ('webdev-professional', 525),
   ('webdev-agency',       900),
@@ -32,7 +32,7 @@ FROM (VALUES
   ('bundle-launch',       250),
   ('bundle-brand',        500),
 
-  -- Kiosk build (~15% cost — software licensing, misc supplies; hardware billed separately)
+  -- Kiosk build (~15% cost: software licensing, misc supplies; hardware billed separately)
   ('kiosk-build',         375)
 ) AS v(product_id, cost)
 WHERE NOT EXISTS (

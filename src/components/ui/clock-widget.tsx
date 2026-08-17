@@ -11,7 +11,7 @@ interface ClockWidgetProps {
     size?: 'sm' | 'md' | 'lg';
     /** Hide the CLOCK/STOPWATCH/TIMER caption for tight placements. */
     hideLabel?: boolean;
-    /** Pin to clock mode — no stopwatch/timer cycling. For small, display-only
+    /** Pin to clock mode: no stopwatch/timer cycling. For small, display-only
      *  placements like the site header where the extra controls don't fit. */
     lockMode?: boolean;
 }
@@ -291,8 +291,8 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                             >
                               {/* The dial is locked square inside whatever box
                                   it is given. Hand lengths are percentages of
-                                  the face, so a non-square container — the
-                                  64x46 header slot, for one — stretched them
+                                  the face, so a non-square container; the
+                                  64x46 header slot, for one: stretched them
                                   into an ellipse. This keeps every proportion
                                   fixed at every size. */}
                               <div className="relative h-full aspect-square max-w-full max-h-full">
@@ -307,8 +307,8 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                                         whether the face was 612px or 135px, so
                                         the small sizes came out four times too
                                         heavy. The percentages are calibrated to
-                                        reproduce the 4x4 weights exactly —
-                                        3px, 2px and 1px on a 612px face — with
+                                        reproduce the 4x4 weights exactly:
+                                        3px, 2px and 1px on a 612px face, with
                                         a floor of one pixel so a hand can't
                                         vanish at 1x1. */}
                                     <div
@@ -431,7 +431,7 @@ export function ClockWidget({ className, size = 'md', hideLabel = false, lockMod
                 onClick={cycleMode}
             >
                 <div className={cn("bg-transparent", responsive ? "px-4 py-1 md:px-8 md:py-4" : "px-8 py-4")}>
-                    {/* Label hidden in compact placements (e.g. the header) — the
+                    {/* Label hidden in compact placements (e.g. the header): the
                         tap area above still cycles clock → stopwatch → timer. */}
                     {!hideLabel && (
                         <span className={cn("tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors", responsive ? "text-[8px] md:text-[10px]" : "text-[10px]")}>

@@ -130,12 +130,12 @@ async function getOrCreateFolder(name: string, parentId: string): Promise<string
 
 // ─── 4-axis fingerprint index ─────────────────────────────────────────────────
 //
-// Axis 1 — md5:HASH:size  → byte-identical proof (no EXIF needed)
-// Axis 2 — ns:lcname:size → exact claptrop filename match
-// Axis 3 — tail:tail:size → prefix-agnostic tail (catches @tlau_ vs @tlau.photos_)
-// Axis 4 — date:YYYY-MM-DD:size → DSCF/RAW files that have no claptrop name yet
+// Axis 1: md5:HASH:size  → byte-identical proof (no EXIF needed)
+// Axis 2: ns:lcname:size → exact claptrop filename match
+// Axis 3: tail:tail:size → prefix-agnostic tail (catches @tlau_ vs @tlau.photos_)
+// Axis 4: date:YYYY-MM-DD:size → DSCF/RAW files that have no claptrop name yet
 //
-// Any hit on ANY axis means the file is already in Drive — skip the upload.
+// Any hit on ANY axis means the file is already in Drive, skip the upload.
 
 interface DriveFingerprintIndex {
     md5:  Set<string>;   // "md5:HASH:size"
@@ -175,7 +175,7 @@ function findExistingInDrive(
     const lc   = name.toLowerCase();
     const size = String(fs.statSync(localPath).size);
 
-    // Axis 1: md5 (exact bytes) — only compute hash if md5 index is non-empty
+    // Axis 1: md5 (exact bytes), only compute hash if md5 index is non-empty
     if (idx.md5.size > 0) {
         const hash = md5OfFile(localPath);
         if (idx.md5.has(`md5:${hash}:${size}`)) return 'md5';
@@ -371,7 +371,7 @@ async function flushStagingToDrive(indexes: Record<string, DriveFingerprintIndex
     }
 
     if (failed.length) {
-        console.warn(`\n⚠️  ${failed.length} file(s) failed to upload — NOT deleted:\n` +
+        console.warn(`\n⚠️  ${failed.length} file(s) failed to upload, NOT deleted:\n` +
             failed.map(f => `  ${f}`).join('\n'));
     } else {
         console.log('\n✅ Staging flushed. Disk space reclaimed.');
@@ -477,7 +477,7 @@ async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintInde
         }
     }
 
-    // Retry failures — keep local file safe if it still fails
+    // Retry failures: keep local file safe if it still fails
     if (failed.length) {
         console.log(`\n=== Retrying ${failed.length} failed upload(s) ===`);
         for (const { filePath, parentId, type } of failed) {

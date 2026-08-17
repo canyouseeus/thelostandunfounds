@@ -4,7 +4,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 /**
  * The shared card-stack explorer every widget's expanded card navigates with:
  * a stack of cards, a back control that always returns to the card you came
- * from, and — from the root card — a labelled way back to the dashboard.
+ * from, and, from the root card, a labelled way back to the dashboard.
  * Registry drills census → category → item; revenue will drill waterfall →
  * source → transaction; each widget defines only its tree.
  */
@@ -21,7 +21,7 @@ export interface StackCard {
 
 export function CardStack({ root, rootBackLabel = 'Dashboard', onClose }: {
   root: StackCard;
-  /** What the back control says on the root card — where closing lands you. */
+  /** What the back control says on the root card; where closing lands you. */
   rootBackLabel?: string;
   onClose: () => void;
 }) {
@@ -51,7 +51,7 @@ export function CardStack({ root, rootBackLabel = 'Dashboard', onClose }: {
   );
 }
 
-/** A row that pushes deeper — the stack's standard list item. */
+/** A row that pushes deeper: the stack's standard list item. */
 export function StackRow({ label, value, sub, onPress }: {
   label: string;
   value?: string;

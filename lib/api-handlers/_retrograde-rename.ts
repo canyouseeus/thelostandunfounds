@@ -1,11 +1,11 @@
 /**
- * Serverless retrograde rename — renames existing Drive files to the @tlau
+ * Serverless retrograde rename: renames existing Drive files to the @tlau
  * naming convention, updates Supabase photos (title + latitude/longitude +
  * location_name). Safe to invoke repeatedly; resumable because each call
  * filters out photos whose title is already in claptrop format.
  *
  * Requires OAuth2 Drive credentials (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET /
- * GOOGLE_REFRESH_TOKEN) — the service account used for read-only sync does
+ * GOOGLE_REFRESH_TOKEN): the service account used for read-only sync does
  * not have write access to rename files.
  */
 import { google } from 'googleapis';
@@ -34,7 +34,7 @@ export interface RetrogradeResult {
     /**
      * Sample of the renames a dry run would perform. The dry run used to
      * compute each new name and discard it, so it could report "418 files
-     * would change" without showing a single one — which is not a preview
+     * would change" without showing a single one; which is not a preview
      * anyone can approve. Capped so a large library can't return megabytes.
      */
     preview: Array<{ from: string; to: string }>;
@@ -42,7 +42,7 @@ export interface RetrogradeResult {
     skippedUnattributed: string[];
     /**
      * Set when the run stopped because Drive rejected the credentials. The
-     * counts alone cannot express this — "everything failed" and "the run was
+     * counts alone cannot express this: "everything failed" and "the run was
      * never authorised" look identical from the outside.
      */
     authError?: string;
@@ -54,12 +54,12 @@ export const PREVIEW_LIMIT = 25;
  * Thrown when Drive rejects the credentials themselves. Not a per-file
  * condition: retrying the next file cannot help, and doing so turns one bad
  * secret into hundreds of identical failures with no stated cause. A run that
- * hit this reported "FAILED 418" and nothing else — the reason was only
+ * hit this reported "FAILED 418" and nothing else; the reason was only
  * visible in the platform logs.
  */
 export class DriveAuthError extends Error {
     constructor(public readonly reason: string) {
-        super(`Google rejected the credentials (${reason}). Check GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN — invalid_client means the three do not form a valid set, usually a rotated secret or a refresh token issued by a different OAuth client.`);
+        super(`Google rejected the credentials (${reason}). Check GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN; invalid_client means the three do not form a valid set, usually a rotated secret or a refresh token issued by a different OAuth client.`);
         this.name = 'DriveAuthError';
     }
 }
@@ -67,7 +67,7 @@ export class DriveAuthError extends Error {
 const AUTH_FAILURES = ['invalid_client', 'invalid_grant', 'unauthorized_client', 'invalid_token'];
 
 /**
- * `blocked` means Drive will never accept this write — the file is gone or the
+ * `blocked` means Drive will never accept this write; the file is gone or the
  * account has read-only access to it. Retrying it is not "retry-safe", it is an
  * infinite loop: the file stays outside the current naming scheme, so it comes
  * back in the next run's work set forever. `transient` is the genuinely
@@ -87,7 +87,7 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
             // per-file console.error that used to make the failure visible, so
             // a run could come back 0/418/0 with nothing in the platform logs
             // and nothing on screen for anyone on a cached bundle.
-            console.error(`[retrograde] auth failure (${authReason || err?.code}) renaming ${fileId} — aborting run`);
+            console.error(`[retrograde] auth failure (${authReason || err?.code}) renaming ${fileId}; aborting run`);
             throw new DriveAuthError(authReason || 'unauthorized');
         }
         const code = err?.code || err?.response?.status;
@@ -96,7 +96,7 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
             console.warn(`[retrograde] no write access ${fileId}: ${reason || code}`);
             return 'blocked';
         }
-        // Transient — let caller count as failed, retry-safe on next run
+        // Transient: let caller count as failed, retry-safe on next run
         console.error(`[retrograde] rename ${fileId} failed:`, err?.message);
         return 'transient';
     }
@@ -116,7 +116,7 @@ async function processLibrary(
 
     // Paged deliberately. An unbounded .select() is capped at 1000 rows by
     // PostgREST, and that cap is silent: the run saw only the first 1000 photos
-    // in a library, renamed them, then reported "remaining=0 — nothing left to
+    // in a library, renamed them, then reported "remaining=0; nothing left to
     // do" while ~10,000 files sat untouched. last-night-noir stopping at exactly
     // 1000 renamed is what gave it away.
     const PAGE = 1000;
@@ -138,7 +138,7 @@ async function processLibrary(
     }
     if (photos.length === 0) return;
 
-    // Anything not already in the current SEO prefix gets renamed — that
+    // Anything not already in the current SEO prefix gets renamed; that
     // includes both raw camera filenames and legacy `@tlau_` files that
     // pre-dated the brand+IG prefix.
     // A file Drive has already refused to let us write is not pending work. It

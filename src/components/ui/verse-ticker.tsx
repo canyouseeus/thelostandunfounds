@@ -9,10 +9,10 @@ import { cn } from './utils';
  * up. The day-of-year index makes the choice stable for the whole day and
  * rotates through the list across the year.
  *
- * King James Version — public domain.
+ * King James Version: public domain.
  */
 const VERSES: { text: string; ref: string; jesus?: boolean }[] = [
-  // Red-letter — the words of Jesus, rendered in red per the usual convention.
+  // Red-letter: the words of Jesus, rendered in red per the usual convention.
   { text: 'Come unto me, all ye that labour and are heavy laden, and I will give you rest.', ref: 'Matthew 11:28', jesus: true },
   { text: 'I am the way, the truth, and the life: no man cometh unto the Father, but by me.', ref: 'John 14:6', jesus: true },
   { text: 'Peace I leave with you, my peace I give unto you: let not your heart be troubled, neither let it be afraid.', ref: 'John 14:27', jesus: true },
@@ -59,7 +59,7 @@ export function verseOfTheDay(date = new Date()) {
 /**
  * Scroll speed in words per minute. Driving the animation off word count
  * rather than a fixed duration keeps long and short verses moving at the
- * same reading pace — otherwise a 25-word verse would race past while a
+ * same reading pace: otherwise a 25-word verse would race past while a
  * 10-word one crawls.
  */
 const WORDS_PER_MINUTE = 85;
@@ -85,7 +85,7 @@ export function VerseTicker({ className, wpm = WORDS_PER_MINUTE }: { className?:
         '[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)]',
         className,
       )}
-      title={`${verse.text} — ${verse.ref}`}
+      title={`${verse.text}: ${verse.ref}`}
     >
       {/* Two copies scrolling as one track: the second follows immediately
           behind the first, so text is on screen at every point in the loop
@@ -106,7 +106,7 @@ export function VerseTicker({ className, wpm = WORDS_PER_MINUTE }: { className?:
               {verse.text}
             </span>
             <span className="font-mono text-[13px] tracking-widest text-white/60 ml-3">
-              — {verse.ref}
+              {verse.ref}
             </span>
           </span>
         ))}

@@ -7,7 +7,7 @@ import { isAdminUser, elevateToAdminSession } from '../utils/admin'
 /**
  * Replaces ProtectedRoute on /admin routes.
  * Instead of redirecting unauthenticated users to /, it shows an inline
- * login prompt that slides up from the bottom — matching the newsletter
+ * login prompt that slides up from the bottom; matching the newsletter
  * signup animation on the homepage.
  *
  * When someone is signed in but not an admin (e.g. an affiliate account),

@@ -26,7 +26,7 @@ export function buildBody(): string {
   <h1 style="${EMAIL_STYLES.heading1}">SUPPORT THE WORK</h1>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    THE LOST+UNFOUNDS has been running on its own steam for a while now — the
+    THE LOST+UNFOUNDS has been running on its own steam for a while now; the
     galleries, the archives, the writing. Until this week there was no
     straightforward way for anyone to put something toward it, so a few people
     who offered had nowhere to go.
@@ -42,14 +42,14 @@ export function buildBody(): string {
 
   <p style="${EMAIL_STYLES.paragraph}">
     It goes toward hosting, the print pipeline, and the time that goes into
-    shooting and writing. If you would rather not, that is genuinely fine —
+    shooting and writing. If you would rather not, that is genuinely fine;
     nothing here is going behind a paywall, and everything that was free stays
     free.
   </p>
 
   <p style="${EMAIL_STYLES.muted}">
     Thanks for reading.<br>
-    — Joshua, THE LOST+UNFOUNDS
+    Joshua, THE LOST+UNFOUNDS
   </p>
 `
 }

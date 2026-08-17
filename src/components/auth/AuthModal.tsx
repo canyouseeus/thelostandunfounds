@@ -14,7 +14,7 @@ interface AuthModalProps {
   initialMode?: 'signin' | 'signup';
   onLoginSuccess?: () => void;
   required?: boolean;
-  intent?: string; // e.g. 'affiliate' — passed through auth so dashboard can act on it
+  intent?: string; // e.g. 'affiliate': passed through auth so dashboard can act on it
   // Google OAuth only. The admin gate uses this: the owner signs in with the
   // Google account the admin allowlist is keyed on, so an email/password form
   // and a "Sign up" link on /admin are dead options on a restricted route.
@@ -34,7 +34,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
-  // After email/password auth — redirect with intent if present, otherwise normal flow
+  // After email/password auth: redirect with intent if present, otherwise normal flow
   useEffect(() => {
     if (justSignedUp && user) {
       setJustSignedUp(false);

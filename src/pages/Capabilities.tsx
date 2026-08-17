@@ -47,13 +47,13 @@ const MACHINES: Machine[] = [
     ],
     apps: [
       'Jigs, fixtures & tooling for manufacturers',
-      'Functional replacement parts — gears, brackets, housings',
-      'End-use components — enclosures, mounts, adapters',
+      'Functional replacement parts: gears, brackets, housings',
+      'End-use components: enclosures, mounts, adapters',
       'Drone / robotics / RC parts in carbon-fiber',
       'Automotive & marine parts (ASA / PC)',
-      'Flexible parts — gaskets, seals, grips (TPU)',
+      'Flexible parts: gaskets, seals, grips (TPU)',
     ],
-    foot: 'Sells on strength & materials — functional, industrial, durable.',
+    foot: 'Sells on strength & materials: functional, industrial, durable.',
   },
   {
     kicker: 'MSLA · 405nm Resin',
@@ -65,7 +65,7 @@ const MACHINES: Machine[] = [
       { k: 'Build Volume', v: '153 × 78 × 165 mm' },
       { k: 'Resolution', v: '9K · 8520 × 4320 px' },
       { k: 'XY Detail', v: '18 µm' },
-      { k: 'Layer Height', v: '0.01 – 0.2 mm' },
+      { k: 'Layer Height', v: '0.01-0.2 mm' },
       { k: 'Light Source', v: '405nm COB · Tilt-Release' },
     ],
     materials: [
@@ -79,18 +79,18 @@ const MACHINES: Machine[] = [
     ],
     apps: [
       'Dental models & surgical guides (biocompatible)',
-      'Jewelry casting masters (castable — high margin)',
+      'Jewelry casting masters (castable: high margin)',
       'Miniatures & terrain for tabletop gaming',
       'Figurines, busts & collectibles',
       'Anatomical / medical models for training',
-      'Looks-like prototypes — presentation-grade finish',
+      'Looks-like prototypes: presentation-grade finish',
     ],
-    foot: 'Sells on detail & finish — precise, refined, beautiful.',
+    foot: 'Sells on detail & finish: precise, refined, beautiful.',
   },
 ];
 
 const CLIENTS = [
-  { t: 'Manufacturers & Shops', d: 'Custom jigs, fixtures, tooling — no minimum order.' },
+  { t: 'Manufacturers & Shops', d: 'Custom jigs, fixtures, tooling; no minimum order.' },
   { t: 'Product & Startups', d: 'Works-like & looks-like prototypes on demand.' },
   { t: 'Dental & Medical', d: 'Models, guides, anatomical & training aids.' },
   { t: 'Jewelers', d: 'Castable masters for rings, pendants, custom pieces.' },
@@ -178,7 +178,7 @@ function MachineBlock({ machine, index, invert }: { machine: Machine; index: num
             </div>
 
             <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${mutedStrong} mt-10 mb-4`}>
-              Materials — The Selling Point
+              Materials: The Selling Point
             </p>
             <div className="flex flex-wrap gap-2">
               {machine.materials.map(({ label, hero }) => (
@@ -224,7 +224,7 @@ export default function Capabilities() {
         <title>THE LOST+UNFOUNDS | Fabrication Capabilities</title>
         <meta
           name="description"
-          content="Custom additive manufacturing — industrial FDM and 9K resin printing. Functional engineering-grade parts and micron-precise detail work. No minimum order, fast turnaround."
+          content="Custom additive manufacturing: industrial FDM and 9K resin printing. Functional engineering-grade parts and micron-precise detail work. No minimum order, fast turnaround."
         />
         <link rel="canonical" href="https://www.thelostandunfounds.com/capabilities" />
       </Helmet>
@@ -245,7 +245,7 @@ export default function Capabilities() {
             </h1>
             <p className="text-base md:text-2xl font-light text-white/50 max-w-2xl mx-auto mb-10">
               The right part, in the right material, at the right accuracy.
-              Two machines — industrial FDM and 9K resin.
+              Two machines: industrial FDM and 9K resin.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -269,7 +269,7 @@ export default function Capabilities() {
           <p className="text-xl md:text-3xl font-light leading-snug text-white/80">
             We don't sell 3D printing. We produce{' '}
             <span className="text-white font-normal">functional engineering-grade components</span> on FDM and{' '}
-            <span className="text-white font-normal">micron-precise detail work</span> on resin — with in-house
+            <span className="text-white font-normal">micron-precise detail work</span> on resin, with in-house
             design, reverse engineering, and fast local turnaround.
           </p>
         </div>
@@ -280,7 +280,7 @@ export default function Capabilities() {
         <MachineBlock key={machine.name} machine={machine} index={i} invert={i % 2 === 1} />
       ))}
 
-      {/* Which machine for the job — matrix */}
+      {/* Which machine for the job: matrix */}
       <section className="py-16 md:py-24 border-t border-white/10">
         <div className="max-w-6xl mx-auto px-6 md:px-8">
           <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mb-3 text-center">
@@ -357,7 +357,7 @@ export default function Capabilities() {
             ))}
           </div>
           <p className="text-white/30 text-xs font-light text-center mt-8">
-            Tip — add "for sale" or check Etsy / eBay with these terms to see live market pricing.
+            Tip: add "for sale" or check Etsy / eBay with these terms to see live market pricing.
           </p>
         </div>
       </section>
@@ -400,7 +400,7 @@ export default function Capabilities() {
             Let's make <br /> your part
           </h2>
           <p className="text-white/40 text-base font-light mb-10">
-            Send a file, a sketch, or a broken part — we'll quote material, accuracy, and turnaround.
+            Send a file, a sketch, or a broken part; we'll quote material, accuracy, and turnaround.
             No minimum order.
           </p>
           <Link

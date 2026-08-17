@@ -3,12 +3,12 @@ import { ConditionKind } from '../../lib/weather';
 
 /**
  * The ambient condition layer behind the weather tile: rain falls, snow drifts,
- * cloud and fog bands slide across. Decorative only — it sits under the
+ * cloud and fog bands slide across. Decorative only: it sits under the
  * readout at low opacity and never takes pointer events.
  *
  * Canvas rather than CSS keyframes for two reasons. Particle counts and speeds
  * are derived from the tile's measured size, so the effect stays proportional
- * across every shape the widget takes — the same rule the type follows with
+ * across every shape the widget takes; the same rule the type follows with
  * `cqmin`. And one animation frame drives every particle, instead of dozens of
  * separately-composited elements on a dashboard that stays open all day.
  */
@@ -104,7 +104,7 @@ export function WeatherFx({ kind, isDay = true }: { kind: ConditionKind; isDay?:
       const u = unit();
 
       if (kind === 'storm') {
-        // Roughly every four seconds, and brief — a dashboard is not a screensaver.
+        // Roughly every four seconds, and brief; a dashboard is not a screensaver.
         flash -= dt;
         if (flash < -4000 && rand() < 0.06) flash = 130;
         if (flash > 0) {
@@ -130,7 +130,7 @@ export function WeatherFx({ kind, isDay = true }: { kind: ConditionKind; isDay?:
           continue;
         }
 
-        // rain / storm — streaks angled slightly off vertical
+        // rain / storm: streaks angled slightly off vertical
         p.y += (dt / 1000) * p.v * (kind === 'storm' ? 1.5 : 1.05);
         if (p.y > 1.05) { p.y = -0.15; p.x = rand(); }
         const len = u * 0.11 * (0.5 + p.s);

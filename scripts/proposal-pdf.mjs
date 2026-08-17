@@ -5,7 +5,7 @@
  *   public/<client>-proposal.html  →  public/<client>-proposal.pdf
  *
  * The PDFs are committed and served statically, so each proposal has a stable
- * URL — https://www.thelostandunfounds.com/kattitude-proposal.pdf — that can be
+ * URL: https://www.thelostandunfounds.com/kattitude-proposal.pdf; that can be
  * linked in an email or attached directly. There is no runtime PDF endpoint on
  * purpose: proposals are static files, so editing one already requires a deploy,
  * and generating them ahead of time avoids shipping a headless browser into a
@@ -37,7 +37,7 @@ function findChrome() {
 
   const browsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
   if (existsSync(browsersPath)) {
-    // prefer headless_shell — lighter and more reliable in containers
+    // prefer headless_shell: lighter and more reliable in containers
     const dirs = readdirSync(browsersPath)
       .filter((d) => d.startsWith('chromium'))
       .sort((a, b) => (a.includes('headless') ? -1 : b.includes('headless') ? 1 : 0));
@@ -123,4 +123,4 @@ if (failed > 0) {
   process.exit(1);
 }
 
-console.log(`\nDone — ${targets.length} PDF(s) written to public/.`);
+console.log(`\nDone: ${targets.length} PDF(s) written to public/.`);

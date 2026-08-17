@@ -2,7 +2,7 @@
  * Gallery checkout tray spec.
  *
  * Renders the real SelectionTray at phone width, because the tray only appears
- * once photos are selected and a local gallery has no photos to select — so
+ * once photos are selected and a local gallery has no photos to select, so
  * every claim about how it reads had to be made from source rather than pixels.
  * This puts pixels on it: the amount is green, and the three stacked
  * micro-captions that made it look disorganised are gone.

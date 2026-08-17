@@ -1,5 +1,5 @@
 /**
- * Kattitude Tattoo Studio — Shop Owner Admin Dashboard
+ * Kattitude Tattoo Studio: Shop Owner Admin Dashboard
  * Route: /admin/kattitude
  */
 
@@ -219,7 +219,7 @@ export default function AdminKattitude() {
             </Link>
             <div>
               <h1 className="font-black text-white uppercase text-[clamp(1.25rem,3vw,2rem)] leading-none">KATTITUDE</h1>
-              <p className="text-white/30 text-xs uppercase tracking-widest font-bold mt-0.5">Tattoo Studio — Austin, TX</p>
+              <p className="text-white/30 text-xs uppercase tracking-widest font-bold mt-0.5">Tattoo Studio; Austin, TX</p>
             </div>
           </div>
           <Link to="/kattitude" target="_blank"
@@ -479,7 +479,7 @@ export default function AdminKattitude() {
                       <td className="py-3 px-2 font-bold text-white">{w.client_name}</td>
                       <td className="py-3 px-2 text-white/50 text-xs">{w.client_email}</td>
                       <td className="py-3 px-2">
-                        {w.newsletter_opt_in ? <CheckCircleIcon className="w-4 h-4 text-green-400" /> : <span className="text-white/20 text-xs">—</span>}
+                        {w.newsletter_opt_in ? <CheckCircleIcon className="w-4 h-4 text-green-400" /> : <span className="text-white/20 text-xs">, </span>}
                       </td>
                       <td className="py-3 px-2">
                         {w.agreed_to_terms ? <CheckCircleIcon className="w-4 h-4 text-green-400" /> : <ExclamationCircleIcon className="w-4 h-4 text-red-400" />}

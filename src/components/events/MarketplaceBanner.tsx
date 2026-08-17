@@ -15,7 +15,7 @@ interface BannerData {
 
 interface MarketplaceBannerProps {
     surface: 'gallery' | 'shop' | 'blog';
-    /** Suppress the bottom margin — use when rendering inside a fixed header */
+    /** Suppress the bottom margin: use when rendering inside a fixed header */
     noMargin?: boolean;
 }
 

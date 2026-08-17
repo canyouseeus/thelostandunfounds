@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 /* ============================================================
-   FADEBOX — Redesign proposal preview (public, no auth)
+   FADEBOX: Redesign proposal preview (public, no auth)
    Black & White "Noir" identity. Barber-first in-house booking
    (replaces Booksy) + live-synced Google reviews marquee.
    Self-contained: route it at /fadebox-preview.
@@ -49,7 +49,7 @@ function useLocalDark() {
 }
 
 /* ---------------------------- Data ---------------------------- */
-// barber tuple: [name, specialty, rating?, reviewCount?] — rating/reviews shown when known (real Booksy data)
+// barber tuple: [name, specialty, rating?, reviewCount?]; rating/reviews shown when known (real Booksy data)
 interface Studio { id: string; name: string; addr: string; barbers: [string, string, number?, number?][]; }
 const STUDIOS: Studio[] = [
   { id: 'triangle', name: 'The Triangle', addr: '4601 N Lamar Blvd', barbers: [
@@ -68,7 +68,7 @@ const STUDIOS: Studio[] = [
     ['Daniel', 'JD Fades'], ['Pati', 'Barber & stylist'], ['Z', 'Cuts'] ] },
 ];
 
-// Not bookable yet — shown as a "coming soon" tile in the studio switcher and footer.
+// Not bookable yet: shown as a "coming soon" tile in the studio switcher and footer.
 const COMING_SOON = { name: 'San Antonio', addr: 'Coming soon' };
 
 interface Service { id: string; name: string; desc: string; price: number; mins: number; }
@@ -92,23 +92,23 @@ const DAYS: Day[] = [
 // barber they praise. Production swaps this for a live Google Reviews API feed.
 interface Review { quote: string; barber: string; }
 const REVIEWS: Review[] = [
-  { quote: '10/10 first-time experience — great communication and got the exact cut I wanted. Shop atmosphere is 10/10 too.', barber: 'E.Fades' },
+  { quote: '10/10 first-time experience; great communication and got the exact cut I wanted. Shop atmosphere is 10/10 too.', barber: 'E.Fades' },
   { quote: 'Best barber I’ve had. He works fast without sacrificing an ounce of quality.', barber: 'E.Fades' },
-  { quote: 'Followed my barber all the way here — he’s genuinely that good. I drive clear across town for it.', barber: 'Turo' },
+  { quote: 'Followed my barber all the way here; he’s genuinely that good. I drive clear across town for it.', barber: 'Turo' },
   { quote: 'Want a quality fade and real attention to detail? Book Arturo.', barber: 'Turo' },
   { quote: 'Jeremy is professional, punctual, consistent, and genuinely cares about the experience.', barber: 'Chill' },
-  { quote: 'Ralph did an amazing job and was so friendly — listens patiently and does exactly what you ask.', barber: 'Ralphy' },
+  { quote: 'Ralph did an amazing job and was so friendly; listens patiently and does exactly what you ask.', barber: 'Ralphy' },
   { quote: 'Best barber in Austin. Magic hands, and he takes his time with the cut.', barber: 'Ralphy' },
   { quote: 'Adam spun that chair and 30 minutes later I looked like I don’t return texts on purpose. So clean I didn’t recognize myself.', barber: 'Adam' },
-  { quote: 'One of the best in Austin — consistent, never a disappointment.', barber: 'Adam' },
-  { quote: 'That boy Gee will get you right — one of the best fades I’ve had, worth every cent.', barber: 'Gee' },
-  { quote: 'Professional and flexible — made time to add a beard trim even though it wasn’t booked.', barber: 'Gee' },
+  { quote: 'One of the best in Austin; consistent, never a disappointment.', barber: 'Adam' },
+  { quote: 'That boy Gee will get you right; one of the best fades I’ve had, worth every cent.', barber: 'Gee' },
+  { quote: 'Professional and flexible: made time to add a beard trim even though it wasn’t booked.', barber: 'Gee' },
   { quote: 'Book Donnie for a quality fade and outstanding attention to detail.', barber: 'Woo' },
   { quote: 'My go-to. Always communicative, and the fade is perfect every time.', barber: 'E-Rod' },
-  { quote: 'Shelly is incredible — professional, patient, and unreal attention to detail.', barber: 'Shelly' },
+  { quote: 'Shelly is incredible: professional, patient, and unreal attention to detail.', barber: 'Shelly' },
   { quote: 'David was excellent, easy to talk to, and highly skilled. Best barber in Austin.', barber: 'David' },
-  { quote: 'Fadebox is the best barbershop I’ve been to hands down — fade, beard trim, and lineup, out in 30 minutes.', barber: 'Fadebox' },
-  { quote: 'The Fadebox fam shows nothing but hospitality — a great group of talented barbers.', barber: 'Fadebox' },
+  { quote: 'Fadebox is the best barbershop I’ve been to hands down; fade, beard trim, and lineup, out in 30 minutes.', barber: 'Fadebox' },
+  { quote: 'The Fadebox fam shows nothing but hospitality; a great group of talented barbers.', barber: 'Fadebox' },
   { quote: 'Great vibes every single time.', barber: 'Fadebox' },
 ];
 
@@ -188,7 +188,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
 
 /* ------------------------------- Hero ------------------------------- */
 // Full-bleed photo hero (Fadebox Off-5th, shot by tlau.photos). Always a dark
-// ground with white text — the alternating rhythm starts light in the next section.
+// ground with white text: the alternating rhythm starts light in the next section.
 function Hero() {
   const stats: [string, string][] = [['4.9★', 'Avg rating'], ['4,800+', 'Reviews across the team'], ['26', 'Barbers'], ['4', 'Studios']];
   const white = '#ffffff';
@@ -325,10 +325,10 @@ function BarberBooking({ dark }: { dark: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="Reserve your chair"
           title="Barber first. Everything else follows."
-          body="You come for your barber, not just any open chair. So that's where we start — pick your studio, choose your barber, then lock a service and time. Booked in under a minute." />
+          body="You come for your barber, not just any open chair. So that's where we start: pick your studio, choose your barber, then lock a service and time. Booked in under a minute." />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {/* STEP 1 — STUDIO */}
+          {/* STEP 1: STUDIO */}
           <div style={{ padding: '30px', background: t.bg }}>
             <StepLabel t={t} num={1} title="Choose your studio" hint="4 open · 1 coming" />
             <div className="flex flex-wrap gap-2.5">
@@ -339,8 +339,8 @@ function BarberBooking({ dark }: { dark: boolean }) {
                   <span className="text-[0.66rem]" style={{ color: i === studioIdx ? t.bg : t.inkFaint, opacity: i === studioIdx ? 0.6 : 1 }}>{s.addr}</span>
                 </button>
               ))}
-              {/* Coming soon — San Antonio (not bookable; matches the bookable tiles so it aligns) */}
-              <button type="button" disabled aria-disabled="true" title="San Antonio — coming soon"
+              {/* Coming soon: San Antonio (not bookable; matches the bookable tiles so it aligns) */}
+              <button type="button" disabled aria-disabled="true" title="San Antonio; coming soon"
                 className="flex flex-col gap-0.5 flex-1" style={{ padding: '14px 18px', minWidth: 150, background: t.panel2, opacity: 0.55, cursor: 'not-allowed', color: t.inkFaint }}>
                 <span className="text-sm font-black tracking-wider uppercase">{COMING_SOON.name}</span>
                 <span className="text-[0.66rem]" style={{ color: t.inkFaint }}>{COMING_SOON.addr}</span>
@@ -348,7 +348,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
             </div>
           </div>
 
-          {/* STEP 2 — BARBER */}
+          {/* STEP 2: BARBER */}
           <div style={{ padding: '30px', background: t.bg }}>
             <StepLabel t={t} num={2} title="Pick your barber" hint={`${studio.barbers.length} barbers · ${studio.name}`} />
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))' }}>
@@ -372,7 +372,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
             </div>
           </div>
 
-          {/* STEP 3 — SERVICE */}
+          {/* STEP 3: SERVICE */}
           <div style={{ padding: '30px', background: t.bg, opacity: barber ? 1 : 0.45, pointerEvents: barber ? 'auto' : 'none' }}>
             <StepLabel t={t} num={3} title="Choose a service" hint="Prices upfront" />
             <div className="flex flex-wrap gap-2.5">
@@ -392,7 +392,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
             </div>
           </div>
 
-          {/* STEP 4 — TIME */}
+          {/* STEP 4: TIME */}
           <div style={{ padding: '30px', background: t.bg, opacity: service ? 1 : 0.45, pointerEvents: service ? 'auto' : 'none' }}>
             <StepLabel t={t} num={4} title="Lock a time" hint="Central Time" />
             <div className="flex flex-wrap gap-2 mb-3.5">
@@ -457,8 +457,8 @@ function WhyReviews({ dark }: { dark: boolean }) {
   const t = theme(dark);
   const cells: [string, string, string][] = [
     ['4.9★', 'Team rating', 'A near-perfect average across thousands of booked visits.'],
-    ['4,800+', 'Reviews across the team', 'Every barber carries their own 5-star reviews on Google, Booksy & Squire — it adds up fast.'],
-    ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.'],
+    ['4,800+', 'Reviews across the team', 'Every barber carries their own 5-star reviews on Google, Booksy & Squire; it adds up fast.'],
+    ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio, with San Antonio coming soon.'],
     ['26', 'Barbers to choose from', 'Every specialty covered, from skin fades to beard sculpts.'],
   ];
   return (
@@ -489,7 +489,7 @@ function ServicesMenu({ dark }: { dark: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="The menu"
           title="Clean list. No surprises."
-          body="Every service, every price, up front. What you see is what you pay at the chair — no surprises." />
+          body="Every service, every price, up front. What you see is what you pay at the chair; no surprises." />
         <div className="flex flex-wrap gap-2.5">
           {SERVICES.map(s => (
             <div key={s.id} className="flex items-center gap-4 flex-1" style={{ background: t.bg, padding: '16px 20px', flexBasis: 220 }}>
@@ -583,7 +583,7 @@ export default function FadeboxLanding() {
       </main>
       <Footer dark={!dark} />
       <div className="text-center text-[0.62rem] tracking-[0.18em] uppercase" style={{ background: t.ink, color: t.bg, padding: '8px 12px' }}>
-        Preview — bookings aren't live yet
+        Preview: bookings aren't live yet
       </div>
     </div>
   );

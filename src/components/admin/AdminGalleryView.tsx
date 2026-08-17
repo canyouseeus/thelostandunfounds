@@ -69,7 +69,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [isManaged, setIsManaged] = useState(false); // Modal open state
     const [editingId, setEditingId] = useState<string | null>(null); // If set, we are editing
     // Photo IDs staged from the batch-editing grid, waiting to land in whatever
-    // gallery the admin creates next — see openCreateModalForPhotos / handleSaveGallery.
+    // gallery the admin creates next: see openCreateModalForPhotos / handleSaveGallery.
     const [pendingGalleryPhotoIds, setPendingGalleryPhotoIds] = useState<string[]>([]);
     const [uploadMode, setUploadMode] = useState<'drive' | 'upload'>('drive');
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
@@ -672,7 +672,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         setIsManaged(true);
     };
 
-    // Called from the photo grid's "Save" action once edits are made — stages
+    // Called from the photo grid's "Save" action once edits are made; stages
     // the edited photos so the next successfully-created gallery adopts them.
     const openCreateModalForPhotos = (photoIds: string[]) => {
         setPendingGalleryPhotoIds(photoIds);
@@ -710,7 +710,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         try {
             info('Starting asset health check...');
 
-            // First, try to get an actual photo from the database — use most recent image to avoid stale IDs
+            // First, try to get an actual photo from the database; use most recent image to avoid stale IDs
             const { data: photos, error: photoError } = await supabase
                 .from('photos')
                 .select('google_drive_file_id')
@@ -780,7 +780,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     return (
         <div className="flex flex-col h-full overflow-x-hidden">
 
-            {/* Create/Edit Gallery Modal — fullscreen ExpandableScreen, same pattern as Affiliates/ProductCostManagement */}
+            {/* Create/Edit Gallery Modal: fullscreen ExpandableScreen, same pattern as Affiliates/ProductCostManagement */}
             <ExpandableScreen isOpen={isManaged} onOpenChange={setIsManaged}>
                 <ExpandableScreenContent className="overflow-y-auto">
                     <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-20 pb-16">
@@ -796,7 +796,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             type="button"
                                             onClick={() => setModalData({ ...modalData, published: !isPublished })}
                                             className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 transition-colors"
-                                            title={isPublished ? 'Published — visible on site. Click to switch to draft.' : 'Draft — hidden from production. Click to publish.'}
+                                            title={isPublished ? 'Published: visible on site. Click to switch to draft.' : 'Draft; hidden from production. Click to publish.'}
                                             aria-pressed={isPublished}
                                             aria-label={isPublished ? 'Switch to draft' : 'Publish gallery'}
                                         >
@@ -1263,7 +1263,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </ExpandableScreenContent>
             </ExpandableScreen>
 
-            {/* Compact header — title + actions */}
+            {/* Compact header: title + actions */}
             <div className="shrink-0 flex items-center justify-between gap-3 pb-3">
                 <div className="flex items-center gap-2">
                     <div className="bg-white p-1.5">
@@ -1306,7 +1306,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </div>
             </div>
 
-            {/* Inline metrics — admin only, single compact row */}
+            {/* Inline metrics: admin only, single compact row */}
             {!isPhotographerView && (
                 <div className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-1 py-2 px-3 mb-2 bg-white/5">
                     <div className="flex items-center gap-2">
@@ -1336,11 +1336,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {healthStatus === 'healthy' && (
                 <div className="shrink-0 flex items-center gap-2 py-2 px-3 mb-2 bg-green-500/10 text-green-400 text-xs">
                     <CheckCircleIcon className="w-4 h-4 flex-shrink-0" />
-                    <span>Asset system healthy — delivery verified.</span>
+                    <span>Asset system healthy: delivery verified.</span>
                 </div>
             )}
 
-            {/* Tab bar — admin only */}
+            {/* Tab bar: admin only */}
             {!isPhotographerView && (
                 <div className="shrink-0 flex overflow-x-auto border-b border-white/10">
                     {[
@@ -1366,7 +1366,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </div>
             )}
 
-            {/* Tab content — fills remaining height, only this scrolls */}
+            {/* Tab content: fills remaining height, only this scrolls */}
             <div className="flex-1 min-h-0 overflow-y-auto pt-4 custom-scrollbar">
                 {activeTab === 'downloads' ? (
                     <AdminDownloadsPanel />
@@ -1388,7 +1388,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             </div>
 
                             {/* Every library in one run. Renaming was offered per gallery
-                                only, so a single job became eight — and the endpoint always
+                                only, so a single job became eight, and the endpoint always
                                 supported the whole set (it filters by slug only when given). */}
                             <button
                                 onClick={() => setRenameFor(renameFor === '__all__' ? null : '__all__')}
@@ -1504,7 +1504,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             )}
                         </div>
 
-                        {/* Recent Sales — admin only */}
+                        {/* Recent Sales: admin only */}
                         {!isPhotographerView && (
                             <div className="bg-white/[0.02] p-4">
                                 <h3 className="text-xs font-bold text-white uppercase mb-3 tracking-wide">

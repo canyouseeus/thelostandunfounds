@@ -102,7 +102,7 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
               <KeyIcon className="w-4 h-4" />
               Environment Variables
             </h3>
-            <p className="text-white/60 text-sm mb-4">Manage Vercel project environment variables. Values are masked — only the last 4 characters are shown.</p>
+            <p className="text-white/60 text-sm mb-4">Manage Vercel project environment variables. Values are masked, only the last 4 characters are shown.</p>
             <AdminEnvVarsView />
           </div>
 

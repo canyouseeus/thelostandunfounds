@@ -22,7 +22,7 @@ import {
 const PINK = '#E91E8C';
 /* The logo's yellow, sampled from assets/brand/kattitude-logo.png in the
  * kiosk's styles.css, where it is the canonical --yellow / --gold.
- * Was #B8860B (CSS DarkGoldenrod) — a brown-gold that is not this
+ * Was #B8860B (CSS DarkGoldenrod): a brown-gold that is not this
  * brand's yellow and never was. Both Kattitude templates share this
  * token, so the site and the console cannot drift apart again. */
 const GOLD = '#FDE446';
@@ -153,7 +153,7 @@ function Hero({ dark }: { dark: boolean }) {
         </h1>
 
         <p className="max-w-xl mx-auto text-base sm:text-lg leading-relaxed mb-10" style={{ color: textMuted }}>
-          Custom tattoo artistry in Austin, TX. Fine line, single needle, micro realism, ornamentals, and color — every piece designed for you, every time.
+          Custom tattoo artistry in Austin, TX. Fine line, single needle, micro realism, ornamentals, and color; every piece designed for you, every time.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
@@ -218,7 +218,7 @@ function Styles({ dark }: { dark: boolean }) {
       icon: <BoltIcon className="w-7 h-7" />,
       title: 'Blackwork',
       tag: 'Dark & Graphic',
-      description: 'High-contrast black ink only — from solid black fills and tribal patterns to ornamental sleeve-ready compositions.',
+      description: 'High-contrast black ink only, from solid black fills and tribal patterns to ornamental sleeve-ready compositions.',
       features: ['Solid black fills', 'Tribal & ornamental', 'Dotwork shading', 'Sleeve compositions'],
     },
     {
@@ -299,7 +299,7 @@ function HowItWorks({ dark }: { dark: boolean }) {
     {
       step: '02', icon: <PaintBrushIcon className="w-6 h-6" />,
       title: 'Pick Your Style',
-      body: 'Traditional, fine line, blackwork, color realism — tell us what vibe you\'re going for and describe your concept.',
+      body: 'Traditional, fine line, blackwork, color realism; tell us what vibe you\'re going for and describe your concept.',
     },
     {
       step: '03', icon: <CameraIcon className="w-6 h-6" />,
@@ -349,9 +349,9 @@ function HowItWorks({ dark }: { dark: boolean }) {
           <div className="flex items-start gap-3">
             <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: PINK }} />
             <div>
-              <div className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: PINK }}>Step 5 — Digital Booking Coming Soon</div>
+              <div className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: PINK }}>Step 5; Digital Booking Coming Soon</div>
               <p className="text-xs leading-relaxed" style={{ color: textMuted }}>
-                We're building a digital booking flow for waivers and deposit collection — sign and pay before you even walk in the door. Join the waitlist to be first access.
+                We're building a digital booking flow for waivers and deposit collection; sign and pay before you even walk in the door. Join the waitlist to be first access.
               </p>
             </div>
           </div>
@@ -375,7 +375,7 @@ function Artists({ dark }: { dark: boolean }) {
       role: 'Artist / Studio Owner',
       instagram: '@Kattitudetattoo',
       specialties: ['Fine Line', 'Color Realism', 'Cover-Ups', 'Traditional'],
-      bio: 'Studio owner and lead artist. Kat accepts return clients only — if you have sat with her before, you know why her books fill before they open.',
+      bio: 'Studio owner and lead artist. Kat accepts return clients only, if you have sat with her before, you know why her books fill before they open.',
       availability: 'Return clients only · Weekdays',
       rating: 5,
     },
@@ -386,7 +386,7 @@ function Artists({ dark }: { dark: boolean }) {
       instagram: '@delicatelyscripted',
       specialties: ['Single Needle', 'Micro Realism', 'Color', 'Florals'],
       bio: 'Senior artist with impossibly delicate single needle work and micro realism. Her florals are some of the most requested pieces in the studio.',
-      availability: 'Booking 4–5 weeks out',
+      availability: 'Booking 4-5 weeks out',
       rating: 5,
     },
     {
@@ -396,7 +396,7 @@ function Artists({ dark }: { dark: boolean }) {
       instagram: '@Alenanebotattoos',
       specialties: ['Large Scale Fine Line', 'Florals', 'Ornamentals'],
       bio: 'Senior artist known for large scale fine line compositions. Her ornamental and floral work transforms entire limbs into seamless, flowing pieces.',
-      availability: 'Booking 4–6 weeks out',
+      availability: 'Booking 4-6 weeks out',
       rating: 5,
     },
     {
@@ -406,7 +406,7 @@ function Artists({ dark }: { dark: boolean }) {
       instagram: '@mirandaiink',
       specialties: ['Large Scale Fine Line', 'Gothic', 'Abstract', 'Realism'],
       bio: 'Junior artist with a dark, moody edge. Miranda excels at large scale fine line with gothic influence, abstract compositions, and realism work.',
-      availability: 'Booking 2–3 weeks out',
+      availability: 'Booking 2-3 weeks out',
       rating: 5,
     },
     {
@@ -416,7 +416,7 @@ function Artists({ dark }: { dark: boolean }) {
       instagram: '@inkedbyjemini',
       specialties: ['3 Needle', 'Single Needle'],
       bio: 'Junior artist focused on precision needle work. Jen brings clean, consistent execution to both 3 needle and single needle styles.',
-      availability: 'Booking 2–3 weeks out',
+      availability: 'Booking 2-3 weeks out',
       rating: 5,
     },
     {
@@ -426,7 +426,7 @@ function Artists({ dark }: { dark: boolean }) {
       instagram: '@Puratinta_26',
       specialties: ['Single Needle', '3 Needle', 'Large Scale Flowers'],
       bio: 'Junior artist specializing in single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
-      availability: 'Booking 2–3 weeks out',
+      availability: 'Booking 2-3 weeks out',
       rating: 5,
     },
     {
@@ -505,7 +505,7 @@ function Testimonials({ dark }: { dark: boolean }) {
     },
     {
       name: 'Jordan T.', location: 'South Congress', rating: 5,
-      text: "I came in for a cover-up I'd been dreading for years. Kat not only covered it — she completely transformed it into a sleeve centerpiece I'm obsessed with. The studio is clean, professional, and fun.",
+      text: "I came in for a cover-up I'd been dreading for years. Kat not only covered it: she completely transformed it into a sleeve centerpiece I'm obsessed with. The studio is clean, professional, and fun.",
     },
     {
       name: 'Priya M.', location: 'Domain Northside', rating: 5,
@@ -606,18 +606,18 @@ function BookingCTA({ dark }: { dark: boolean }) {
               <select style={{ background: inputBg, color: textMuted, appearance: 'none' }}
                 className="w-full px-4 py-3 text-sm focus:outline-none">
                 <option>Any Artist Best Fit</option>
-                <option>Kat (@Kattitudetattoo) — Return Clients Only</option>
-                <option>Barbie (@delicatelyscripted) — Senior · Single Needle, Micro Realism, Florals</option>
-                <option>Alena (@Alenanebotattoos) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
-                <option>Miranda (@mirandaiink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
-                <option>Jen (@inkedbyjemini) — Junior · 3 Needle, Single Needle</option>
-                <option>Naomi (@Puratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
+                <option>Kat (@Kattitudetattoo): Return Clients Only</option>
+                <option>Barbie (@delicatelyscripted): Senior · Single Needle, Micro Realism, Florals</option>
+                <option>Alena (@Alenanebotattoos): Senior · Large Scale Fine Line, Florals, Ornamentals</option>
+                <option>Miranda (@mirandaiink): Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
+                <option>Jen (@inkedbyjemini): Junior · 3 Needle, Single Needle</option>
+                <option>Naomi (@Puratinta_26): Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
               </select>
             </div>
           </div>
           <div className="mb-4">
             <label className="block text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: textFaint }}>Describe Your Concept</label>
-            <textarea placeholder="Tell us about your tattoo idea — subject, placement, inspiration, or anything else that helps..." rows={4}
+            <textarea placeholder="Tell us about your tattoo idea; subject, placement, inspiration, or anything else that helps..." rows={4}
               style={{ background: inputBg, color: inputText, caretColor: PINK }}
               className="w-full px-4 py-3 text-sm focus:outline-none resize-none" />
           </div>
@@ -630,7 +630,7 @@ function BookingCTA({ dark }: { dark: boolean }) {
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs" style={{ color: textFaint }}>
           <div className="flex items-center gap-1.5"><PhoneIcon className="w-3.5 h-3.5" />(512) 555-0420</div>
           <div className="w-px h-4" style={{ background: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }} />
-          <div className="flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5" />Tue–Sat, 11am–7pm</div>
+          <div className="flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5" />Tue, Sat, 11am, 7pm</div>
           <div className="w-px h-4" style={{ background: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }} />
           <div className="flex items-center gap-1.5"><MapPinIcon className="w-3.5 h-3.5" />East Austin, TX</div>
         </div>
@@ -677,7 +677,7 @@ function Footer({ dark }: { dark: boolean }) {
               {[
                 { icon: <PhoneIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: '(512) 555-0420' },
                 { icon: <MapPinIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'East Austin, TX' },
-                { icon: <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Tue–Sat, 11:00am–7:00pm' },
+                { icon: <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />, text: 'Tue, Sat, 11:00am, 7:00pm' },
               ].map(row => (
                 <div key={row.text} className="flex items-center gap-2 text-xs" style={{ color: textLink }}>
                   {row.icon}{row.text}

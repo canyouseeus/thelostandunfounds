@@ -4,7 +4,7 @@ import { LAYOUT_GENERATION, readLocal, readRemote, writeLocal, writeRemote } fro
 import { TILE_1X1, TILE_1X2, TILE_1X4, TILE_2X1, TILE_2X2, TILE_2X4, TILE_4X1, TILE_4X2, TILE_4X4 } from './DashboardTile';
 
 /**
- * The widget shapes, smallest first — the order the resize control offers them.
+ * The widget shapes, smallest first: the order the resize control offers them.
  * Named in columns x rows on a grid four columns wide on a phone and eight on
  * desktop, so 2x2 is the familiar small widget and 1x2 is half of one.
  */
@@ -51,7 +51,7 @@ const SHAPE_UNITS: Record<ShapeName, number> = {
  * Widgets that only work in a square.
  *
  * The clock is a dial, the calendar is a seven-column month, the calculator is
- * a four-column keypad. Squash any of them into a 4x2 and the proportions go —
+ * a four-column keypad. Squash any of them into a 4x2 and the proportions go;
  * an elliptical clock face, day cells that no longer fit their digits. They
  * scale proportionally instead, so they offer the square sizes only. Anything
  * not listed here can take any shape.
@@ -64,7 +64,7 @@ export const SQUARE_ONLY: Record<string, readonly ShapeName[]> = {
   // truncate it into a number with no story, so registry offers the wide,
   // tall and large shapes only.
   registry: ['4x2', '2x4', '4x4'],
-  // Analytics reads as a chart with a split — the squares under 2x2 and the
+  // Analytics reads as a chart with a split; the squares under 2x2 and the
   // strips have no room for either.
   'site-analytics': ['2x2', '4x2', '2x4'],
   // The CRM face is a dial and a count; the roster needs ledger room.
@@ -82,7 +82,7 @@ export function shapeOptions(id: string): readonly ShapeName[] {
 /**
  * The designed default: a composed mosaic, not a starting mess. Shapes and
  * order are chosen so the phone lattice (4 units per row) and the desktop
- * lattice (8 per row) both fill with zero holes: total area is 80 units —
+ * lattice (8 per row) both fill with zero holes: total area is 80 units;
  * twenty full phone rows, ten desktop rows. On a phone it reads top to
  * bottom: time and sky, then money, the calendar, the census, analytics
  * beside the client book, the feed, the services, the keypad.
@@ -93,7 +93,7 @@ export const DEFAULT_LAYOUT: Record<string, ShapeName> = {
   'revenue-performance': '4x2',
   // The two 4x4s are adjacent on purpose: on the eight-column desktop they
   // pair into one band. Split apart, whichever came last took four rows of
-  // the left half and left the right half empty — a hole no amount of total
+  // the left half and left the right half empty; a hole no amount of total
   // area fixes, because packing is placement, not arithmetic.
   calendar: '4x4',
   calculator: '4x4',
@@ -115,7 +115,7 @@ interface Stored {
 }
 
 /**
- * A saved layout can predate a widget's shape restrictions — clamp every
+ * A saved layout can predate a widget's shape restrictions; clamp every
  * stored shape to the widget's current catalogue, falling back to its
  * default (or the catalogue's first entry) rather than rendering a view
  * the widget no longer has.
@@ -133,7 +133,7 @@ function clampShapes(shapes: Record<string, ShapeName>): Record<string, ShapeNam
 function reconcile(saved: Partial<Stored> | null): Stored {
   // No layout, or one from an older generation of the default: take the
   // designed board. A layout saved before the shapes were redesigned is an
-  // arrangement of a different dashboard — merging it strands tiles at sizes
+  // arrangement of a different dashboard: merging it strands tiles at sizes
   // that no longer compose, which is how a board of 1x1s survived the
   // redesign.
   if (!saved || (saved.generation ?? 1) < LAYOUT_GENERATION) {

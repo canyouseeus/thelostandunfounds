@@ -14,7 +14,7 @@ import CrewOnboardingSend from './CrewOnboardingSend';
  * The question this answers is "who can I send tonight?", so the search box
  * matches across gear as well as names: typing "gimbal" or "wireless lav"
  * narrows to the people who own one. Each card shows the kit grouped by
- * category and how recently it was confirmed — a kit last touched a year ago
+ * category and how recently it was confirmed; a kit last touched a year ago
  * is worth a text before it is worth a booking.
  */
 
@@ -66,7 +66,7 @@ interface RosterEntry {
 /**
  * The three walls between "on the roster" and "can actually work a job":
  * a login to see anything, a kit list to come up in a search, and Stripe to be
- * paid. Shown as what's missing rather than what's done — the gaps are the
+ * paid. Shown as what's missing rather than what's done; the gaps are the
  * actionable half.
  */
 function SetupChips({ setup }: { setup?: SetupState }) {
@@ -146,7 +146,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
     load();
   }, [load]);
 
-  // Search spans gear text, not just names — the point is finding capability.
+  // Search spans gear text, not just names; the point is finding capability.
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return roster;

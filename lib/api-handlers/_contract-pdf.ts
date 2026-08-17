@@ -58,7 +58,7 @@ function fmtDateTime(iso: string | null): string {
 
 /**
  * Decode a `data:image/png;base64,...` signature into a Buffer pdfkit can
- * draw. Returns null on anything malformed rather than throwing — a contract
+ * draw. Returns null on anything malformed rather than throwing; a contract
  * that renders without the ink is far better than one that 500s.
  */
 function decodeSignature(dataUrl: string | null): Buffer | null {
@@ -97,7 +97,7 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Buffer
     topShift = Math.max(0, bannerTop + drawnHeight + 16 - 56)
   } else {
     console.error(
-      '[contract-pdf] BANNER MISSING — rendering an unbranded contract. ' +
+      '[contract-pdf] BANNER MISSING: rendering an unbranded contract. ' +
       'Checked public/brand/banner.png. Fix before sending this to a client.'
     )
     doc.fillColor(INK).font('Helvetica-Bold').fontSize(20)
@@ -251,7 +251,7 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Buffer
 
   for (const signer of ordered) {
     doc.font('Helvetica-Bold').fontSize(9.5).fillColor(INK)
-      .text(`${signer.name} — ${signer.email}`, LEFT, cy, { width: CONTENT_W })
+      .text(`${signer.name}: ${signer.email}`, LEFT, cy, { width: CONTENT_W })
     cy += 14
     const detail = [
       `Status: ${signer.status}`,
@@ -279,7 +279,7 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Buffer
       .text(fmtDateTime(ev.created_at), LEFT, cy, { width: 150 })
     doc.font('Helvetica').fontSize(8.5).fillColor(INK)
       .text(
-        `${ev.event_type.replace(/_/g, ' ')}${ev.actor ? ` — ${ev.actor}` : ''}` +
+        `${ev.event_type.replace(/_/g, ' ')}${ev.actor ? `; ${ev.actor}` : ''}` +
         `${ev.ip_address ? `  (${ev.ip_address})` : ''}`,
         LEFT + 150, cy, { width: CONTENT_W - 150 }
       )

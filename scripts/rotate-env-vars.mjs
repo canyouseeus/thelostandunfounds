@@ -21,7 +21,7 @@ const BASE_URL = 'https://api.vercel.com';
 // All variables that need attention, grouped by service
 const FLAGGED_VARS = [
   // Zoho (email delivery - critical for checkout emails)
-  { name: 'ZOHO_REFRESH_TOKEN', service: 'Zoho', envs: ['production', 'preview'], lastUpdated: '2025-12-11', critical: true, note: 'OAuth refresh token — regenerate at https://api-console.zoho.com/' },
+  { name: 'ZOHO_REFRESH_TOKEN', service: 'Zoho', envs: ['production', 'preview'], lastUpdated: '2025-12-11', critical: true, note: 'OAuth refresh token; regenerate at https://api-console.zoho.com/' },
   { name: 'ZOHO_CLIENT_SECRET', service: 'Zoho', envs: ['production', 'preview'], lastUpdated: '2025-11-14', critical: true, note: 'Zoho API console → Client Secret' },
   { name: 'ZOHO_API_KEY', service: 'Zoho', envs: ['production', 'preview'], lastUpdated: '2025-11-10', critical: false, note: 'Zoho API key' },
 
@@ -205,7 +205,7 @@ async function main() {
   const existing = await getExistingEnvVars(token);
   const envMap = {};
   for (const env of existing) {
-    // Key by name — there can be multiple entries per name (one per target env)
+    // Key by name: there can be multiple entries per name (one per target env)
     if (!envMap[env.key]) envMap[env.key] = [];
     envMap[env.key].push(env);
   }
@@ -232,7 +232,7 @@ async function main() {
     if (value.trim()) {
       const envEntries = envMap[v.name];
       if (!envEntries || envEntries.length === 0) {
-        console.log(`  ⚠️  Variable not found in Vercel — will need to be created manually`);
+        console.log(`  ⚠️  Variable not found in Vercel; will need to be created manually`);
       } else {
         updates.push({ ...v, value: value.trim(), envEntries });
         console.log(`  ✅ Queued for update`);

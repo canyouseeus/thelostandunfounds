@@ -1096,7 +1096,7 @@ export default function NewsletterManagement() {
         </div>
       </AdminBentoCard>
 
-      {/* Campaign Detail — fullscreen ExpandableScreen pattern */}
+      {/* Campaign Detail: fullscreen ExpandableScreen pattern */}
       <ExpandableScreen
         isOpen={!!expandedCampaignId}
         onOpenChange={(open) => { if (!open) setExpandedCampaignId(null); }}
@@ -1211,7 +1211,7 @@ export default function NewsletterManagement() {
         </ExpandableScreenContent>
       </ExpandableScreen>
 
-      {/* Recipient Selection — fullscreen ExpandableScreen pattern */}
+      {/* Recipient Selection: fullscreen ExpandableScreen pattern */}
       <ExpandableScreen isOpen={showRecipientSelection} onOpenChange={setShowRecipientSelection}>
         <ExpandableScreenContent className="overflow-x-hidden">
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -1307,7 +1307,7 @@ export default function NewsletterManagement() {
         </ExpandableScreenContent>
       </ExpandableScreen>
 
-      {/* Subscriber Index — fullscreen ExpandableScreen pattern */}
+      {/* Subscriber Index: fullscreen ExpandableScreen pattern */}
       <ExpandableScreen isOpen={showSubscriberModal} onOpenChange={setShowSubscriberModal}>
         <ExpandableScreenContent className="overflow-x-hidden">
           <div className="flex-1 overflow-y-auto overflow-x-hidden">

@@ -60,7 +60,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
   // Background removal tracking across all product cards
   const [settledCount, setSettledCount] = useState(0);
   const [newlyEnhanced, setNewlyEnhanced] = useState(0);
-  // reloadCountdown removed — auto-reload caused images to revert when Supabase upload failed
+  // reloadCountdown removed: auto-reload caused images to revert when Supabase upload failed
 
   const handleImageSettled = useCallback((wasNew: boolean) => {
     setSettledCount(s => s + 1);
@@ -265,7 +265,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
           </>
         )}
 
-        {/* Skeleton — shown while products are loading */}
+        {/* Skeleton: shown while products are loading */}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-pulse">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -448,8 +448,8 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
   const displayComparePrice = product.compareAtPrice || null;
   const { processedUrl, processing, error: bgrError } = useBackgroundRemoval(imageUrl, onSettled);
 
-  // If the processed (Supabase-hosted) image fails to load — e.g. storage is
-  // down or over its egress quota — fall back to the original product photo
+  // If the processed (Supabase-hosted) image fails to load, e.g. storage is
+  // down or over its egress quota; fall back to the original product photo
   // WITHOUT the styled outline. Reset the flag whenever the processed URL changes.
   const [processedFailed, setProcessedFailed] = useState(false);
   useEffect(() => { setProcessedFailed(false); }, [processedUrl]);
@@ -474,7 +474,7 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
       // user hits back from Fourthwall (see restore effect in Shop).
       try {
         sessionStorage.setItem('shopReturn', JSON.stringify({ y: window.scrollY, id: product.id }));
-      } catch { /* private mode / quota — restore just won't fire */ }
+      } catch { /* private mode / quota: restore just won't fire */ }
       window.location.href = product.url;
       return;
     }
@@ -502,13 +502,13 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
             alt={product.title}
             className="w-full h-full transition-all duration-700"
             onError={() => {
-              // Only revert once — if the ORIGINAL image also fails there's
+              // Only revert once, if the ORIGINAL image also fails there's
               // nothing better to show, so don't loop.
               if (showProcessed) setProcessedFailed(true);
             }}
             style={showProcessed ? {
               // The white sticker outline is baked into the transparent PNG by
-              // scripts/generate-transparent-product-images.mjs — no CSS filter.
+              // scripts/generate-transparent-product-images.mjs; no CSS filter.
               objectFit: 'contain',
               padding: '24px',
             } : {
@@ -520,14 +520,14 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
           <div className="w-full h-full bg-white/5" />
         )}
 
-        {/* Background removal error — temporary debug indicator */}
+        {/* Background removal error: temporary debug indicator */}
         {bgrError && !processing && (
           <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
             <p className="text-[8px] text-red-400 bg-black/80 px-2 py-1 leading-tight break-all">{bgrError}</p>
           </div>
         )}
 
-        {/* Processing indicator — visible while AI removes background */}
+        {/* Processing indicator: visible while AI removes background */}
         {processing && (
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-4 pointer-events-none">
             <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
@@ -542,7 +542,7 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
         )}
       </div>
 
-      {/* Text below the image — centered title + price, no description */}
+      {/* Text below the image: centered title + price, no description */}
       <div className="p-4 flex-1 flex flex-col gap-1 items-center text-center">
         <h3 className="text-sm font-black text-white uppercase tracking-tight leading-tight line-clamp-2">
           {product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}
@@ -607,7 +607,7 @@ function ProductRow({
         ))}
       </div>
 
-      {/* Swipe indicator — mobile only */}
+      {/* Swipe indicator: mobile only */}
       {products.length > 1 && (
         <div className="flex md:hidden flex-col items-center gap-2 pt-1">
           <div className="flex items-center gap-2">

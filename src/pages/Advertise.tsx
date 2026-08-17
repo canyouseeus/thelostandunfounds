@@ -23,15 +23,15 @@ export default function Advertise() {
     const placements = [
         {
             title: "Above the Fold",
-            description: "Your campaign runs at the very top of the page — above the navigation bar. The first thing every visitor sees, before anything else loads.",
+            description: "Your campaign runs at the very top of the page, above the navigation bar. The first thing every visitor sees, before anything else loads.",
         },
         {
             title: "Synchronized Slots",
-            description: "Campaigns rotate on synchronized 8-second global intervals. Every visitor on the site sees the same slot at the same time — no impression is wasted.",
+            description: "Campaigns rotate on synchronized 8-second global intervals. Every visitor on the site sees the same slot at the same time; no impression is wasted.",
         },
         {
             title: "Homepage Priority",
-            description: "The banner lives on the visitor homepage — the gallery and shop every visitor lands on. Prime real estate with maximum dwell time.",
+            description: "The banner lives on the visitor homepage; the gallery and shop every visitor lands on. Prime real estate with maximum dwell time.",
         }
     ];
 
@@ -64,7 +64,7 @@ export default function Advertise() {
         <div className="min-h-screen bg-black text-white overflow-x-hidden">
             <Helmet>
                 <title>THE LOST+UNFOUNDS | Advertise</title>
-                <meta name="description" content="Partner with THE LOST+UNFOUNDS. Your campaign sits above the navigation bar — the first impression for every visitor, every time." />
+                <meta name="description" content="Partner with THE LOST+UNFOUNDS. Your campaign sits above the navigation bar; the first impression for every visitor, every time." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/advertise" />
             </Helmet>
 
@@ -129,7 +129,7 @@ export default function Advertise() {
                                 Above Everything
                             </h2>
                             <p className="text-black/60 leading-relaxed mb-4 font-light text-sm md:text-base">
-                                Our banner sits at the very top of the page — pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive, before they interact with a single element.
+                                Our banner sits at the very top of the page; pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive, before they interact with a single element.
                             </p>
                             <p className="text-black/60 leading-relaxed font-light text-sm md:text-base">
                                 Campaigns are delivered on a synchronized 8-second rotation. Multiple brands can run concurrently, sharing slots across the global audience without cannibalizing each other's visibility.

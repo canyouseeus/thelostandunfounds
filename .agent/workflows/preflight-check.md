@@ -36,17 +36,25 @@ If you modified `BlogPost.tsx`, `BlogAnalysis.tsx`, or any blog component:
 
 ### 5. SQL scripts use safe patterns
 If you created or modified a SQL file:
-- Never use `ON CONFLICT (slug)` — the slug column may not have a unique constraint
+- Never use `ON CONFLICT (slug)`: the slug column may not have a unique constraint
 - Must use check-and-insert/update pattern (check existence first with `SELECT INTO`, then `IF/ELSE`)
 
-### 6. Skill was consulted
+### 6. No em dashes or en dashes
+```bash
+npm run check:dashes
+```
+Brand voice bans both characters everywhere: copy, comments, docs, commit messages. Fix any hit
+with a comma, colon, semicolon, full stop, or parentheses. This also runs in `prebuild`, so a
+violation fails the build.
+
+### 7. Skill was consulted
 Before implementing, check: did you read the relevant skill(s) from `.claude/skills/`?
 If not, read them now and verify your implementation aligns.
 
 ## Quick One-Liner
 ```bash
-npm run build && echo "✅ Build passed"
+npm run check:dashes && npm run build && echo "✅ Preflight passed"
 ```
 
 ## If a Check Fails
-Fix the issue, then re-run the preflight check. Don't skip checks — they exist because violations have broken production before.
+Fix the issue, then re-run the preflight check. Don't skip checks: they exist because violations have broken production before.

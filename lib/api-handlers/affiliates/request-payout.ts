@@ -171,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (affiliate.is_flagged) {
       return res.status(403).json({
-        error: 'Account flagged for review. Payouts are paused — please contact support.',
+        error: 'Account flagged for review. Payouts are paused: please contact support.',
         code: 'AFFILIATE_FLAGGED',
       });
     }
@@ -225,7 +225,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           destination: affiliate.stripe_account_id,
           description: notes
             ? String(notes).slice(0, 200)
-            : `Affiliate commission payout — ${affiliateCodeValue}`,
+            : `Affiliate commission payout: ${affiliateCodeValue}`,
           metadata: {
             affiliate_id: affiliate.id,
             affiliate_code: affiliateCodeValue,

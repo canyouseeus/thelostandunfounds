@@ -26,7 +26,7 @@ function Frame({ id, size, children }: { id: string; size: number; children: Rea
   )
 }
 
-/** A — Apple's order: city, temperature, glyph + label at the foot. */
+/** A: Apple's order: city, temperature, glyph + label at the foot. */
 const AppleOrder = () => (
   <div className="absolute flex flex-col text-left" style={{ inset: '9cqmin' }}>
     <span className="font-black uppercase tracking-widest text-white/60" style={{ fontSize: '10cqmin', lineHeight: 1 }}>{CITY}</span>
@@ -35,7 +35,7 @@ const AppleOrder = () => (
   </div>
 )
 
-/** B — the glyph is the tile: oversized, centred, temperature over it. */
+/** B: the glyph is the tile: oversized, centred, temperature over it. */
 const GlyphField = () => (
   <>
     <span className="absolute grayscale leading-none opacity-30"
@@ -47,7 +47,7 @@ const GlyphField = () => (
   </>
 )
 
-/** C — corner bleed: the glyph oversized and cropped by the tile's edge. */
+/** C: corner bleed: the glyph oversized and cropped by the tile's edge. */
 const CornerBleed = () => (
   <>
     <span className="absolute grayscale leading-none opacity-40"
@@ -59,7 +59,7 @@ const CornerBleed = () => (
   </>
 )
 
-/** D — stacked even: big glyph top, temperature bottom, no city. */
+/** D: stacked even: big glyph top, temperature bottom, no city. */
 const StackEven = () => (
   <div className="absolute flex flex-col items-start justify-between text-left" style={{ inset: '9cqmin' }}>
     <span className="grayscale leading-none" style={{ fontSize: '40cqmin' }}>{GLYPH}</span>
@@ -67,7 +67,7 @@ const StackEven = () => (
   </div>
 )
 
-/** E — centred totem: glyph over temperature over city, all centred. */
+/** E: centred totem: glyph over temperature over city, all centred. */
 const Totem = () => (
   <div className="absolute flex flex-col items-center justify-center" style={{ inset: '7cqmin', gap: '5cqmin' }}>
     <span className="grayscale leading-none" style={{ fontSize: '36cqmin' }}>{GLYPH}</span>
@@ -76,7 +76,7 @@ const Totem = () => (
   </div>
 )
 
-/** F — diagonal: glyph big in the top-right, temperature anchored bottom-left. */
+/** F: diagonal: glyph big in the top-right, temperature anchored bottom-left. */
 const Diagonal = () => (
   <>
     <span className="absolute grayscale leading-none"
@@ -89,12 +89,12 @@ const Diagonal = () => (
 )
 
 const VARIANTS: [string, string, () => JSX.Element][] = [
-  ['A', 'Apple order — city, temp, glyph at the foot', AppleOrder],
-  ['B', 'Glyph field — oversized glyph behind everything', GlyphField],
-  ['C', 'Corner bleed — glyph cropped by the tile edge', CornerBleed],
-  ['D', 'Stack — glyph and temp split the height', StackEven],
-  ['E', 'Totem — everything centred', Totem],
-  ['F', 'Diagonal — glyph and temp in opposite corners', Diagonal],
+  ['A', 'Apple order: city, temp, glyph at the foot', AppleOrder],
+  ['B', 'Glyph field: oversized glyph behind everything', GlyphField],
+  ['C', 'Corner bleed: glyph cropped by the tile edge', CornerBleed],
+  ['D', 'Stack: glyph and temp split the height', StackEven],
+  ['E', 'Totem: everything centred', Totem],
+  ['F', 'Diagonal: glyph and temp in opposite corners', Diagonal],
 ]
 
 createRoot(document.getElementById('root')!).render(
@@ -103,7 +103,7 @@ createRoot(document.getElementById('root')!).render(
       <div key={id} data-row={id} className="flex items-end gap-4">
         <Frame id={id} size={81}><Face /></Frame>
         <Frame id={id} size={120}><Face /></Frame>
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 pb-1">{id} — {label}</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 pb-1">{id}, {label}</span>
       </div>
     ))}
   </div>

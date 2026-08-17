@@ -4,14 +4,14 @@ import { getSupabaseAdmin, resolveCrewMember, isAdmin } from './_shared.js';
 /**
  * A photographer's own blocked-out days.
  *
- * The owner has had this for a while — `booking_availability`, toggled from the
+ * The owner has had this for a while; `booking_availability`, toggled from the
  * calendar tab of the admin booking view. That table is deliberately not reused
  * here. It is the *site's* calendar: the public booking form reads it and a row
  * there closes the date to everybody. One photographer being at a wedding on
  * Saturday must not stop the studio taking Saturday work, because somebody else
  * on the roster can shoot it. So crew blocks live in
  * `photographer_availability`, keyed per person, and feed the master calendar as
- * information — "who is free" — rather than as a gate.
+ * information, "who is free", rather than as a gate.
  *
  * Auth is a verified Supabase JWT, the same model as the rest of `api/crew`.
  * The photographer is resolved from the token's user id and never from anything
@@ -43,7 +43,7 @@ function readDates(body: any): { dates: string[]; error?: string } {
   for (const value of raw) {
     const ymd = String(value || '').trim();
     if (!YMD.test(ymd)) return { dates: [], error: `Invalid date: ${ymd || '(empty)'}` };
-    // Reject 2026-02-31 and friends — the regex only proves the shape.
+    // Reject 2026-02-31 and friends; the regex only proves the shape.
     const [y, m, d] = ymd.split('-').map(Number);
     const parsed = new Date(Date.UTC(y, m - 1, d));
     if (parsed.getUTCFullYear() !== y || parsed.getUTCMonth() !== m - 1 || parsed.getUTCDate() !== d) {
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // ── Admin: the whole roster's availability in a window ──────────────
-    // This is the deployment question — "who can I send on the 3rd?" — so it
+    // This is the deployment question: "who can I send on the 3rd?", so it
     // returns every active photographer, including the ones with nothing
     // blocked. An empty list for someone means available, and the caller
     // shouldn't have to infer that from their absence.

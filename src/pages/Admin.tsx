@@ -200,14 +200,14 @@ const PLATFORM_LAUNCH_DATE = '2026-01-15';
 /**
  * The instruments, as opposed to the data tiles.
  *
- * You point at a key, a day or a control inside these — not at the tile — and
+ * You point at a key, a day or a control inside these, not at the tile, and
  * each of those already lights on its own hover. The cell's tile-wide wash is
  * suppressed for them so hovering one key doesn't highlight the whole widget.
  * Data tiles keep the wash: there, the tile *is* the target.
  *
  * The calendar's 1x1 shape is the exception. It isn't the month grid, it's a
  * single date face with nothing inside it to light, and the whole tile opens
- * the master calendar — so it behaves like a data tile and keeps the wash.
+ * the master calendar, so it behaves like a data tile and keeps the wash.
  */
 const TOOL_WIDGETS = new Set(['clock', 'calendar', 'calculator']);
 const drawsOwnHover = (id: string, size: string) =>
@@ -283,7 +283,7 @@ export default function Admin() {
 
   // Which console panel is open (null = none)
   const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
-  // ?panel=<id> opens a panel directly — used by the header date to jump
+  // ?panel=<id> opens a panel directly; used by the header date to jump
   // straight to the master calendar from anywhere in the admin.
   const [searchParams] = useSearchParams();
   // Watches the query rather than reading it once: clicking the header date
@@ -294,10 +294,10 @@ export default function Admin() {
     if (panel) setActivePanelSection(panel);
   }, [searchParams]);
 
-  // Long press on the dashboard calendar opens the master calendar panel —
+  // Long press on the dashboard calendar opens the master calendar panel;
   // the same one the header date links to.
   const calendarPress = useLongPress(() => openPanel('calendar'));
-  // The clock expands on hold only — plain clicks belong to the widget itself
+  // The clock expands on hold only; plain clicks belong to the widget itself
   // (face click cycles format, label click cycles mode, per the clock rule).
   const [clockOpen, setClockOpen] = useState(false);
   const clockPress = useLongPress(() => setClockOpen(true), 450, { holdOnMouse: true });
@@ -310,13 +310,13 @@ export default function Admin() {
   const gridRef = useRef<HTMLDivElement>(null);
   /* The row unit is CSS now, not a measurement. It used to come from a
      ResizeObserver in an effect with empty deps that bailed when the grid
-     was not mounted yet — and the dashboard renders a loading state first,
+     was not mounted yet, and the dashboard renders a loading state first,
      so it bailed every time, never measured again, and the rows fell back
      to content height. That is why a 2x2 came out a rectangle and a 4x2
      came out smashed: the column spans were right and the row heights were
      never applied. Container query units give the same number with nothing
      to race. */
-  // Ticks once a minute — enough for a date face.
+  // Ticks once a minute: enough for a date face.
   const [today, setToday] = useState(new Date());
   useEffect(() => {
     const t = setInterval(() => setToday(new Date()), 60_000);
@@ -327,7 +327,7 @@ export default function Admin() {
     setActivePanelSection(prev => (prev === id ? null : id));
   };
 
-  // Deep-link support (e.g. /admin?section=invoices&booking_id=...) — opens a console
+  // Deep-link support (e.g. /admin?section=invoices&booking_id=...): opens a console
   // panel directly instead of requiring a separate route for each section.
   useEffect(() => {
     const section = searchParams.get('section');
@@ -897,7 +897,7 @@ export default function Admin() {
 
 
 
-        // Get affiliate revenue — sum actual sale amounts (profit_generated + product_cost)
+        // Get affiliate revenue: sum actual sale amounts (profit_generated + product_cost)
         // from non-cancelled commissions, not the commission payouts themselves
         const { data: commissions } = await supabase
           .from('affiliate_commissions')
@@ -940,10 +940,10 @@ export default function Admin() {
         // Booking revenue is money actually collected, not invoice status. A
         // deposit-paid job stays status 'sent' until the balance clears (so the
         // client's email still reads "Invoice", not "Receipt"), but the deposit
-        // is real income the moment it lands — keying off status alone hid it.
+        // is real income the moment it lands; keying off status alone hid it.
         //
         // Each invoice contributes the full amount collected against it. This
-        // figure is GROSS — the contractor's cut is not subtracted here. It is a
+        // figure is GROSS: the contractor's cut is not subtracted here. It is a
         // cost, and it is shown as one in the waterfall on the expanded card.
         // Netting it out of the headline made assigning a photographer *lower*
         // all-time revenue on a job whose payment had not changed, which is the
@@ -965,7 +965,7 @@ export default function Admin() {
 
           bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
             // Invoices marked paid with no itemised payments still count in
-            // full — older rows predate invoice_payments being populated.
+            // full: older rows predate invoice_payments being populated.
             const recorded = collectedByInvoice.get(inv.id);
             const collected =
               recorded != null ? recorded : inv.status === 'paid' ? Number(inv.total || 0) : 0;
@@ -1058,7 +1058,7 @@ export default function Admin() {
         console.error('Error checking pending submissions:', err);
       }
 
-      // Check for Prodigi print orders that failed at fulfillment — the
+      // Check for Prodigi print orders that failed at fulfillment; the
       // customer was charged but the physical order was never submitted,
       // so this needs to surface loudly (real money, no dry-run test order
       // was ever run against this flow).
@@ -1072,7 +1072,7 @@ export default function Admin() {
           newAlerts.push({
             id: 5,
             type: 'error',
-            message: `${count} print order${count > 1 ? 's' : ''} failed to submit to Prodigi — customer was charged`,
+            message: `${count} print order${count > 1 ? 's' : ''} failed to submit to Prodigi; customer was charged`,
             time: 'Just now',
             read: false
           });
@@ -1485,7 +1485,7 @@ export default function Admin() {
           </div>
 
           {/* Was its own Profit Trend tile, which showed the same total as this
-              one — the graph belongs with the figures it plots. */}
+              one: the graph belongs with the figures it plots. */}
           <ProfitGraph />
 
           {/* Refunds were a separate tile too. They're money out; they belong
@@ -1499,7 +1499,7 @@ export default function Admin() {
       title: 'Network Status',
       icon: <CpuChipIcon className="w-4 h-4" />,
       primary: `${[healthMetrics.db, healthMetrics.api, healthMetrics.auth, healthMetrics.storage].filter(Boolean).length}/4`,
-      caption: 'Services online — 42ms',
+      caption: 'Services online: 42ms',
       aside: (
         <StatusMarks
           items={[
@@ -1577,7 +1577,7 @@ export default function Admin() {
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
       content: (
         <div className="space-y-3 pt-2">
-          {/* The work queue lives with the other things that want attention —
+          {/* The work queue lives with the other things that want attention;
               it came off the retired users tile, which was a census row it
               never belonged on. */}
           {pendingSubmissions > 0 && (
@@ -1644,7 +1644,7 @@ export default function Admin() {
           </h1>
 
           {/* Three icon buttons beside a title that scales with the viewport
-              collided on a phone — they sat on top of "ADMIN DASHBOARD". Above
+              collided on a phone: they sat on top of "ADMIN DASHBOARD". Above
               sm they stay inline; below it they collapse behind one button. */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <CopyDebugReport />
@@ -1720,19 +1720,19 @@ export default function Admin() {
             width to show its figures in full, three from md. Tiles size to
             their content, and three of them span two columns. Six single tiles
             plus three doubles is twelve cells, which divides evenly by both 2
-            and 3 — so neither layout ends on a half-empty row. `dense` backfills
+            and 3, so neither layout ends on a half-empty row. `dense` backfills
             any hole if that count ever changes. */}
         {/* One lattice for the whole dashboard, and it's yours to rearrange.
-            Every widget is a cell here — clock and weather included — so they
+            Every widget is a cell here, clock and weather included, so they
             all pack against each other with nothing left over. Shapes and order
             come from the saved layout; the editor below writes to it. */}
-        {/* Nothing sits between the chart and the board in the resting state —
+        {/* Nothing sits between the chart and the board in the resting state;
             the edit toggle lives in the Platform Console dock below. This strip
             only appears once you're editing, where it's part of the tool. */}
         {layout.editing && (
           <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
-              {layout.units} units — {layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'},{' '}
+              {layout.units} units: {layout.fillsRows.phone ? 'fills phone rows' : 'ragged on a phone'},{' '}
               {layout.fillsRows.desktop ? 'fills desktop rows' : 'ragged on desktop'}
               {' · '}
               {layout.syncing ? 'saving' : layout.syncedRemotely ? 'synced to your account' : 'this device only'}
@@ -1740,7 +1740,7 @@ export default function Admin() {
             <div className="flex items-center gap-2">
               <span className="px-2 py-2 text-[10px] font-black uppercase tracking-widest tabular-nums text-white/40">
                 {layout.units % 4 === 0 && layout.units % 8 === 0
-                  ? 'Fills — phone & desktop'
+                  ? 'Fills: phone & desktop'
                   : layout.units % 4 !== 0
                     ? `${4 - (layout.units % 4)}u short on phone`
                     : `${8 - (layout.units % 8)}u short on desktop`}
@@ -1800,8 +1800,8 @@ export default function Admin() {
             const size = layout.shapes[id] ?? '2x2';
             // The clock, calendar, calculator and weather are drawn strictly in
             // white on black, so inverting the whole widget turns them black on
-            // white correctly. The data tiles can't be inverted — their green
-            // and amber accents would come out magenta and blue — so those take
+            // white correctly. The data tiles can't be inverted; their green
+            // and amber accents would come out magenta and blue, so those take
             // a `light` prop and restyle properly.
             const invertIfLight = (node: React.ReactNode) =>
               light ? <div className="w-full h-full invert bg-white">{node}</div> : node;
@@ -1833,7 +1833,7 @@ export default function Admin() {
             ));
 
             if (id === 'calendar') return cell(invertIfLight(
-              // Long press (or a click with a mouse) opens the master calendar —
+              // Long press (or a click with a mouse) opens the master calendar;
               // the same panel the header date links to. Selection is suppressed
               // on the way in: a long press landing on text otherwise starts an
               // iOS selection instead of opening anything.
@@ -1842,7 +1842,7 @@ export default function Admin() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
-                aria-label="Calendar — open master calendar"
+                aria-label="Calendar: open master calendar"
                 className="w-full h-full cursor-pointer touch-manipulation select-none"
                 style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
               >
@@ -2038,7 +2038,7 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* The clock's expanded card: the same widget with a full screen —
+        {/* The clock's expanded card: the same widget with a full screen;
             which is also the 1x1's only route to the stopwatch and timer. */}
         {clockOpen && (
           <DetailSheet onClose={() => setClockOpen(false)} label="Close clock">
@@ -2046,7 +2046,7 @@ export default function Admin() {
           </DetailSheet>
         )}
 
-        {/* Console ExpandableScreen — full-screen overlay for each section */}
+        {/* Console ExpandableScreen: full-screen overlay for each section */}
         <ExpandableScreen
           isOpen={activePanelSection !== null}
           onOpenChange={(open) => { if (!open) setActivePanelSection(null); }}
@@ -2055,7 +2055,7 @@ export default function Admin() {
             {/* Nav-menu pattern: fixed header + flex-1 scrollable content = stays in viewport */}
             <div className="flex flex-col h-full w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-              {/* Fixed header — back button + section title, pr-16 clears the X button */}
+              {/* Fixed header: back button + section title, pr-16 clears the X button */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
@@ -2096,7 +2096,7 @@ export default function Admin() {
                 );
               })()}
 
-              {/* Content — fills remaining height, scrolls within itself */}
+              {/* Content: fills remaining height, scrolls within itself */}
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
                 {activePanelSection === 'gallery' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>

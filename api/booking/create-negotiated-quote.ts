@@ -9,7 +9,7 @@ import {
 /**
  * Invoice a price agreed over email.
  *
- * Repeat clients negotiate — "this is what I can work with" — and saying yes to
+ * Repeat clients negotiate, "this is what I can work with", and saying yes to
  * a number should not mean hand-writing an invoice. Every automatic path here
  * resolves a price from the rate card on purpose, so there was no way to bill an
  * agreed amount at all.
@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // client who can see what they were given asks for it again by name, and
     // the record explains the number to whoever reads it later.
     const items: BookingLineItem[] = [{
-      description: `Photography — ${eventType}`,
+      description: `Photography: ${eventType}`,
       quantity: 1,
       unit_price: Number(listPrice) > 0 ? Number(listPrice) : agreedPrice,
       amount: Number(listPrice) > 0 ? Number(listPrice) : agreedPrice,
@@ -109,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (Number(listPrice) > 0 && Number(listPrice) > agreedPrice) {
       const off = Math.round((Number(listPrice) - agreedPrice) * 100) / 100
       items.push({
-        description: reason ? `Adjustment — ${reason}` : 'Agreed adjustment',
+        description: reason ? `Adjustment: ${reason}` : 'Agreed adjustment',
         quantity: 1,
         unit_price: -off,
         amount: -off,
@@ -121,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       totalPrice: agreedPrice,
       depositPct: Number(depositPct),
       lineItems: items,
-      description: `Photography services — ${eventType}`,
+      description: `Photography services: ${eventType}`,
       origin: siteOrigin(req),
       // Preview to the owner when asked; the invoice and client record are
       // unaffected either way.

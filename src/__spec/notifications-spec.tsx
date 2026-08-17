@@ -8,11 +8,11 @@ import { SHAPE_CLASS } from '../components/admin/useDashboardLayout'
 const DATA: NotificationsWidgetData = {
   pendingReviews: 2,
   items: [
-    { id: '1', type: 'deployment', title: 'Deployment Failed', message: 'Widget system: per-size views — type error in revenue-widget.tsx', severity: 'error', read: false, created_at: '2026-08-05T14:22:00Z',
+    { id: '1', type: 'deployment', title: 'Deployment Failed', message: 'Widget system: per-size views; type error in revenue-widget.tsx', severity: 'error', read: false, created_at: '2026-08-05T14:22:00Z',
       deployment: { id: 'dpl_9f2k', status: 'error', sha: 'a4f19c2', commit: 'Widget system: per-size views', url: null, errorExcerpt: 'src/components/ui/revenue-widget.tsx(41,3): error TS2322: Type string is not assignable to type number' } },
-    { id: '2', type: 'deployment', title: 'Deployment Succeeded', message: 'Registry: the platform census — thelostandunfounds.com', severity: 'info', read: false, created_at: '2026-08-05T13:10:00Z',
+    { id: '2', type: 'deployment', title: 'Deployment Succeeded', message: 'Registry: the platform census; thelostandunfounds.com', severity: 'info', read: false, created_at: '2026-08-05T13:10:00Z',
       deployment: { id: 'dpl_8x1q', status: 'succeeded', sha: '5c1cc66', commit: 'Registry: the platform census', url: 'https://thelostandunfounds.com', errorExcerpt: null } },
-    { id: '3', type: 'stripe', title: 'Refund Issued', message: 'charge_3Rf2 refunded $45.00 — gallery order', severity: 'warning', read: false, created_at: '2026-08-04T19:03:00Z', deployment: null },
+    { id: '3', type: 'stripe', title: 'Refund Issued', message: 'charge_3Rf2 refunded $45.00; gallery order', severity: 'warning', read: false, created_at: '2026-08-04T19:03:00Z', deployment: null },
     { id: '4', type: 'deployment', title: 'Deployment Succeeded', message: 'Analytics: fix the page-view black hole', severity: 'info', read: true, created_at: '2026-08-04T11:40:00Z', deployment: null },
     { id: '5', type: 'system', title: 'Gallery Sync Complete', message: '214 photos synced from Google Drive', severity: 'success', read: true, created_at: '2026-08-03T22:15:00Z', deployment: null },
     { id: '6', type: 'deployment', title: 'Deployment Succeeded', message: 'CRM: collection dial and roster', severity: 'info', read: true, created_at: '2026-08-03T16:02:00Z', deployment: null },

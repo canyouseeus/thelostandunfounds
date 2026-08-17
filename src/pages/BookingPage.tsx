@@ -26,28 +26,28 @@ const PHOTO_SERVICES = [
         id: 'portrait',
         label: 'LIFESTYLE PORTRAIT',
         price: '$250',
-        meta: '30–45 min · Downtown Austin',
+        meta: '30-45 min · Downtown Austin',
         eventType: 'Lifestyle Shoot',
         features: [
-            '10–15 curated photos',
+            '10-15 curated photos',
             'Same-day delivery',
             'Candid, lifestyle direction',
         ],
     },
     {
         // Priced to enter the Austin short-term-rental market competitively.
-        // Reference points (2026): Austin MLS listing work runs $150–325 with a
-        // ~$185 median; STR shoots run $100–400 for a standard unit, with budget
+        // Reference points (2026): Austin MLS listing work runs $150-325 with a
+        // ~$185 median; STR shoots run $100-400 for a standard unit, with budget
         // operators from $149. A $195 entry undercuts the mid-market without
         // landing in the budget bracket, and the ladder carries the margin on
-        // larger properties. Add-ons track market: drone $95–400, 3D $100–525.
+        // larger properties. Add-ons track market: drone $95-400, 3D $100-525.
         id: 'airbnb',
         label: 'AIRBNB / SHORT-TERM RENTAL',
         price: '$195+',
         meta: 'Studio / 1BR · Your property',
         eventType: 'Airbnb / Short-Term Rental',
         features: [
-            '25–35 edited photos · 24–72 hr delivery',
+            '25-35 edited photos · 24-72 hr delivery',
             '2BR $265 · 3BR $335 · 4BR+ / luxury from $425',
             'Twilight +$125 · Drone +$150 · 3D tour +$200',
         ],
@@ -58,7 +58,7 @@ const PHOTO_SERVICES = [
         // model units, amenity spaces and exteriors across a portfolio, and the
         // scope is set by the property rather than by a bedroom count.
         //
-        // Same ladder logic as the $195 Airbnb entry — a single unit enters just
+        // Same ladder logic as the $195 Airbnb entry; a single unit enters just
         // above the STR rate (leasing photography carries more amenity and
         // exterior coverage), and the margin is carried by the property package
         // and the portfolio retainer. Quoted on a call rather than auto-invoiced:
@@ -71,8 +71,8 @@ const PHOTO_SERVICES = [
         eventType: 'Real Estate / Multifamily',
         isConsultation: true,
         features: [
-            'Single model unit or vacant listing $225 · 20–30 edited photos',
-            'Property package $850 — exteriors, amenities + 2 model units',
+            'Single model unit or vacant listing $225 · 20-30 edited photos',
+            'Property package $850: exteriors, amenities + 2 model units',
             'Portfolio retainer from $1,600/mo · Drone +$150 · 3D tour +$200',
         ],
     },
@@ -83,7 +83,7 @@ const PHOTO_SERVICES = [
         meta: '3 hours · Your venue',
         eventType: 'Event Coverage',
         features: [
-            '20–30 curated photos, next-day',
+            '20-30 curated photos, next-day',
             'Event highlight reel within 48 hrs',
             '+$175/hr for additional hours',
         ],
@@ -95,8 +95,8 @@ const PHOTO_SERVICES = [
         meta: '4 hours · On location',
         eventType: 'Half-Day Content',
         features: [
-            '30–50 curated photos',
-            '2–3 short-form reels',
+            '30-50 curated photos',
+            '2-3 short-form reels',
             'Lifestyle + product coverage',
         ],
     },
@@ -108,7 +108,7 @@ const PHOTO_SERVICES = [
         eventType: 'Full-Day Content',
         features: [
             '50+ curated photos',
-            '2–3 short-form reels',
+            '2-3 short-form reels',
             'Everything a brand needs in a single day',
         ],
         featured: true,
@@ -124,7 +124,7 @@ const WEB_SERVICES = [
         isConsultation: true,
         features: [
             'Template-based site',
-            '5–8 pages',
+            '5-8 pages',
             'Mobile responsive',
             'Vercel deployment',
         ],
@@ -159,7 +159,7 @@ const WEB_SERVICES = [
     {
         id: 'maintenance',
         label: 'MONTHLY MAINTENANCE',
-        price: '$150–300/mo',
+        price: '$150-300/mo',
         eventType: 'Retainer (Monthly)',
         isConsultation: true,
         features: [
@@ -175,13 +175,13 @@ const WEB_SERVICES = [
 // photo content days, so /services/video advertised something that could not
 // be booked on its own.
 //
-// Priced against the Austin market (2026): freelance video runs $600–1,500 for
-// a half day and $1,200–3,000 for a full day; Austin single-camera branded
-// packages start around $1,400–2,200; agencies charge $1,500–5,000 for
-// short-form social alone; retainers of 4–8 videos/month run $1,000–2,500.
-// Austin sits 25–40% under LA/NYC for equivalent work. The ladder below enters
+// Priced against the Austin market (2026): freelance video runs $600-1,500 for
+// a half day and $1,200-3,000 for a full day; Austin single-camera branded
+// packages start around $1,400-2,200; agencies charge $1,500-5,000 for
+// short-form social alone; retainers of 4-8 videos/month run $1,000-2,500.
+// Austin sits 25-40% under LA/NYC for equivalent work. The ladder below enters
 // well beneath the agency floor with REEL PACK, then tracks the freelance band
-// — the same logic as the $195 Airbnb entry: undercut the mid-market at the
+//; the same logic as the $195 Airbnb entry: undercut the mid-market at the
 // door, carry the margin further up.
 const VIDEO_SERVICES = [
     {
@@ -203,7 +203,7 @@ const VIDEO_SERVICES = [
         meta: '4 hours · On location',
         eventType: 'Brand Video',
         features: [
-            'One 60–90s hero video',
+            'One 60-90s hero video',
             '3 vertical cutdowns for social',
             'Licensed music + captions',
         ],
@@ -216,7 +216,7 @@ const VIDEO_SERVICES = [
         meta: '8 hours · On location',
         eventType: 'Video Content Day',
         features: [
-            'Hero video plus 6–8 reels',
+            'Hero video plus 6-8 reels',
             'Multi-location or multi-setup',
             'A month of social in one day',
         ],
@@ -244,7 +244,7 @@ const BUNDLES = [
         eventType: 'Web Development',
         isConsultation: true,
         features: [
-            'Starter website (5–8 pages)',
+            'Starter website (5-8 pages)',
             'Lifestyle portrait session',
             'Product & space photography for the site',
             'Same-day photo delivery',
@@ -269,7 +269,7 @@ const BUNDLES = [
 
 const TRAVEL_TIERS = [
     { range: 'Downtown Austin', rate: 'Included' },
-    { range: '15–50 mi', rate: '+$50' },
+    { range: '15-50 mi', rate: '+$50' },
     { range: '50+ mi', rate: '+$100 + mileage' },
     { range: 'Overnight', rate: 'Lodging at cost' },
 ];
@@ -279,7 +279,7 @@ const TRAVEL_TIERS = [
 const WEBDEV_EVENT_TYPES = ['Web Development', 'Retainer (Monthly)'];
 const isWebDevEventType = (eventType: string) => WEBDEV_EVENT_TYPES.includes(eventType);
 
-// Mirrors AIRBNB_TIERS in api/booking/index.ts. Display only — the server
+// Mirrors AIRBNB_TIERS in api/booking/index.ts. Display only: the server
 // resolves the actual price from the bedroom count it is sent.
 const AIRBNB_BEDROOM_OPTIONS = [
     { value: 1, label: 'Studio / 1', price: 195 },
@@ -308,11 +308,11 @@ const EVENT_TYPES = [
 interface TimeSlot { label: string; start: string; end: string; display: string }
 
 const TIME_SLOTS: TimeSlot[] = [
-    { label: 'Early Morning', start: '06:00', end: '08:00', display: '6AM – 8AM' },
-    { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM – 12PM' },
-    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
-    { label: 'Evening',   start: '17:00', end: '20:00', display: '5PM – 8PM' },
-    { label: 'Night',     start: '20:00', end: '23:00', display: '8PM – 11PM' },
+    { label: 'Early Morning', start: '06:00', end: '08:00', display: '6AM; 8AM' },
+    { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM; 12PM' },
+    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM; 5PM' },
+    { label: 'Evening',   start: '17:00', end: '20:00', display: '5PM; 8PM' },
+    { label: 'Night',     start: '20:00', end: '23:00', display: '8PM, 11PM' },
 ];
 
 // A booked shoot reserves its window plus travel time either side, so a slot
@@ -515,19 +515,19 @@ const ServiceCard: React.FC<{
 
 /**
  * `focus` swaps the hero's heading and opening line so each service URL leads
- * with what that visitor searched for. Everything below the hero is unchanged —
+ * with what that visitor searched for. Everything below the hero is unchanged;
  * a host who came for listing photography can still see the web packages.
  *
  * The point is that the three URLs are not the same document. Identical pages
  * on three addresses get collapsed to one in search, and the two Google
- * discards are the ones it decides are duplicates — not the one you'd choose.
+ * discards are the ones it decides are duplicates, not the one you'd choose.
  */
 type ServiceFocus = 'airbnb' | 'realestate' | 'web' | 'video';
 
 const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = {
     airbnb: {
         h1: <>AIRBNB<br />PHOTOGRAPHY</>,
-        copy: 'Listing photography for Austin short-term rentals. 25–35 edited photos, delivered in 24–72 hours, priced from $195.',
+        copy: 'Listing photography for Austin short-term rentals. 25-35 edited photos, delivered in 24-72 hours, priced from $195.',
     },
     realestate: {
         h1: <>REAL ESTATE<br />PHOTOGRAPHY</>,
@@ -620,17 +620,17 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
     //   /?view=booking&service=airbnb&promo=AIRBNB10
     // `service` preselects the event type and jumps to the scheduler, so a
     // repeat client books the thing they already bought instead of landing on
-    // a generic service list. `promo` is recorded on the booking — there is no
+    // a generic service list. `promo` is recorded on the booking; there is no
     // automated discount engine for bookings, so the code travels in the notes
     // and is honoured when the invoice is raised.
     const [promoCode, setPromoCode] = useState('');
-    // A client we already know — their name and email ride in the link we sent
+    // A client we already know: their name and email ride in the link we sent
     // them, so the wizard's identity steps are pure friction. Express mode asks
     // only for what we cannot know: when, where, and how to get in.
     const [expressMode, setExpressMode] = useState(false);
-    // Arrived via ?service= — the visitor asked for the calendar, not the pitch.
+    // Arrived via ?service=: the visitor asked for the calendar, not the pitch.
     const [deepLinked, setDeepLinked] = useState(false);
-    // ?client=<crm id> — a personal link. The modal resolves them from the CRM.
+    // ?client=<crm id>: a personal link. The modal resolves them from the CRM.
     const [expressClientId, setExpressClientId] = useState<string | null>(null);
     const [expressOpen, setExpressOpen] = useState(false);
     useEffect(() => {
@@ -643,7 +643,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
             if (match) {
                 setForm(prev => ({ ...prev, event_type: match.eventType }));
                 // No scrolling. The pitch above the scheduler is hidden for a
-                // deep link, so the calendar is already the top of the page —
+                // deep link, so the calendar is already the top of the page;
                 // nothing to travel to, nothing to jump.
                 setDeepLinked(true);
             }
@@ -757,7 +757,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
             )}
 
             {/* Everything above the scheduler is the pitch. A client who followed a
-                booking link from an email has already been sold — showing them the
+                booking link from an email has already been sold; showing them the
                 pitch first means the page must scroll to reach the calendar, and
                 any scroll on arrival reads as a jump. Hide it so the scheduler is
                 simply the top of the page. */}
@@ -830,7 +830,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                             </p>
                             <p className="text-white/40 text-xs leading-relaxed max-w-2xl">
                                 Candid-first direction and a{' '}
-                                <span className="text-white font-bold">fast turnaround</span> —
+                                <span className="text-white font-bold">fast turnaround</span>;
                                 real moments, not posed briefs. We match each shoot to the right
                                 photographer and the right kit, so the work fits the space instead
                                 of the other way around. Tell us what you need and we'll scope it
@@ -967,7 +967,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     10% off this booking &middot; {promoCode}
                                 </p>
                                 <p className="text-white/40 text-xs mt-2">
-                                    We'll apply it to your invoice — nothing else to enter.
+                                    We'll apply it to your invoice; nothing else to enter.
                                 </p>
                             </div>
                         )}
@@ -986,7 +986,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                             >
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 mb-6">
-                                        01 — Pick a Date
+                                        01: Pick a Date
                                     </p>
                                     <BookingCalendar
                                         selected={form.event_date}
@@ -1030,7 +1030,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     <div className="bg-white/[0.03] p-5">
                                         <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Cancellation &amp; Rescheduling</p>
                                         <p className="text-white/40 text-xs leading-relaxed">
-                                            The retainer is non-refundable — it pays for the date being held.
+                                            The retainer is non-refundable: it pays for the date being held.
                                             Cancel more than 14 days out and nothing further is owed; inside 14 days,
                                             25% of the balance is owed; inside 48 hours or a no-show, the full amount is owed.
                                             One free reschedule with 48+ hours' notice, within 90 days and subject to availability.
@@ -1095,7 +1095,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             <div>
                                                 <h3 className="text-xl font-bold text-white">Confirm your shoot</h3>
                                                 <p className="text-white/40 text-sm">
-                                                    {form.name ? `${form.name} — ` : ''}we have the rest on file
+                                                    {form.name ? `${form.name}: ` : ''}we have the rest on file
                                                 </p>
                                             </div>
                                         </div>
@@ -1143,13 +1143,13 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
 
                                         <p className="text-white text-sm font-bold mb-1">How do we get in?</p>
                                         <p className="text-white/40 text-xs mb-3">
-                                            Lockbox code, gate code, parking, who to call — anything the photographer needs on the day.
+                                            Lockbox code, gate code, parking, who to call; anything the photographer needs on the day.
                                         </p>
                                         <textarea
                                             value={form.access_notes || ''}
                                             onChange={e => set('access_notes', e.target.value)}
                                             rows={4}
-                                            placeholder="e.g. Gate code 4821, unit 204, lockbox on the door — code 1105. Parking in visitor spots out front."
+                                            placeholder="e.g. Gate code 4821, unit 204, lockbox on the door; code 1105. Parking in visitor spots out front."
                                             className="w-full bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:bg-white/10 transition-colors rounded-none mb-6 resize-none"
                                         />
 
@@ -1256,7 +1256,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             <div className="mt-6">
                                                 <p className="text-white text-sm font-bold mb-1">How many bedrooms?</p>
                                                 <p className="text-white/40 text-xs mb-3">
-                                                    Sets your rate — we'll send the invoice as soon as you book.
+                                                    Sets your rate: we'll send the invoice as soon as you book.
                                                 </p>
                                                 <div className="grid grid-cols-4 gap-2">
                                                     {AIRBNB_BEDROOM_OPTIONS.map(o => (
@@ -1284,7 +1284,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             </div>
                                             <div>
                                                 <h3 className="text-xl font-bold text-white">What time works?</h3>
-                                                <p className="text-white/40 text-sm">Pick a window — we'll refine when we talk</p>
+                                                <p className="text-white/40 text-sm">Pick a window; we'll refine when we talk</p>
                                             </div>
                                         </div>
                                         {conflictingEvents.length > 0 && (
@@ -1343,7 +1343,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             <input
                                                 type="text"
                                                 autoFocus
-                                                placeholder="Current website (if any) — or 'Don't have one yet'"
+                                                placeholder="Current website (if any), or 'Don't have one yet'"
                                                 value={form.location}
                                                 onChange={e => set('location', e.target.value)}
                                                 className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
@@ -1359,7 +1359,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                                 <p className="text-white/60 text-[11px] leading-relaxed">
                                                     Submitting holds this time for a{' '}
                                                     <span className="text-white font-bold">free consultation call</span>{' '}
-                                                    — no payment required. We'll scope the project together and follow up with a fixed-price proposal.
+                                                    no payment required. We'll scope the project together and follow up with a fixed-price proposal.
                                                 </p>
                                             </div>
                                         </div>
@@ -1384,7 +1384,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             />
                                             <textarea
                                                 rows={3}
-                                                placeholder="Anything else — vibe, references, budget, timeline…"
+                                                placeholder="Anything else: vibe, references, budget, timeline…"
                                                 value={form.notes}
                                                 onChange={e => set('notes', e.target.value)}
                                                 className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
@@ -1393,7 +1393,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                                 <p className="text-white/60 text-[11px] leading-relaxed">
                                                     Submitting holds the date while we talk. A{' '}
                                                     <span className="text-white font-bold">50% retainer</span>{' '}
-                                                    finalizes the booking — contract and payment link follow after we scope it out.
+                                                    finalizes the booking: contract and payment link follow after we scope it out.
                                                     Payment via{' '}
                                                     <span className="text-white font-bold">Stripe</span> or{' '}
                                                     <span className="text-white font-bold">Bitcoin</span>.
@@ -1462,7 +1462,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                 <p className="text-white/50 text-sm leading-relaxed">
                                     <span className="text-white font-bold">{formatDate(form.event_date)}</span>{' '}
                                     is on hold while we talk. I'll reach out within 24 hours to confirm
-                                    scope — nothing is finalized until the retainer is received.
+                                    scope: nothing is finalized until the retainer is received.
                                 </p>
                                 {notifyDebug && (
                                     <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">

@@ -6,8 +6,8 @@
  * lives in the server environment. All they do is share their folder with the
  * address below, exactly as they would share it with a person.
  *
- * Lives here because two places have to name it — the onboarding wizard's
- * share step and the invitation email — and a stale copy in either one sends
+ * Lives here because two places have to name it; the onboarding wizard's
+ * share step and the invitation email, and a stale copy in either one sends
  * someone to share their folder with an address that does not exist, which
  * fails quietly and looks like the sync is broken.
  */

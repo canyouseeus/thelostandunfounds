@@ -19,7 +19,7 @@ type TimePeriod = 'all' | 'yearly' | 'ninetyDay' | 'sixtyDay' | 'monthly' | 'wee
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Length of each bounded period. 'all' is excluded — it has no fixed span. */
+/** Length of each bounded period. 'all' is excluded: it has no fixed span. */
 const PERIOD_MS: Record<Exclude<TimePeriod, 'all'>, number> = {
     daily: DAY_MS,
     weekly: 7 * DAY_MS,
@@ -140,7 +140,7 @@ export function RevenueTracker({
                     {/* The track scrolls from the start, and the inner row centres itself
                         with auto margins. `justify-center` on the scroller itself would
                         overflow the first toggle past the left edge, out of reach of the
-                        scroll — which is what clipped ALL TIME. */}
+                        scroll: which is what clipped ALL TIME. */}
                     <div className="flex overflow-x-auto scrollbar-hide py-4 px-4">
                       <div className="flex items-center gap-2 mx-auto">
                         {periods.map((period) => (

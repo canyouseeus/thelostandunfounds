@@ -18,7 +18,7 @@ Auth:      lib/api-handlers/_zoho-email-utils.ts  ← single source of truth for
 
 ## Symptom: "API error: 500" on folders load
 
-**Check first — stray route file shadowing the catch-all.**
+**Check first: stray route file shadowing the catch-all.**
 
 Vercel routes specific files before catch-alls. If `pages/api/mail/folders.ts` or any file under `pages/api/mail/` exists, Vercel serves IT instead of `api/mail/[...path].ts` for that path.
 
@@ -26,7 +26,7 @@ Vercel routes specific files before catch-alls. If `pages/api/mail/folders.ts` o
 find pages/api/mail -name "*.ts" 2>/dev/null
 ```
 
-If anything shows up: delete it. Then check for the `pages/` directory itself — if it's empty, delete that too.
+If anything shows up: delete it. Then check for the `pages/` directory itself, if it's empty, delete that too.
 
 ```bash
 rm -rf pages/api/mail
@@ -51,7 +51,7 @@ Node.js ESM (which Vercel uses at runtime) requires explicit `.js` extensions ev
 **Fix:** Open `api/mail/[...path].ts` and ensure the handler import has `.js`:
 
 ```ts
-// WRONG — works in tsc but crashes on Vercel
+// WRONG: works in tsc but crashes on Vercel
 import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler';
 
 // CORRECT
@@ -71,17 +71,17 @@ GET /api/mail/message/1782072271666158500  404 Not Found
 **Root cause:** Zoho Mail API requires `folderId` in the URL to fetch message content. The endpoint without it doesn't exist:
 
 ```
-# 404 — this endpoint does not exist in Zoho's API
+# 404: this endpoint does not exist in Zoho's API
 GET /api/accounts/{accountId}/messages/{messageId}/content
 
-# 200 — correct form
+# 200: correct form
 GET /api/accounts/{accountId}/folders/{folderId}/messages/{messageId}/content
 ```
 
 **Fix in `AdminMailView.tsx`:** Pass `folderId` when calling `loadMessage`. Each message object from the list already includes `folderId`.
 
 ```tsx
-// WRONG — folderId missing
+// WRONG: folderId missing
 onClick={() => loadMessage(msg.messageId)}
 
 // CORRECT
@@ -105,10 +105,10 @@ const loadMessage = useCallback(async (messageId: string, folderId?: string) => 
 
 ## Symptom: Auth works for newsletters/receipts but fails for webmail
 
-The newsletter and transactional send path use `lib/api-handlers/_zoho-email-utils.ts`. The webmail handler (`_zoho-mail-handler.ts`) must import auth from the same file — never inline a copy:
+The newsletter and transactional send path use `lib/api-handlers/_zoho-email-utils.ts`. The webmail handler (`_zoho-mail-handler.ts`) must import auth from the same file, never inline a copy:
 
 ```ts
-// CORRECT — always import from the single source of truth
+// CORRECT, always import from the single source of truth
 import { getZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils.js';
 ```
 
@@ -163,4 +163,4 @@ Re-authorize:
 2. Check which `/api/mail/` request is failing and its status code
 3. Check Vercel function logs (Vercel dashboard → Functions → filter by `mail`) for the server-side error
 4. Match symptom to section above and apply fix
-5. Always check for stray `pages/api/` files first — it's the least obvious cause
+5. Always check for stray `pages/api/` files first; it's the least obvious cause

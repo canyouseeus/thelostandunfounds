@@ -93,7 +93,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     //     reflect items registered before the visible window as a "starting balance."
     //   - Per-bucket (revenue, bookings): the amount generated WITHIN each bucket's
     //     time slot. A $300 invoice paid before the window must NOT appear on
-    //     every day — it should only appear on the day it was actually paid.
+    //     every day: it should only appear on the day it was actually paid.
     //
     // The previous implementation was cumulative for everything, which caused a
     // single past invoice to render as a flat line at $300 across the entire range.
@@ -204,7 +204,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
   // For per-bucket $ metrics, the "current value" headline above the chart should be
   // the total across all visible buckets (i.e. revenue/bookings generated in the
-  // selected window) — not just the last bucket, which is usually $0. For cumulative
+  // selected window), not just the last bucket, which is usually $0. For cumulative
   // count metrics it's still the latest running total, which is the last bucket's value.
   const isCumulativeMetric = metric === 'newsletter' || metric === 'affiliates';
   const headlineValue = isCumulativeMetric
@@ -245,7 +245,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
     if (previous === 0) {
       if (current === 0) return null;
-      // No baseline to divide by — report the gain itself, as the hero does.
+      // No baseline to divide by: report the gain itself, as the hero does.
       return { pct: current, up: true };
     }
     const pct = ((current - previous) / previous) * 100;

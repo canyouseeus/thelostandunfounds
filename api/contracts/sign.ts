@@ -1,5 +1,5 @@
 /**
- * Public signing endpoint. No auth — the 32-byte signing token IS the
+ * Public signing endpoint. No auth: the 32-byte signing token IS the
  * credential, so everything here is written defensively.
  *
  *   GET  /api/contracts/sign?token=…            → the contract to review
@@ -293,7 +293,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // `email-rendering` RULE 3.
       content:
         `<p style="${EMAIL_STYLES.paragraph}">${escapeHtml(signer.name)},</p>` +
-        `<p style="${EMAIL_STYLES.paragraph}">Thank you — your signature on ` +
+        `<p style="${EMAIL_STYLES.paragraph}">Thank you; your signature on ` +
         `<strong>${escapeHtml(contract.title)}</strong> has been recorded.</p>` +
         (pdfUrl
           ? `<p style="margin:0 0 28px;"><a href="${escapeHtml(pdfUrl)}" ` +

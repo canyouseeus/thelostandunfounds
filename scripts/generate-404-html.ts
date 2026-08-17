@@ -3,7 +3,7 @@
  *
  * Why this exists:
  * The Vercel catch-all rewrite (see vercel.json) maps every unmatched URL to
- * the SPA shell. Without this script, that shell is `dist/index.html` — the
+ * the SPA shell. Without this script, that shell is `dist/index.html`; the
  * homepage. That means crawlers hitting unpublished drafts, admin-only routes
  * (like /booking), or any URL we haven't pre-rendered see the SAME homepage
  * markup at every URL, which Ahrefs/Google flag as duplicate content.
@@ -48,7 +48,7 @@ async function generate404Html() {
 
   // Make the title generic so the noindex shell does not parrot the homepage.
   // Without a unique title Ahrefs/Google still cluster these URLs together
-  // even when noindex eventually drops them — the unique title keeps the
+  // even when noindex eventually drops them; the unique title keeps the
   // crawler from treating intermediate snapshots as duplicates of `/`.
   html = html.replace(
     /<title>.*?<\/title>/i,

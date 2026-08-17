@@ -282,4 +282,4 @@ ALTER TABLE bookings
 -- ---------- COMMENTS ----------
 COMMENT ON COLUMN affiliates.stripe_account_id IS 'Stripe Connect Express account id (acct_...)';
 COMMENT ON COLUMN affiliates.fraud_score IS 'Cumulative fraud score; >=10 should freeze payouts';
-COMMENT ON FUNCTION register_referral_conversion IS 'Idempotent referral conversion writer — used by photo_order + booking completion paths';
+COMMENT ON FUNCTION register_referral_conversion IS 'Idempotent referral conversion writer; used by photo_order + booking completion paths';

@@ -16,7 +16,7 @@ export interface RevenueSummary {
 export interface RevenueWidgetData {
   /** Dollars, all sources combined. */
   total: number;
-  /** Per-source split — affiliate, gallery, bookings. Dollars. */
+  /** Per-source split: affiliate, gallery, bookings. Dollars. */
   sources: { label: string; value: number }[];
   /** Recent daily revenue, oldest first. Dollars. */
   series: number[];
@@ -165,12 +165,12 @@ function RevenueDetail({ summary: s }: { summary: RevenueSummary }) {
 }
 
 const summaryToData = (s: RevenueSummary): RevenueWidgetData => ({
-  // The headline is GROSS — total money taken in.
+  // The headline is GROSS: total money taken in.
   //
   // It was net, and net is the wrong headline for two reasons. It contradicted
   // everything shown beneath it: the source rows and the 30-day sparkline are
   // both gross, so the big number never equalled the sum of its own breakdown.
-  // And it moves for reasons that are not sales — correcting a contractor
+  // And it moves for reasons that are not sales; correcting a contractor
   // payout from $0 to its true value dropped the all-time total, which a
   // headline revenue figure must never do.
   //
@@ -250,7 +250,7 @@ export function RevenueWidget({ size = '2x2', data: pinned, detail, className }:
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
-        aria-label="Revenue — open full breakdown"
+        aria-label="Revenue: open full breakdown"
         className={cn(
           'relative bg-black text-white flex flex-col cursor-pointer touch-manipulation select-none overflow-hidden',
           className,
@@ -265,10 +265,10 @@ export function RevenueWidget({ size = '2x2', data: pinned, detail, className }:
         <div className="relative flex-1 min-h-0 flex flex-col" style={{ padding: '7cqmin' }}>
           {(cols === 1 && rows === 1) || (cols === 2 && rows === 2) ? (
             /* The diagonal face: the trace is the mass in the upper half, the
-               figure holds the bottom-left — same composition as the weather
+               figure holds the bottom-left: same composition as the weather
                1x1/2x2, so the small squares read as a family. */
             <div className="flex-1 min-h-0 relative">
-              {/* The trace is the upper mass, opposite the figure — the same
+              {/* The trace is the upper mass, opposite the figure; the same
                   corner opposition as the weather face's glyph. */}
               <div className="absolute top-0 left-0 right-0 opacity-60 text-green-400" style={{ height: '42%' }}>
                 <Sparkline values={data.series.length >= 2 ? data.series : [0, 0]} className="h-full" />

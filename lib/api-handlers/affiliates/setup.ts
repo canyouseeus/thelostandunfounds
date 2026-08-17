@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Resolve the referring affiliate, if the signup arrived through a ref
     // link. Stored as referred_by so calculate-commission.ts can walk the
-    // upline — it reads this column at three levels and previously always
+    // upline: it reads this column at three levels and previously always
     // found null, because nothing ever wrote it.
     let referredBy: string | null = null
     if (referred_by_code && typeof referred_by_code === 'string') {
@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .select('id, user_id')
             .eq('code', referred_by_code.toUpperCase())
             .maybeSingle()
-        // Ignore a self-referral — landing on your own link must not make you
+        // Ignore a self-referral: landing on your own link must not make you
         // your own upline.
         if (referrer && referrer.user_id !== user_id) {
             referredBy = referrer.id
@@ -122,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Payout settings are now created/owned by the Stripe Connect onboarding
     // flow (POST /api/affiliates/connect-onboarding), which writes the
     // stripe_account_id once Stripe issues one. We deliberately do NOT
-    // create a payout_settings row here — there is nothing to put in it
+    // create a payout_settings row here; there is nothing to put in it
     // until the user completes Stripe Connect KYC.
 
     // Best-effort welcome email (deduped on affiliate id)

@@ -39,7 +39,7 @@ function addSku(map: Map<string, string[]>, sku: string | null | undefined, sour
  * and, for SKUs that exist, gets a real cost via POST /quotes (US, 1 copy).
  *
  * Runs server-side specifically because PRODIGI_API_KEY is a Vercel
- * "Sensitive" env var — it's available to this running function via
+ * "Sensitive" env var: it's available to this running function via
  * process.env, but not retrievable through the Vercel CLI/dashboard for a
  * human or local script to read directly. This endpoint is the only way to
  * exercise that key against Prodigi's API outside of the actual checkout
@@ -49,12 +49,12 @@ function addSku(map: Map<string, string[]>, sku: string | null | undefined, sour
  * Forces `forceLive: true` on both lookup calls: Prodigi's sandbox
  * dashboard/credentials are defunct (only a live key exists), and the two
  * calls made here (GET /products, POST /quotes) are read-only regardless
- * of environment — no order is ever created. This does NOT affect
+ * of environment: no order is ever created. This does NOT affect
  * createProdigiOrder, which stays on PRODIGI_ENVIRONMENT (sandbox by
  * default) so real checkouts can't be flipped to live fulfillment as a
  * side effect of running this.
  *
- * Does not write to the database — returns a report for a human (or the
+ * Does not write to the database; returns a report for a human (or the
  * admin UI's "Verify Catalog" button) to act on.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -135,7 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     result.shippingCost = Number(q.costSummary.shipping.amount)
                 }
                 if (!item?.unitCost) {
-                    result.quoteError = `Quote returned no unitCost — raw: ${JSON.stringify(quote).slice(0, 300)}`
+                    result.quoteError = `Quote returned no unitCost; raw: ${JSON.stringify(quote).slice(0, 300)}`
                 }
             } catch (err: any) {
                 result.quoteError = err?.message || 'Quote failed'

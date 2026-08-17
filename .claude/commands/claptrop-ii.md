@@ -11,4 +11,4 @@ cd /Users/thelostunfounds/thelostandunfounds && node_modules/.bin/tsx scripts/up
 ```
 
 **What it does:**
-Same as `/claptrop` but stops after the SD card import — no Drive upload. Files stay in `~/Desktop/PHOTO UPLOADS/` until you're ready to sync.
+Same as `/claptrop` but stops after the SD card import; no Drive upload. Files stay in `~/Desktop/PHOTO UPLOADS/` until you're ready to sync.

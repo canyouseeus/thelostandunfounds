@@ -1,5 +1,5 @@
 /**
- * POST /api/contracts/admin  — admin-gated contract + template management.
+ * POST /api/contracts/admin: admin-gated contract + template management.
  *
  * Actions (body.action):
  *   list_templates                                  → template[]
@@ -41,7 +41,7 @@ import {
 } from '../../lib/api-handlers/_contracts-utils.js'
 
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-/** Business address of record — every client-facing send is copied here. */
+/** Business address of record: every client-facing send is copied here. */
 const BUSINESS_CC = 'media@thelostandunfounds.com'
 
 function isAdmin(req: VercelRequest): boolean {
@@ -70,7 +70,7 @@ function signingUrl(origin: string, token: string): string {
  *
  * Uses EMAIL_STYLES.button rather than a hand-rolled style. The first version
  * filled the button with the page colour (#000 on a black email), so the fill
- * was invisible and the CTA rendered as bare text — exactly the failure
+ * was invisible and the CTA rendered as bare text; exactly the failure
  * `email-rendering` RULE 3 warns about. The canonical button is a solid white
  * fill with black type.
  *
@@ -104,7 +104,7 @@ function buildInviteHtml(params: {
     </p>
     ${expiryLine}
     <p style="${EMAIL_STYLES.muted} margin:0;">
-      This link is unique to you — please don't forward it. Once signed, you'll get a
+      This link is unique to you; please don't forward it. Once signed, you'll get a
       PDF copy for your records.
     </p>
   `

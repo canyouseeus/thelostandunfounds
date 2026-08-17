@@ -3,7 +3,7 @@
 -- with a push model driven by Vercel's deployment webhooks.
 --
 -- `deployments` is an append-only ledger of every deployment event Vercel
--- sends us. `admin_notifications` is a generic admin-dashboard inbox — the
+-- sends us. `admin_notifications` is a generic admin-dashboard inbox; the
 -- deployment webhook is its first writer, but the type column lets other
 -- event sources reuse it later.
 

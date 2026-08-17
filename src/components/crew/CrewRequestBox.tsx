@@ -12,7 +12,7 @@ import { supabase } from '../../lib/supabase';
  * text message somebody has to remember.
  *
  * The history below the box is the point as much as the box is. Without it,
- * sending is indistinguishable from shouting into a void — you can't tell
+ * sending is indistinguishable from shouting into a void; you can't tell
  * whether it arrived, whether it was read, or whether you already asked.
  */
 
@@ -72,7 +72,7 @@ export default function CrewRequestBox() {
                 setHistory(payload.requests || []);
             }
         } catch {
-            /* history is supporting detail — the box still works without it */
+            /* history is supporting detail: the box still works without it */
         } finally {
             setLoadingHistory(false);
         }

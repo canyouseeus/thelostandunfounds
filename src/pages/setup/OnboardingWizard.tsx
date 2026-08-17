@@ -39,7 +39,7 @@ export default function OnboardingWizard() {
         }
     }, [user]);
 
-    // Shared with the invitation email — see src/lib/gallery-agent.ts.
+    // Shared with the invitation email: see src/lib/gallery-agent.ts.
     const AGENT_EMAIL = GALLERY_AGENT_EMAIL;
 
     useEffect(() => {

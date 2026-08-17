@@ -145,7 +145,7 @@
             "itemOffered": {
               "@type": "Service",
               "name": "Portrait & Lifestyle Photography",
-              "description": "Individual and brand portrait sessions — natural, editorial, and studio-style."
+              "description": "Individual and brand portrait sessions; natural, editorial, and studio-style."
             }
           },
           {
@@ -180,7 +180,7 @@
 
   <!-- Pre-rendered content, deliberately a SIBLING of #root rather than a child.
        React's createRoot().render() clears its container, so a pre-render nested
-       inside #root is destroyed the moment the app mounts — before Googlebot
+       inside #root is destroyed the moment the app mounts, before Googlebot
        takes its render snapshot. Out here it survives, and main.tsx hides it once
        the app has actually painted. -->
   <div id="pre-render"
@@ -255,7 +255,7 @@
         const preRender = document.getElementById('pre-render');
 
         // React 18 does not emit [data-reactroot], so the old check here could
-        // never succeed. Test for painted content instead — and the same bar as
+        // never succeed. Test for painted content instead, and the same bar as
         // main.tsx, so the two cannot disagree about when it is safe to hide.
         if (root && (root.textContent || '').trim().length > 120) {
           if (preRender) {

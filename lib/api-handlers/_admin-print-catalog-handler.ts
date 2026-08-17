@@ -18,7 +18,7 @@ function getSupabase() {
 }
 
 /**
- * CRUD for print_catalog_options — the universal size/frame menu used by
+ * CRUD for print_catalog_options: the universal size/frame menu used by
  * the "Order Print" flow on every gallery photo (distinct from the curated
  * prodigi_products catalog managed by _admin-prodigi-products-handler.ts).
  * Admin only.

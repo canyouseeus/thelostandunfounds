@@ -7,7 +7,7 @@
  * Mirrors the gate in stripe-reminders.ts: the affiliates router is ungated,
  * so the recipient is restricted to owner addresses unless CRON_SECRET is
  * supplied. An unauthenticated caller can, at most, mail the owner a copy of
- * our own template — never an arbitrary third party.
+ * our own template, never an arbitrary third party.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const result = await sendAffiliateEmail({
     type: 'admin_new_affiliate',
-    // Preview only — no affiliate row is involved, and a unique reference_id
+    // Preview only: no affiliate row is involved, and a unique reference_id
     // keeps this out of the dedup path for real registrations.
     affiliateId: null as any,
     referenceId: `preview_${Date.now()}`,

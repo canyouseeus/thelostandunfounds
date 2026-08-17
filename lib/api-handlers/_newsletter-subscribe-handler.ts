@@ -295,7 +295,7 @@ export default async function handler(
             throw new Error(errorMessage)
           }
 
-          // Welcome email sent successfully — track it in the database
+          // Welcome email sent successfully: track it in the database
           try {
             await supabase
               .from('newsletter_subscribers')

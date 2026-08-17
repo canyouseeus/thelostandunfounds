@@ -61,8 +61,8 @@ export default async function handler(
 
         // The service account first, the owner's OAuth credentials when it
         // cannot be used. A mangled private key throws
-        // "DECODER routines::unsupported" from the JWT signer — production is
-        // in that state, so this endpoint returned a 500 on every download —
+        // "DECODER routines::unsupported" from the JWT signer; production is
+        // in that state, so this endpoint returned a 500 on every download,
         // and the service account has no rights over folders created by the
         // owner's own account even when the key is sound.
         let accessToken: string | null | undefined

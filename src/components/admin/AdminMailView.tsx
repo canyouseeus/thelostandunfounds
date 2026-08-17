@@ -154,10 +154,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, detail);
 
       // A response with no JSON body (Vercel's own routing error page, a gateway
-      // timeout, etc.) never reached our handler — show a short, friendly message
+      // timeout, etc.) never reached our handler; show a short, friendly message
       // instead of dumping the raw HTML/text error page in the UI.
       const msg = parsed.error || parsed.message
-        ? `HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`
+        ? `HTTP ${response.status}: /api/mail/${endpoint}\n${detail}`
         : `Couldn't reach the mail server (HTTP ${response.status}). Please try again.`;
       throw new Error(msg);
     }
@@ -516,7 +516,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     return <FolderOpen className="w-4 h-4" />;
   };
 
-  // Folder list — shared between the desktop sidebar and the mobile drawer
+  // Folder list: shared between the desktop sidebar and the mobile drawer
   const renderFolderList = () => (
     <>
       {folders.map(folder => (
@@ -562,7 +562,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top bar — folder menu (mobile), search, compose */}
+      {/* Top bar: folder menu (mobile), search, compose */}
       <div className="shrink-0 flex items-center gap-2 pb-3">
         <button
           onClick={() => setShowFolderDrawer(true)}
@@ -608,15 +608,15 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         </div>
       )}
 
-      {/* Main layout — fills remaining height */}
+      {/* Main layout: fills remaining height */}
       <div className="flex-1 min-h-0 bg-black/50 border-none flex overflow-hidden">
-        {/* Folder sidebar — desktop only; mobile uses the drawer opened from the top bar */}
+        {/* Folder sidebar: desktop only; mobile uses the drawer opened from the top bar */}
         <div className="hidden md:block w-48 border-none p-3 space-y-1 shrink-0">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
           {renderFolderList()}
         </div>
 
-        {/* Message list — full width on mobile until a message is opened */}
+        {/* Message list: full width on mobile until a message is opened */}
         <div className={`w-full md:w-80 border-none flex-col shrink-0 ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`}>
           {/* Messages */}
           <div className="flex-1 overflow-auto">
@@ -708,7 +708,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           </div>
         </div>
 
-        {/* Message content — full width on mobile once a message is opened */}
+        {/* Message content: full width on mobile once a message is opened */}
         <div className={`flex-1 flex-col min-w-0 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {loadingMessage ? (
             <div className="flex-1 flex items-center justify-center">
@@ -874,14 +874,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         </div>
       </div>
 
-      {/* Folder drawer — mobile only */}
+      {/* Folder drawer: mobile only */}
       <SidePanel isOpen={showFolderDrawer} onClose={() => setShowFolderDrawer(false)} title="Folders">
         <div className="space-y-1">
           {renderFolderList()}
         </div>
       </SidePanel>
 
-      {/* Compose — fullscreen ExpandableScreen pattern */}
+      {/* Compose: fullscreen ExpandableScreen pattern */}
       <ExpandableScreen isOpen={showCompose} onOpenChange={setShowCompose}>
         <ExpandableScreenContent className="overflow-x-hidden">
           <div className="flex-1 overflow-y-auto overflow-x-hidden">

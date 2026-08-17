@@ -19,7 +19,7 @@ interface MapPhoto {
   longitude: number;
   location_name: string | null;
   library_id: string;
-  // Only the two EXIF fields the map popup needs — pulled as flat aliases
+  // Only the two EXIF fields the map popup needs; pulled as flat aliases
   // (metadata->>…) instead of the whole metadata JSONB to keep egress low.
   camera_model?: string | null;
   date_taken?: string | null;
@@ -42,7 +42,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function thumbUrl(p: MapPhoto) {
-  // Serve through our own proxy, never lh3.googleusercontent.com directly —
+  // Serve through our own proxy, never lh3.googleusercontent.com directly;
   // Google credits an image to whoever serves it, and every other surface on
   // the site now routes through /api/gallery/stream for exactly that reason.
   if (p.google_drive_file_id)
@@ -132,7 +132,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
     })();
   }, []);
 
-  // Effective plotting coords for a photo — venue pin if it has a venue tag,
+  // Effective plotting coords for a photo; venue pin if it has a venue tag,
   // otherwise the EXIF GPS. Used by every map-coordinate consumer so popup
   // tracking, marker placement, and fit-bounds all stay consistent.
   const effectiveCoords = (p: MapPhoto): { lat: number; lng: number } => {

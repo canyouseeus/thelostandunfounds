@@ -5,12 +5,12 @@
  * Sent from media@thelostandunfounds.com via Zoho Mail.
  *
  * Body (JSON):
- *   clientName            string   — Client / company name
- *   clientEmail           string   — Where the contract is sent
- *   eventDate             string   — Human-readable date (e.g. "Saturday, April 19, 2026")
+ *   clientName            string: Client / company name
+ *   clientEmail           string: Where the contract is sent
+ *   eventDate             string: Human-readable date (e.g. "Saturday, April 19, 2026")
  *   locations             Array<{ name, address?, peakHours? }>
- *   totalPrice            number   — Total price in USD
- *   deliverablesPerLocation string — e.g. "10 photos + 1 reel"
+ *   totalPrice            number: Total price in USD
+ *   deliverablesPerLocation string, e.g. "10 photos + 1 reel"
  *   notes?                string
  *
  * Auth: x-admin-secret header required.
@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await sendZohoEmail({
       auth,
       to: clientEmail,
-      subject: `Photography Services Agreement — ${FROM_NAME}`,
+      subject: `Photography Services Agreement: ${FROM_NAME}`,
       htmlContent,
     })
 

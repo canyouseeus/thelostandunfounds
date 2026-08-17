@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!date_of_birth)
       return res.status(400).json({ error: 'Date of birth is required.' })
 
-    // Age check — must be 18+
+    // Age check: must be 18+
     const dob = new Date(date_of_birth)
     const today = new Date()
     const age = today.getFullYear() - dob.getFullYear() -

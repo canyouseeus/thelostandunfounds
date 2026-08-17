@@ -24,7 +24,7 @@ async function getBtcPriceUsd(): Promise<number> {
     } catch {
         // fall through to hardcoded fallback
     }
-    // Hardcoded fallback — used only if both APIs are unreachable
+    // Hardcoded fallback: used only if both APIs are unreachable
     return 100000
 }
 
@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
         body: JSON.stringify({
             correlationId,
-            description: description || '⚡ Nostr Zap — THE LOST+UNFOUNDS',
+            description: description || '⚡ Nostr Zap: THE LOST+UNFOUNDS',
             amount: {
                 amount: amountUsd.toFixed(4),
                 currency: 'USD',

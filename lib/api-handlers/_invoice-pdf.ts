@@ -28,8 +28,8 @@ const DEFAULT_BANNER_HEIGHT = 166.7
  *
  * pdfkit exposes `doc.openImage()` at runtime but does not declare it in its
  * type definitions, so calling it fails the typecheck. The banner is a PNG we
- * ship ourselves, and the header is fixed-layout — width and height are two
- * big-endian uint32s at byte offset 16 — so parsing it directly is both typed
+ * ship ourselves, and the header is fixed-layout; width and height are two
+ * big-endian uint32s at byte offset 16, so parsing it directly is both typed
  * and dependency-free.
  */
 export function pngSize(buf: Buffer): { width: number; height: number } | null {
@@ -45,7 +45,7 @@ export function pngSize(buf: Buffer): { width: number; height: number } | null {
 
 /**
  * Resolve the brand banner, preferring the copy bundled in the repo.
- * Returns null (never throws) if neither disk nor network yields the image —
+ * Returns null (never throws) if neither disk nor network yields the image;
  * the caller logs that case rather than failing the whole PDF.
  */
 export async function loadBannerBuffer(): Promise<Buffer | null> {
@@ -187,7 +187,7 @@ function fmtTimeRange(
 ): string | null {
   const s = fmtTime(start)
   const e = fmtTime(end)
-  if (s && e) return `${s} – ${e}`
+  if (s && e) return `${s}; ${e}`
   return s || e || null
 }
 
@@ -204,7 +204,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   // ── Brand banner ──────────────────────────────────────────────────────────
   // Read from disk first. This used to fetch the banner over HTTP on every
   // render, which meant the single most recognisable brand element depended on
-  // a network round trip succeeding at render time — and the failure was
+  // a network round trip succeeding at render time, and the failure was
   // swallowed, so a bannerless invoice went out looking structurally correct
   // with no error anywhere. That is exactly what happened to INV-004.
   //
@@ -227,7 +227,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     topShift = Math.max(0, bannerTop + drawnHeight + bannerGap - 56)
   } else {
     console.error(
-      '[invoice-pdf] BANNER MISSING — rendering an unbranded invoice. ' +
+      '[invoice-pdf] BANNER MISSING: rendering an unbranded invoice. ' +
       'Checked disk (public/brand/banner.png) and ' + BANNER_URL + '. ' +
       'Fix before sending this document to a client.'
     )
@@ -235,7 +235,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
 
   // ── Header ────────────────────────────────────────────────────────────────
   // The banner artwork already contains the wordmark. Drawing BRAND.name as
-  // text as well prints the brand name twice — once inside the image, once
+  // text as well prints the brand name twice, once inside the image, once
   // beneath it. Only render the text wordmark when there is no banner.
   if (!bannerBuffer) {
     doc
@@ -247,7 +247,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
 
   // Tagline + website sit beneath the text wordmark when it's present, and
   // move up to sit level with the document title when the banner supplies the
-  // wordmark instead — otherwise the left column starts with a blank gap.
+  // wordmark instead: otherwise the left column starts with a blank gap.
   const metaTop = bannerBuffer ? 60 : 82
   doc
     .fillColor(INK)
@@ -408,7 +408,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
 
   // ── Pay buttons (clickable link annotations) ──────────────────────────────
   // If a full-payment link is provided, render two full-width black buttons
-  // stacked vertically — guarantees both fit on the page and stay legible at
+  // stacked vertically: guarantees both fit on the page and stay legible at
   // any zoom, and matches the brand's noir aesthetic (pure #000000 fill).
   // Otherwise fall back to the single "PAY {label}" button.
   const drawPayButton = (
@@ -419,7 +419,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     label: string,
     url: string
   ) => {
-    // Pure black fill, no stroke — avoids any antialias greys at fill edges.
+    // Pure black fill, no stroke: avoids any antialias greys at fill edges.
     doc.save()
     doc.rect(x, btnY, width, height).fill('#000000')
     doc.restore()
@@ -447,7 +447,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
       y,
       CONTENT_W,
       btnH,
-      `PAY DEPOSIT — ${fmtUSD(data.amountDue)}  »`,
+      `PAY DEPOSIT: ${fmtUSD(data.amountDue)}  »`,
       data.paymentUrl
     )
     y += btnH + gap
@@ -456,7 +456,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
       y,
       CONTENT_W,
       btnH,
-      `PAY FULL AMOUNT — ${fmtUSD(data.total)}  »`,
+      `PAY FULL AMOUNT: ${fmtUSD(data.total)}  »`,
       data.fullPaymentUrl
     )
     y += btnH + 10

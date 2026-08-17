@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!token) {
     return res.status(200).json({
       lines: [],
-      error: 'VERCEL_ACCESS_TOKEN not set — add it to Vercel env vars to enable server log fetching'
+      error: 'VERCEL_ACCESS_TOKEN not set; add it to Vercel env vars to enable server log fetching'
     });
   }
 
@@ -45,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await r.json();
-    // Normalize — Vercel returns either { logs: [...] } or an array
+    // Normalize: Vercel returns either { logs: [...] } or an array
     const raw: any[] = Array.isArray(data) ? data : (data.logs || data.data || []);
 
     const lines: string[] = raw.map((entry: any) => {

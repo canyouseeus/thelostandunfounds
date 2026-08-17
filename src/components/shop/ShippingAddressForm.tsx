@@ -17,7 +17,7 @@ const inputClass =
   'bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40';
 
 /**
- * Shipping address collection for Bitcoin/Lightning print checkout — Strike
+ * Shipping address collection for Bitcoin/Lightning print checkout; Strike
  * has no hosted address-collection step (unlike Stripe Checkout), so this
  * has to be gathered client-side before the invoice is created.
  */

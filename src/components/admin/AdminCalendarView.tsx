@@ -116,7 +116,7 @@ function getWeekStart(d: Date): Date {
 export default function AdminCalendarView({ adminEmail }: { adminEmail?: string } = {}) {
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     // The active roster, so "who is free on the 3rd?" can be answered by name
-    // rather than by the absence of a row. Loaded once — names change far more
+    // rather than by the absence of a row. Loaded once: names change far more
     // slowly than the calendar window does.
     const [crew, setCrew] = useState<CrewMember[]>([]);
     const [focusDate, setFocusDate] = useState<Date>(new Date());
@@ -137,7 +137,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
     useEffect(() => {
         let alive = true;
         const today = toYMD(new Date());
-        // Range is irrelevant here — we only want the roster names back. The
+        // Range is irrelevant here: we only want the roster names back. The
         // per-date blocks come from /api/calendar/range with everything else.
         fetch(`/api/crew/availability?roster=1&start=${today}&end=${today}`, {
             headers: adminEmail ? { 'x-admin-email': adminEmail } : {},
@@ -308,7 +308,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
                         Master Calendar
                     </h3>
                     <p className="text-white/30 text-xs mt-1 hidden sm:block">
-                        Site-wide activity — bookings, events, uploads.
+                        Site-wide activity: bookings, events, uploads.
                     </p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
@@ -331,7 +331,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
             </div>
 
             {/* The notes app rides along inside the master calendar as its own
-                expandable card — same shell every widget's detail view uses. */}
+                expandable card: same shell every widget's detail view uses. */}
             {notesOpen && (
                 <DetailSheet onClose={() => setNotesOpen(false)} label="Close notes" wide>
                     <h2 className="text-lg font-black uppercase tracking-widest text-white pr-10 mb-4 text-left">Notes</h2>
@@ -481,7 +481,7 @@ function ActivityLegend() {
  * Reads as availability rather than as a block list on purpose: the useful
  * answer to "can we take Thursday?" is a name you can call, so the people who
  * are free are listed first and the people who are out are the exception
- * underneath. Nobody being out is stated explicitly — a silent section would be
+ * underneath. Nobody being out is stated explicitly; a silent section would be
  * indistinguishable from one that failed to load.
  */
 function CrewAvailability({ crew, blocks }: { crew: CrewMember[]; blocks: CrewBlock[] }) {
@@ -510,7 +510,7 @@ function CrewAvailability({ crew, blocks }: { crew: CrewMember[]; blocks: CrewBl
                             {blocks.map(block => (
                                 <div key={block.id} className="bg-amber-500/10 px-3 py-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
-                                        {block.photographerName} — unavailable
+                                        {block.photographerName}: unavailable
                                     </p>
                                     {block.note && <p className="text-xs text-white/50 mt-1 text-left">{block.note}</p>}
                                 </div>
@@ -550,7 +550,7 @@ function WeekView({
     const todayYmd = toYMD(new Date());
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    const weekLabel = `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    const weekLabel = `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}; ${days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     return (
         <div className="space-y-4">
@@ -652,7 +652,7 @@ function DayView({
 }) {
     const ymd = toYMD(focusDate);
     const [addingBooking, setAddingBooking] = useState(false);
-    // The day's business recap — sales with their money trail, and what shipped.
+    // The day's business recap: sales with their money trail, and what shipped.
     const [recap, setRecap] = useState<RecapResponse | null>(null);
     const [recapLoading, setRecapLoading] = useState(false);
     useEffect(() => {
@@ -803,7 +803,7 @@ function ExpandableBookingCard({ booking: b, onChange }: { booking: CalendarBook
                     </p>
                     <p className="text-white/40 text-[10px] font-mono truncate">
                         {b.event_type}
-                        {b.start_time ? ` · ${b.start_time.slice(0, 5)}–${b.end_time?.slice(0, 5) || '?'}` : ''}
+                        {b.start_time ? ` · ${b.start_time.slice(0, 5)}; ${b.end_time?.slice(0, 5) || '?'}` : ''}
                         {b.location ? ` · ${b.location}` : ''}
                     </p>
                 </div>
@@ -827,7 +827,7 @@ function ExpandableBookingCard({ booking: b, onChange }: { booking: CalendarBook
                                 <DetailRow label="Email" value={b.email} />
                                 {b.location && <DetailRow label="Location" value={b.location} />}
                                 {b.start_time && (
-                                    <DetailRow label="Time" value={`${b.start_time.slice(0, 5)} – ${b.end_time?.slice(0, 5) || 'TBD'}`} />
+                                    <DetailRow label="Time" value={`${b.start_time.slice(0, 5)}; ${b.end_time?.slice(0, 5) || 'TBD'}`} />
                                 )}
                                 <DetailRow label="Retainer" value={b.retainer ? 'Paid' : 'Not paid'} />
                                 <DetailRow label="Date" value={b.event_date} />
@@ -1048,7 +1048,7 @@ function TimeInReviewCard({
                                 </div>
                                 {!isDeep && review.photos.length > 16 && (
                                     <p className="text-white/40 text-[10px] mt-2">
-                                        + {review.photos.length - 16} more —{' '}
+                                        + {review.photos.length - 16} more: {' '}
                                         <button onClick={onToggle} className="underline hover:text-white">expand for full gallery</button>
                                     </p>
                                 )}
@@ -1060,7 +1060,7 @@ function TimeInReviewCard({
                         onClick={onToggle}
                         className="w-full flex items-center justify-center gap-2 py-3 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors bg-white/[0.03] hover:bg-white/[0.06]"
                     >
-                        {isDeep ? 'Collapse to Glance' : 'Expand — Deeper Insights'}
+                        {isDeep ? 'Collapse to Glance' : 'Expand: Deeper Insights'}
                         <ArrowRightIcon className="w-3 h-3" />
                     </button>
                 </div>
@@ -1279,7 +1279,7 @@ function DailyRecap({ recap, loading }: { recap: RecapResponse | null; loading: 
                         </div>
                     )}
 
-                    {/* Deployments — what shipped while the sales happened. */}
+                    {/* Deployments: what shipped while the sales happened. */}
                     {recap.deployments.length > 0 && (
                         <div>
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-1.5">
@@ -1323,7 +1323,7 @@ function Section({ title, action, children }: { title: string; action?: React.Re
 
 /**
  * Books an appointment from the day view, through the same endpoint the public
- * booking form uses — so availability blocking, admin notification and the
+ * booking form uses, so availability blocking, admin notification and the
  * booking's lifecycle (it lands as pending, confirmable from its card below)
  * all behave exactly as if the client had requested it.
  */

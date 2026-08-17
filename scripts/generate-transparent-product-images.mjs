@@ -7,7 +7,7 @@
  * WASM. Re-run this whenever the Fourthwall product images change:
  *
  *   # one-time: the removal model is a heavy native dep, kept OUT of the app's
- *   # package.json on purpose (not needed at build/runtime — the PNGs are static)
+ *   # package.json on purpose (not needed at build/runtime; the PNGs are static)
  *   npm i -D --no-save @imgly/background-removal-node
  *   node scripts/generate-transparent-product-images.mjs
  *

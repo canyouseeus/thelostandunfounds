@@ -2,7 +2,7 @@
  * Continue the retrograde rename, server-side, until there is nothing left.
  *
  * The admin button drives this from the browser, which means the run only
- * survives as long as the tab is awake — a phone locking its screen suspends
+ * survives as long as the tab is awake; a phone locking its screen suspends
  * the loop mid-migration. That is a poor thing to ask of anyone for a job that
  * takes an hour, so the same work runs here on a schedule instead.
  *
@@ -10,7 +10,7 @@
  * there is work to do, so once the archive is converted this becomes a cheap
  * no-op: one query, zero Drive calls.
  *
- * Attribution is enforced by retrogradeRename itself — a library whose
+ * Attribution is enforced by retrogradeRename itself; a library whose
  * photographer_handle is NULL is skipped and reported, never renamed under
  * somebody else's handle. That guarantee has to hold here more than anywhere,
  * because no one is watching this run.
@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (result.authError) {
             // Worth shouting about: unattended runs fail silently otherwise, and
             // this is the error that already cost a day.
-            console.error(`[cron/retrograde] halted — ${result.authError}`);
+            console.error(`[cron/retrograde] halted: ${result.authError}`);
             return res.status(200).json({ ok: false, ...result });
         }
 
@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(
             `[cron/retrograde] renamed=${result.renamed} failed=${result.failed} blocked=${result.blocked} remaining=${result.remaining}` +
             (result.skippedUnattributed.length ? ` skippedUnattributed=${result.skippedUnattributed.join(',')}` : '') +
-            (done ? ' — nothing left to do' : ''),
+            (done ? '; nothing left to do' : ''),
         );
 
         return res.status(200).json({ ok: true, done, ...result });

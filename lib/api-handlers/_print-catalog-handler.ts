@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
  *
  * Public, unauthenticated: the fixed size/frame menu + mockup templates
  * used to drive the "Order Print" flow on any gallery photo. Anon key is
- * sufficient — both tables have public-select RLS policies scoped to
+ * sufficient: both tables have public-select RLS policies scoped to
  * published rows only (status='active' / template_url IS NOT NULL).
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -4,7 +4,7 @@
 --
 -- print_catalog_options: the fixed size/frame menu shown at checkout
 -- (3 sizes x framed/unframed = 6 rows). One row covers BOTH orientations
--- of a physical size — Prodigi encodes orientation in the SKU itself
+-- of a physical size: Prodigi encodes orientation in the SKU itself
 -- (WxH vs HxW), so each row carries a landscape SKU and a portrait SKU.
 --
 -- print_frame_templates: admin-uploaded mockup photos (e.g. a black frame
@@ -16,7 +16,7 @@
 -- these orders flow through the exact same Stripe/Strike webhook
 -- finalization + Prodigi submission + 42%-of-profit commission code already
 -- built for the curated catalog (see 20260710190631_prodigi_print_shop.sql)
--- — sku and asset_url are resolved once at checkout time and stored on the
+--; sku and asset_url are resolved once at checkout time and stored on the
 -- row, so the webhook needs no changes.
 
 CREATE TABLE IF NOT EXISTS print_catalog_options (
@@ -87,7 +87,7 @@ CREATE POLICY print_frame_templates_public_select ON print_frame_templates
 -- Seed the 6-option menu (3 sizes x framed/unframed), 3:2 ratio to match the
 -- Fujifilm X-S20's native sensor so nothing crops. SKUs and base_cost are
 -- best-effort placeholders (GLOBAL-FAP-* for Prodigi's Fine Art Print line,
--- GLOBAL-CFPM-* confirmed as their classic-frame line from API docs) —
+-- GLOBAL-CFPM-* confirmed as their classic-frame line from API docs);
 -- ORCHESTRATOR: verify every SKU against GET /v4.0/products/{sku} and true
 -- Prodigi cost via POST /v4.0/quotes before flipping PRODIGI_ENVIRONMENT to
 -- live; correct base_cost/sku directly in the admin Print Shop UI if needed.
@@ -104,8 +104,8 @@ ON CONFLICT (size_label) DO NOTHING;
 
 -- Seed empty frame-template rows (landscape/portrait x mat/no-mat) so the
 -- admin UI has something to attach an uploaded template image + bounds to.
--- template_url stays NULL — and therefore invisible to the public-select
--- policy above — until an admin uploads one.
+-- template_url stays NULL, and therefore invisible to the public-select
+-- policy above, until an admin uploads one.
 INSERT INTO print_frame_templates (frame_color, orientation, has_mat, bounds)
 VALUES
     ('black', 'landscape', false, '{"x": 14, "y": 18, "width": 72, "height": 64}'::jsonb),

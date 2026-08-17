@@ -38,7 +38,7 @@ const css = readFileSync(cssPath, 'utf8').trimEnd();
 const block = [
   START,
   '<style>',
-  '/* GENERATED from public/proposal.css — do not edit here.',
+  '/* GENERATED from public/proposal.css: do not edit here.',
   '   Edit the stylesheet, then run: npm run proposal:css */',
   css,
   '</style>',
@@ -59,7 +59,7 @@ for (const file of targets) {
   const end = html.indexOf(END);
 
   if (start === -1 || end === -1) {
-    console.error(`✗ ${file}: missing ${START} / ${END} markers — skipped`);
+    console.error(`✗ ${file}: missing ${START} / ${END} markers, skipped`);
     stale++;
     continue;
   }
@@ -88,5 +88,5 @@ if (checkOnly && stale > 0) {
 }
 
 if (!checkOnly) {
-  console.log(`\nDone — ${written} updated, ${targets.length - written} already current.`);
+  console.log(`\nDone: ${written} updated, ${targets.length - written} already current.`);
 }

@@ -1,4 +1,4 @@
-# THE LOST ARCHIVES — Blog Columns Overview
+# THE LOST ARCHIVES: Blog Columns Overview
 
 **Complete reference guide for all blog columns, their structure, purpose, and features.**
 
@@ -8,12 +8,12 @@
 
 | Column | Purpose | Structure | Affiliate Links | Focus |
 |--------|---------|-----------|-----------------|-------|
-| **Main Blog** | Pure writing & personal expression | 6–8 paragraphs | ❌ None | Essays, reflections, stories, philosophical/cultural commentary |
-| **BookClub** | Curated reading experiences | 4–8 books per post | ✔ Amazon books | Themed collections, lessons, personal impact |
+| **Main Blog** | Pure writing & personal expression | 6-8 paragraphs | ❌ None | Essays, reflections, stories, philosophical/cultural commentary |
+| **BookClub** | Curated reading experiences | 4-8 books per post | ✔ Amazon books | Themed collections, lessons, personal impact |
 | **GearHeads** | Tools, setups, kits, combinations | Up to 8 products | ✔ Amazon products | Workflows, hobbies, lifestyle systems |
-| **Edge of the Borderlands** | Travel & adventure insights | 4–8 items per post | ✔ Amazon/travel/Bitcoin | Journey stories, navigation, practical takeaways |
-| **Science Column** | Deep scientific dives | 6–8 paragraphs (flexible) | ❌ None | Physics, quantum theory, biology, emerging sciences |
-| **NEW THEORY** | Practical science in daily life | 4–8 items or 6–8 paragraphs | Optional (gear/tools) | Nutrition, systems, habits, DIY experiments |
+| **Edge of the Borderlands** | Travel & adventure insights | 4-8 items per post | ✔ Amazon/travel/Bitcoin | Journey stories, navigation, practical takeaways |
+| **Science Column** | Deep scientific dives | 6-8 paragraphs (flexible) | ❌ None | Physics, quantum theory, biology, emerging sciences |
+| **NEW THEORY** | Practical science in daily life | 4-8 items or 6-8 paragraphs | Optional (gear/tools) | Nutrition, systems, habits, DIY experiments |
 
 ---
 
@@ -29,7 +29,7 @@
 - Personal narratives
 
 **Structure:**
-- 6–8 paragraphs per post
+- 6-8 paragraphs per post
 - Narrative-driven format
 
 **Affiliate Links:** ❌ None
@@ -56,8 +56,8 @@
 - Book comparisons and applications
 
 **Structure:**
-- Standard: 4–8 books per post
-- Micro Edition: 1–3 books
+- Standard: 4-8 books per post
+- Micro Edition: 1-3 books
 - Extended Edition: 9+ books
 
 **Affiliate Links:** ✔ Amazon books (or other retail links)
@@ -111,8 +111,8 @@
 - Lessons learned from travel experiences
 
 **Structure:**
-- 4–8 items (gear + tools + services) per post
-- Micro Edition: 1–3 items
+- 4-8 items (gear + tools + services) per post
+- Micro Edition: 1-3 items
 - Extended Edition: 9+ items
 
 **Affiliate Links:** ✔ Amazon / travel services / Bitcoin wallets / other relevant tools
@@ -140,7 +140,7 @@
 
 **Structure:**
 - Flexible article length
-- Ideally 6–8 paragraphs for readability
+- Ideally 6-8 paragraphs for readability
 - Can accommodate longer technical content
 
 **Affiliate Links:** ❌ None (focus on knowledge, not products)
@@ -171,8 +171,8 @@
 
 **Structure:**
 - Flexible format:
-  - 4–8 items/experiments per post (collection format)
-  - 6–8 paragraphs (narrative format)
+  - 4-8 items/experiments per post (collection format)
+  - 6-8 paragraphs (narrative format)
 
 **Affiliate Links:** Optional (gear, tools, or household products for experiments)
 
@@ -192,8 +192,8 @@
 ## Key Takeaways Across All Columns
 
 ### Structure Guidelines
-- **Standard Format:** Most columns use 4–8 items or 6–8 paragraphs
-- **Flexibility:** Micro Editions (1–3 items) and Extended Editions (9+ items) available
+- **Standard Format:** Most columns use 4-8 items or 6-8 paragraphs
+- **Flexibility:** Micro Editions (1-3 items) and Extended Editions (9+ items) available
 - **Readability:** Structure guidelines maintain consistent reading experience
 
 ### Affiliate Integration

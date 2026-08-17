@@ -57,7 +57,7 @@ function getConfig(forceLive?: boolean) {
 
 /**
  * `forceLive` is only ever passed by read-only lookups (getProdigiProduct /
- * getProdigiQuote) for the admin catalog-verification tool — it does NOT
+ * getProdigiQuote) for the admin catalog-verification tool; it does NOT
  * affect createProdigiOrder, which stays governed purely by
  * PRODIGI_ENVIRONMENT so real checkouts can never be flipped to live
  * fulfillment as a side effect of verifying the catalog.
@@ -90,7 +90,7 @@ async function prodigiFetch(path: string, init: RequestInit = {}, forceLive?: bo
 }
 
 /**
- * Create a Prodigi order. Idempotent via idempotencyKey — a retry with the
+ * Create a Prodigi order. Idempotent via idempotencyKey: a retry with the
  * same key returns the original order (outcome: 'AlreadyExists').
  */
 export async function createProdigiOrder(input: CreateProdigiOrderInput) {

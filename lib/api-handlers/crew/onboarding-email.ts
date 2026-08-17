@@ -4,7 +4,7 @@ import { sendTransactionalEmail } from '../_resend-email-handler.js';
 import { EMAIL_STYLES } from '../../email-template.js';
 
 /**
- * The "you're on the roster — here's what's still missing for *you*" email.
+ * The "you're on the roster: here's what's still missing for *you*" email.
  *
  * The invite email gets somebody onto the roster and asks for their kit list.
  * This is the one that comes after, and the thing that makes it work is that
@@ -14,13 +14,13 @@ import { EMAIL_STYLES } from '../../email-template.js';
  * without Stripe you can be assigned and accrued but never actually paid.
  *
  * A generic "go set everything up" email asks each person to work out for
- * themselves which of those they've already done — which is exactly the effort
+ * themselves which of those they've already done; which is exactly the effort
  * that made them stall the first time. So each send is assembled from that
  * person's real state: what's done is acknowledged in one line, and the body is
  * only the steps they still owe, in the order that unblocks the most.
  *
  * The ordering is not cosmetic. Login gates the dashboard, and the dashboard is
- * where Stripe and the calendar live — so somebody with no account gets exactly
+ * where Stripe and the calendar live, so somebody with no account gets exactly
  * one ask, and the rest is described rather than demanded. Handing a person
  * four buttons when three of them lead to a login wall is how you get zero.
  *
@@ -44,7 +44,7 @@ const SITE = (process.env.SITE_URL || 'https://www.thelostandunfounds.com').repl
 const BUSINESS_RECORD_CC = 'media@thelostandunfounds.com';
 
 // This one goes out over Joshua's name, not the platform's. It asks people for
-// things — their kit, their bank details, their availability — and those asks
+// things (their kit, their bank details, their availability) and those asks
 // land differently from a person than from noreply@. Both providers honour a
 // caller-supplied sender, so this is read on the Zoho path and the Resend
 // fallback alike.
@@ -279,7 +279,7 @@ export function buildOnboardingEmail(person: Recipient): {
   // One button, at the end, after everything that explains why it's worth
   // pressing. Earlier versions put a call to action on every step, which meant
   // handing somebody three or four competing destinations and asking them to
-  // pick — and for anyone without a login, three of them led to the same login
+  // pick, and for anyone without a login, three of them led to the same login
   // wall anyway. The dashboard walks them through the steps once they're in,
   // so the email's only job is to get them there.
   const cta = `
@@ -398,7 +398,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Two ways to authorise a real roster send: the cron secret, or a Supabase
   // session that verifies as the owner. The `x-admin-email` header the other
-  // admin routes accept is deliberately NOT one of them — it is caller-supplied,
+  // admin routes accept is deliberately NOT one of them; it is caller-supplied,
   // and this route mails five contractors from Joshua's address.
   const admin = await resolveVerifiedAdmin(req);
   if (!isAuthorized(req) && !admin && !isOwnerPreview) {
@@ -410,7 +410,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Preview: one copy of each distinct variant, to the owner ───────
     // Sending only the first person's copy would hide exactly what this
-    // endpoint exists to get right — that the emails differ per person.
+    // endpoint exists to get right: that the emails differ per person.
     if (testEmail) {
       const seen = new Set<string>();
       const samples = roster.filter((person) => {

@@ -134,7 +134,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
-  console.error('Root element not found – skipping React mount. Refresh the page to recover.')
+  console.error('Root element not found; skipping React mount. Refresh the page to recover.')
 } else {
   console.log('🚀 React is mounting...', { rootElement })
 
@@ -153,7 +153,7 @@ if (!rootElement) {
     // Hide the pre-render once the app has actually PAINTED, not merely mounted.
     //
     // Mount fires before any data arrives, so hiding there left a crawler
-    // looking at a loading spinner where the real content used to be — the
+    // looking at a loading spinner where the real content used to be; the
     // gallery pages were reporting Soft 404 in Search Console for exactly this.
     // The pre-render lives outside #root (see index.html) so React no longer
     // destroys it, and it stays on screen until there is something to replace it.
@@ -172,7 +172,7 @@ if (!rootElement) {
 /**
  * Keep the pre-rendered content visible until the app paints something real.
  *
- * "Real" is deliberately crude — enough text in #root that a crawler snapshot
+ * "Real" is deliberately crude: enough text in #root that a crawler snapshot
  * would carry meaning. A spinner or an empty shell does not clear the bar, so
  * a slow or failed data fetch leaves the pre-rendered content in place rather
  * than replacing it with nothing.

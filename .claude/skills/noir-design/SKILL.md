@@ -16,12 +16,12 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 
 ### 2. Geometry & Separation
 
-- **NO BORDERS.** See the `no-border-design` skill — it is the authority and this skill defers to
+- **NO BORDERS.** See the `no-border-design` skill; it is the authority and this skill defers to
   it. Never use `border`, `border-t/b/l/r`, `border-white`, `border-white/10`, or any `border-*`
   utility on any element. There is no "thin white outline" exception; that rule is retired.
 - **NO SHADOWS.** No `shadow-*`, no `shadow-2xl`, no arbitrary `shadow-[...]`, no glows, no rings,
-  no gradients. Shadows are **not** an approved substitute for borders — the surface is flat.
-- **Surface ladder** — surface tone and spacing are the *only* separation mechanisms. Elements
+  no gradients. Shadows are **not** an approved substitute for borders; the surface is flat.
+- **Surface ladder**: surface tone and spacing are the *only* separation mechanisms. Elements
   separate by sitting on a different tone, not by being outlined or lifted:
 
   | Level | Value | Used for |
@@ -43,7 +43,7 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
      dashboards) is a pill: `rounded-full`, or `rounded-[32px] sm:rounded-full` when it wraps to
      multiple rows. See `bento-design` → Platform Console Tray for the canonical markup. Covers
      the tray pill itself and its icon buttons.
-  2. **Profile avatars.** Always `rounded-full` — avatars are circles, everywhere they appear.
+  2. **Profile avatars.** Always `rounded-full`: avatars are circles, everywhere they appear.
 
   Nothing else. Cards, modals, side panels, bottom sheets, inputs, ordinary buttons, product
   images, gallery thumbnails and the expandable card a tray icon opens all stay square. If you are
@@ -55,7 +55,7 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 - **Alignment (Critical)**: All body text MUST be `text-left`. Only the Amazon disclosure may be justified.
 
 ### 4. Interactive Elements
-- **Glassmorphism**: When using overlays, use `rgba(0, 0, 0, 0.95)` plus `backdrop-blur` — the blur
+- **Glassmorphism**: When using overlays, use `rgba(0, 0, 0, 0.95)` plus `backdrop-blur`; the blur
   and the tone difference do the separating. No white border.
 - **Hover States**: Invert colors on hover (Black text on White background).
 - **Animations**: Use "mechanical" animations (blinking cursors, sliding toasts) rather than soft fades.
@@ -90,8 +90,8 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 
 ### Rules
 - **No `border-*` classes.** A button is defined by its surface, not an outline.
-- `border-radius: 0` — always use `style={{ borderRadius: 0 }}` to override Tailwind's base reset.
-  (Radius, not a border — keep it.)
+- `border-radius: 0`, always use `style={{ borderRadius: 0 }}` to override Tailwind's base reset.
+  (Radius, not a border: keep it.)
 - Hover **swaps surface tone** between the subtle and inverted levels of the ladder above. Never
   land on `bg-black`: without a border it is invisible against the page.
 - Labels always **UPPERCASE** with `tracking-widest`

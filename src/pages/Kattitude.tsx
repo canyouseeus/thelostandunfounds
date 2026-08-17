@@ -69,7 +69,7 @@ export default function Kattitude() {
   return (
     <>
       <SEOHead
-        title="Kattitude Tattoo Studio — Austin, TX"
+        title="Kattitude Tattoo Studio: Austin, TX"
         description="Custom tattoo art in Austin, Texas. Book a consultation with our artists."
         canonicalPath="/kattitude"
       />
@@ -291,7 +291,7 @@ export default function Kattitude() {
         <footer className="border-t border-white/10 px-6 py-8">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30">
-              © {new Date().getFullYear()} Kattitude Tattoo Studio — Austin, TX
+              © {new Date().getFullYear()} Kattitude Tattoo Studio, Austin, TX
             </p>
             <Link
               to="/kattitude/waiver"

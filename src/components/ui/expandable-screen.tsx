@@ -17,7 +17,7 @@ const ExpandableScreenContext = createContext<ExpandableScreenContextValue | nul
  * Reference-counted body scroll lock, shared across every open screen.
  *
  * Only the first locker records the page's real overflow values, and only the
- * last release restores them — so nested or overlapping screens can never
+ * last release restores them, so nested or overlapping screens can never
  * restore each other's 'hidden' and strand the page unscrollable.
  */
 let scrollLockCount = 0;
@@ -95,7 +95,7 @@ export function ExpandableScreen({
     }
 
     // Lock scroll while open. documentElement (<html>) is the actual scrolling
-    // root in standards mode — locking body alone leaves it scrollable, which on
+    // root in standards mode: locking body alone leaves it scrollable, which on
     // mobile Safari lets touches land on background content behind this
     // fixed-position overlay (taps appear to do nothing because they hit
     // whatever scrolled into that screen position).
@@ -136,7 +136,7 @@ export function ExpandableScreen({
         <AnimatePresence>
           {isOpen && (
             <>
-              {/* Expanded Screen — sits above nav (z-[999]) */}
+              {/* Expanded Screen: sits above nav (z-[999]) */}
               <motion.div
                 ref={screenRef}
                 layoutId={layoutId}

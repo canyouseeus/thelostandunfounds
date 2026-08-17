@@ -100,7 +100,7 @@ async function handleGetAvailability(req: VercelRequest, res: VercelResponse) {
  *
  * Keyed on the client's row id, which we only ever put in a link sent to that
  * client. Returns the minimum the modal needs to greet them and prefill the
- * booking — name, email, business — and nothing else on the record.
+ * booking (name, email, business) and nothing else on the record.
  */
 async function handleGetClient(req: VercelRequest, res: VercelResponse) {
     const id = (req.query.id as string | undefined) || ''
@@ -142,7 +142,7 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
             .select('start_time, end_time, status')
             .eq('event_date', date)
             .in('status', ['pending', 'confirmed']),
-        // Events on this date — the photographer is already committed to them.
+        // Events on this date: the photographer is already committed to them.
         // Surface them so the booking form can warn the client before picking
         // a conflicting window.
         supabase
@@ -186,7 +186,7 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
  *
  * Only services with a real rate card appear here. Web Development, Retainer
  * and Brand / Editorial are quoted case by case, so they are deliberately
- * absent — an automatic Stripe link for a consultation would be wrong.
+ * absent: an automatic Stripe link for a consultation would be wrong.
  *
  * Prices are resolved on the server and never read from the request: the
  * amount a client is charged must not be something they can post.
@@ -206,7 +206,7 @@ const FIXED_PHOTO_PRICES: Record<string, number> = {
   'Event Coverage': 600,
   'Half-Day Content': 800,
   'Full-Day Content': 1400,
-  // Standalone video. Mirrors VIDEO_SERVICES in src/pages/BookingPage.tsx —
+  // Standalone video. Mirrors VIDEO_SERVICES in src/pages/BookingPage.tsx,
   // if a price changes there it must change here, or the booking quotes
   // nothing and the client never receives an invoice.
   'Reel Pack': 450,
@@ -217,7 +217,7 @@ const FIXED_PHOTO_PRICES: Record<string, number> = {
 /**
  * Resolve a discount code against public.promo_codes.
  *
- * A code arriving on a booking is a claim, never a percentage — the terms live
+ * A code arriving on a booking is a claim, never a percentage; the terms live
  * in the database: who may use it, whether it is single-use, whether it has
  * expired, whether it is still active. A hardcoded map had none of those, so a
  * one-time offer could be redeemed for ever by anyone who kept the link.
@@ -271,7 +271,7 @@ function resolvePhotoPrice(
     return { price: tier.price, label: `Airbnb listing photography (${tier.label})` }
   }
   const flat = FIXED_PHOTO_PRICES[eventType]
-  if (flat) return { price: flat, label: `Photography — ${eventType}` }
+  if (flat) return { price: flat, label: `Photography; ${eventType}` }
   return null
 }
 
@@ -287,12 +287,12 @@ function extractPromoCode(notes: string | null | undefined): string | null {
  *
  * A run through the express modal with a real client link created a real
  * booking, a real invoice and a live Stripe payment link, and emailed all of it
- * to the client — because nothing in the flow distinguishes a rehearsal from a
+ * to the client, because nothing in the flow distinguishes a rehearsal from a
  * real booking. The client received a quote for a shoot that did not exist.
  *
  * A booking is treated as a test when the request says so (?test=1 or
  * test: true) or when the details are obviously placeholder. Test bookings are
- * still recorded — so the flow can be exercised end to end — but they are
+ * still recorded, so the flow can be exercised end to end, but they are
  * marked, no invoice is generated, no Stripe link is created, and nothing is
  * emailed to the client.
  */
@@ -334,7 +334,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         location,
         notes,
         retainer,
-        // Only used to pick a rate-card tier — the price itself is resolved
+        // Only used to pick a rate-card tier; the price itself is resolved
         // server-side from this, never taken from the request.
         bedrooms
     } = req.body
@@ -350,7 +350,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
 
     // Dates can be closed outright in booking_availability, and a shoot
     // already on the books reserves its window plus a travel buffer (see the
-    // buffer check below). Multiple shoots a day are still fine — they just
+    // buffer check below). Multiple shoots a day are still fine; they just
     // have to be far enough apart for one photographer to make both.
     const { data: availRow } = await supabase
         .from('booking_availability')
@@ -365,7 +365,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     }
 
     // The form hides slots outside the day's window, but the endpoint is
-    // reachable directly — enforce the window here too rather than trusting
+    // reachable directly: enforce the window here too rather than trusting
     // the client, or a request lands for a time nobody can cover.
     const allowedSlots = availRow?.allowed_slots?.trim()
         ? availRow.allowed_slots.split(',').map((s: string) => s.trim()).filter(Boolean)
@@ -389,7 +389,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
 
     // A shoot reserves its window plus travel time on each side. The forms grey
     // out slots that collide, but the endpoint is reachable directly, so the
-    // real guard has to be here — this is what stops one photographer being
+    // real guard has to be here; this is what stops one photographer being
     // committed to two jobs that cannot both be reached.
     if (start_time) {
         const { data: sameDay, error: sameDayErr } = await supabase
@@ -409,7 +409,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         const conflict = findBufferConflict(start_time, end_time || null, sameDay || [])
         if (conflict) {
             return res.status(409).json({
-                error: `That time is too close to another shoot that day. We need ${BUFFER_MINUTES / 60} hours either side of a booking for setup and travel — please pick another slot.`
+                error: `That time is too close to another shoot that day. We need ${BUFFER_MINUTES / 60} hours either side of a booking for setup and travel; please pick another slot.`
             })
         }
     }
@@ -445,13 +445,13 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     // waiting for someone to raise it by hand. Consultation-style work
     // (web dev, retainers, brand) resolves to null here and stays manual.
     //
-    // Best-effort: a booking that saved is not failed by a quoting problem —
+    // Best-effort: a booking that saved is not failed by a quoting problem;
     // the quote can be raised from the admin endpoint afterwards.
     let quote: { created: boolean; invoiceNumber?: string; total?: number; error?: string } = { created: false }
     const pricing = isTest ? null : resolvePhotoPrice(event_type.trim(), bedrooms)
     if (isTest) {
-        console.log('[BookingRequest] TEST booking — no invoice, no Stripe link, no client email:', data.id)
-        quote = { created: false, error: 'test booking — quoting skipped' }
+        console.log('[BookingRequest] TEST booking; no invoice, no Stripe link, no client email:', data.id)
+        quote = { created: false, error: 'test booking, quoting skipped' }
     }
     if (pricing) {
         try {
@@ -461,19 +461,19 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
 
             // final_price beats discount_amount beats discount_pct. A number
             // agreed with a client in writing is stated, not approximated by a
-            // percentage that lands near it — 10% off $335 is $301.50, and the
+            // percentage that lands near it: 10% off $335 is $301.50, and the
             // client was told $300.
             let total = pricing.price
             let discountLabel: string | null = null
             if (resolved?.finalPrice != null) {
                 total = resolved.finalPrice
-                discountLabel = `Agreed rate — ${promo}`
+                discountLabel = `Agreed rate: ${promo}`
             } else if (resolved?.amount != null) {
                 total = Math.max(0, pricing.price - resolved.amount)
-                discountLabel = `Discount — ${promo}`
+                discountLabel = `Discount: ${promo}`
             } else if (resolved && resolved.pct > 0) {
                 total = Math.round(pricing.price * (1 - resolved.pct / 100) * 100) / 100
-                discountLabel = `Discount — ${promo} (${resolved.pct}%)`
+                discountLabel = `Discount: ${promo} (${resolved.pct}%)`
             }
             total = Math.round(total * 100) / 100
 
@@ -493,7 +493,7 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
                 bookingId: data.id as string,
                 totalPrice: total,
                 lineItems,
-                description: `${pricing.label}${promo ? ` — ${promo} applied` : ''}`,
+                description: `${pricing.label}${promo ? `; ${promo} applied` : ''}`,
                 origin: siteOrigin(req),
             })
             quote = { created: true, invoiceNumber: result.invoiceNumber, total: result.total }
@@ -544,19 +544,19 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     }
 
     // Send notification email inline (best-effort). We await it so there's no
-    // dangling promise after res.json() — Vercel kills the function when the
+    // dangling promise after res.json(): Vercel kills the function when the
     // response is sent, and a rejected pending fetch was surfacing as
     // FUNCTION_INVOCATION_FAILED.
     let notify: { sent: boolean; error?: string } = { sent: false }
     try {
         if (isTest) {
-            notify = { sent: false, error: 'test booking — notifications suppressed' }
+            notify = { sent: false, error: 'test booking; notifications suppressed' }
             return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote })
         }
         await sendBookingNotification(data.id as string, supabase)
         notify = { sent: true }
     } catch (notifyErr: any) {
-        // Non-fatal — booking is saved, admin just didn't get the email.
+        // Non-fatal: booking is saved, admin just didn't get the email.
         const msg = notifyErr?.message || String(notifyErr)
         console.warn('[BookingRequest] notify failed:', msg)
         notify = { sent: false, error: msg }
@@ -573,14 +573,14 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
         .single()
     if (error || !booking) return
 
-    // Admin notification — structured summary wrapped in brand template
-    const adminSubject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
+    // Admin notification: structured summary wrapped in brand template
+    const adminSubject = `New Booking Inquiry: ${booking.event_type || 'Other'}; ${booking.name}`
     await sendTransactionalEmail({ to: NOTIFY_TO, subject: adminSubject, content: buildAdminSummaryBody(booking) })
 
-    // Client confirmation — warm recap of what they submitted, wrapped in
+    // Client confirmation: warm recap of what they submitted, wrapped in
     // the same branded template so the header + logo match the site.
     if (booking.email) {
-        const clientSubject = `We got your booking request — TLAU`
+        const clientSubject = `We got your booking request, TLAU`
         try {
             await sendTransactionalEmail({ to: booking.email, subject: clientSubject, content: buildClientConfirmationBody(booking) })
         } catch (err) {
@@ -648,7 +648,7 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
     }
 
     // Fire affiliate commission when this transition lands the booking in
-    // a paid state. Idempotent — no-op if already triggered for this booking.
+    // a paid state. Idempotent: no-op if already triggered for this booking.
     if (booking && willTriggerCommission) {
         try {
             if (booking.email && booking.total_amount_cents) {
@@ -663,7 +663,7 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
                     console.log('[booking] commission triggered:', { id, amount: result.amount })
                 }
             } else {
-                console.log('[booking] paid status reached but no amount set — skipping commission trigger')
+                console.log('[booking] paid status reached but no amount set, skipping commission trigger')
             }
         } catch (commissionErr: any) {
             console.error('[booking] commission trigger failed:', commissionErr?.message)
@@ -700,9 +700,9 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
 function subjectForStatus(status: string, booking: any): string | null {
     const eventType = booking.event_type || 'shoot'
     switch (status) {
-        case 'confirmed': return `Your ${eventType} is confirmed — TLAU`
-        case 'declined': return `About your booking request — TLAU`
-        case 'cancelled': return `Your ${eventType} booking has been cancelled — TLAU`
+        case 'confirmed': return `Your ${eventType} is confirmed; TLAU`
+        case 'declined': return `About your booking request; TLAU`
+        case 'cancelled': return `Your ${eventType} booking has been cancelled; TLAU`
         default: return null
     }
 }
@@ -719,36 +719,36 @@ function buildClientStatusUpdateBody(booking: any, status: string): string {
         return `
             <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">YOU'RE BOOKED</h1>
             <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
-                Hey ${escapeHtml(firstName)} — your ${escapeHtml(eventType)} on
+                Hey ${escapeHtml(firstName)}: your ${escapeHtml(eventType)} on
                 <b>${escapeHtml(dateLine)}</b> is confirmed. An invoice with the
                 deposit and balance details is on its way separately.
             </p>
             ${adminNote}
-            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">, Joshua / TLAU</p>
         `
     }
     if (status === 'declined') {
         return `
             <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">ABOUT YOUR REQUEST</h1>
             <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
-                Hey ${escapeHtml(firstName)} — thanks for reaching out about
+                Hey ${escapeHtml(firstName)}: thanks for reaching out about
                 ${escapeHtml(dateLine)}. Unfortunately I'm not able to take this
                 one on. If timing or scope shifts, please feel welcome to reach
                 back out.
             </p>
             ${adminNote}
-            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">, Joshua / TLAU</p>
         `
     }
     if (status === 'cancelled') {
         return `
             <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">BOOKING CANCELLED</h1>
             <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
-                Hey ${escapeHtml(firstName)} — your ${escapeHtml(eventType)}
+                Hey ${escapeHtml(firstName)}: your ${escapeHtml(eventType)}
                 booking on ${escapeHtml(dateLine)} has been cancelled.
             </p>
             ${adminNote}
-            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">, Joshua / TLAU</p>
         `
     }
     return ''
@@ -831,7 +831,7 @@ function buildAdminSummaryBody(booking: any): string {
             ${booking.phone ? row('Phone', escapeHtml(booking.phone)) : ''}
             ${row('Shoot Type', escapeHtml(booking.event_type || '—'))}
             ${row('Date', escapeHtml(formatEventDate(booking.event_date)))}
-            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}`) : ''}
+            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')}; ${escapeHtml(booking.end_time || '?')}`) : ''}
             ${booking.location ? row('Location', escapeHtml(booking.location)) : ''}
             ${booking.retainer ? row('Retainer', 'Yes (monthly)') : ''}
         </table>
@@ -852,7 +852,7 @@ function buildClientConfirmationBody(booking: any): string {
     return `
         <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">YOUR BOOKING REQUEST IS IN</h1>
         <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 20px 0;">
-            Hey ${escapeHtml(firstName)} — thanks for reaching out. Your request is held while we talk.
+            Hey ${escapeHtml(firstName)}: thanks for reaching out. Your request is held while we talk.
             I'll get back to you within 24 hours to scope the shoot and sort out logistics.
             Nothing is finalized until we've aligned and the 50% deposit is received.
         </p>
@@ -861,7 +861,7 @@ function buildClientConfirmationBody(booking: any): string {
             ${booking.business_name ? row('Business', escapeHtml(booking.business_name)) : ''}
             ${row('Shoot Type', escapeHtml(booking.event_type || '—'))}
             ${row('Date', escapeHtml(formatEventDate(booking.event_date)))}
-            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}`) : ''}
+            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')}; ${escapeHtml(booking.end_time || '?')}`) : ''}
             ${booking.location ? row('Location', escapeHtml(booking.location)) : ''}
         </table>
         <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px 0;">The deposit</p>
@@ -873,7 +873,7 @@ function buildClientConfirmationBody(booking: any): string {
         <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:24px 0 8px 0;">
             If anything needs to change on your end, just reply to this email.
         </p>
-        <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+        <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">, Joshua / TLAU</p>
     `
 }
 
