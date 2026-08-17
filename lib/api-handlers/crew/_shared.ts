@@ -245,6 +245,17 @@ export async function accrueCrewPayout(
     invoicePaymentId?: string | null;
     amountPaid: number;
     paidAt?: string;
+    /**
+     * When Stripe actually frees the money, from the charge's balance
+     * transaction (`available_on`).
+     *
+     * CREW_PAYOUT_HOLD_DAYS is a flat guess — 2 days by default — and on a
+     * newer account Stripe can take four. A hold shorter than reality makes
+     * every run skip on insufficient_balance until Stripe catches up, and
+     * worse, the photographer's email quotes this date: a contractor was
+     * nearly told his money would land three days before it could.
+     */
+    availableOn?: string | null;
   }
 ): Promise<{ accrued: boolean; amount?: number; reason?: string; availableAt?: string; photographer?: PhotographerRow }> {
   const { data: invoice } = await supabase
@@ -286,7 +297,11 @@ export async function accrueCrewPayout(
   if (amount <= 0) return { accrued: false, reason: 'zero_share' };
 
   const paidAt = args.paidAt ? new Date(args.paidAt) : new Date();
-  const availableAt = new Date(paidAt.getTime() + holdDays() * 24 * 60 * 60 * 1000);
+  const holdUntil = new Date(paidAt.getTime() + holdDays() * 24 * 60 * 60 * 1000);
+  // Whichever is later: our own hold, or the day Stripe releases the funds.
+  const stripeAvailable = args.availableOn ? new Date(args.availableOn) : null;
+  const availableAt =
+    stripeAvailable && stripeAvailable.getTime() > holdUntil.getTime() ? stripeAvailable : holdUntil;
 
   const { accountId } = await resolveConnectAccount(supabase, photographer);
 

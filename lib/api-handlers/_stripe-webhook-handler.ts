@@ -775,6 +775,7 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
             invoicePaymentId: paymentRow?.id || null,
             amountPaid,
             paidAt,
+            availableOn: await stripeAvailableOn(session),
         })
         if (accrual.accrued) {
             console.log('✅ Crew payout accrued:', { invoice: invoice.id, amount: accrual.amount })
@@ -902,6 +903,37 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
  * without the stamp a retried deposit event sends the same assignment twice.
  * It is also the only record anywhere that the photographer was told.
  */
+/**
+ * The date Stripe frees this payment for transfers.
+ *
+ * Read from the charge's balance transaction rather than assumed. Funds sat in
+ * Stripe's pending balance until four days after the charge while our own
+ * two-day hold had long expired, so the payout skipped every hourly run with
+ * no error recorded and no way to see why.
+ *
+ * Best-effort: on any failure the caller falls back to the flat hold.
+ */
+async function stripeAvailableOn(session: Stripe.Checkout.Session): Promise<string | null> {
+    try {
+        const key = process.env.STRIPE_SECRET_KEY
+        if (!key) return null
+        const stripe = new Stripe(key, { apiVersion: '2024-12-18.acacia' as any, typescript: true })
+        const piId = typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent?.id
+        if (!piId) return null
+
+        const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge.balance_transaction'] })
+        const charge: any = (pi as any).latest_charge
+        const txn = charge?.balance_transaction
+        const availableOn = typeof txn === 'object' ? txn?.available_on : null
+        return availableOn ? new Date(availableOn * 1000).toISOString() : null
+    } catch (err: any) {
+        console.warn('⚠️ Could not read Stripe availability date:', err?.message)
+        return null
+    }
+}
+
 async function notifyPhotographerOnce(supabase: any, booking: any, invoice: any): Promise<void> {
     try {
         if (booking.photographer_notified_at) return
