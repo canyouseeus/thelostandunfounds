@@ -160,7 +160,13 @@ function checkPageMeta() {
     if (!usesHelmet && !usesSEOHead) continue;
 
     // Title format check (brand must come first).
-    const titleMatches = [...src.matchAll(/<title>([^<]+)<\/title>/g)];
+    // Pages that declare noindex are never crawled, so the brand-prefix rule
+    // (which exists for Ahrefs' benefit) has nothing to act on. Internal admin
+    // surfaces and client-scoped tools title themselves for the operator
+    // instead. The description rule below still applies to everyone.
+    const isNoindex = /<meta[^>]+content=["'][^"']*noindex/.test(src);
+
+    const titleMatches = isNoindex ? [] : [...src.matchAll(/<title>([^<]+)<\/title>/g)];
     for (const t of titleMatches) {
       const raw = t[1].trim();
       // Skip JSX expressions wrapping the brand — they're hard to statically resolve
