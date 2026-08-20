@@ -41,10 +41,20 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch all libraries that have a slug
+    // Public libraries only. This runs on the service-role key, so RLS does not
+    // filter anything out — the is_private check has to be made here, and it was
+    // missing. scripts/pre-render-galleries.ts and scripts/generate-sitemap.ts
+    // both filter on it, so private galleries were advertised in this sitemap
+    // while being neither pre-rendered nor listed in sitemap.xml: every one of
+    // them resolved to the noindex 404 shell, which is what Ahrefs reports as
+    // "Noindex page in sitemap". Worse than the crawl error, it published the
+    // slugs, names and photos of private client jobs to search engines, with the
+    // images served through /api/gallery/stream that robots.txt deliberately
+    // allows. Any new gallery generator must apply the same filter.
     const { data: libraries, error: libErr } = await supabase
         .from('photo_libraries')
         .select('id, slug, name')
+        .eq('is_private', false)
         .not('slug', 'is', null)
         .order('slug', { ascending: true });
 

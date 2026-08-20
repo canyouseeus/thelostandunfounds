@@ -8,6 +8,7 @@ config({ path: '.env.local' });
 import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { replacePreRenderBlock } from './lib/pre-render-shell';
 
 /**
  * Every image URL emitted below must be on this domain, served through
@@ -170,11 +171,7 @@ async function preRenderGalleries() {
         </div>
       `;
 
-      if (html.includes('id="pre-render"')) {
-        html = html.replace(/<div id="pre-render"[^>]*>[\s\S]*?<\/div>/i, `<div id="pre-render">${preRenderContent}</div>`);
-      } else {
-        html = html.replace('<div id="root">', `<div id="pre-render">${preRenderContent}</div>\n  <div id="root">`);
-      }
+      html = replacePreRenderBlock(html, `<div id="pre-render">${preRenderContent}</div>`);
 
       const galleryDir = join(distPath, 'gallery', slug);
       await mkdir(galleryDir, { recursive: true });

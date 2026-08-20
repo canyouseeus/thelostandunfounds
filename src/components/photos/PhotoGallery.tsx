@@ -1068,7 +1068,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             </p>
                             <p className="text-[9px] text-white/30 leading-relaxed mt-1">
                                 Purchased downloads are licensed for personal use — social media, wallpapers, personal printing.{' '}
-                                <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
+                                <a href="/contact" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
                                     Commercial licensing →
                                 </a>
                             </p>

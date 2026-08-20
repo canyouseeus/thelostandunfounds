@@ -45,6 +45,23 @@ export default function Footer() {
             >
               Support
             </Link>
+            {/* Services and Capabilities were in the sitemap and pre-rendered but
+                linked from nowhere on the site, so Ahrefs reported them as orphan
+                pages. The nav's SERVICES tab points at /?view=services — homepage
+                state, not the real URL — so the footer is what actually gives
+                these pages an inbound link. */}
+            <Link
+              to="/services"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Services
+            </Link>
+            <Link
+              to="/capabilities"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Capabilities
+            </Link>
             <Link
               to="/advertise"
               className="text-white/60 hover:!text-white transition-colors"

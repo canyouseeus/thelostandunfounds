@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { conflictsWithBuffer } from '../../lib/booking-buffer';
 import {
@@ -524,6 +525,17 @@ const ServiceCard: React.FC<{
  */
 type ServiceFocus = 'airbnb' | 'realestate' | 'web' | 'video';
 
+/** The service URLs, in the order they read as a set. Keys match ServiceFocus,
+ *  plus 'all' for the hub at /services. Mirrors SERVICE_PAGES in Gallery.tsx
+ *  and the services entries in scripts/pre-render-core-pages.ts. */
+const SERVICE_LINKS: { path: string; label: string; key: ServiceFocus | 'all' }[] = [
+    { path: '/services', label: 'All Services', key: 'all' },
+    { path: '/services/airbnb-photography', label: 'Airbnb', key: 'airbnb' },
+    { path: '/services/real-estate-photography', label: 'Real Estate', key: 'realestate' },
+    { path: '/services/web-design', label: 'Web Design', key: 'web' },
+    { path: '/services/video', label: 'Video', key: 'video' },
+];
+
 const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = {
     airbnb: {
         h1: <>AIRBNB<br />PHOTOGRAPHY</>,
@@ -783,6 +795,24 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                         Schedule a Session
                         <ArrowLongRightIcon className="w-4 h-4" />
                     </button>
+
+                    {/* The five service URLs exist so each can rank for its own
+                        search, but nothing on the site linked to any of them —
+                        Ahrefs reported all five as orphan pages, which is a page
+                        Google finds in the sitemap and nowhere else. Every offer
+                        now links the others, so the set holds itself up. The
+                        current page is plain text rather than a link to itself. */}
+                    <nav aria-label="Services" className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-widest">
+                        {SERVICE_LINKS.map(({ path, label, key }) => (
+                            key === (focus ?? 'all') ? (
+                                <span key={path} className="text-white/70">{label}</span>
+                            ) : (
+                                <Link key={path} to={path} className="text-white/30 hover:text-white transition-colors">
+                                    {label}
+                                </Link>
+                            )
+                        ))}
+                    </nav>
                 </div>
             </div>
 

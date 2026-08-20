@@ -53,7 +53,12 @@
   <noscript>
     <div
       style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
-      <h1 style="font-size: 3rem; margin-bottom: 2rem; font-weight: bold; display: block;">CAN YOU SEE US?</h1>
+      <!-- Deliberately a paragraph rather than a heading. Every pre-rendered page
+           carries its own page-specific top-level heading in the #pre-render block
+           below, and a crawler that parses raw HTML without executing JS reads
+           noscript content too — so a heading here put a second, identical one on
+           all 40 URLs on the site. This is a fallback splash, not the page title. -->
+      <p style="font-size: 3rem; margin-bottom: 2rem; font-weight: bold; display: block;">CAN YOU SEE US?</p>
       <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
         Thanks for stopping by. Sign-up for updates and news!
       </p>
