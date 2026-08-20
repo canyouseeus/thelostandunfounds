@@ -19,6 +19,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="THE LOST+UNFOUNDS" />
 
+  <!-- Self-referencing canonical for the homepage. Every pre-render script
+       (core pages, blog posts, columns, galleries) replaces this tag with the
+       page's own URL when it exists, so putting it in the shell is safe and
+       only `/` keeps it. generate-404-html.ts strips it, since the noindex
+       shell must not canonicalise arbitrary URLs to the homepage. -->
+  <link rel="canonical" href="https://www.thelostandunfounds.com/" />
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.thelostandunfounds.com/" />
@@ -75,6 +82,12 @@
           <a href="/events" style="color: rgba(255, 255, 255, 0.6);">Events</a>
           <a href="/gallery" style="color: rgba(255, 255, 255, 0.6);">The Gallery</a>
           <a href="/contact" style="color: rgba(255, 255, 255, 0.6);">Contact</a>
+          <!-- /services and /capabilities are also linked from Footer.tsx, but that
+               only exists once React hydrates. This shell is what a crawler that
+               does not run JS sees on every pre-rendered page, so the links have to
+               be here too or those URLs stay orphaned for non-rendering crawlers. -->
+          <a href="/services" style="color: rgba(255, 255, 255, 0.6);">Services</a>
+          <a href="/capabilities" style="color: rgba(255, 255, 255, 0.6);">Capabilities</a>
           <a href="/privacy" style="color: rgba(255, 255, 255, 0.6);">Privacy Policy</a>
           <a href="/terms" style="color: rgba(255, 255, 255, 0.6);">Terms of Service</a>
         </div>
@@ -209,6 +222,8 @@
           <a href="/events" style="color: black;">Events</a>
           <a href="/gallery" style="color: black;">The Gallery</a>
           <a href="/contact" style="color: black;">Contact</a>
+          <a href="/services" style="color: black;">Services</a>
+          <a href="/capabilities" style="color: black;">Capabilities</a>
           <a href="/privacy" style="color: black;">Privacy</a>
           <a href="/terms" style="color: black;">Terms</a>
         </div>

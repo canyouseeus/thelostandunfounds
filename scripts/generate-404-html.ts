@@ -46,6 +46,12 @@ async function generate404Html() {
     html = html.replace('</head>', `  ${NOINDEX_META}\n</head>`);
   }
 
+  // Strip the shell's canonical. index.html carries a self-referencing homepage
+  // canonical and every pre-render script overwrites it with the page's own URL,
+  // but this shell is served at arbitrary unmatched URLs — leaving it in would
+  // point every 404 at `/`.
+  html = html.replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, '');
+
   // Make the title generic so the noindex shell does not parrot the homepage.
   // Without a unique title Ahrefs/Google still cluster these URLs together
   // even when noindex eventually drops them — the unique title keeps the
