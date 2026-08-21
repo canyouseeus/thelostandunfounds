@@ -26,7 +26,7 @@ const PHOTO_SERVICES = [
     {
         id: 'portrait',
         label: 'LIFESTYLE PORTRAIT',
-        price: '$250',
+        price: '$500',
         meta: '30–45 min · Downtown Austin',
         eventType: 'Lifestyle Shoot',
         features: [
@@ -36,21 +36,26 @@ const PHOTO_SERVICES = [
         ],
     },
     {
-        // Priced to enter the Austin short-term-rental market competitively.
-        // Reference points (2026): Austin MLS listing work runs $150–325 with a
-        // ~$185 median; STR shoots run $100–400 for a standard unit, with budget
-        // operators from $149. A $195 entry undercuts the mid-market without
-        // landing in the budget bracket, and the ladder carries the margin on
-        // larger properties. Add-ons track market: drone $95–400, 3D $100–525.
+        // Priced above the Austin short-term-rental market, deliberately.
+        // Reference points (2026, unchanged — these are observed market rates,
+        // not our rates): Austin MLS listing work runs $150–325 with a ~$185
+        // median; STR shoots run $100–400 for a standard unit, with budget
+        // operators from $149. Add-ons observed at drone $95–400, 3D $100–525.
+        //
+        // The $390 entry sits at or above the top of that STR band, so this
+        // ladder no longer competes on price and should not be described as
+        // undercutting the mid-market. It asks the client to choose on the work
+        // instead. If bookings thin out at the top of the funnel, this entry
+        // rate is the first thing to revisit.
         id: 'airbnb',
         label: 'AIRBNB / SHORT-TERM RENTAL',
-        price: '$195+',
+        price: '$390+',
         meta: 'Studio / 1BR · Your property',
         eventType: 'Airbnb / Short-Term Rental',
         features: [
             '25–35 edited photos · 24–72 hr delivery',
-            '2BR $265 · 3BR $335 · 4BR+ / luxury from $425',
-            'Twilight +$125 · Drone +$150 · 3D tour +$200',
+            '2BR $530 · 3BR $670 · 4BR+ / luxury from $850',
+            'Twilight +$250 · Drone +$300 · 3D tour +$400',
         ],
     },
     {
@@ -59,7 +64,7 @@ const PHOTO_SERVICES = [
         // model units, amenity spaces and exteriors across a portfolio, and the
         // scope is set by the property rather than by a bedroom count.
         //
-        // Same ladder logic as the $195 Airbnb entry — a single unit enters just
+        // Same ladder logic as the $390 Airbnb entry — a single unit enters just
         // above the STR rate (leasing photography carries more amenity and
         // exterior coverage), and the margin is carried by the property package
         // and the portfolio retainer. Quoted on a call rather than auto-invoiced:
@@ -67,32 +72,32 @@ const PHOTO_SERVICES = [
         // fixed price, and billing either from a card would be wrong.
         id: 'realestate',
         label: 'REAL ESTATE / MULTIFAMILY',
-        price: '$225+',
+        price: '$450+',
         meta: 'Per unit or per property · Austin metro',
         eventType: 'Real Estate / Multifamily',
         isConsultation: true,
         features: [
-            'Single model unit or vacant listing $225 · 20–30 edited photos',
-            'Property package $850 — exteriors, amenities + 2 model units',
-            'Portfolio retainer from $1,600/mo · Drone +$150 · 3D tour +$200',
+            'Single model unit or vacant listing $450 · 20–30 edited photos',
+            'Property package $1,700 — exteriors, amenities + 2 model units',
+            'Portfolio retainer from $3,200/mo · Drone +$300 · 3D tour +$400',
         ],
     },
     {
         id: 'event',
         label: 'EVENT COVERAGE',
-        price: '$600',
+        price: '$1,200',
         meta: '3 hours · Your venue',
         eventType: 'Event Coverage',
         features: [
             '20–30 curated photos, next-day',
             'Event highlight reel within 48 hrs',
-            '+$175/hr for additional hours',
+            '+$350/hr for additional hours',
         ],
     },
     {
         id: 'halfday',
         label: 'HALF-DAY CONTENT',
-        price: '$800',
+        price: '$1,600',
         meta: '4 hours · On location',
         eventType: 'Half-Day Content',
         features: [
@@ -104,7 +109,7 @@ const PHOTO_SERVICES = [
     {
         id: 'fullday',
         label: 'FULL-DAY CONTENT',
-        price: '$1,400',
+        price: '$2,800',
         meta: '8 hours · On location',
         eventType: 'Full-Day Content',
         features: [
@@ -120,7 +125,7 @@ const WEB_SERVICES = [
     {
         id: 'starter',
         label: 'STARTER',
-        price: '$1,500',
+        price: '$3,000',
         eventType: 'Web Development',
         isConsultation: true,
         features: [
@@ -133,7 +138,7 @@ const WEB_SERVICES = [
     {
         id: 'professional',
         label: 'PROFESSIONAL',
-        price: '$3,500',
+        price: '$7,000',
         eventType: 'Web Development',
         isConsultation: true,
         features: [
@@ -147,7 +152,7 @@ const WEB_SERVICES = [
     {
         id: 'agency',
         label: 'AGENCY',
-        price: '$6,000+',
+        price: '$12,000+',
         eventType: 'Web Development',
         isConsultation: true,
         features: [
@@ -160,7 +165,7 @@ const WEB_SERVICES = [
     {
         id: 'maintenance',
         label: 'MONTHLY MAINTENANCE',
-        price: '$150–300/mo',
+        price: '$300–600/mo',
         eventType: 'Retainer (Monthly)',
         isConsultation: true,
         features: [
@@ -176,19 +181,22 @@ const WEB_SERVICES = [
 // photo content days, so /services/video advertised something that could not
 // be booked on its own.
 //
-// Priced against the Austin market (2026): freelance video runs $600–1,500 for
-// a half day and $1,200–3,000 for a full day; Austin single-camera branded
-// packages start around $1,400–2,200; agencies charge $1,500–5,000 for
-// short-form social alone; retainers of 4–8 videos/month run $1,000–2,500.
-// Austin sits 25–40% under LA/NYC for equivalent work. The ladder below enters
-// well beneath the agency floor with REEL PACK, then tracks the freelance band
-// — the same logic as the $195 Airbnb entry: undercut the mid-market at the
-// door, carry the margin further up.
+// Austin market observations (2026 — these are market rates, not ours, and are
+// left as recorded): freelance video runs $600–1,500 for a half day and
+// $1,200–3,000 for a full day; Austin single-camera branded packages start
+// around $1,400–2,200; agencies charge $1,500–5,000 for short-form social
+// alone; retainers of 4–8 videos/month run $1,000–2,500. Austin sits 25–40%
+// under LA/NYC for equivalent work.
+//
+// The ladder below now sits above that band rather than inside it: REEL PACK at
+// $900 still clears the agency floor from underneath, but VIDEO CONTENT DAY at
+// $4,000 is agency-bracket pricing, not freelance. Same intent as the $390
+// Airbnb entry — compete on the work, not on being the cheaper quote.
 const VIDEO_SERVICES = [
     {
         id: 'reelpack',
         label: 'REEL PACK',
-        price: '$450',
+        price: '$900',
         meta: '2 hours · On location',
         eventType: 'Reel Pack',
         features: [
@@ -200,7 +208,7 @@ const VIDEO_SERVICES = [
     {
         id: 'brandvideo',
         label: 'BRAND VIDEO',
-        price: '$1,200',
+        price: '$2,400',
         meta: '4 hours · On location',
         eventType: 'Brand Video',
         features: [
@@ -213,7 +221,7 @@ const VIDEO_SERVICES = [
     {
         id: 'videoday',
         label: 'VIDEO CONTENT DAY',
-        price: '$2,000',
+        price: '$4,000',
         meta: '8 hours · On location',
         eventType: 'Video Content Day',
         features: [
@@ -225,7 +233,7 @@ const VIDEO_SERVICES = [
     {
         id: 'reelretainer',
         label: 'MONTHLY REEL RETAINER',
-        price: '$900/mo',
+        price: '$1,800/mo',
         eventType: 'Retainer (Monthly)',
         isConsultation: true,
         features: [
@@ -240,7 +248,7 @@ const BUNDLES = [
     {
         id: 'launch',
         label: 'LAUNCH PACKAGE',
-        price: '$2,500',
+        price: '$5,000',
         tagline: 'Launch online, fully equipped.',
         eventType: 'Web Development',
         isConsultation: true,
@@ -254,7 +262,7 @@ const BUNDLES = [
     {
         id: 'brand',
         label: 'BRAND PACKAGE',
-        price: '$5,000',
+        price: '$10,000',
         tagline: 'A complete brand presence, built and shot in one engagement.',
         eventType: 'Brand / Editorial',
         isConsultation: true,
@@ -270,8 +278,8 @@ const BUNDLES = [
 
 const TRAVEL_TIERS = [
     { range: 'Downtown Austin', rate: 'Included' },
-    { range: '15–50 mi', rate: '+$50' },
-    { range: '50+ mi', rate: '+$100 + mileage' },
+    { range: '15–50 mi', rate: '+$100' },
+    { range: '50+ mi', rate: '+$200 + mileage' },
     { range: 'Overnight', rate: 'Lodging at cost' },
 ];
 
@@ -283,10 +291,10 @@ const isWebDevEventType = (eventType: string) => WEBDEV_EVENT_TYPES.includes(eve
 // Mirrors AIRBNB_TIERS in api/booking/index.ts. Display only — the server
 // resolves the actual price from the bedroom count it is sent.
 const AIRBNB_BEDROOM_OPTIONS = [
-    { value: 1, label: 'Studio / 1', price: 195 },
-    { value: 2, label: '2 bed', price: 265 },
-    { value: 3, label: '3 bed', price: 335 },
-    { value: 4, label: '4+ / lux', price: 425 },
+    { value: 1, label: 'Studio / 1', price: 390 },
+    { value: 2, label: '2 bed', price: 530 },
+    { value: 3, label: '3 bed', price: 670 },
+    { value: 4, label: '4+ / lux', price: 850 },
 ];
 
 const EVENT_TYPES = [
@@ -539,19 +547,19 @@ const SERVICE_LINKS: { path: string; label: string; key: ServiceFocus | 'all' }[
 const FOCUS_HERO: Record<ServiceFocus, { h1: React.ReactNode; copy: string }> = {
     airbnb: {
         h1: <>AIRBNB<br />PHOTOGRAPHY</>,
-        copy: 'Listing photography for Austin short-term rentals. 25–35 edited photos, delivered in 24–72 hours, priced from $195.',
+        copy: 'Listing photography for Austin short-term rentals. 25–35 edited photos, delivered in 24–72 hours, priced from $390.',
     },
     realestate: {
         h1: <>REAL ESTATE<br />PHOTOGRAPHY</>,
-        copy: 'Leasing and listing photography for Austin apartment communities, property managers and agents. Model units from $225, full property packages at $850, portfolio retainers from $1,600/mo.',
+        copy: 'Leasing and listing photography for Austin apartment communities, property managers and agents. Model units from $450, full property packages at $1,700, portfolio retainers from $3,200/mo.',
     },
     web: {
         h1: <>WEB<br />DESIGN</>,
-        copy: 'Websites for Austin small businesses, artists, and brands. From a five-page starter site to a full custom build with booking and payments, from $1,500.',
+        copy: 'Websites for Austin small businesses, artists, and brands. From a five-page starter site to a full custom build with booking and payments, from $3,000.',
     },
     video: {
         h1: <>VIDEO<br />CONTENT</>,
-        copy: 'Short-form video for brands in Austin. Reel packs from $450, brand films from $1,200, and full video content days \u2014 plus reels shot alongside stills on any content day.',
+        copy: 'Short-form video for brands in Austin. Reel packs from $900, brand films from $2,400, and full video content days \u2014 plus reels shot alongside stills on any content day.',
     },
 };
 

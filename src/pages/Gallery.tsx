@@ -175,17 +175,17 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         '/services/airbnb-photography': {
             focus: 'airbnb' as const,
             title: 'THE LOST+UNFOUNDS | Austin Airbnb & Short-Term Rental Photography',
-            description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos delivered in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.',
+            description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos delivered in 24-72 hours, from $390. Twilight, drone and 3D tour add-ons.',
         },
         '/services/real-estate-photography': {
             focus: 'realestate' as const,
             title: 'THE LOST+UNFOUNDS | Austin Real Estate & Apartment Photography',
-            description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $225, full property packages at $850 covering exteriors, amenities and model units, portfolio retainers from $1,600/mo.',
+            description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $450, full property packages at $1,700 covering exteriors, amenities and model units, portfolio retainers from $3,200/mo.',
         },
         '/services/web-design': {
             focus: 'web' as const,
             title: 'THE LOST+UNFOUNDS | Austin Small Business Web Design',
-            description: 'Website design and development for Austin small businesses, artists and brands. Five-page starter sites from $1,500 through full custom builds with booking and payments.',
+            description: 'Website design and development for Austin small businesses, artists and brands. Five-page starter sites from $3,000 through full custom builds with booking and payments.',
         },
         '/services/video': {
             focus: 'video' as const,
@@ -278,7 +278,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                     content={servicePage
                         ? servicePage.description
                         : isServicesRoute
-                        ? "Austin photography and web design. Airbnb and short-term rental shoots from $195, event coverage from $600, and custom small business websites from $1,500."
+                        ? "Austin photography and web design. Airbnb and short-term rental shoots from $390, event coverage from $1,200, and custom small business websites from $3,000."
                         : isHomepage
                         ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
                         : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}

@@ -29,10 +29,10 @@ const TIME_SLOTS: TimeSlot[] = [
 ];
 
 const BEDROOM_OPTIONS = [
-    { value: 1, label: 'Studio / 1', price: 195 },
-    { value: 2, label: '2 bed', price: 265 },
-    { value: 3, label: '3 bed', price: 335 },
-    { value: 4, label: '4+ / lux', price: 425 },
+    { value: 1, label: 'Studio / 1', price: 390 },
+    { value: 2, label: '2 bed', price: 530 },
+    { value: 3, label: '3 bed', price: 670 },
+    { value: 4, label: '4+ / lux', price: 850 },
 ];
 
 const DAYS_AHEAD = 21;

@@ -305,7 +305,7 @@ export default function KioskDemo() {
               <h2>Investment</h2>
               <div className="price">
                 <span className="u" style={{ letterSpacing: '.14em' }}>From</span>
-                <span className="n">$2,500</span>
+                <span className="n">$5,000</span>
               </div>
               <p className="note">
                 <b>Quoted per project.</b> One-time, for the software build,

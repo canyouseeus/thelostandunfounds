@@ -50,7 +50,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'photo-portrait',
         name: 'Lifestyle Portrait',
         category: 'photography',
-        price: 250,
+        price: 500,
         priceType: 'one_time',
         description: '30–45 min lifestyle portrait session in downtown Austin, 10–15 curated photos, same-day delivery.',
     },
@@ -58,7 +58,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'photo-event',
         name: 'Event Coverage',
         category: 'photography',
-        price: 600,
+        price: 1200,
         priceType: 'one_time',
         description: '3 hours of event coverage at your venue, 20–30 curated photos and a highlight reel within 48 hrs.',
     },
@@ -66,7 +66,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'photo-halfday',
         name: 'Half-Day Content',
         category: 'photography',
-        price: 800,
+        price: 1600,
         priceType: 'one_time',
         description: '4 hours on location, 30–50 curated photos plus 2–3 short-form reels.',
     },
@@ -74,7 +74,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'photo-fullday',
         name: 'Full-Day Content',
         category: 'photography',
-        price: 1400,
+        price: 2800,
         priceType: 'one_time',
         description: '8 hours on location, 50+ curated photos plus 2–3 short-form reels.',
     },
@@ -83,7 +83,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'webdev-starter',
         name: 'Starter Site',
         category: 'web-dev',
-        price: 1500,
+        price: 3000,
         priceType: 'one_time',
         description: 'Template-based site, 5–8 pages, mobile responsive, Vercel deployment.',
     },
@@ -91,7 +91,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'webdev-professional',
         name: 'Professional Site',
         category: 'web-dev',
-        price: 3500,
+        price: 7000,
         priceType: 'one_time',
         description: 'Custom branding, dashboard/admin panel, booking system, SEO optimization.',
     },
@@ -99,7 +99,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'webdev-agency',
         name: 'Agency Build',
         category: 'web-dev',
-        price: 6000,
+        price: 12000,
         priceType: 'one_time',
         description: 'Full custom build, CRM integration, email automation, payment processing.',
     },
@@ -107,7 +107,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'webdev-maintenance',
         name: 'Monthly Maintenance',
         category: 'web-dev',
-        price: 150,
+        price: 300,
         priceType: 'recurring',
         interval: 'month',
         description: 'Content updates, performance monitoring, priority support, security patches.',
@@ -117,7 +117,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'bundle-launch',
         name: 'Launch Package',
         category: 'bundle',
-        price: 2500,
+        price: 5000,
         priceType: 'one_time',
         description: 'Starter website (5–8 pages) + lifestyle portrait session + product/space photography for the site.',
     },
@@ -125,7 +125,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         id: 'bundle-brand',
         name: 'Brand Package',
         category: 'bundle',
-        price: 5000,
+        price: 10000,
         priceType: 'one_time',
         description: 'Professional website with custom branding + half-day content shoot + brand photography and social assets.',
     },
@@ -136,7 +136,7 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
         category: 'kiosk',
         /* A FLOOR, and this is sold PER PROJECT — never as a fixed-price
          * product. Anywhere it is shown to a customer it must read "from" or
-         * "per project", never a bare $2,500.
+         * "per project", never a bare $5,000.
          *
          * WHAT DOES AND DOES NOT MOVE THE NUMBER, because this was written
          * wrong once already: the software build does NOT scale with artist
@@ -144,8 +144,8 @@ export const SERVICE_PRODUCTS: ServiceProduct[] = [
          * way and is not billed per seat. What varies is the ROOM: how many
          * touchscreens, what size, and the mounting and setup that go with
          * them. Hardware is quoted separately and bought at cost. */
-        price: 2500,
+        price: 5000,
         priceType: 'one_time',
-        description: 'Interactive kiosk build, installation and setup. Quoted per project from $2,500 — hardware billed separately at cost; the quote varies with the number and size of screens, not with how many artists use it.',
+        description: 'Interactive kiosk build, installation and setup. Quoted per project from $5,000 — hardware billed separately at cost; the quote varies with the number and size of screens, not with how many artists use it.',
     },
 ]

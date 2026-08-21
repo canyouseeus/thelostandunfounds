@@ -194,24 +194,24 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
 const AIRBNB_EVENT_TYPE = 'Airbnb / Short-Term Rental'
 
 const AIRBNB_TIERS: Array<{ maxBedrooms: number; price: number; label: string }> = [
-  { maxBedrooms: 1, price: 195, label: 'Studio / 1 bedroom' },
-  { maxBedrooms: 2, price: 265, label: '2 bedroom' },
-  { maxBedrooms: 3, price: 335, label: '3 bedroom' },
-  { maxBedrooms: 99, price: 425, label: '4+ bedroom / luxury' },
+  { maxBedrooms: 1, price: 390, label: 'Studio / 1 bedroom' },
+  { maxBedrooms: 2, price: 530, label: '2 bedroom' },
+  { maxBedrooms: 3, price: 670, label: '3 bedroom' },
+  { maxBedrooms: 99, price: 850, label: '4+ bedroom / luxury' },
 ]
 
 const FIXED_PHOTO_PRICES: Record<string, number> = {
-  'Portrait Session': 250,
-  'Lifestyle Shoot': 250,
-  'Event Coverage': 600,
-  'Half-Day Content': 800,
-  'Full-Day Content': 1400,
+  'Portrait Session': 500,
+  'Lifestyle Shoot': 500,
+  'Event Coverage': 1200,
+  'Half-Day Content': 1600,
+  'Full-Day Content': 2800,
   // Standalone video. Mirrors VIDEO_SERVICES in src/pages/BookingPage.tsx —
   // if a price changes there it must change here, or the booking quotes
   // nothing and the client never receives an invoice.
-  'Reel Pack': 450,
-  'Brand Video': 1200,
-  'Video Content Day': 2000,
+  'Reel Pack': 900,
+  'Brand Video': 2400,
+  'Video Content Day': 4000,
 }
 
 /**
