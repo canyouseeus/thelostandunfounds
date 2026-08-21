@@ -53,7 +53,11 @@ const CORE_PAGES = [
     { path: 'thelostarchives/all', title: 'ALL ARTICLES | THE LOST+UNFOUNDS', description: 'Every article in THE LOST ARCHIVES — the full back catalogue on development, AI, photography, and building in the age of information.' },
     { path: 'tools', title: 'TOOL BOX | THE LOST+UNFOUNDS', description: 'Free tools from THE LOST+UNFOUNDS, including the TikTok downloader. Small utilities built in public and open to everyone.' },
     { path: 'tools/tiktok-downloader', title: 'TIKTOK DOWNLOADER | THE LOST+UNFOUNDS', description: 'Download TikTok videos without the watermark. A free browser tool from THE LOST+UNFOUNDS — paste a link and save the file.' },
-    { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' }
+    { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' },
+    // The crew feed. Public to read, so it belongs here — unlike /gear and
+    // /photographer-dashboard, which are gated and are meant to stay on the
+    // noindex shell.
+    { path: 'feed', title: 'THE WIRE | THE LOST+UNFOUNDS', description: 'Work from the THE LOST+UNFOUNDS photography crew: photos and eight-second reels, each one credited to the exact kit it was shot on.' }
 ];
 
 async function preRenderCorePages() {
