@@ -240,9 +240,14 @@ async function hydrate(supabase: SupabaseClient, posts: any[]): Promise<any[]> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const supabase = getSupabaseAdmin();
-
   try {
+    // Inside the try on purpose. This throws when the Supabase env vars are
+    // absent, and outside the try that surfaces as an opaque
+    // FUNCTION_INVOCATION_FAILED with nothing but a stack in the platform log
+    // — which is exactly what preview deployments do today, since the service
+    // key is only bound to production. A JSON 500 says which of the two it is.
+    const supabase = getSupabaseAdmin();
+
     // ---- Reads -------------------------------------------------------------
     if (req.method === 'GET') {
       const limit = Math.min(50, Math.max(1, Number(req.query?.limit) || 12));
