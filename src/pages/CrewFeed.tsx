@@ -120,7 +120,7 @@ export default function CrewFeed() {
     return (
         <>
             <SEOHead
-                title="The Wire — Crew Feed"
+                title="THE WIRE"
                 description="Work from the THE LOST+UNFOUNDS photography crew: photos, eight-second reels, and the exact kit each frame was shot on."
                 canonicalPath="/feed"
             />
