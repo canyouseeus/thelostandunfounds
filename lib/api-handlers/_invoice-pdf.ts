@@ -128,6 +128,10 @@ const HAIRLINE = '#dddddd'
 const LEFT = 56
 const RIGHT = 556 // 612 page width − 56 right margin
 const CONTENT_W = RIGHT - LEFT
+// Lowest the footer's last line may reach on the 792pt page. Past the 736pt
+// bottom margin on purpose — the footer is positioned explicitly and pdfkit's
+// auto-pagination is switched off for it — while still leaving a 30pt edge.
+const FOOTER_SAFE_BOTTOM = 762
 
 function fmtUSD(n: number): string {
   return `$${Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`
@@ -480,7 +484,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
       `PAY ${data.amountDueLabel.toUpperCase()}  »`,
       data.paymentUrl
     )
-    y = btnY + btnH + 10
+    y = btnY + btnH + 8
     doc
       .font('Helvetica')
       .fontSize(7.5)
@@ -500,7 +504,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
         link: data.paymentUrl,
         underline: true,
       })
-    y += 22
+    y += 12
   }
 
   // ── Notes ─────────────────────────────────────────────────────────────────
@@ -512,8 +516,24 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   }
 
   // ── Footer ────────────────────────────────────────────────────────────────
-  // Kept above the bottom margin (≈736pt) so pdfkit doesn't auto-add a page.
-  const footerY = 696
+  // The pay block and notes flow down the page, but this used to sit at a
+  // hard-coded 696 regardless. On an invoice with a long description the
+  // Stripe fallback URL rendered at ~699-709 and the footer's "Questions?"
+  // line at ~703-714 — printed on top of each other, with the hairline rule
+  // struck through the URL. The one link a client copies by hand was
+  // illegible (INV-007). So track the flowed content instead of a fixed y.
+  //
+  // Short invoices are untouched: their y sits below the 696 floor, so the
+  // footer lands exactly where it always did.
+  //
+  // Rule, then two 8pt lines at +10 and +22 — about 34pt of block.
+  const FOOTER_BLOCK_H = 34
+  const footerY = Math.min(Math.max(696, y + 6), FOOTER_SAFE_BOTTOM - FOOTER_BLOCK_H)
+  // pdfkit breaks to a new page when a .text() run would cross the bottom
+  // margin — even at explicit coordinates. Clearing the margin for the footer
+  // keeps these two lines on page one instead of emitting a second page that
+  // carries nothing but "Thank you for working with THE LOST+UNFOUNDS."
+  doc.page.margins.bottom = 0
   doc.moveTo(LEFT, footerY).lineTo(RIGHT, footerY).lineWidth(0.5).strokeColor(HAIRLINE).stroke()
   doc
     .font('Helvetica')
