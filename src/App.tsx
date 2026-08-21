@@ -63,6 +63,7 @@ import AdminContracts from './pages/AdminContracts'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import GearIntake from './pages/GearIntake'
+import CrewFeed from './pages/CrewFeed'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
 import SubmitEvent from './pages/SubmitEvent'
@@ -398,6 +399,11 @@ function App() {
                   who has only sent an email address can fill it in before they
                   have an account; signed-in photographers get the same page. */}
               <Route path="/gear" element={<GearIntake />} />
+              {/* The crew's wall. Public to read; posting resolves the author
+                  from a session, so the route itself needs no guard. */}
+              <Route path="/feed" element={<Layout />}>
+                <Route index element={<CrewFeed />} />
+              </Route>
               <Route path="/photos/success" element={<Layout />}>
                 <Route index element={<PhotoSuccessPage />} />
               </Route>

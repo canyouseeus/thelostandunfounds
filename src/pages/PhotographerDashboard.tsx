@@ -1,6 +1,6 @@
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
     CurrencyDollarIcon,
@@ -160,6 +160,35 @@ export default function PhotographerDashboard() {
                     <span className="font-medium">Tip:</span> Payments are sent directly to your connected Stripe account.
                     Make sure your Stripe account details are up to date.
                 </p>
+            </div>
+
+            {/* The wall. Kept as a link rather than an embedded composer:
+                posting belongs next to the feed you are posting into, and this
+                page is long enough already. */}
+            <div className="mb-6">
+                <h2 className="text-xl font-bold uppercase tracking-tighter mb-4">THE WIRE</h2>
+                <div className="bg-white/5 p-6" style={{ borderRadius: 0 }}>
+                    <p className="text-sm text-zinc-400 text-left mb-4">
+                        Share what you shot and tag the kit you shot it on — pulled straight from your
+                        saved load-out. Photos and reels up to 8 seconds.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            to="/feed"
+                            className="px-4 py-2 text-sm font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
+                            style={{ borderRadius: 0 }}
+                        >
+                            Post to the wire
+                        </Link>
+                        <Link
+                            to="/gear"
+                            className="px-4 py-2 text-sm font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+                            style={{ borderRadius: 0 }}
+                        >
+                            Edit my kit
+                        </Link>
+                    </div>
+                </div>
             </div>
 
             <div className="mb-6">
