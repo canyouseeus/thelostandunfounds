@@ -443,7 +443,13 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     doc.link(x, btnY, width, height, url)
   }
 
-  if (data.paymentUrl && data.fullPaymentUrl) {
+  // A settled invoice is a receipt: rendering a live "PAY" button on it invites
+  // a second payment for money already collected. INV-006 sat in production
+  // showing BALANCE DUE $0.00 above a working PAY BALANCE DUE button wired to
+  // its original Stripe link. Nothing due, nothing to pay.
+  const hasBalance = Number(data.amountDue || 0) > 0
+
+  if (hasBalance && data.paymentUrl && data.fullPaymentUrl) {
     const btnH = 44
     const gap = 10
     drawPayButton(
@@ -473,7 +479,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
         align: 'center',
       })
     y += 22
-  } else if (data.paymentUrl) {
+  } else if (hasBalance && data.paymentUrl) {
     const btnH = 44
     const btnY = y
     drawPayButton(
