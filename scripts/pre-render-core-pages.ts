@@ -33,13 +33,13 @@ const CORE_PAGES = [
     // The services offer. Until this existed the whole hire-us page lived behind a
     // React state flag on the homepage, so the raw HTML at /?view=services was
     // byte-identical to the homepage and contained none of the copy below.
-    { path: 'services', title: 'AUSTIN PHOTOGRAPHY & WEB DESIGN | THE LOST+UNFOUNDS', description: 'Austin photography and web design. Airbnb shoots from $195, event coverage from $600, small business websites from $1,500. Book online.' },
+    { path: 'services', title: 'AUSTIN PHOTOGRAPHY & WEB DESIGN | THE LOST+UNFOUNDS', description: 'Austin photography and web design. Airbnb shoots from $390, event coverage from $1,200, small business websites from $3,000. Book online.' },
     // One page per offer. A single page cannot rank for three unrelated
     // searches, and "airbnb photographer austin" competes with a different set
     // of results than "small business web design austin".
-    { path: 'services/airbnb-photography', title: 'AUSTIN AIRBNB PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos in 24-72 hours, from $195. Twilight, drone and 3D tour add-ons.' },
-    { path: 'services/real-estate-photography', title: 'AUSTIN REAL ESTATE & APARTMENT PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $225, full property packages at $850, portfolio retainers from $1,600/mo.' },
-    { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $1,500 to custom builds with booking and payments.' },
+    { path: 'services/airbnb-photography', title: 'AUSTIN AIRBNB PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Airbnb and short-term rental listing photography in Austin, TX. 25-35 edited photos in 24-72 hours, from $390. Twilight, drone and 3D tour add-ons.' },
+    { path: 'services/real-estate-photography', title: 'AUSTIN REAL ESTATE & APARTMENT PHOTOGRAPHY | THE LOST+UNFOUNDS', description: 'Real estate and multifamily leasing photography in Austin, TX. Model units from $450, full property packages at $1,700, portfolio retainers from $3,200/mo.' },
+    { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $3,000 to custom builds with booking and payments.' },
     { path: 'services/video', title: 'AUSTIN VIDEO CONTENT & BRAND REELS | THE LOST+UNFOUNDS', description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels in 48 hours.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
@@ -268,43 +268,43 @@ async function preRenderCorePages() {
                 const allOfferings = [
                     {
                         name: 'Airbnb & Short-Term Rental Photography',
-                        price: '195',
+                        price: '390',
                         summary: 'Listing photography for Austin short-term rentals and Airbnb hosts. 25–35 edited photos, 24–72 hour delivery.',
-                        detail: 'Studio / 1BR from $195 · 2BR $265 · 3BR $335 · 4BR+ / luxury from $425. Twilight +$125 · Drone +$150 · 3D tour +$200.',
+                        detail: 'Studio / 1BR from $390 · 2BR $530 · 3BR $670 · 4BR+ / luxury from $850. Twilight +$250 · Drone +$300 · 3D tour +$400.',
                     },
                     {
                         name: 'Real Estate & Multifamily Photography',
-                        price: '225',
+                        price: '450',
                         summary: 'Leasing and listing photography for Austin apartment communities, property managers, and agents.',
-                        detail: 'Single model unit or vacant listing $225 (20–30 edited photos) · Property package $850 covering exteriors, amenities and 2 model units · Portfolio retainer from $1,600/mo · Drone +$150 · Twilight +$125 · 3D tour +$200 · Floor plan +$75.',
+                        detail: 'Single model unit or vacant listing $450 (20–30 edited photos) · Property package $1,700 covering exteriors, amenities and 2 model units · Portfolio retainer from $3,200/mo · Drone +$300 · Twilight +$250 · 3D tour +$400 · Floor plan +$150.',
                     },
                     {
                         name: 'Small Business Website Design',
-                        price: '1500',
+                        price: '3000',
                         summary: 'Website design and development for Austin small businesses, artists, and brands. Mobile responsive, SEO optimized.',
-                        detail: 'Starter $1,500 (5–8 pages) · Professional $3,500 (custom branding, admin dashboard, booking system, SEO) · Agency $6,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $150–300/mo.',
+                        detail: 'Starter $3,000 (5–8 pages) · Professional $7,000 (custom branding, admin dashboard, booking system, SEO) · Agency $12,000+ (full custom build, CRM, email automation, payment processing) · Monthly maintenance $300–600/mo.',
                     },
                     {
                         name: 'Short-Form Video & Brand Reels',
-                        price: '450',
+                        price: '900',
                         summary: 'Standalone video for Austin brands — vertical reels, hero brand films, and full video content days.',
-                        detail: 'Reel Pack $450 (2 hrs, 3 reels, 5-day delivery) · Brand Video $1,200 (4 hrs, one 60-90s hero plus 3 cutdowns) · Video Content Day $2,000 (8 hrs, hero plus 6-8 reels) · Monthly Reel Retainer $900/mo for 4 reels.',
+                        detail: 'Reel Pack $900 (2 hrs, 3 reels, 5-day delivery) · Brand Video $2,400 (4 hrs, one 60-90s hero plus 3 cutdowns) · Video Content Day $4,000 (8 hrs, hero plus 6-8 reels) · Monthly Reel Retainer $1,800/mo for 4 reels.',
                     },
                     {
                         name: 'Event Photography & Video',
-                        price: '600',
+                        price: '1200',
                         summary: 'Event coverage across Austin — venues, brand activations, nightlife, and private events.',
-                        detail: '3 hours from $600 · 20–30 curated photos next-day · event highlight reel within 48 hours · +$175/hr for additional hours.',
+                        detail: '3 hours from $1,200 · 20–30 curated photos next-day · event highlight reel within 48 hours · +$350/hr for additional hours.',
                     },
                     {
                         name: 'Brand Content Days',
-                        price: '800',
+                        price: '1600',
                         summary: 'Half-day and full-day content production for brands — photography plus short-form video.',
-                        detail: 'Half-day $800 (4 hrs, 30–50 photos, 2–3 reels) · Full-day $1,400 (8 hrs, 50+ photos, 2–3 reels).',
+                        detail: 'Half-day $1,600 (4 hrs, 30–50 photos, 2–3 reels) · Full-day $2,800 (8 hrs, 50+ photos, 2–3 reels).',
                     },
                     {
                         name: 'Lifestyle Portrait Session',
-                        price: '250',
+                        price: '500',
                         summary: 'Candid lifestyle portraits in downtown Austin with same-day delivery.',
                         detail: '30–45 minutes · 10–15 curated photos · same-day delivery.',
                     },
@@ -329,7 +329,7 @@ async function preRenderCorePages() {
                     "url": `https://www.thelostandunfounds.com/${page.path}`,
                     "areaServed": { "@type": "City", "name": "Austin", "addressRegion": "TX", "addressCountry": "US" },
                     "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" },
-                    "priceRange": "$195–$6,000+",
+                    "priceRange": "$390–$12,000+",
                     "hasOfferCatalog": {
                         "@type": "OfferCatalog",
                         "name": "Photography & Web Design Services",
