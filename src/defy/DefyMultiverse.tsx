@@ -12,6 +12,16 @@ import { Helmet } from 'react-helmet-async'
 import { QRCodeSVG } from 'qrcode.react'
 import './defy.css'
 
+/**
+ * Canonical for whichever host is serving. The vercel.json host rewrite means
+ * defymultiverse.com/ and thelostandunfounds.com/defy are the same page, so a
+ * hardcoded canonical is necessarily wrong on one of them. Self-reference instead.
+ */
+function canonicalHref(): string {
+  if (typeof window === 'undefined') return 'https://www.thelostandunfounds.com/defy'
+  return window.location.origin + window.location.pathname.replace(/\/$/, '') || window.location.origin
+}
+
 const TOKEN_KEY = 'defy.token'
 const HEX = '0123456789ABCDEF'
 
@@ -225,6 +235,7 @@ export default function DefyMultiverse() {
         <Helmet>
           <title>DEFY MULTIVERSE</title>
           <meta name="description" content="Your email is an address. It resolves to one of 18,446,744,073,709,551,616 universes. One question a day. The smallest side wins." />
+          <link rel="canonical" href={canonicalHref()} />
         </Helmet>
         <div className="defy-shell">
           <div className="defy-gate">
@@ -276,6 +287,7 @@ export default function DefyMultiverse() {
       <Helmet>
         <title>{universe.name} — DEFY MULTIVERSE</title>
         <meta name="description" content="One question a day. The smallest side wins." />
+        <link rel="canonical" href={canonicalHref()} />
       </Helmet>
 
       <div className="defy-shell">
