@@ -53,7 +53,13 @@ const CORE_PAGES = [
     { path: 'thelostarchives/all', title: 'ALL ARTICLES | THE LOST+UNFOUNDS', description: 'Every article in THE LOST ARCHIVES — the full back catalogue on development, AI, photography, and building in the age of information.' },
     { path: 'tools', title: 'TOOL BOX | THE LOST+UNFOUNDS', description: 'Free tools from THE LOST+UNFOUNDS, including the TikTok downloader. Small utilities built in public and open to everyone.' },
     { path: 'tools/tiktok-downloader', title: 'TIKTOK DOWNLOADER | THE LOST+UNFOUNDS', description: 'Download TikTok videos without the watermark. A free browser tool from THE LOST+UNFOUNDS — paste a link and save the file.' },
-    { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' }
+    { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' },
+    // Same omission again, and this one costs money: /pay is the only page an anonymous
+    // visitor can hand over money on, and it was being served the noindex shell.
+    { path: 'pay', title: 'PAY | THE LOST+UNFOUNDS', description: 'Pay any amount securely by card. Settle an invoice or support THE LOST+UNFOUNDS directly through Stripe.' },
+    // DEFY MULTIVERSE. Deliberately not branded "| THE LOST+UNFOUNDS" — it is a
+    // separate property that happens to share this deployment.
+    { path: 'defy', title: 'DEFY MULTIVERSE', description: 'Your email is an address. It resolves to one of 18,446,744,073,709,551,616 universes. One question a day, and the smallest side wins.' }
 ];
 
 async function preRenderCorePages() {

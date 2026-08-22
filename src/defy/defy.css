@@ -1,0 +1,121 @@
+/* DEFY MULTIVERSE — scoped styling.
+   Deliberately NOT the Noir system: this site is not THE LOST+UNFOUNDS and must not
+   look like it. Every colour below derives from --u-*, which is set at runtime from
+   the player's own universe. Two visitors never see the same page.
+   Scoped under .defy so nothing leaks into the rest of the app. */
+
+.defy {
+  --u-accent: #8a8a8a;
+  --u-deep: #101010;
+  --u-wash: #060606;
+  --ink: #f2f2f2;
+  --ink-dim: rgba(242, 242, 242, 0.52);
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #000;
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The universe bleeds in from the edges once you have one. */
+.defy::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -20%, var(--u-deep) 0%, transparent 60%),
+    radial-gradient(90% 60% at 50% 120%, var(--u-wash) 0%, transparent 55%);
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+.defy[data-open="1"]::before { opacity: 1; }
+
+.defy-shell { position: relative; max-width: 44rem; margin: 0 auto; padding: 8vh 1.5rem 6rem; }
+
+/* ---------------------------------------------------------------- the gate */
+.defy-gate { min-height: 84vh; display: flex; flex-direction: column; justify-content: center; }
+.defy-mark { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.42em; color: var(--ink-dim); margin-bottom: 3rem; }
+.defy-ask { font-size: clamp(1.9rem, 6vw, 3.1rem); line-height: 1.08; font-weight: 300; letter-spacing: -0.02em; margin: 0 0 1.25rem; }
+.defy-sub { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.65; max-width: 30rem; margin: 0 0 2.5rem; }
+.defy-sub strong { color: var(--ink); font-weight: 400; }
+
+.defy-field { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.defy-input {
+  flex: 1 1 16rem; background: rgba(255,255,255,0.05); color: var(--ink);
+  font-family: var(--mono); font-size: 1rem; padding: 1.05rem 1.1rem;
+  border: 0; border-radius: 0; outline: 0; min-width: 0;
+}
+.defy-input::placeholder { color: rgba(242,242,242,0.28); }
+.defy-input:focus { background: rgba(255,255,255,0.09); }
+
+.defy-go {
+  background: var(--ink); color: #000; font-family: var(--mono);
+  font-size: 0.78rem; letter-spacing: 0.2em; padding: 1.05rem 1.6rem;
+  border: 0; border-radius: 0; cursor: pointer; transition: opacity 0.15s ease;
+}
+.defy-go:hover:not(:disabled) { opacity: 0.78; }
+.defy-go:disabled { opacity: 0.35; cursor: default; }
+
+.defy-err { font-family: var(--mono); font-size: 0.78rem; color: #ff8f7a; margin-top: 1rem; }
+.defy-fine { font-family: var(--mono); font-size: 0.68rem; color: rgba(242,242,242,0.34); margin-top: 1.4rem; line-height: 1.8; }
+
+/* ------------------------------------------------------------- the reveal */
+@keyframes defy-scan { from { opacity: 0.15 } 50% { opacity: 1 } to { opacity: 0.15 } }
+.defy-deriving { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.18em; color: var(--ink-dim); animation: defy-scan 1.05s ease-in-out infinite; }
+.defy-addr-roll { font-family: var(--mono); font-size: clamp(1.1rem, 5vw, 2rem); letter-spacing: 0.1em; margin-top: 1.25rem; color: var(--u-accent); word-break: break-all; }
+
+@keyframes defy-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+.defy-block { animation: defy-rise 0.6s ease both; margin-bottom: 3.5rem; }
+
+.defy-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.34em; color: var(--ink-dim); margin-bottom: 0.9rem; }
+.defy-name { font-size: clamp(1.6rem, 5.5vw, 2.6rem); font-weight: 300; letter-spacing: -0.015em; line-height: 1.1; margin: 0 0 0.5rem; color: var(--u-accent); }
+.defy-addr { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.16em; color: var(--ink-dim); word-break: break-all; }
+.defy-creed { font-size: 1.02rem; line-height: 1.75; margin: 1.6rem 0 0; max-width: 32rem; }
+.defy-rare { font-family: var(--mono); font-size: 0.68rem; color: rgba(242,242,242,0.34); margin-top: 1.1rem; line-height: 1.7; }
+
+.defy-traits { display: grid; gap: 0.55rem; margin-top: 2rem; }
+.defy-trait { display: grid; grid-template-columns: 5.5rem 1fr 2.2rem; align-items: center; gap: 0.75rem; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; color: var(--ink-dim); }
+.defy-bar { height: 2px; background: rgba(255,255,255,0.09); position: relative; }
+.defy-bar > i { position: absolute; inset: 0 auto 0 0; background: var(--u-accent); display: block; }
+.defy-trait > span:last-child { text-align: right; color: var(--ink); }
+
+/* ------------------------------------------------------------ the defiance */
+.defy-prompt { font-size: clamp(1.35rem, 4.4vw, 2rem); font-weight: 300; line-height: 1.28; margin: 0 0 1.9rem; }
+.defy-options { display: grid; gap: 0.5rem; }
+@media (min-width: 34rem) { .defy-options { grid-template-columns: 1fr 1fr; } }
+.defy-opt {
+  background: rgba(255,255,255,0.05); color: var(--ink); text-align: left;
+  font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.12em;
+  padding: 1.5rem 1.25rem; border: 0; border-radius: 0; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.defy-opt:hover:not(:disabled) { background: var(--u-accent); color: #000; }
+.defy-opt:disabled { cursor: default; }
+.defy-opt[data-chosen="1"] { background: var(--u-accent); color: #000; }
+.defy-opt[data-dim="1"] { opacity: 0.3; }
+
+.defy-answered { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em; color: var(--ink-dim); margin-top: 1.4rem; line-height: 1.9; }
+
+/* -------------------------------------------------------------- standings */
+.defy-row { display: grid; grid-template-columns: 1.4rem 1fr auto; gap: 0.85rem; align-items: baseline; padding: 0.7rem 0; font-family: var(--mono); font-size: 0.76rem; }
+.defy-row + .defy-row { background: linear-gradient(to right, rgba(255,255,255,0.055), rgba(255,255,255,0.055)) top left / 100% 1px no-repeat; }
+.defy-rank { color: rgba(242,242,242,0.3); }
+.defy-key { letter-spacing: 0.16em; }
+.defy-num { color: var(--ink); text-align: right; }
+.defy-mine { font-size: 0.6rem; letter-spacing: 0.2em; color: #000; background: var(--u-accent); padding: 0.15rem 0.4rem; margin-left: 0.5rem; }
+
+/* ------------------------------------------------------------------ prime */
+.defy-prime { margin-top: 4rem; padding-top: 2.5rem; background: linear-gradient(to right, rgba(255,255,255,0.055), rgba(255,255,255,0.055)) top left / 100% 1px no-repeat; }
+.defy-link { color: var(--u-accent); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.14em; display: inline-block; padding: 0.9rem 0; }
+.defy-link:hover { text-decoration: underline; }
+.defy-anchor-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+.defy-amt { background: rgba(255,255,255,0.05); color: var(--ink); font-family: var(--mono); font-size: 0.78rem; padding: 0.85rem 1rem; border: 0; border-radius: 0; cursor: pointer; }
+.defy-amt[data-on="1"] { background: var(--u-accent); color: #000; }
+
+.defy-ledger { font-family: var(--mono); font-size: 0.66rem; color: rgba(242,242,242,0.34); line-height: 1.9; word-break: break-all; }
