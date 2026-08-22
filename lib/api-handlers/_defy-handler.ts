@@ -288,44 +288,86 @@ async function anchored(_req: VercelRequest, res: VercelResponse) {
 }
 
 /**
- * Confirm an anchor. Stripe is the source of truth: the register only records a
- * session Stripe itself reports as paid, so a forged sessionId buys nothing.
+ * Confirm an anchor, by card (Stripe) or Bitcoin over Lightning (Strike).
+ *
+ * The payment provider is the only source of truth. Nothing enters the register
+ * until Stripe or Strike is asked directly and reports the money as received, so a
+ * forged reference buys nothing but a 402. The client is never trusted for the
+ * amount either — it is read back off the provider's own record.
  */
 async function anchorConfirm(req: VercelRequest, res: VercelResponse) {
   const sb = db()
   const sessionId = String(req.body?.sessionId || '')
-  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
-    return res.status(400).json({ error: 'Not a checkout session.' })
-  }
+  const invoiceId = String(req.body?.invoiceId || '')
 
   const row = await playerByToken(sb, req.body?.token)
   if (!row) return res.status(401).json({ error: 'No universe on this token.' })
 
-  const secret = process.env.STRIPE_SECRET_KEY
-  if (!secret) return res.status(503).json({ error: 'Payments are not configured.' })
+  let provider: 'stripe' | 'strike'
+  let paymentRef: string
+  let amountCents: number
+  let currency: string
 
-  const r = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
-    headers: { Authorization: `Bearer ${secret}` },
-  })
-  if (!r.ok) return res.status(400).json({ error: 'Stripe does not recognise that session.' })
+  if (sessionId) {
+    if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
+      return res.status(400).json({ error: 'Not a checkout session.' })
+    }
+    const secret = process.env.STRIPE_SECRET_KEY
+    if (!secret) return res.status(503).json({ error: 'Card payments are not configured.' })
 
-  const session: any = await r.json()
-  if (session.payment_status !== 'paid') {
-    return res.status(402).json({ error: 'That session has not been paid.' })
+    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+    })
+    if (!r.ok) return res.status(400).json({ error: 'Stripe does not recognise that session.' })
+
+    const session: any = await r.json()
+    if (session.payment_status !== 'paid') {
+      return res.status(402).json({ error: 'That session has not been paid.' })
+    }
+    provider = 'stripe'
+    paymentRef = sessionId
+    amountCents = session.amount_total || 0
+    currency = session.currency || 'usd'
+
+  } else if (invoiceId) {
+    if (!/^[0-9a-f-]{36}$/i.test(invoiceId)) {
+      return res.status(400).json({ error: 'Not an invoice.' })
+    }
+    const key = process.env.STRIKE_API_KEY
+    if (!key) return res.status(503).json({ error: 'Lightning payments are not configured.' })
+
+    const r = await fetch(`https://api.strike.me/v1/invoices/${invoiceId}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    })
+    if (!r.ok) return res.status(400).json({ error: 'Strike does not recognise that invoice.' })
+
+    const inv: any = await r.json()
+    if (inv.state !== 'PAID') {
+      return res.status(402).json({ error: `That invoice is ${String(inv.state || 'unpaid').toLowerCase()}.` })
+    }
+    provider = 'strike'
+    paymentRef = invoiceId
+    amountCents = Math.round(Number(inv.amount?.amount || 0) * 100)
+    currency = String(inv.amount?.currency || 'usd').toLowerCase()
+
+  } else {
+    return res.status(400).json({ error: 'Nothing to confirm.' })
   }
 
   const designation = `${row.universe_name} · ${row.universe_address}`
   const { error } = await sb.from('defy_anchors').insert({
     player_id: row.id,
-    stripe_session_id: sessionId,
-    amount_cents: session.amount_total || 0,
-    currency: session.currency || 'usd',
+    provider,
+    payment_ref: paymentRef,
+    amount_cents: amountCents,
+    currency,
     designation,
   })
-  // A duplicate just means they reloaded the return page. Still anchored.
+  // A duplicate just means they reloaded the return page or the poll fired twice.
+  // Still anchored, exactly once — the (provider, payment_ref) index guarantees it.
   if (error && !/duplicate|unique/i.test(error.message)) throw new Error(error.message)
 
-  return res.status(200).json({ anchored: true, designation })
+  return res.status(200).json({ anchored: true, designation, provider })
 }
 
 /**
@@ -386,7 +428,7 @@ async function admin(req: VercelRequest, res: VercelResponse) {
       count('defy_defiances', q => q.is('day', null)),
       count('defy_defiances'),
       count('defy_ledger'),
-      sb.from('defy_anchors').select('amount_cents, created_at, designation').order('created_at', { ascending: false }).limit(50),
+      sb.from('defy_anchors').select('amount_cents, created_at, designation, provider').order('created_at', { ascending: false }).limit(50),
       sb.from('defy_defiances').select('id, prompt, option_a, option_b').eq('day', day).maybeSingle(),
       sb.from('defy_players').select('constellation, score, streak, last_played_day, defiances_played'),
     ])
@@ -435,13 +477,20 @@ async function admin(req: VercelRequest, res: VercelResponse) {
       anchorUsd30d: Math.round(anchorCents30d / 100),
       dailyAverage30d: Math.round(anchorCents30d / 100 / 30),
       goalPerDay: 150,
+      byProvider: ['stripe', 'strike'].map(p => ({
+        provider: p,
+        count: anchors.filter((a: any) => (a.provider || 'stripe') === p).length,
+        usd: Math.round(anchors.filter((a: any) => (a.provider || 'stripe') === p)
+          .reduce((s: number, a: any) => s + (a.amount_cents || 0), 0) / 100),
+      })),
     },
     content: { poolLeft, poolTotal, daysOfRunway: poolLeft },
     ledger: { length: ledgerLen, recent: recentLedger || [] },
     today: todayRow.data || null,
     byConstellation,
     recentAnchors: anchors.slice(0, 10).map((a: any) => ({
-      designation: a.designation, usd: Math.round((a.amount_cents || 0) / 100), at: a.created_at,
+      designation: a.designation, usd: Math.round((a.amount_cents || 0) / 100),
+      at: a.created_at, provider: a.provider || 'stripe',
     })),
   })
 }

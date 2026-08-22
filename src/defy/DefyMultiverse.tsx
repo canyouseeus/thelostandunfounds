@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { QRCodeSVG } from 'qrcode.react'
 import './defy.css'
 
 const TOKEN_KEY = 'defy.token'
@@ -46,6 +47,8 @@ export default function DefyMultiverse() {
   const [pass, setPass] = useState(0)          // three passes of the reveal
   const [rolling, setRolling] = useState('')
   const [amount, setAmount] = useState(15)
+  const [ln, setLn] = useState<{ invoiceId: string; lnInvoice: string } | null>(null)
+  const [lnState, setLnState] = useState<'waiting' | 'paid'>('waiting')
   const rollTimer = useRef<number | null>(null)
 
   const universe = state?.player?.universe ?? null
@@ -159,6 +162,57 @@ export default function DefyMultiverse() {
       setError(e.message); setBusy(false)
     }
   }
+
+  /**
+   * Bitcoin over Lightning, on the Strike rails already in this repo. Anchors are
+   * small and Stripe's 2.9% + $0.30 eats 15% of a $5 one; Lightning keeps nearly all
+   * of it, which is the whole reason this path exists.
+   */
+  const anchorLightning = async () => {
+    if (!universe) return
+    setBusy(true); setError(null); setLnState('waiting')
+    try {
+      const r = await fetch('/api/shop/payments/strike', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount, currency: 'USD',
+          description: `DEFY MULTIVERSE — anchor from ${universe.designation}`,
+        }),
+      })
+      const d = await r.json()
+      if (!r.ok || !d.lnInvoice) throw new Error(d?.error || 'Could not open a Lightning invoice.')
+      setLn({ invoiceId: d.invoiceId, lnInvoice: d.lnInvoice })
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Poll Strike until the invoice is paid, then confirm the anchor. Strike is the
+  // source of truth on both ends: the server re-checks before writing the register.
+  useEffect(() => {
+    if (!ln || lnState === 'paid' || !token) return
+    let alive = true
+    const id = window.setInterval(async () => {
+      try {
+        const r = await fetch(`/api/shop/payments/strike/status?invoiceId=${encodeURIComponent(ln.invoiceId)}`)
+        const d = await r.json()
+        if (!alive) return
+        if (d.state === 'PAID') {
+          setLnState('paid')
+          await fetch('/api/defy/anchor-confirm', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, invoiceId: ln.invoiceId }),
+          })
+        } else if (d.state === 'CANCELLED') {
+          setLn(null)
+          setError('That invoice expired. Open a new one.')
+        }
+      } catch { /* a dropped poll is not a failure; the next tick retries */ }
+    }, 3000)
+    return () => { alive = false; clearInterval(id) }
+  }, [ln, lnState, token])
 
   const shareLine = universe && state
     ? `I am ${universe.designation}. ${state.player?.streak ?? 0} days defiant. defymultiverse.com`
@@ -323,15 +377,40 @@ export default function DefyMultiverse() {
           </p>
           <div className="defy-anchor-row">
             {ANCHOR_AMOUNTS.map(a => (
-              <button key={a} className="defy-amt" data-on={amount === a ? '1' : '0'} onClick={() => setAmount(a)}>
+              <button key={a} className="defy-amt" data-on={amount === a ? '1' : '0'}
+                onClick={() => { setAmount(a); setLn(null) }}>
                 ${a}
               </button>
             ))}
-            <button className="defy-go" onClick={anchor} disabled={busy}>
-              {busy ? 'OPENING' : 'ANCHOR'}
-            </button>
+            <button className="defy-go" onClick={anchor} disabled={busy}>CARD</button>
+            <button className="defy-go" onClick={anchorLightning} disabled={busy}>BITCOIN</button>
           </div>
           {error && <div className="defy-err">{error}</div>}
+
+          {ln && lnState === 'waiting' && (
+            <div className="defy-ln">
+              <div className="defy-label" style={{ marginBottom: '1rem' }}>
+                ${amount} · SCAN WITH ANY LIGHTNING WALLET
+              </div>
+              {/* Rendered locally rather than through a QR web service, so no third
+                  party ever sees an invoice belonging to one of your anchors. */}
+              <QRCodeSVG value={ln.lnInvoice.toUpperCase()} size={208} level="M"
+                bgColor="#000000" fgColor="#ffffff" marginSize={2} />
+              <div className="defy-anchor-row">
+                <a className="defy-amt" href={`lightning:${ln.lnInvoice}`}>OPEN WALLET</a>
+                <button className="defy-amt"
+                  onClick={() => navigator.clipboard?.writeText(ln.lnInvoice)}>COPY INVOICE</button>
+                <button className="defy-amt" onClick={() => setLn(null)}>CANCEL</button>
+              </div>
+              <p className="defy-ledger">Waiting for payment. This updates itself.</p>
+            </div>
+          )}
+
+          {lnState === 'paid' && (
+            <p className="defy-answered">
+              ANCHORED. {universe.designation} IS IN THE REGISTER.
+            </p>
+          )}
 
           <div className="defy-label" style={{ marginTop: '2.5rem' }}>THE LEDGER</div>
           <p className="defy-ledger">

@@ -84,6 +84,11 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "^(www\\.)?defymultiverse\\.com$" }],
+      "destination": "/defy"
+    },
+    {
       "source": "/pricing",
       "destination": "/api/_pricing-gone"
     },

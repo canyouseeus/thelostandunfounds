@@ -119,3 +119,11 @@
 .defy-amt[data-on="1"] { background: var(--u-accent); color: #000; }
 
 .defy-ledger { font-family: var(--mono); font-size: 0.66rem; color: rgba(242,242,242,0.34); line-height: 1.9; word-break: break-all; }
+
+/* Lightning anchor. The QR is drawn locally by qrcode.react — no QR web service
+   gets to see an invoice. White-on-black to match, with a quiet zone so wallet
+   cameras can still find the finder patterns against the page background. */
+.defy-ln { margin-top: 1.5rem; }
+.defy-ln svg { display: block; }
+.defy-ln .defy-anchor-row { margin-top: 1rem; }
+.defy-ln a.defy-amt { text-decoration: none; display: inline-block; }
