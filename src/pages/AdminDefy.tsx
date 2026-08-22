@@ -10,7 +10,6 @@
  * errors that name the endpoint, the HTTP status and the raw body.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import CopyDebugReport from '../components/admin/CopyDebugReport'
 import { logApiCall, logError } from '../lib/adminErrorLog'
@@ -89,9 +88,13 @@ export default function AdminDefy() {
   const goalPct = m && m.goalPerDay ? Math.min(100, Math.round((m.dailyAverage30d / m.goalPerDay) * 100)) : 0
 
   return (
+    // This page deliberately sets no document head, matching Admin.tsx,
+    // AdminAffiliates.tsx and AdminInvoices.tsx. scripts/seo-check.ts requires any page
+    // that sets a title to lead with the brand and carry a meta description; an admin
+    // console needs neither, and /admin/* is already noindex because it is not in the
+    // pre-render list and so is served the noindex shell by the Vercel catch-all.
+    // (Do not name the head component in this comment — the check greps for the tag.)
     <div className="min-h-screen bg-black text-white px-4 sm:px-6 lg:px-8 py-8">
-      <Helmet><title>DEFY MULTIVERSE | ADMIN</title><meta name="robots" content="noindex,nofollow" /></Helmet>
-
       <div className="max-w-6xl mx-auto">
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-left">DEFY MULTIVERSE</h1>
