@@ -109,10 +109,22 @@ export default async function handler(
                 : 'https://www.thelostandunfounds.com')
         ).replace(/\/$/, '')
 
+        // Callers may redirect the shopper back into their own flow instead of the
+        // homepage, but only to a path on this origin: anything not starting with a
+        // single "/" is ignored, so a caller cannot turn checkout into an open redirect.
+        const samePath = (p: unknown): string | null => {
+            const s = typeof p === 'string' ? p.trim() : ''
+            return /^\/(?!\/)/.test(s) ? s : null
+        }
+        const successPath = samePath(req.body?.successPath)
+        const cancelPath = samePath(req.body?.cancelPath)
+
         const successUrl =
+            (successPath && `${origin}${successPath}`) ||
             process.env.STRIPE_SUCCESS_URL ||
             `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`
         const cancelUrl =
+            (cancelPath && `${origin}${cancelPath}`) ||
             process.env.STRIPE_CANCEL_URL ||
             `${origin}/?payment=cancelled`
 
