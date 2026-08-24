@@ -242,14 +242,21 @@ function parsePhotoFields(file: DriveFile) {
  * URL, so folding it in would make every photo look changed on every pass and
  * defeat the whole check. It also excludes anything we derive rather than read
  * — the fingerprint answers "did Drive change?", not "is our row perfect?".
+ *
+ * The separator is printable on purpose. This joined on \u0000 first, which
+ * PostgreSQL cannot store in text or jsonb at all: every write carrying a
+ * fingerprint came back 400 and the sync stopped persisting anything. Nothing
+ * that lands in a column may contain a NUL.
  */
+const FINGERPRINT_SEP = '~|~';
+
 function computeFingerprint(file: DriveFile): string {
     return [
         file.modifiedTime ?? '',
         file.name ?? '',
         file.mimeType ?? '',
         file.createdTime ?? '',
-    ].join('\u0000');
+    ].join(FINGERPRINT_SEP);
 }
 
 const FINGERPRINT_KEY = 'sync_fingerprint';
