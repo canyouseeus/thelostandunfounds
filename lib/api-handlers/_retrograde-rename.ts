@@ -119,24 +119,30 @@ async function processLibrary(
     // in a library, renamed them, then reported "remaining=0 — nothing left to
     // do" while ~10,000 files sat untouched. last-night-noir stopping at exactly
     // 1000 renamed is what gave it away.
+    //
+    // Only the columns the decision needs. This scan used to pull `metadata` for
+    // every photo in every library on every firing — 14 MB a pass, ~3.9 GB a day,
+    // to discover there was nothing to rename. `metadata` is by far the widest
+    // column here and none of it is needed to decide; the two fields that are
+    // (rename_blocked, and later date/GPS) are read per candidate instead.
     const PAGE = 1000;
-    const photos: any[] = [];
+    const index: Array<{ id: string; title: string | null; rename_blocked: string | null }> = [];
     for (let from = 0; ; from += PAGE) {
         const { data: page, error } = await supabase
             .from('photos')
-            .select('id, google_drive_file_id, title, metadata, created_at, latitude, longitude, location_name')
+            .select('id, title, rename_blocked:metadata->>rename_blocked')
             .eq('library_id', library.id)
             .order('created_at', { ascending: true })
             .range(from, from + PAGE - 1);
         if (error) {
-            console.error(`[retrograde] photo fetch failed for ${library.slug} at offset ${from}:`, error.message);
+            console.error(`[retrograde] photo index fetch failed for ${library.slug} at offset ${from}:`, error.message);
             return;
         }
         if (!page || page.length === 0) break;
-        photos.push(...page);
+        index.push(...(page as any[]));
         if (page.length < PAGE) break;
     }
-    if (photos.length === 0) return;
+    if (index.length === 0) return;
 
     // Anything not already in the current SEO prefix gets renamed — that
     // includes both raw camera filenames and legacy `@tlau_` files that
@@ -144,16 +150,42 @@ async function processLibrary(
     // A file Drive has already refused to let us write is not pending work. It
     // can never satisfy isCurrentName(), so without this it would be re-attempted
     // on every single run for the life of the cron.
-    const toRename = (photos as any[]).filter(p =>
+    const candidates = index.filter(p =>
         !isCurrentName(p.title, library.photographer_handle ?? undefined)
-        && !p.metadata?.rename_blocked
+        && !p.rename_blocked
     );
-    stats.blocked += (photos as any[]).filter(p => p.metadata?.rename_blocked).length;
-    stats.remaining += toRename.length;
-    if (toRename.length === 0) return;
+    stats.blocked += index.filter(p => p.rename_blocked).length;
+    stats.remaining += candidates.length;
+    // The converged case, and the one that matters for cost: nothing to rename,
+    // so no heavy read and no Drive call. This is what the cron does on almost
+    // every firing.
+    if (candidates.length === 0) return;
 
+    // Only now is the wide row worth reading, and only for the candidates.
+    const photos: any[] = [];
+    const FETCH_CHUNK = 200;
+    for (let i = 0; i < candidates.length; i += FETCH_CHUNK) {
+        const ids = candidates.slice(i, i + FETCH_CHUNK).map(c => c.id);
+        const { data: rows, error } = await supabase
+            .from('photos')
+            .select('id, google_drive_file_id, title, metadata, created_at, latitude, longitude, location_name')
+            .in('id', ids);
+        if (error) {
+            console.error(`[retrograde] candidate fetch failed for ${library.slug}:`, error.message);
+            return;
+        }
+        photos.push(...(rows ?? []));
+    }
+    // Preserve the deterministic oldest-first order the index was sorted into;
+    // .in() does not guarantee it, and buildName's sequence numbers depend on it.
+    const order = new Map(candidates.map((c, i) => [c.id, i]));
+    photos.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const toRename = photos;
+
+    // Collision avoidance still needs every current name in the library, but
+    // titles alone — which the index already holds.
     const existingNames = new Set(
-        (photos as any[])
+        index
             .filter(p => isCurrentName(p.title, library.photographer_handle ?? undefined))
             .map(p => `${p.title}.jpg`.toLowerCase())
     );
