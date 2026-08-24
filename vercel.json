@@ -47,7 +47,7 @@
     },
     {
       "path": "/api/cron/retrograde-rename",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/send-scheduled-newsletters",

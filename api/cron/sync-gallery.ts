@@ -19,6 +19,15 @@ const STALE_SYNCING_MINUTES = 30;
 
 const ACTIONABLE_STATUSES = ['pending', 'error', 'syncing'];
 
+/**
+ * Terminal, deliberately absent from ACTIONABLE_STATUSES and from the claim
+ * query: a halted row is one the cron has proven it cannot finish, so it must
+ * not be picked up again until a human has looked at it. Parking it as 'error'
+ * would not do — errors are retried, which is what made the runaway loop
+ * self-sustaining.
+ */
+const HALTED_STATUS = 'halted';
+
 function isAuthorized(req: VercelRequest): boolean {
     if (process.env.NODE_ENV !== 'production') return true;
     const authHeader = req.headers['authorization'];
@@ -57,7 +66,7 @@ async function claimNextSubfolder(supabase: SupabaseClient, librarySlugs: string
     const staleCutoff = minutesAgo(STALE_SYNCING_MINUTES);
     const { data, error } = await supabase
         .from('sync_progress')
-        .select('id, library_slug, subfolder_id, subfolder_name, status')
+        .select('id, library_slug, subfolder_id, subfolder_name, status, photos_synced')
         .in('library_slug', librarySlugs)
         .or(`status.in.(pending,error),and(status.eq.syncing,updated_at.lt.${staleCutoff})`)
         .order('updated_at', { ascending: true })
@@ -215,27 +224,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             const completedAt = new Date().toISOString();
-            const finalStatus = result.timedOut ? 'pending' : 'completed';
+
+            // Coverage, not writes. A pass that skipped every photo because
+            // Drive changed nothing still walked the whole folder, and calling
+            // that "0 synced" would read as a regression and, worse, look
+            // identical to a pass that got nowhere.
+            const processed = result.synced + (result.skipped ?? 0);
+            const previous = next.photos_synced ?? 0;
+
+            // A timed-out pass that reached no further than the last one is not
+            // making progress, and running it again will not change that. This
+            // is the condition that went unnoticed for eleven days while the job
+            // restarted from the first photo every five minutes: it always timed
+            // out, always at the same place, and 'pending' put it straight back
+            // in the queue. Park it as 'error' so it stops and stays visible
+            // instead of billing for a loop that can never finish.
+            const stalled = result.timedOut && previous > 0 && processed <= previous;
+            const finalStatus = !result.timedOut ? 'completed' : (stalled ? HALTED_STATUS : 'pending');
+
+            if (stalled) {
+                console.error(
+                    `[cron sync-gallery] ${next.library_slug}/${next.subfolder_name ?? next.subfolder_id} ` +
+                    `made no progress (${processed} <= ${previous}) and timed out again — parking as error`,
+                );
+            }
+
             await supabase
                 .from('sync_progress')
                 .update({
                     status: finalStatus,
-                    photos_synced: result.synced,
+                    photos_synced: processed,
+                    error_message: stalled
+                        ? `Halted: timed out after ${processed} photos without advancing past the previous pass (${previous}). `
+                          + `Re-running as-is would loop. Investigate before setting this row back to pending.`
+                        : null,
                     completed_at: result.timedOut ? null : completedAt,
                     updated_at: completedAt,
                 })
                 .eq('id', next.id);
 
             return res.status(200).json({
-                status: finalStatus === 'completed' ? 'ok' : 'timed_out',
+                status: finalStatus === 'completed' ? 'ok' : (stalled ? 'stalled' : 'timed_out'),
                 subfolder_synced: {
                     library_slug: next.library_slug,
                     id: next.subfolder_id,
                     name: next.subfolder_name,
-                    photos_synced: result.synced,
+                    photos_synced: processed,
+                    photos_written: result.synced,
+                    photos_skipped: result.skipped ?? 0,
                     folders_visited: result.foldersVisited,
                     tags_created: result.tagsCreated,
                     timed_out: result.timedOut,
+                    stalled,
                 },
                 remaining_count: await countRemaining(supabase, librarySlugs),
                 libraries: discovery,
