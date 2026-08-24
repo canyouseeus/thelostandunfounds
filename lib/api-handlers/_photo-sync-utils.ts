@@ -23,6 +23,14 @@ type DriveFile = drive_v3.Schema$File;
 
 interface SyncStats {
     synced: number;
+    /**
+     * Photos Drive has not touched since the last sync, so nothing was written
+     * for them. Counted separately from `synced`: folding them together hides
+     * the difference between "did the work" and "correctly did nothing", which
+     * is the exact distinction that went unnoticed while this job rewrote every
+     * row every five minutes.
+     */
+    skipped: number;
     foldersVisited: number;
     tagsCreated: number;
 }
@@ -98,7 +106,7 @@ async function listFolderEntries(
         const res: { data: drive_v3.Schema$FileList } = await driveCallWithRetry(
             () => drive.files.list({
                 q: `'${folderId}' in parents and trashed = false`,
-                fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webContentLink, createdTime, imageMediaMetadata)',
+                fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webContentLink, createdTime, modifiedTime, imageMediaMetadata)',
                 pageSize: DRIVE_PAGE_SIZE,
                 pageToken,
             }),
@@ -227,11 +235,89 @@ function parsePhotoFields(file: DriveFile) {
     return { metadata, finalCreatedAt, latitude, longitude };
 }
 
-async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null> {
+/**
+ * Identity of a Drive file as far as this sync is concerned.
+ *
+ * Deliberately excludes `thumbnailLink`: Google rotates the token inside that
+ * URL, so folding it in would make every photo look changed on every pass and
+ * defeat the whole check. It also excludes anything we derive rather than read
+ * — the fingerprint answers "did Drive change?", not "is our row perfect?".
+ */
+function computeFingerprint(file: DriveFile): string {
+    return [
+        file.modifiedTime ?? '',
+        file.name ?? '',
+        file.mimeType ?? '',
+        file.createdTime ?? '',
+    ].join('\u0000');
+}
+
+const FINGERPRINT_KEY = 'sync_fingerprint';
+
+interface ExistingPhoto {
+    id: string;
+    libraryId: string | null;
+    fingerprint: string | null;
+}
+
+/**
+ * PostgREST sends filters in the query string, so `.in()` on thousands of IDs
+ * builds a URL no gateway will accept. Chunked well under that ceiling.
+ */
+const EXISTING_LOOKUP_CHUNK = 200;
+
+/**
+ * Load every already-synced photo for this batch of Drive files in a handful of
+ * queries.
+ *
+ * This replaces a per-photo existence check. That check was one of the three
+ * HTTP calls each photo cost, and with the folder re-walked every five minutes
+ * it added up to ~1M requests a day on its own.
+ */
+async function loadExistingPhotos(ctx: SyncCtx, fileIds: string[]): Promise<Map<string, ExistingPhoto>> {
+    const found = new Map<string, ExistingPhoto>();
+    for (let i = 0; i < fileIds.length; i += EXISTING_LOOKUP_CHUNK) {
+        const chunk = fileIds.slice(i, i + EXISTING_LOOKUP_CHUNK);
+        // Deliberately NOT scoped to this library. photos.google_drive_file_id
+        // carries a global unique index, so a file that has moved between
+        // libraries still occupies a row here. Scoping the lookup would hide
+        // that row, send the file down the insert path, and hit the unique
+        // violation on every pass forever.
+        const { data, error } = await ctx.supabase
+            .from('photos')
+            .select('id, google_drive_file_id, library_id, metadata')
+            .in('google_drive_file_id', chunk);
+        if (error) {
+            // Treat as "nothing known". The sync then behaves exactly as it did
+            // before this optimisation existed — correct, just not cheap.
+            console.error(`[sync] existing-photo lookup failed:`, error.message);
+            continue;
+        }
+        for (const row of data ?? []) {
+            if (!row.google_drive_file_id) continue;
+            found.set(row.google_drive_file_id, {
+                id: row.id,
+                libraryId: row.library_id ?? null,
+                fingerprint: row.metadata?.[FINGERPRINT_KEY] ?? null,
+            });
+        }
+    }
+    return found;
+}
+
+async function upsertPhoto(
+    ctx: SyncCtx,
+    file: DriveFile,
+    existing: ExistingPhoto | undefined,
+): Promise<string | null> {
     if (!file.id || !file.name) return null;
     const title = file.name.split('.').slice(0, -1).join('.');
     const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
     const { metadata, finalCreatedAt, latitude, longitude } = parsePhotoFields(file);
+
+    // Stamped on the row so the next pass can tell at a glance that Drive has
+    // not touched this file, and skip it without writing anything.
+    metadata[FINGERPRINT_KEY] = computeFingerprint(file);
 
     const payload: Record<string, unknown> = {
         library_id: ctx.library.id,
@@ -248,14 +334,9 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
     if (latitude != null) payload.latitude = latitude;
     if (longitude != null) payload.longitude = longitude;
 
-    // Check for existing row first — the DB unique constraint may not yet be in place,
-    // so we can't rely on onConflict alone. Manual check prevents duplicate insertions.
-    const { data: existing } = await ctx.supabase
-        .from('photos')
-        .select('id')
-        .eq('google_drive_file_id', file.id)
-        .maybeSingle();
-
+    // Whether the row exists is already known from the folder-wide prefetch in
+    // processFolder. The DB unique constraint may not be in place, so we still
+    // branch on it explicitly rather than relying on onConflict.
     if (existing) {
         const { data, error } = await ctx.supabase
             .from('photos')
@@ -399,7 +480,10 @@ async function determineFolderTag(
     return { tagId: null, venue: null };
 }
 
-async function processFolder(
+// Exported for the sync-skip harness in scripts/verify-sync-skip.mts, which
+// drives this function against stub clients to assert a second pass over an
+// unchanged folder performs zero writes.
+export async function processFolder(
     ctx: SyncCtx,
     folderId: string,
     folderName: string | null,
@@ -414,10 +498,54 @@ async function processFolder(
 
     const { photos, subfolders } = await listFolderEntries(ctx.drive, folderId);
 
+    // One lookup for the whole folder, then decide per photo whether there is
+    // anything to do. Everything below this line depends on it.
+    const existingPhotos = await loadExistingPhotos(
+        ctx,
+        photos.map(f => f.id).filter((id): id is string => !!id),
+    );
+
+    // A folder in which Drive changed nothing needs no folder-level tag work
+    // either. determineFolderTag costs a reverse-geocode round trip, so paying
+    // it to re-derive a tag we will not attach to anything is pure waste.
+    const unchanged = (file: DriveFile): boolean => {
+        if (!file.id) return false;
+        const known = existingPhotos.get(file.id);
+        if (!known?.fingerprint) return false;
+        // A file whose row is filed under a different library has moved and must
+        // be re-homed, however untouched Drive left its contents.
+        if (known.libraryId !== ctx.library.id) return false;
+        return known.fingerprint === computeFingerprint(file);
+    };
+    const changedPhotos = photos.filter(f => !unchanged(f));
+
+    for (const file of photos) {
+        // Every file present in Drive counts as seen, changed or not — this set
+        // drives orphan deletion, and omitting the skipped ones would delete the
+        // entire archive on the first clean pass.
+        if (file.id && unchanged(file)) {
+            ctx.seenFileIds.add(file.id);
+            ctx.stats.skipped++;
+        }
+    }
+
+    if (changedPhotos.length === 0) {
+        // Nothing to do here. Recurse into subfolders and return without a
+        // single write.
+        if (depth < MAX_DEPTH) {
+            for (const sub of subfolders) {
+                if (ctx.stats.synced >= ctx.limit) break;
+                if (Date.now() > ctx.deadline) { ctx.timedOut = true; break; }
+                await processFolder(ctx, sub.id!, sub.name || null, depth + 1);
+            }
+        }
+        return;
+    }
+
     let collectionTagId: string | null = null;
     let folderVenueOrLocationTagId: string | null = null;
     let folderVenue: VenueTag | null = null;
-    if (depth > 0 && folderName && photos.length > 0) {
+    if (depth > 0 && folderName && changedPhotos.length > 0) {
         // Subfolder name itself is always tagged on the photos as a 'collection'.
         collectionTagId = await ensureTag(ctx, folderName, 'collection');
         // Best-effort: also try to derive a venue/neighborhood from the folder.
@@ -432,13 +560,13 @@ async function processFolder(
         }
     }
 
-    for (const file of photos) {
+    for (const file of changedPhotos) {
         if (ctx.stats.synced >= ctx.limit) return;
         if (Date.now() > ctx.deadline) { ctx.timedOut = true; return; }
         if (!file.id) continue;
         ctx.seenFileIds.add(file.id);
 
-        const photoId = await upsertPhoto(ctx, file);
+        const photoId = await upsertPhoto(ctx, file, existingPhotos.get(file.id));
         if (!photoId) continue;
 
         const tagIds = new Set<string>();
@@ -673,7 +801,7 @@ async function buildCtx(
         tagCache,
         venues,
         neighborhoods,
-        stats: { synced: 0, foldersVisited: 0, tagsCreated: 0 },
+        stats: { synced: 0, skipped: 0, foldersVisited: 0, tagsCreated: 0 },
         seenFileIds: new Set<string>(),
         limit: limit > 0 ? limit : Number.MAX_SAFE_INTEGER,
         deadline: Date.now() + timeBudgetSeconds * 1000,
@@ -756,6 +884,7 @@ export async function syncSingleSubfolder(opts: {
 
     return {
         synced: ctx.stats.synced,
+        skipped: ctx.stats.skipped,
         foldersVisited: ctx.stats.foldersVisited,
         tagsCreated: ctx.stats.tagsCreated,
         seenFileIds: [...ctx.seenFileIds],
@@ -837,6 +966,7 @@ export async function syncGalleryPhotos(
 
     return {
         synced: ctx.stats.synced,
+        skipped: ctx.stats.skipped,
         foldersVisited: ctx.stats.foldersVisited,
         tagsCreated: ctx.stats.tagsCreated,
         deleted: deletedCount,

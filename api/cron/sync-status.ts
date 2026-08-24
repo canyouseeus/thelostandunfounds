@@ -56,12 +56,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 case 'syncing':
                     syncing++;
                     break;
+                // 'halted' is a subfolder the sync cron gave up on because it
+                // stopped making progress. Counted with errors on purpose: this
+                // switch had no default, so a status nobody listed was a row
+                // nobody could see — and an unwatched sync is how a runaway loop
+                // bills for eleven days before anyone notices.
                 case 'error':
+                case 'halted':
                     errors++;
                     erroredSubfolders.push({
                         subfolder_id: row.subfolder_id,
                         subfolder_name: row.subfolder_name,
                         error_message: row.error_message,
+                        updated_at: row.updated_at,
+                    });
+                    break;
+                default:
+                    // Same reasoning: never let an unrecognised status vanish.
+                    console.warn(`[cron sync-status] unrecognised status "${row.status}" on ${row.subfolder_id}`);
+                    errors++;
+                    erroredSubfolders.push({
+                        subfolder_id: row.subfolder_id,
+                        subfolder_name: row.subfolder_name,
+                        error_message: row.error_message ?? `Unrecognised status: ${row.status}`,
                         updated_at: row.updated_at,
                     });
                     break;
