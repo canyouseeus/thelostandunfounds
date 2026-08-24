@@ -17,6 +17,23 @@ type Row = Record<string, any>;
 interface Counts { select: number; update: number; insert: number; upsert: number }
 
 function newCounts(): Counts { return { select: 0, update: 0, insert: 0, upsert: 0 }; }
+
+/**
+ * PostgreSQL cannot store U+0000 in text or jsonb — a payload containing one is
+ * rejected outright with a 400, not silently cleaned. The stub used to accept
+ * any JS value, so it happily "wrote" a fingerprint joined on \u0000 and every
+ * assertion here passed while the real database refused all 9,529 writes. A
+ * stub that accepts what the real thing rejects is not a test of anything.
+ */
+function assertStorable(table: string, payload: any): void {
+    const json = JSON.stringify(payload);
+    if (json && json.includes('\\u0000')) {
+        throw new Error(
+            `${table}: payload contains U+0000, which PostgreSQL cannot store — ` +
+            `the real write would fail with 400. Offending payload: ${json.slice(0, 200)}`,
+        );
+    }
+}
 const writes = (c: Counts) => c.update + c.insert + c.upsert;
 
 /** Minimal thenable PostgREST-shaped stub over an in-memory table set. */
@@ -50,18 +67,21 @@ function makeSupabase(db: { photos: Row[]; photo_tags: Row[] }, counts: Counts) 
                     return { data, error: null };
                 }
                 if (table === 'photos' && q._op === 'update') {
+                    assertStorable(table, q._payload);
                     counts.update++;
                     const row = db.photos.find(r => r.google_drive_file_id === q._filters['google_drive_file_id']);
                     if (row) Object.assign(row, q._payload);
                     return { data: row ? { id: row.id } : null, error: row ? null : { message: 'not found' } };
                 }
                 if (table === 'photos' && q._op === 'insert') {
+                    assertStorable(table, q._payload);
                     counts.insert++;
                     const row = { id: `photo-${++idSeq}`, ...q._payload };
                     db.photos.push(row);
                     return { data: { id: row.id }, error: null };
                 }
                 if (table === 'photo_tags' && q._op === 'upsert') {
+                    assertStorable(table, q._payload);
                     counts.upsert++;
                     for (const r of q._payload) {
                         if (!db.photo_tags.some(t => t.photo_id === r.photo_id && t.tag_id === r.tag_id)) {
