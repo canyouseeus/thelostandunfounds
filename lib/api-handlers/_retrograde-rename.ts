@@ -27,6 +27,7 @@ export interface RetrogradeResult {
     skipped: number;
     /** Files Drive permanently refuses to let us rename. Excluded from future runs. */
     blocked: number;
+    missing: number;
     failed: number;
     remaining: number;
     dryRun: boolean;
@@ -73,7 +74,7 @@ const AUTH_FAILURES = ['invalid_client', 'invalid_grant', 'unauthorized_client',
  * back in the next run's work set forever. `transient` is the genuinely
  * retryable case.
  */
-type RenameOutcome = 'ok' | 'blocked' | 'transient';
+type RenameOutcome = 'ok' | 'blocked' | 'missing' | 'transient';
 
 async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: string, newName: string): Promise<RenameOutcome> {
     try {
@@ -92,7 +93,17 @@ async function renameInDrive(drive: ReturnType<typeof google.drive>, fileId: str
         }
         const code = err?.code || err?.response?.status;
         const reason = err?.errors?.[0]?.reason;
-        if (code === 403 || code === 404) {
+        // 404 and 403 are different facts and were both recorded as
+        // "drive_no_write_access". 850 files carried that label while the real
+        // cause was that the Drive file had been deleted, which sent the
+        // investigation at a sharing problem that did not exist. A file we
+        // cannot see and a file we may not write both leave the work set, but
+        // only one of them is fixed by changing permissions.
+        if (code === 404) {
+            console.warn(`[retrograde] file missing ${fileId}: ${reason || code}`);
+            return 'missing';
+        }
+        if (code === 403) {
             console.warn(`[retrograde] no write access ${fileId}: ${reason || code}`);
             return 'blocked';
         }
@@ -106,7 +117,7 @@ async function processLibrary(
     supabase: SupabaseClient,
     drive: ReturnType<typeof google.drive>,
     library: { id: string; slug: string; photographer_handle: string | null },
-    stats: { renamed: number; skipped: number; blocked: number; failed: number; remaining: number },
+    stats: { renamed: number; skipped: number; blocked: number; missing: number; failed: number; remaining: number },
     deadline: number,
     dryRun: boolean,
     hardPhotoCap: number | null,
@@ -154,7 +165,8 @@ async function processLibrary(
         !isCurrentName(p.title, library.photographer_handle ?? undefined)
         && !p.rename_blocked
     );
-    stats.blocked += index.filter(p => p.rename_blocked).length;
+    stats.blocked += index.filter(p => p.rename_blocked === 'drive_no_write_access').length;
+    stats.missing += index.filter(p => p.rename_blocked === 'drive_file_missing').length;
     stats.remaining += candidates.length;
     // The converged case, and the one that matters for cost: nothing to rename,
     // so no heavy read and no Drive call. This is what the cron does on almost
@@ -241,18 +253,21 @@ async function processLibrary(
         }
 
         const outcome = await renameInDrive(drive, photo.google_drive_file_id, newFilename);
-        if (outcome === 'blocked') {
+        if (outcome === 'blocked' || outcome === 'missing') {
             // Persist the refusal so this file leaves the work set permanently.
             // Stored on metadata rather than a new column so this needs no
             // migration, and stays visible to anyone inspecting the row.
+            // The reason is recorded verbatim: a missing file is an orphaned
+            // row to clean up, a forbidden one is a sharing change to make.
+            const reason = outcome === 'missing' ? 'drive_file_missing' : 'drive_no_write_access';
             const { error: markErr } = await supabase
                 .from('photos')
-                .update({ metadata: { ...meta, rename_blocked: 'drive_no_write_access' } })
+                .update({ metadata: { ...meta, rename_blocked: reason } })
                 .eq('id', photo.id);
             if (markErr) {
-                console.error(`[retrograde] could not mark ${photo.id} blocked:`, markErr.message);
+                console.error(`[retrograde] could not mark ${photo.id} ${reason}:`, markErr.message);
             }
-            stats.blocked++;
+            if (outcome === 'missing') stats.missing++; else stats.blocked++;
             stats.remaining--;
             continue;
         }
@@ -310,7 +325,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     if (error || !libraries) throw new Error(`Failed to load libraries: ${error?.message}`);
 
     const deadline = Date.now() + ((opts.timeBudgetSeconds ?? 270) * 1000);
-    const stats = { renamed: 0, skipped: 0, blocked: 0, failed: 0, remaining: 0 };
+    const stats = { renamed: 0, skipped: 0, blocked: 0, missing: 0, failed: 0, remaining: 0 };
     const librariesProcessed: string[] = [];
     const preview: Array<{ from: string; to: string }> = [];
     const skippedUnattributed: string[] = [];
@@ -347,7 +362,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             if (err instanceof DriveAuthError) {
                 console.error(`[retrograde] run aborted: ${err.message}`);
                 return {
-                    renamed: stats.renamed, skipped: stats.skipped, blocked: stats.blocked, failed: stats.failed,
+                    renamed: stats.renamed, skipped: stats.skipped, blocked: stats.blocked, missing: stats.missing, failed: stats.failed,
                     remaining: stats.remaining, dryRun: opts.dryRun ?? false,
                     librariesProcessed, preview, skippedUnattributed,
                     authError: err.message,
@@ -361,6 +376,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
         renamed: stats.renamed,
         skipped: stats.skipped,
         blocked: stats.blocked,
+        missing: stats.missing,
         failed: stats.failed,
         remaining: stats.remaining,
         dryRun: opts.dryRun ?? false,
