@@ -34,25 +34,63 @@ function isAdmin(req: VercelRequest): boolean {
 }
 
 /**
- * OAuth, not the service account. The service account owns its own Drive and
- * can only write where it has been explicitly shared; the refresh token acts as
- * the account that owns the destination folders. Matches drive-add.ts.
+ * OAuth first: the refresh token acts as the account that owns the destination
+ * folders, so it can write anywhere in that Drive. Matches drive-add.ts.
+ *
+ * Falls back to the service account, which owns a separate Drive and can only
+ * write where it has been explicitly shared — workable, but the destination
+ * folder has to be shared with it first. The fallback exists because Vercel
+ * scopes environment variables per environment, so a preview deployment can be
+ * missing the OAuth refresh token that production has.
  */
-function getDrive() {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-    );
-    oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
-    return google.drive({ version: 'v3', auth: oauth2Client });
+function getDrive(): { drive: ReturnType<typeof google.drive>; auth: 'oauth' | 'service_account' } {
+    if (process.env.GOOGLE_REFRESH_TOKEN) {
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+        );
+        oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+        return { drive: google.drive({ version: 'v3', auth: oauth2Client }), auth: 'oauth' };
+    }
+    const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const key = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '')
+        .replace(/\\n/g, '\n').replace(/"/g, '').trim();
+    if (!email || !key) throw new Error('No Google credentials in this environment');
+    const jwt = new google.auth.JWT({
+        email, key, scopes: ['https://www.googleapis.com/auth/drive'],
+    });
+    return { drive: google.drive({ version: 'v3', auth: jwt }), auth: 'service_account' };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'POST') {
+    if (req.method !== 'POST' && req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
     if (!isAdmin(req)) {
         return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // GET reports which credentials this environment actually holds. Vercel
+    // scopes env vars per environment, so "it works in production" says nothing
+    // about a preview deployment, and the Google client error for a missing
+    // refresh token names none of the three possible causes.
+    //
+    // Presence booleans only — never a value. The service account address is
+    // returned in full because it is an identifier, not a secret: sharing a
+    // folder with the service account requires knowing it, and it is visible in
+    // the ACL of every folder already shared with it.
+    if (req.method === 'GET') {
+        return res.status(200).json({
+            oauth: {
+                clientId: Boolean(process.env.GOOGLE_CLIENT_ID),
+                clientSecret: Boolean(process.env.GOOGLE_CLIENT_SECRET),
+                refreshToken: Boolean(process.env.GOOGLE_REFRESH_TOKEN),
+            },
+            serviceAccount: {
+                email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || null,
+                privateKey: Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY),
+            },
+        });
     }
 
     const { url, fileName, parentId, mimeType } = (req.body || {}) as Record<string, string>;
@@ -72,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const drive = getDrive();
+        const { drive, auth } = getDrive();
 
         // Re-running a rescue must not double the folder. Drive happily keeps two
         // files with one name in a folder and nothing downstream would flag it.
@@ -118,6 +156,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             size: Number(created.data.size ?? 0),
             mimeType: created.data.mimeType,
             webViewLink: created.data.webViewLink,
+            auth,
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
