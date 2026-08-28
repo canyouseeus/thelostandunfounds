@@ -24,9 +24,11 @@ import {
   PlusIcon,
   PencilSquareIcon,
   RectangleStackIcon,
+  PrinterIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/Loading';
 import { useAuth } from '@/contexts/AuthContext';
+import DtfExportPanel from './DtfExportPanel';
 
 interface Library {
   id: string;
@@ -1262,6 +1264,21 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
                     <MetaRow label="Synced" value={new Date(drawerPhoto.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />
                     <MetaRow label="Status" value={drawerPhoto.status || 'active'} />
                   </div>
+
+                  {/* Print export sits above EXIF: it is the reason to open a
+                      photo on an order, where the camera data is reference. */}
+                  {drawerPhoto.google_drive_file_id && (
+                    <div>
+                      <SectionLabel icon={<PrinterIcon className="w-3 h-3" />} label="DTF Print Size" />
+                      <div className="mt-2">
+                        <DtfExportPanel
+                          key={drawerPhoto.google_drive_file_id}
+                          fileId={drawerPhoto.google_drive_file_id}
+                          title={drawerPhoto.title}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {drawerPhoto.metadata && Object.values(drawerPhoto.metadata).some(Boolean) && (
                     <div>
