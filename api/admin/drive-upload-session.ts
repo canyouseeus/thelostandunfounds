@@ -40,13 +40,24 @@ function isAdmin(req: VercelRequest): boolean {
   return host.includes('localhost') || host.includes('127.0.0.1')
 }
 
-async function getAccessToken(): Promise<string> {
+/**
+ * Return a credentialed auth client AND the raw bearer token.
+ *
+ * Both are needed and they are not interchangeable: the googleapis client wants
+ * an auth object, while the resumable session has to be opened with a hand-built
+ * fetch (the library exposes no way to get the Location header back), which
+ * wants the token as a string. Deriving one and improvising the other is what
+ * broke this the first time — a `new google.auth.OAuth2()` with no credentials
+ * was handed to drive(), which then failed with "No access, refresh token, API
+ * key or refresh handler callback is set."
+ */
+async function getDriveAuth(): Promise<{ auth: any; token: string }> {
   const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env
   if (GOOGLE_REFRESH_TOKEN && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
     const oauth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
     oauth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN })
     const { token } = await oauth.getAccessToken()
-    if (token) return token
+    if (token) return { auth: oauth, token }
   }
   // The service account owns a different Drive, so it can only write where the
   // destination folder has been shared with it explicitly. Kept as the fallback
@@ -59,7 +70,7 @@ async function getAccessToken(): Promise<string> {
   const jwt = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive'] })
   const { access_token } = await jwt.authorize()
   if (!access_token) throw new Error('Service account returned no access token')
-  return access_token
+  return { auth: jwt, token: access_token }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -84,12 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const safeName = fileName.replace(/[^A-Za-z0-9._-]/g, '_')
 
   try {
-    const token = await getAccessToken()
-    const drive = google.drive({
-      version: 'v3',
-      auth: new google.auth.OAuth2(),
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const { auth, token } = await getDriveAuth()
+    const drive = google.drive({ version: 'v3', auth })
 
     // Re-running an upload must not leave two files with one name in the
     // folder; Drive allows it and the gallery would show the clip twice.
