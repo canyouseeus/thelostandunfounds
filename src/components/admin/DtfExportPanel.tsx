@@ -33,7 +33,6 @@ const SIZE_PRESETS = [8, 10, 11, 12, 14];
 const DPI_PRESETS = [150, 300, 600];
 
 type FitRule = 'longest' | 'width' | 'height';
-type Orientation = 'source' | 'portrait' | 'landscape';
 type Format = 'png' | 'jpeg';
 
 interface Props {
@@ -83,7 +82,6 @@ export default function DtfExportPanel({ fileId, title }: Props) {
     const [customInches, setCustomInches] = useState('');
     const [dpi, setDpi] = useState(300);
     const [fit, setFit] = useState<FitRule>('longest');
-    const [orientation, setOrientation] = useState<Orientation>('source');
     const [format, setFormat] = useState<Format>('png');
 
     // The source is fetched once per photo and reused for every export, so
@@ -125,14 +123,20 @@ export default function DtfExportPanel({ fileId, title }: Props) {
         };
     }, [fileId]);
 
-    /** Source dimensions after any forced orientation, plus the resulting output. */
+    /**
+     * Output dimensions for the current settings.
+     *
+     * The photo keeps the orientation it was shot in — a portrait frame exports
+     * portrait, a landscape one lands landscape, and only the scale changes.
+     * An earlier draft offered buttons to force one or the other, but the only
+     * way to reshape a photo without cropping it is to rotate it, which lays a
+     * landscape frame on its side. That is right for a sleeve print and wrong
+     * for everything else, so the control is gone rather than mislabelled.
+     */
     const plan = useMemo(() => {
         if (!bitmap) return null;
-        const turned =
-            (orientation === 'portrait' && bitmap.width > bitmap.height) ||
-            (orientation === 'landscape' && bitmap.height > bitmap.width);
-        const w = turned ? bitmap.height : bitmap.width;
-        const h = turned ? bitmap.width : bitmap.height;
+        const w = bitmap.width;
+        const h = bitmap.height;
 
         const limit = Math.round(inches * dpi);
         const basis = fit === 'width' ? w : fit === 'height' ? h : Math.max(w, h);
@@ -141,11 +145,11 @@ export default function DtfExportPanel({ fileId, title }: Props) {
         const outH = Math.max(1, Math.round(h * scale));
 
         return {
-            turned, w, h, scale, outW, outH,
+            w, h, scale, outW, outH,
             // Largest print this source covers natively, on the same fit rule.
             nativeInches: basis / dpi,
         };
-    }, [bitmap, inches, dpi, fit, orientation]);
+    }, [bitmap, inches, dpi, fit]);
 
     const runExport = useCallback(async () => {
         if (!bitmap || !plan) return;
@@ -153,27 +157,12 @@ export default function DtfExportPanel({ fileId, title }: Props) {
         setError(null);
         setDone(null);
         try {
-            // Draw through a rotation first when the orientation is forced, so
-            // the scaling step always works on an upright, correctly-shaped image.
-            let source: HTMLCanvasElement | ImageBitmap = bitmap;
-            if (plan.turned) {
-                const turnedCanvas = document.createElement('canvas');
-                turnedCanvas.width = plan.w;
-                turnedCanvas.height = plan.h;
-                const tctx = turnedCanvas.getContext('2d');
-                if (!tctx) throw new Error('Canvas unavailable in this browser.');
-                tctx.translate(plan.w / 2, plan.h / 2);
-                tctx.rotate(Math.PI / 2);
-                tctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
-                source = turnedCanvas;
-            }
-
             // A single drawImage from 6240px to 3600px aliases fine detail, so
             // anything below half size is halved repeatedly first. Each step
             // averages neighbouring pixels the way a proper filter would.
             let currentW = plan.w;
             let currentH = plan.h;
-            let current: HTMLCanvasElement | ImageBitmap = source;
+            let current: HTMLCanvasElement | ImageBitmap = bitmap;
             while (currentW > plan.outW * 2 && currentH > plan.outH * 2) {
                 const stepW = Math.max(plan.outW, Math.round(currentW / 2));
                 const stepH = Math.max(plan.outH, Math.round(currentH / 2));
@@ -286,12 +275,6 @@ export default function DtfExportPanel({ fileId, title }: Props) {
                             {DPI_PRESETS.map((n) => (
                                 <Chip key={n} active={dpi === n} onClick={() => setDpi(n)}>{n}</Chip>
                             ))}
-                        </Row>
-
-                        <Row label="Orient">
-                            <Chip active={orientation === 'source'} onClick={() => setOrientation('source')}>As shot</Chip>
-                            <Chip active={orientation === 'portrait'} onClick={() => setOrientation('portrait')}>Portrait</Chip>
-                            <Chip active={orientation === 'landscape'} onClick={() => setOrientation('landscape')}>Landscape</Chip>
                         </Row>
 
                         <Row label="Format">
