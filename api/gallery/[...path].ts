@@ -304,13 +304,89 @@ async function grantDeliveryEntitlements(
         })));
 }
 
-function buildDownloadFilename(rawTitle: string): string {
+// A gallery holds video as well as stills, and a clip saved as .jpg is a file
+// the client's machine refuses to open. Extension follows the actual type.
+const DOWNLOAD_EXTENSIONS: Record<string, string> = {
+    'video/quicktime': 'mov',
+    'video/mp4': 'mp4',
+    'image/png': 'png',
+    'image/webp': 'webp',
+};
+
+function buildDownloadFilename(rawTitle: string, mimeType?: string | null): string {
     const PREFIX = 'the_lost_and_unfounds_llc_joshua_abram_greene';
     const sanitized = rawTitle
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')  // non-alphanumeric → underscore
         .replace(/^_+|_+$/g, '');      // trim leading/trailing underscores
-    return `${PREFIX}_${sanitized || 'photo'}.jpg`;
+    const ext = (mimeType && DOWNLOAD_EXTENSIONS[mimeType]) || 'jpg';
+    return `${PREFIX}_${sanitized || 'photo'}.${ext}`;
+}
+
+/**
+ * Send a video straight through from Drive, honouring Range.
+ *
+ * Every other path here buffers the file and calls res.send, which is fine for
+ * a resized still and impossible for a clip: a Vercel response body is capped
+ * around 4.5MB, so a 20MB video buffered that way fails outright. The body is
+ * piped instead, so memory stays flat whatever the file weighs.
+ *
+ * Range matters beyond seeking — Safari will not play a source that does not
+ * answer a range request with 206, so without this the clip silently shows a
+ * dead player on every iPhone, which is most of the people being sent one.
+ * sharp is deliberately not in this path; it would reject the input anyway.
+ */
+async function streamVideoFromDrive(
+    req: VercelRequest,
+    res: VercelResponse,
+    fileId: string,
+    mimeType: string,
+    opts: { download: boolean; filename: string }
+): Promise<boolean> {
+    const token = await getDriveAccessToken();
+    if (!token) return false;
+
+    const range = req.headers.range;
+    const upstream = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // Pass the browser's Range through untouched so Drive does the
+                // slicing; re-deriving offsets here would only add a way to be wrong.
+                ...(range ? { Range: range } : {}),
+            },
+        }
+    );
+
+    if (!upstream.ok || !upstream.body) {
+        console.warn('[stream] video fetch failed:', upstream.status);
+        return false;
+    }
+
+    res.status(upstream.status === 206 ? 206 : 200);
+    res.setHeader('Content-Type', upstream.headers.get('content-type') || mimeType);
+    res.setHeader('Accept-Ranges', 'bytes');
+    for (const header of ['content-length', 'content-range'] as const) {
+        const value = upstream.headers.get(header);
+        if (value) res.setHeader(header, value);
+    }
+    res.setHeader(
+        'Cache-Control',
+        opts.download ? 'no-store' : 'public, max-age=31536000, immutable'
+    );
+    if (opts.download) {
+        res.setHeader('Content-Disposition', `attachment; filename="${opts.filename}"`);
+    }
+
+    const { Readable } = await import('stream');
+    const nodeStream = Readable.fromWeb(upstream.body as any);
+    await new Promise<void>((resolve, reject) => {
+        nodeStream.pipe(res);
+        nodeStream.on('end', resolve);
+        nodeStream.on('error', reject);
+    });
+    return true;
 }
 
 /**
@@ -411,22 +487,41 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
 
         // Look up photo (id + title) from DB — id goes into the download event log,
         // title drives the branded filename.
-        let downloadFilename = buildDownloadFilename('photo');
+        //
+        // mime_type is read for every request, not just downloads: it is what
+        // routes a clip away from the image path below, and that decision has to
+        // happen on plain views too or the video never plays at all.
         let photoIdForEvent: string | null = null;
-        if (isDownload) {
-            try {
-                const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-                const { data: photo } = await supabase
-                    .from('photos')
-                    .select('id, title')
-                    .eq('google_drive_file_id', fileId as string)
-                    .single();
-                if (photo?.title) downloadFilename = buildDownloadFilename(photo.title);
-                if (photo?.id) photoIdForEvent = photo.id as string;
-            } catch {
-                // Non-fatal — fall back to generic filename
-            }
+        let photoTitle = 'photo';
+        let photoMimeType: string | null = null;
+        try {
+            const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+            const { data: photo } = await supabase
+                .from('photos')
+                .select('id, title, mime_type')
+                .eq('google_drive_file_id', fileId as string)
+                .single();
+            if (photo?.title) photoTitle = photo.title as string;
+            if (photo?.id) photoIdForEvent = photo.id as string;
+            if (photo?.mime_type) photoMimeType = photo.mime_type as string;
+        } catch {
+            // Non-fatal — a file with no row still streams as an image below.
+        }
+        let downloadFilename = buildDownloadFilename(photoTitle, photoMimeType);
 
+        // Video leaves here entirely: it cannot be resized, cannot be buffered
+        // into a response, and needs Range to play at all.
+        if (photoMimeType?.startsWith('video/')) {
+            const served = await streamVideoFromDrive(req, res, fileId as string, photoMimeType, {
+                download: isDownload,
+                filename: downloadFilename,
+            });
+            if (served) return;
+            console.error('[stream] video path failed for fileId:', fileId);
+            return res.status(404).json({ error: 'Video not found or inaccessible' });
+        }
+
+        if (isDownload) {
             // Fire-and-forget: write the download event.
             try {
                 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);

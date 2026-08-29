@@ -33,11 +33,19 @@ import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 // cause of a large Supabase egress overage. Users load more on demand.
 const GALLERY_PAGE_SIZE = 150;
 
+// A gallery holds video as well as stills. Everything below keys off this one
+// field, so a row that predates it (null) still renders as an image exactly as
+// it always did.
+export function isVideoPhoto(photo: { mime_type?: string | null }): boolean {
+    return Boolean(photo.mime_type?.startsWith('video/'));
+}
+
 interface Photo {
     id: string;
     title: string;
     thumbnail_url: string;
     google_drive_file_id: string;
+    mime_type?: string | null;
     created_at: string;
     price?: number;
     library_id: string;
@@ -141,20 +149,35 @@ const PhotoCard: React.FC<{
                                 }}
                             />
                         )}
-                        <img
-                            src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=1200`}
-                            alt={photo.title}
-                            onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
-                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
-                            draggable={false}
-                            loading="lazy"
-                            onContextMenu={(e) => e.preventDefault()}
-                            style={{
-                                WebkitTouchCallout: 'none',
-                                WebkitUserSelect: 'none',
-                                userSelect: 'none'
-                            }}
-                        />
+                        {isVideoPhoto(photo) ? (
+                            // preload="metadata" so the grid does not pull tens of
+                            // megabytes per clip on first paint; the poster frame
+                            // comes from the stream endpoint's image path.
+                            <video
+                                src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}`}
+                                controls={isPurchased}
+                                playsInline
+                                preload="metadata"
+                                onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                onContextMenu={(e) => e.preventDefault()}
+                            />
+                        ) : (
+                            <img
+                                src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=1200`}
+                                alt={photo.title}
+                                onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                draggable={false}
+                                loading="lazy"
+                                onContextMenu={(e) => e.preventDefault()}
+                                style={{
+                                    WebkitTouchCallout: 'none',
+                                    WebkitUserSelect: 'none',
+                                    userSelect: 'none'
+                                }}
+                            />
+                        )}
 
                         {/* Brand overlay (preview protection) */}
                         {!isPurchased && (

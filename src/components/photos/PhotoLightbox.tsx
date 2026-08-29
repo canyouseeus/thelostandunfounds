@@ -9,6 +9,7 @@ interface Photo {
     title: string;
     thumbnail_url: string;
     google_drive_file_id: string;
+    mime_type?: string | null;
     metadata?: { width?: number; height?: number } | null;
 }
 
@@ -133,19 +134,35 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 />
                             )}
 
-                            <img
-                                src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=3000`}
-                                alt={photo.title}
-                                className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isPurchased ? 'pointer-events-none' : 'pointer-events-auto'}`}
-                                onContextMenu={(e) => e.preventDefault()}
-                                draggable={false}
-                                onLoad={() => setIsImageLoading(false)}
-                                style={{
-                                    WebkitTouchCallout: 'none',
-                                    WebkitUserSelect: 'none',
-                                    userSelect: 'none'
-                                }}
-                            />
+                            {photo.mime_type?.startsWith('video/') ? (
+                                // onLoadedMetadata, not onLoad: a <video> never fires
+                                // onLoad, so reusing the image handler would leave the
+                                // player stuck behind the loading veil forever.
+                                <video
+                                    src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}`}
+                                    controls
+                                    autoPlay
+                                    playsInline
+                                    preload="metadata"
+                                    className="max-h-[70vh] w-auto object-contain shadow-2xl pointer-events-auto"
+                                    onLoadedMetadata={() => setIsImageLoading(false)}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                />
+                            ) : (
+                                <img
+                                    src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=3000`}
+                                    alt={photo.title}
+                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isPurchased ? 'pointer-events-none' : 'pointer-events-auto'}`}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    draggable={false}
+                                    onLoad={() => setIsImageLoading(false)}
+                                    style={{
+                                        WebkitTouchCallout: 'none',
+                                        WebkitUserSelect: 'none',
+                                        userSelect: 'none'
+                                    }}
+                                />
+                            )}
 
                             {/* Close Button - Overlaid on Photo - Only show when loaded */}
                             <button
