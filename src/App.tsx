@@ -49,6 +49,8 @@ import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
 import BecomeAffiliate from './pages/BecomeAffiliate'
+import DefyMultiverse from './defy/DefyMultiverse'
+import AdminDefy from './pages/AdminDefy'
 import ScrollToTop from './components/ScrollToTop'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 import AdminAffiliates from './pages/AdminAffiliates'
@@ -144,6 +146,9 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<RootPage />} />
               </Route>
+              {/* DEFY MULTIVERSE — a separate site sharing this deployment.
+                  No <Layout>: no shared header, footer or Noir styling. */}
+              <Route path="/defy" element={<DefyMultiverse />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/zoho/callback" element={<ZohoCallback />} />
               {/* Services — same view as the homepage SERVICES tab, but at a real,
@@ -249,6 +254,13 @@ function App() {
                   <ErrorBoundary>
                     <AdminAuthGate>
                       <AdminAffiliates />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
+                <Route path="defy" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminDefy />
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />
