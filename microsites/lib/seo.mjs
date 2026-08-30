@@ -27,12 +27,22 @@ function businessNode(site) {
   const node = {
     '@type': 'ProfessionalService',
     '@id': abs(site, '/#business'),
-    name: site.brand,
+    // The real-world business name, NOT the microsite's trading name.
+    //
+    // This has to be the string that appears on the Google Business Profile,
+    // because the GBP and this markup are the two halves of one NAP and Google
+    // reconciles them. A GBP named "Austin Short-Term Rental Photography" would
+    // itself be a guidelines violation — profile names must be the real-world
+    // name without descriptors, and keyword-stuffed names are among the most
+    // common suspension triggers. So the entity is THE LOST+UNFOUNDS and the
+    // microsite brand rides along as alternateName, which is what it actually
+    // is: a trading name for one service line.
+    name: business.legalName,
+    alternateName: site.brand,
     description: `${site.niche} in ${geo.city}, ${geo.region}.`,
     url: abs(site, '/'),
     email: business.email,
     priceRange: business.priceRange,
-    parentOrganization: { '@type': 'Organization', name: business.legalName, url: business.parentUrl },
     address: {
       '@type': 'PostalAddress',
       addressLocality: geo.city,
