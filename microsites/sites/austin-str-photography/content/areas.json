@@ -1,0 +1,82 @@
+[
+  {
+    "slug": "downtown-austin",
+    "name": "Downtown Austin",
+    "zips": ["78701", "78702"],
+    "typical": "High-rise condos and lofts, 600–1,200 sq ft",
+    "landmark": "the Capitol and 2nd Street District",
+    "blurb": "Downtown units are small, glassy and almost always shot against a wall of west-facing windows. The listing photo that sells a downtown condo is the skyline view — which means exposure blending, not a single flash frame.",
+    "challenge": "Floor-to-ceiling glass blows out to pure white on a standard exposure. We bracket every window-facing frame and blend, so the view outside the glass is still readable in the final image. On a 15th-floor unit that view is most of the nightly rate.",
+    "tip": "Book the shoot for late afternoon. Downtown towers shade each other in the morning, and a north-facing unit will not get usable ambient light until after 2pm."
+  },
+  {
+    "slug": "east-austin",
+    "name": "East Austin",
+    "zips": ["78702", "78721", "78722"],
+    "typical": "Bungalows, ADUs and garage conversions",
+    "landmark": "Manor Road and East 6th",
+    "blurb": "East Austin is the densest STR pocket in the city and the most design-forward. Guests booking here are choosing character over square footage, so the shoot has to carry the interior styling rather than the floor plan.",
+    "challenge": "ADUs and garage conversions are frequently under 500 sq ft with one usable sightline. Shooting these well is about lens discipline — a 14mm frame that bows the walls reads as dishonest and drives cancellations. We shoot 20–24mm and take more frames instead.",
+    "tip": "If the property has a mural, patio or tree canopy, that is the cover photo. East Austin outdoor space converts better than another angle of the bedroom."
+  },
+  {
+    "slug": "south-congress",
+    "name": "South Congress",
+    "zips": ["78704"],
+    "typical": "Boutique bungalows and duplex halves",
+    "landmark": "SoCo, Hotel San José and the Continental Club",
+    "blurb": "SoCo listings compete on walkability. The photo set has to establish that the guest can park once and leave the car, which means the exterior and street context matter as much as the interiors.",
+    "challenge": "78704 lots are narrow and heavily treed, so exteriors go dappled and contrasty from mid-morning on. We shoot the front elevation either early or at twilight, when the light is even and the porch reads warm.",
+    "tip": "A twilight exterior is worth the $125 here more than anywhere else in Austin. It is the single frame that separates a SoCo listing from the four identical bungalows on the same block."
+  },
+  {
+    "slug": "zilker",
+    "name": "Zilker & Barton Hills",
+    "zips": ["78704", "78746"],
+    "typical": "Mid-century homes and 2–3BR rentals",
+    "landmark": "Zilker Park and Barton Springs Pool",
+    "blurb": "Zilker rents on proximity — to the park, to the Greenbelt, to ACL. Bookings spike hard around festival weekends, and listings that show the outdoor living space capture that demand.",
+    "challenge": "Mature oak canopy means most Zilker exteriors never get clean sun. We work with the shade rather than fighting it, and use the tree cover as a framing element instead of trying to expose through it.",
+    "tip": "Shoot before October. If your listing is going live for ACL weekend, the photos need to be up by August at the latest to accumulate booking history."
+  },
+  {
+    "slug": "rainey-street",
+    "name": "Rainey Street District",
+    "zips": ["78701"],
+    "typical": "Tower units, studios through 2BR",
+    "landmark": "Rainey Street and Lady Bird Lake",
+    "blurb": "Rainey is the highest-turnover short-term rental district in Austin and the most photographically uniform — dozens of units in the same tower with the same finishes. Differentiation has to come from the shoot.",
+    "challenge": "When forty units in your building share a floor plan, the win is staging and light, not architecture. We shoot the balcony, the lake sightline and any corner exposure hard, because those are the only variables a guest can actually see.",
+    "tip": "Check your HOA before booking drone. Most Rainey towers sit inside the Austin-Bergstrom Class C shelf and require LAANC authorization, which we file — but it adds lead time."
+  },
+  {
+    "slug": "mueller",
+    "name": "Mueller",
+    "zips": ["78723"],
+    "typical": "Modern 3–4BR homes and row houses",
+    "landmark": "the Thinkery and Mueller Lake Park",
+    "blurb": "Mueller draws longer family stays and relocation guests rather than weekend traffic. Those bookers read the full photo set, so the shoot needs coverage — every bedroom, both baths, the laundry, the yard.",
+    "challenge": "Mueller row houses are tall and narrow with a stairwell running through the middle, which breaks the usual open-plan flow. We shoot floor by floor in booking order so the gallery reads as a walkthrough rather than a shuffle.",
+    "tip": "Family bookers filter on bed count and workspace. If there is a desk or a bunk room, it needs its own frame — not a corner of a wider shot."
+  },
+  {
+    "slug": "lake-travis",
+    "name": "Lake Travis & Lakeway",
+    "zips": ["78734", "78738", "78732"],
+    "typical": "Waterfront homes, 4BR+ and luxury",
+    "landmark": "Lake Travis, Hippie Hollow and the Oasis",
+    "blurb": "Lake Travis is the top of the Austin nightly-rate ladder and the one submarket where aerial coverage is not optional. The water is the product, and you cannot show water from the ground.",
+    "challenge": "Lake level moves the shot. At low pool the shoreline can sit a hundred yards further out than the listing implies, and photos that overstate the waterfront generate refund disputes. We shoot to the actual shoreline and note the level on delivery.",
+    "tip": "Budget the $150 drone add-on into every Lake Travis shoot. A luxury lakefront listing without an aerial is leaving real nightly rate on the table."
+  },
+  {
+    "slug": "round-rock",
+    "name": "Round Rock",
+    "zips": ["78664", "78665", "78681"],
+    "typical": "Suburban 3–4BR single-family",
+    "landmark": "Kalahari Resort, Dell and Old Settlers Park",
+    "blurb": "Round Rock runs on corporate and youth-sports demand rather than tourism — Dell contractors, Kalahari weekends, tournament families at Old Settlers. Predictable, less seasonal, and far less photographically competitive than central Austin.",
+    "challenge": "Suburban builder-grade interiors photograph flat because everything is the same beige. We light for separation and shoot slightly warmer than neutral so the rooms do not go grey on a phone screen, which is where 80% of these bookings happen.",
+    "tip": "Show the driveway and the garage. Round Rock guests are arriving by car with gear, and visible parking is a genuine conversion factor here in a way it never is downtown."
+  }
+]

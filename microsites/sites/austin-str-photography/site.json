@@ -1,0 +1,44 @@
+{
+  "id": "austin-str-photography",
+  "domain": "austinairbnbphotography.com",
+  "brand": "Austin STR Photography",
+  "niche": "Airbnb and short-term rental photography",
+  "primaryKeyword": "airbnb photography austin",
+
+  "geo": {
+    "city": "Austin",
+    "region": "TX",
+    "regionName": "Texas",
+    "country": "US",
+    "postalCode": "78701",
+    "lat": 30.2672,
+    "lng": -97.7431,
+    "serviceRadiusMiles": 40
+  },
+
+  "business": {
+    "legalName": "THE LOST+UNFOUNDS",
+    "phone": "REPLACE_ME_TRACKING_NUMBER",
+    "email": "media@thelostandunfounds.com",
+    "bookingUrl": "https://www.thelostandunfounds.com/booking",
+    "parentUrl": "https://www.thelostandunfounds.com",
+    "priceRange": "$$",
+    "foundingYear": 2023,
+    "sameAs": ["https://www.thelostandunfounds.com"]
+  },
+
+  "services": [
+    { "id": "studio",  "name": "Studio / 1BR",        "price": 195,  "unit": "flat", "photos": "25–35 edited photos", "turnaround": "24–72 hrs" },
+    { "id": "2br",     "name": "2 Bedroom",           "price": 265,  "unit": "flat", "photos": "30–40 edited photos", "turnaround": "24–72 hrs" },
+    { "id": "3br",     "name": "3 Bedroom",           "price": 335,  "unit": "flat", "photos": "40–50 edited photos", "turnaround": "24–72 hrs" },
+    { "id": "luxury",  "name": "4BR+ / Luxury",       "price": 425,  "unit": "from", "photos": "50+ edited photos",   "turnaround": "48–72 hrs" }
+  ],
+
+  "addons": [
+    { "name": "Twilight exteriors", "price": 125, "note": "Shot in the 25-minute window after sunset. The single highest-impact add-on for a hero image." },
+    { "name": "Drone / aerial",     "price": 150, "note": "Part 107 licensed. Useful for lakefront, hill-country and multi-building properties." },
+    { "name": "3D virtual tour",    "price": 200, "note": "Matterport-style walkthrough. Airbnb does not host it; use it on your direct-booking site." }
+  ],
+
+  "analytics": { "plausibleDomain": "austinairbnbphotography.com" }
+}
