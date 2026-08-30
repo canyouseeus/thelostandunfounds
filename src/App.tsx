@@ -91,6 +91,11 @@ import FadeboxLanding from './templates/fadebox/FadeboxLanding'
 import FadeboxDashboard from './templates/fadebox/FadeboxDashboard'
 import KioskDemo from './pages/KioskDemo'
 import Demos from './pages/Demos'
+/* Sandbox demo of our own platform. Lazy because a prospect on /demos may
+   never open it, and it is dead weight for everyone else. */
+const DemoTour = lazy(() => import('./pages/demo/DemoTour'))
+const DemoDashboard = lazy(() => import('./pages/demo/DemoDashboard'))
+const DemoAffiliate = lazy(() => import('./pages/demo/DemoAffiliate'))
 
 
 
@@ -298,6 +303,18 @@ function App() {
                   at once. It is a directory, not a container — each demo it lists
                   is its own working URL and stays sendable on its own. */}
               <Route path="/demos" element={<Demos />} />
+
+              {/* Our own platform, demoed the same way a client's is: a
+                  customer-facing walkthrough at one address and an owner
+                  console at another, both standalone (no <Layout>, no auth
+                  gate, no Supabase). These render fabricated data only —
+                  sending a prospect to `/` instead put them in the live app,
+                  where an admin saw the admin build and anyone could check
+                  out. See src/pages/demo/demo-data.ts. */}
+              <Route path="/demo" element={<Navigate to="/demo/tour" replace />} />
+              <Route path="/demo/tour" element={<Suspense fallback={null}><DemoTour /></Suspense>} />
+              <Route path="/demo/dashboard" element={<Suspense fallback={null}><DemoDashboard /></Suspense>} />
+              <Route path="/demo/affiliate" element={<Suspense fallback={null}><DemoAffiliate /></Suspense>} />
 
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
