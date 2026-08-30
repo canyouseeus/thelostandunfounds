@@ -62,14 +62,37 @@ textarea:focus-visible,select:focus-visible{
 
 /* ---- header ---- */
 .hdr{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.95);backdrop-filter:blur(12px)}
-.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.85rem 0}
+.hdr-in{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:.75rem;flex-wrap:wrap;
+  /* padding-block, NOT the 'padding' shorthand. The element carries both
+     the wrap and hdr-in classes, and a shorthand here has equal specificity to
+     .wrap and comes later, so it silently zeroed .wrap's horizontal padding
+     and pinned the logo to the very left edge of the screen. */
+  padding-block:.6rem;
+}
 .logo{font-weight:800;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;line-height:1.2}
 .logo span{display:block;font-weight:500;font-size:.62rem;letter-spacing:.22em;color:rgba(255,255,255,.45)}
-.nav{display:flex;gap:.25rem;flex-wrap:wrap;align-items:center}
-.nav a{
-  font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
-  color:rgba(255,255,255,.55);padding:.5rem .6rem;flex-shrink:0;
+
+/* The nav is a single-line scroller, never a wrapping block.
+   frontend-style-guide rule 2 allows either flex-wrap OR overflow-x-auto with
+   flex-shrink-0 items. Wrapping was technically compliant and looked broken:
+   five items became two ragged rows and pushed the sticky header to 141px,
+   about a sixth of a phone screen, on every page. One line that can scroll is
+   the right reading of that rule here. */
+.nav{
+  display:flex;gap:.15rem;align-items:center;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  max-width:100%;
 }
+.nav::-webkit-scrollbar{display:none}
+.nav{margin-left:-.5rem}
+@media(min-width:640px){.nav{margin-left:0}}
+.nav a{
+  font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  color:rgba(255,255,255,.55);padding:.45rem .5rem;flex-shrink:0;white-space:nowrap;
+}
+@media(min-width:640px){.nav{gap:.25rem}.nav a{letter-spacing:.18em;padding:.5rem .6rem}}
 .nav a:hover{color:#fff;background:rgba(255,255,255,.1);text-decoration:none}
 .nav a[aria-current="page"]{color:#fff}
 
@@ -175,18 +198,22 @@ input,textarea,select{
 input::placeholder,textarea::placeholder{color:rgba(255,255,255,.3)}
 textarea{resize:vertical;min-height:5.5rem}
 
-/* ---- footer ---- */
-.ftr{background:#0a0a0a;padding:3rem 0 2.5rem;margin-top:1px}
-.ftr .cols{display:grid;gap:2rem;grid-template-columns:1fr}
-@media(min-width:480px){.ftr .cols{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:860px){.ftr .cols{grid-template-columns:repeat(4,1fr)}}
+/* ---- footer ----
+   Two columns from 340px up. A single column put 17 links in a 916px stack on
+   a 390px phone — a full screen of footer under every page. The breakpoint was
+   480px, which a 390px iPhone never reaches. */
+.ftr{background:#0a0a0a;padding:2.25rem 0 2rem;margin-top:1px}
+.ftr .cols{display:grid;gap:1.5rem 1rem;grid-template-columns:1fr}
+@media(min-width:340px){.ftr .cols{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:720px){.ftr .cols{grid-template-columns:repeat(3,1fr);gap:2rem}}
+@media(min-width:640px){.ftr{padding:3rem 0 2.5rem}}
 .ftr h3{
-  font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
-  color:rgba(255,255,255,.45);margin-bottom:.9rem;
+  font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);margin-bottom:.6rem;
 }
-.ftr a{color:rgba(255,255,255,.65);font-size:.88rem;display:block;padding:.2rem 0}
+.ftr a{color:rgba(255,255,255,.65);font-size:.82rem;line-height:1.45;display:block;padding:.18rem 0}
 .ftr a:hover{color:#fff}
-.legal{margin-top:2.5rem;font-size:.72rem;color:rgba(255,255,255,.35);line-height:1.7}
+.legal{margin-top:1.75rem;font-size:.7rem;color:rgba(255,255,255,.35);line-height:1.6}
 
 /* ---- draft banner ---- */
 .draft{background:#fff;color:#000;padding:.6rem 0;font-weight:800;
@@ -424,7 +451,7 @@ const NAV = [
   ['/pricing/', 'Pricing'],
   ['/short-term-rental-photography/', 'Service'],
   ['/airbnb-photography-cost-austin/', 'Costs'],
-  ['/how-to-prep-your-airbnb-for-photos/', 'Prep guide'],
+  ['/how-to-prep-your-airbnb-for-photos/', 'Prep'],
   ['/contact/', 'Quote'],
 ];
 
@@ -476,10 +503,6 @@ function footer(ctx) {
       <div>
         <h3>Service area</h3>
         ${areas.slice(0, 5).map((a) => `<a href="/areas/${esc(a.slug)}/">${esc(a.name)}</a>`).join('\n        ')}
-      </div>
-      <div>
-        <h3>Pages</h3>
-        ${NAV.map(([h, l]) => `<a href="${h}">${esc(l)}</a>`).join('\n        ')}
       </div>
       <div>
         <h3>Company</h3>

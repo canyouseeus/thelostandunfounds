@@ -39,7 +39,7 @@ export function legalPages(site) {
     {
       slug: 'about',
       type: 'legal',
-      title: `About ${site.brand} | Austin STR Photography`,
+      title: `About ${site.brand}`,
       description: `${site.brand} is the Austin short-term rental photography service of ${business.legalName}. Who we are, what we shoot, and how we work.`,
       h1: `About ${site.brand}`,
       blocks: [
