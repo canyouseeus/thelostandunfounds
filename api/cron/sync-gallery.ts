@@ -98,7 +98,15 @@ async function runDiscovery(supabase: SupabaseClient, libraries: LibraryRow[]) {
             const { subfolders, rootPhotoCount } = await listLibrarySubfolders(slug);
             report.push({ slug, count: subfolders.length });
 
-            const rows = subfolders.map(s => ({
+            // Declared rather than inferred: the '__root__' sentinel pushed
+            // below carries a null subfolder_name, which an inference from the
+            // mapped rows alone types as string.
+            type SyncProgressRow = {
+                library_slug: string
+                subfolder_id: string
+                subfolder_name: string | null
+            }
+            const rows: SyncProgressRow[] = subfolders.map(s => ({
                 library_slug: slug,
                 subfolder_id: s.id,
                 subfolder_name: s.name,

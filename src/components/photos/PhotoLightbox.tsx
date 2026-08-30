@@ -41,6 +41,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     const [printModalOpen, setPrintModalOpen] = useState(false);
 
     const triggerDownload = (email: string) => {
+        if (!photo) return;
         const fileId = photo.google_drive_file_id || photo.id;
         const url = `/api/gallery/stream?fileId=${fileId}&download=true&email=${encodeURIComponent(email)}`;
         window.open(url, '_blank');
