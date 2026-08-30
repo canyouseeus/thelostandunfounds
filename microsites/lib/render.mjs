@@ -457,7 +457,7 @@ ${quoteForm.fields.map(field).join('\n')}
 const NAV = [
   ['/pricing/', 'Pricing'],
   ['/short-term-rental-photography/', 'Service'],
-  ['/airbnb-photography-cost-austin/', 'Costs'],
+  ['/property-managers/', 'Managers'],
   ['/how-to-prep-your-airbnb-for-photos/', 'Prep'],
   ['/contact/', 'Quote'],
 ];

@@ -531,6 +531,136 @@
     ]
   },
   {
+    "slug": "property-managers",
+    "type": "service",
+    "title": "Photography for Austin Property Managers | Portfolio Rates",
+    "description": "Multifamily photography for Austin property managers — model units, amenity spaces and exteriors. $225 per unit, $850 per property, retainers from $1,600/mo.",
+    "h1": "Photography for Austin Property Managers",
+    "blocks": [
+      {
+        "type": "hero",
+        "kicker": "Multifamily · portfolios · Austin metro",
+        "sub": "One shooter across every community you manage, so twelve properties look like they belong to the same company. $225 per unit, $850 per property, retainers from $1,600/mo.",
+        "primary": {
+          "label": "Start a conversation",
+          "href": "/contact/"
+        },
+        "secondary": {
+          "label": "See STR rates",
+          "href": "/pricing/"
+        }
+      },
+      {
+        "type": "prose",
+        "heading": "This is not short-term rental photography",
+        "body": [
+          "A short-term rental is one listing, and the shoot sells a stay. A managed property is a portfolio asset, and the shoot sells a lease — which changes what gets photographed and how it gets priced.",
+          "You are not buying one unit. You are buying model units, amenity spaces, exteriors and signage, across however many communities you run. The scope is set by the property, not by a bedroom count, which is why this is quoted on a call instead of billed from a card. A twelve-unit boutique building and a three-hundred-unit complex cannot share one fixed price, and pretending otherwise would mean overcharging one of you."
+        ]
+      },
+      {
+        "type": "table",
+        "heading": "Rates",
+        "columns": [
+          "Scope",
+          "Price",
+          "What it covers"
+        ],
+        "rows": [
+          [
+            "Single model unit or vacant listing",
+            "$225",
+            "20–30 edited photos, one unit"
+          ],
+          [
+            "Property package",
+            "$850",
+            "Exteriors, amenity spaces and two model units"
+          ],
+          [
+            "Portfolio retainer",
+            "from $1,600/mo",
+            "Scheduled coverage across the properties you manage"
+          ],
+          [
+            "Drone / aerial",
+            "+$150",
+            "Part 107 licensed; LAANC filed where the airspace requires it"
+          ],
+          [
+            "3D virtual tour",
+            "+$200",
+            "Matterport-style walkthrough for your leasing site"
+          ]
+        ],
+        "note": "Quoted per portfolio. Send the property count and unit mix and you get a real number, not a range."
+      },
+      {
+        "type": "prose",
+        "heading": "Why amenity coverage carries the lease",
+        "body": [
+          "Austin renters comparison-shop across a handful of communities in the same submarket, usually on the same afternoon and usually on a phone. The floor plans in that comparison are close to identical. The pool, the gym, the coworking room, the dog run and the courtyard are what actually differ, and they are the frames most leasing galleries under-shoot.",
+          "Amenity spaces are also the hardest thing on a property to photograph well. They are large, mixed-light, often glass-walled, and frequently occupied. They need a scheduled slot and a plan, not the last twenty minutes of a unit shoot."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Consistency is the reason to use one shooter",
+        "body": [
+          "Managing eight communities and hiring eight local photographers gets you eight different colour treatments, eight different focal lengths and eight different ideas of what a kitchen photo looks like. Side by side on your own website that reads as eight unrelated buildings.",
+          "A portfolio shot to one standard uploads cleanly to every ILS you syndicate to — Apartments.com, Zillow Rentals, your own site — because it was shot and exported to one spec rather than reconciled afterwards."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where a retainer earns its money",
+        "body": [
+          "A property is never finished. Units get renovated, amenities get upgraded, a lease-up stabilises, seasons change what the courtyard looks like, and a pool that photographs beautifully in June looks abandoned in January.",
+          "A retainer covers that cadence: scheduled shoots across the portfolio through the year rather than an emergency booking every time a property needs refreshing. It also means we already know your properties, your access process and your brand standard, so a reshoot does not start from scratch."
+        ]
+      },
+      {
+        "type": "faq",
+        "heading": "Property manager questions",
+        "items": [
+          {
+            "q": "How does portfolio pricing work?",
+            "a": "It is quoted per portfolio rather than per unit, because the scope is driven by property count, unit mix and how much amenity and exterior coverage each site needs. Send the list and you get a fixed number. Retainers start at $1,600/mo."
+          },
+          {
+            "q": "Can you shoot occupied units?",
+            "a": "We prefer model units and vacants, which is what leasing galleries should show anyway. If an occupied unit has to be shot we will do it, but it needs resident notice and it will never photograph like a staged model."
+          },
+          {
+            "q": "Do you handle lease-up properties?",
+            "a": "Yes, and they are a different job from a stabilised property. A lease-up needs everything at once and usually on a deadline tied to the opening. Say so early and we will schedule backwards from it."
+          },
+          {
+            "q": "Who owns the images?",
+            "a": "You do. Full commercial rights across your website, every ILS you syndicate to, print collateral and paid ads. No watermark, no per-platform licensing, no expiry."
+          },
+          {
+            "q": "Do you work with the on-site team or corporate?",
+            "a": "Either. Scheduling usually runs through the on-site manager because they control access and know when the amenity spaces are quiet. Billing and the standard normally sit with corporate."
+          },
+          {
+            "q": "What about drone over a multifamily site?",
+            "a": "Part 107 licensed, and we file LAANC where the airspace requires it — a large share of Austin sits under controlled airspace. We will tell you before the shoot if a property cannot be flown legally rather than after."
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Send us your portfolio",
+        "body": "Property count and unit mix is enough to get a real number back.",
+        "button": {
+          "label": "Start a conversation",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
     "slug": "contact",
     "type": "contact",
     "title": "Request a Quote | Austin Airbnb Photography",
