@@ -84,7 +84,10 @@ const corePages = readJson(join(siteDir, 'content', 'pages.json'));
  */
 function areaTitle(name) {
   const candidates = [
-    `Airbnb Photography in ${name} | STR Photos from $195`,
+    // No "STR" here: this is SERP-facing copy and the acronym is trade jargon
+    // a casual host does not necessarily parse. Dropping it also buys back the
+    // characters that had these titles sitting right on the 60-char ceiling.
+    `Airbnb Photography in ${name} | From $195`,
     `Airbnb Photography in ${name} | Austin`,
     `Airbnb Photography — ${name}`,
   ];

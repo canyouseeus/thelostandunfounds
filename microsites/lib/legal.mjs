@@ -123,7 +123,7 @@ export function legalPages(site) {
     {
       slug: 'privacy-policy',
       type: 'legal',
-      title: 'Privacy Policy | Austin STR Photography',
+      title: `Privacy Policy | ${site.brand}`,
       description: `How ${site.brand} collects, uses and stores the personal information you send through this site, and how to have it deleted.`,
       h1: 'Privacy Policy',
       blocks: [
@@ -186,7 +186,7 @@ export function legalPages(site) {
     {
       slug: 'terms',
       type: 'legal',
-      title: 'Terms of Service | Austin STR Photography',
+      title: `Terms of Service | ${site.brand}`,
       description: `The terms covering photography services booked through ${site.domain} — scope, payment, rescheduling, and image rights.`,
       h1: 'Terms of Service',
       blocks: [
@@ -242,7 +242,7 @@ export function legalPages(site) {
     {
       slug: 'accessibility',
       type: 'legal',
-      title: 'Accessibility Statement | Austin STR Photography',
+      title: `Accessibility | ${site.brand}`,
       description: `How ${site.domain} approaches accessibility, the standard we build to, and how to report a barrier.`,
       h1: 'Accessibility',
       blocks: [
@@ -275,7 +275,7 @@ export function legalPages(site) {
       type: 'legal',
       noindex: true, // A form redirect target has no search value and should
       // never appear in results without its form having been submitted.
-      title: 'Thank you | Austin STR Photography',
+      title: `Thank You | ${site.brand}`,
       description: 'Your enquiry has been received. We reply with a fixed price the same day.',
       h1: 'Thank You',
       blocks: [

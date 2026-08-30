@@ -202,7 +202,7 @@
             "15–25 photos, phone or entry DSLR, often no perspective correction, 3–7 day turnaround"
           ],
           [
-            "Standard STR shoot",
+            "Standard rental shoot",
             "$185–335",
             "25–50 edited photos, wide-angle body, corrected verticals, 24–72 hour turnaround"
           ],
@@ -212,7 +212,7 @@
             "50+ photos, twilight and aerial included, staging direction, 48–72 hours"
           ]
         ],
-        "note": "Reference points drawn from Austin MLS listing rates ($150–325, ~$185 median) and STR-specific shoots ($100–400 standard)."
+        "note": "Reference points drawn from Austin MLS listing rates ($150–325, ~$185 median) and short-term rental shoots ($100–400 standard)."
       },
       {
         "type": "prose",
@@ -273,9 +273,9 @@
     "slug": "austin-str-license-and-your-listing",
     "type": "guide",
     "factsCheckedOn": "2026-08-30",
-    "title": "Austin STR License Rules: What They Mean for Your Listing",
-    "description": "What Austin's STR licensing rules mean for your Airbnb listing — the occupancy cap, the delisting timeline, and what to update before enforcement resumes.",
-    "h1": "Austin STR Licensing and Your Listing",
+    "title": "Austin Short-Term Rental License Rules for Your Listing",
+    "description": "What Austin's short-term rental licensing rules mean for your Airbnb listing — the occupancy cap, the delisting timeline, and what to update now.",
+    "h1": "Austin Short-Term Rental Licensing and Your Listing",
     "blocks": [
       {
         "type": "prose",

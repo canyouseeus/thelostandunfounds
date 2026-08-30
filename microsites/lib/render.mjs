@@ -71,8 +71,15 @@ textarea:focus-visible,select:focus-visible{
      and pinned the logo to the very left edge of the screen. */
   padding-block:.6rem;
 }
-.logo{font-weight:800;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;line-height:1.2}
-.logo span{display:block;font-weight:500;font-size:.62rem;letter-spacing:.22em;color:rgba(255,255,255,.45)}
+.logo{font-weight:800;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;line-height:1.2}
+/* The "Austin, TX" sub-line is redundant on a phone once the name itself
+   begins with Austin, and dropping it keeps the sticky header off a third
+   row. It returns at tablet width where there is room for it. */
+.logo span{display:none;font-weight:500;font-size:.62rem;letter-spacing:.22em;color:rgba(255,255,255,.45)}
+@media(min-width:480px){
+  .logo{font-size:.8rem;letter-spacing:.18em}
+  .logo span{display:block}
+}
 
 /* The nav is a single-line scroller, never a wrapping block.
    frontend-style-guide rule 2 allows either flex-wrap OR overflow-x-auto with

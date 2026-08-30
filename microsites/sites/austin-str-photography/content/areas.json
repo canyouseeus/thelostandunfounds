@@ -2,7 +2,10 @@
   {
     "slug": "downtown-austin",
     "name": "Downtown Austin",
-    "zips": ["78701", "78702"],
+    "zips": [
+      "78701",
+      "78702"
+    ],
     "typical": "High-rise condos and lofts, 600–1,200 sq ft",
     "landmark": "the Capitol and 2nd Street District",
     "blurb": "Downtown units are small, glassy and almost always shot against a wall of west-facing windows. The listing photo that sells a downtown condo is the skyline view — which means exposure blending, not a single flash frame.",
@@ -12,17 +15,23 @@
   {
     "slug": "east-austin",
     "name": "East Austin",
-    "zips": ["78702", "78721", "78722"],
+    "zips": [
+      "78702",
+      "78721",
+      "78722"
+    ],
     "typical": "Bungalows, ADUs and garage conversions",
     "landmark": "Manor Road and East 6th",
-    "blurb": "East Austin is the densest STR pocket in the city and the most design-forward. Guests booking here are choosing character over square footage, so the shoot has to carry the interior styling rather than the floor plan.",
+    "blurb": "East Austin is the densest short-term rental pocket in the city and the most design-forward. Guests booking here are choosing character over square footage, so the shoot has to carry the interior styling rather than the floor plan.",
     "challenge": "ADUs and garage conversions are frequently under 500 sq ft with one usable sightline. Shooting these well is about lens discipline — a 14mm frame that bows the walls reads as dishonest and drives cancellations. We shoot 20–24mm and take more frames instead.",
     "tip": "If the property has a mural, patio or tree canopy, that is the cover photo. East Austin outdoor space converts better than another angle of the bedroom."
   },
   {
     "slug": "south-congress",
     "name": "South Congress",
-    "zips": ["78704"],
+    "zips": [
+      "78704"
+    ],
     "typical": "Boutique bungalows and duplex halves",
     "landmark": "SoCo, Hotel San José and the Continental Club",
     "blurb": "SoCo listings compete on walkability. The photo set has to establish that the guest can park once and leave the car, which means the exterior and street context matter as much as the interiors.",
@@ -32,7 +41,10 @@
   {
     "slug": "zilker",
     "name": "Zilker & Barton Hills",
-    "zips": ["78704", "78746"],
+    "zips": [
+      "78704",
+      "78746"
+    ],
     "typical": "Mid-century homes and 2–3BR rentals",
     "landmark": "Zilker Park and Barton Springs Pool",
     "blurb": "Zilker rents on proximity — to the park, to the Greenbelt, to ACL. Bookings spike hard around festival weekends, and listings that show the outdoor living space capture that demand.",
@@ -42,7 +54,9 @@
   {
     "slug": "rainey-street",
     "name": "Rainey Street District",
-    "zips": ["78701"],
+    "zips": [
+      "78701"
+    ],
     "typical": "Tower units, studios through 2BR",
     "landmark": "Rainey Street and Lady Bird Lake",
     "blurb": "Rainey is the highest-turnover short-term rental district in Austin and the most photographically uniform — dozens of units in the same tower with the same finishes. Differentiation has to come from the shoot.",
@@ -52,7 +66,9 @@
   {
     "slug": "mueller",
     "name": "Mueller",
-    "zips": ["78723"],
+    "zips": [
+      "78723"
+    ],
     "typical": "Modern 3–4BR homes and row houses",
     "landmark": "the Thinkery and Mueller Lake Park",
     "blurb": "Mueller draws longer family stays and relocation guests rather than weekend traffic. Those bookers read the full photo set, so the shoot needs coverage — every bedroom, both baths, the laundry, the yard.",
@@ -62,7 +78,11 @@
   {
     "slug": "lake-travis",
     "name": "Lake Travis & Lakeway",
-    "zips": ["78734", "78738", "78732"],
+    "zips": [
+      "78734",
+      "78738",
+      "78732"
+    ],
     "typical": "Waterfront homes, 4BR+ and luxury",
     "landmark": "Lake Travis, Hippie Hollow and the Oasis",
     "blurb": "Lake Travis is the top of the Austin nightly-rate ladder and the one submarket where aerial coverage is not optional. The water is the product, and you cannot show water from the ground.",
@@ -72,7 +92,11 @@
   {
     "slug": "round-rock",
     "name": "Round Rock",
-    "zips": ["78664", "78665", "78681"],
+    "zips": [
+      "78664",
+      "78665",
+      "78681"
+    ],
     "typical": "Suburban 3–4BR single-family",
     "landmark": "Kalahari Resort, Dell and Old Settlers Park",
     "blurb": "Round Rock runs on corporate and youth-sports demand rather than tourism — Dell contractors, Kalahari weekends, tournament families at Old Settlers. Predictable, less seasonal, and far less photographically competitive than central Austin.",
