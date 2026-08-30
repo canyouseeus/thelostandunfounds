@@ -1,12 +1,49 @@
-# TypeScript cleanup plan
+# TypeScript cleanup — done
 
-**68 errors, 21 files, 6 root causes.** From `npx tsc --noEmit` at the repo
-root on 30 August 2026, against `tsconfig.json` as committed (which already
-includes `src`, `api`, `lib` and `scripts`).
+**Status: complete. 68 errors → 0, and the build now enforces it.**
+Landed 30 August 2026 in `fed292f`, `eeb1ad4` and `c10b990`.
 
-This is a handoff document. Each item gives exact locations, what the compiler
-is actually objecting to, and the fix. Work top to bottom — cheapest and safest
-first, so a partial run still leaves the tree better than it found it.
+`npm run prebuild` now runs `tsc --noEmit` before the SEO check, so the count
+cannot climb again. That gate was verified able to fail: with a deliberate
+`const x: number = "string"` injected the build exits 2 and prints the error;
+with it removed the build exits 0 and completes.
+
+This file is kept as the record of what was found, because four of the fixes
+were real bugs rather than type noise. The original plan text follows the
+findings, unchanged, so the reasoning behind each decision stays readable.
+
+## What it actually found
+
+| Bug | Where | Effect before the fix |
+|---|---|---|
+| `per_page` should be `perPage` | `_admin-affiliates-handler.ts:57` | Key silently ignored, `listUsers` capped at the default 50. Any affiliate past the 50th rendered with no email. |
+| Recharts formatter typed `number` | 5 sites, incl. `AffiliateRevenueTracker.tsx:365` | Recharts passes `number \| undefined`; that site called `.toFixed(2)` on it, so an undefined value threw. The other four printed `$undefined`. |
+| Whole preset passed as one variant | `ExpandableExamples.tsx` ×3 | Framer received target keys named `initial`/`animate`, which are not CSS properties. Those three animations never ran. |
+| `metadata` read off a `MapPhoto` | `PhotoGallery.tsx:1154` | `PhotoMap` deliberately selects flat `metadata->>` aliases and never selects `metadata`, so opening a photo from the map handed the lightbox `undefined` every time. |
+
+The last one only surfaced because the duplicate `Photo` types were consolidated
+rather than cast between — which is why the plan said not to cast there.
+
+**The dead-code deletion was checked, not assumed.** A transitive import graph
+from `src/main.tsx` and `src/App.tsx` reached 251 files; none of the eight
+candidates was among them, and their only importers were each other. The graph
+was control-tested against `Admin.tsx` and `PhotoGallery.tsx`, which it
+correctly reported as reachable — a reachability check that cannot say
+"reachable" proves nothing.
+
+No `any`, no `@ts-ignore`, no `@ts-expect-error` was added. The single `any` in
+the diff is `[key: string]: any` on `PhotoMetadata`, which is deliberate and
+commented: `photos.metadata` is genuinely an open-ended jsonb column.
+
+**Two things changed behaviour and are worth clicking through:** the affiliate
+admin view (previously blank emails should now fill in) and opening a photo from
+the gallery's map view (metadata now arrives).
+
+---
+
+# The original plan
+
+Kept verbatim from here down.
 
 ## Reproduce it correctly
 
