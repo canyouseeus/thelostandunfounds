@@ -84,8 +84,10 @@ export const TEST_PRODUCTS = [
     url: '#',
     category: 'prints',
     featured: true,
-    productKind: 'physical',
-    fulfillment: 'prodigi',
+    // `as const` so this narrows to the literal union Product expects rather
+    // than widening to string, which is what made the whole array unassignable.
+    productKind: 'physical' as const,
+    fulfillment: 'prodigi' as const,
     prodigiProductId: 'dev-prodigi-product-id',
     prodigiSku: 'GLOBAL-CFPM-16X20',
     mockupTemplateUrl: 'https://dummyimage.com/1200x900/000/333333.png&text=Wall+Mockup',

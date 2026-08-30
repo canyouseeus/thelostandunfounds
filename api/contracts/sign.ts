@@ -35,6 +35,7 @@ import {
   isExpired,
   validateSignaturePayload,
   type ContractSigner,
+  type ContractRow,
 } from '../../lib/api-handlers/_contracts-utils.js'
 
 const BUSINESS_CC = 'media@thelostandunfounds.com'
@@ -48,7 +49,23 @@ function escapeHtml(s: unknown): string {
 }
 
 /** Load contract + all signers from a signing token, or explain the refusal. */
-async function loadByToken(supabase: ReturnType<typeof getSupabaseAdmin>, token: string) {
+/**
+ * Declared rather than inferred. Every failure path here already knows its own
+ * status code, but the inferred union lost that — `loaded.code` came out as
+ * `number | undefined` at the call site, which would have meant a failure could
+ * reach `res.status(undefined)`.
+ */
+type LoadFailure = { error: string; code: 404 }
+type LoadSuccess = {
+  signer: ContractSigner
+  contract: ContractRow
+  signers: ContractSigner[]
+}
+
+async function loadByToken(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  token: string
+): Promise<LoadFailure | LoadSuccess> {
   const { data: signer } = await supabase
     .from('contract_signers').select('*').eq('token', token).maybeSingle()
 

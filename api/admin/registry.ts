@@ -180,6 +180,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })))
         }
 
+        if (section === 'leads') {
+            // Quote requests from the microsites. These rows are RLS-locked to
+            // the service role — there is no anon or authenticated policy on
+            // microsite_leads at all — so this endpoint is the only way to read
+            // them, which is deliberate: they carry a member of the public's
+            // name, email, phone and property address.
+            const [{ count }, recent] = await Promise.all([
+                supabase.from('microsite_leads').select('*', { count: 'exact', head: true }),
+                supabase
+                    .from('microsite_leads')
+                    .select('name, email, phone, address, bedrooms, notes, status, site_id, source_url, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(12),
+            ])
+            const rows: Row[] = (recent.data ?? []).map(l => ({
+                name: l.name || '(no name)',
+                // The line a triage decision is actually made on: how big the
+                // job is and whether anyone has replied yet.
+                line: [l.bedrooms, l.address, l.status !== 'new' ? l.status : null]
+                    .filter(Boolean)
+                    .join(' — '),
+                at: when(l.created_at),
+                fields: {
+                    Name: l.name || '—',
+                    Email: l.email || '—',
+                    Phone: l.phone || '—',
+                    Property: l.address || '—',
+                    Bedrooms: l.bedrooms || '—',
+                    Notes: l.notes || '—',
+                    Status: l.status || 'new',
+                    Site: l.site_id || '—',
+                    Page: l.source_url || '—',
+                    Received: l.created_at?.slice(0, 10) ?? '—',
+                },
+            }))
+            return out(count ?? 0, rows)
+        }
+
         return res.status(400).json({ error: 'unknown section' })
     } catch (err: any) {
         console.error('[Registry] error:', err)

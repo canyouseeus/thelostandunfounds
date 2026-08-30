@@ -32,8 +32,62 @@ const DRY_RUN          = args.includes('--dry-run');
 const LIBRARY_FILTER   = (() => { const i = args.indexOf('--library'); return i !== -1 ? args[i + 1] : null; })();
 const SUBJECT_OVERRIDE = (() => { const i = args.indexOf('--subject'); return i !== -1 ? args[i + 1] : undefined; })();
 
+/**
+ * A minimal Database shape covering only the two tables this script touches.
+ *
+ * `createClient` with no generic resolves row types to `never`, so every
+ * property access on a selected row failed to compile, and so did the
+ * `.update({ title })` — a `.returns<T>()` on the select fixes reads but not
+ * writes, which is why the generic is the right lever rather than a per-query
+ * annotation.
+ *
+ * Nullability was read off the live schema (project cxpyqjxhbvuygnxyukli, see
+ * the Database Project Rule in CLAUDE.md), not inferred: photos.id and
+ * photos.google_drive_file_id are NOT NULL; title, metadata and created_at are
+ * nullable, which is why the code below already guards each of them.
+ *
+ * This is deliberately hand-written and partial. If the project ever commits
+ * generated types from `supabase gen types`, replace this with them.
+ */
+type PhotoRow = {
+    id: string
+    google_drive_file_id: string
+    title: string | null
+    metadata: Record<string, any> | null
+    created_at: string | null
+}
+
+type PhotoLibraryRow = {
+    id: string
+    slug: string
+    name: string
+}
+
+type Db = {
+    public: {
+        Tables: {
+            photos: {
+                Row: PhotoRow
+                Insert: Partial<PhotoRow>
+                Update: Partial<PhotoRow>
+                Relationships: []
+            }
+            photo_libraries: {
+                Row: PhotoLibraryRow
+                Insert: Partial<PhotoLibraryRow>
+                Update: Partial<PhotoLibraryRow>
+                Relationships: []
+            }
+        }
+        Views: Record<string, never>
+        Functions: Record<string, never>
+        Enums: Record<string, never>
+        CompositeTypes: Record<string, never>
+    }
+}
+
 // Clients are initialized lazily inside run() so this module is safe to import
-let supabase: ReturnType<typeof createClient>;
+let supabase: ReturnType<typeof createClient<Db>>;
 let drive: ReturnType<typeof google.drive>;
 
 // ─── Log ─────────────────────────────────────────────────────────────────────
@@ -183,7 +237,7 @@ export async function run() {
     if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN)
         throw new Error('Missing Google OAuth2 credentials in .env.local');
 
-    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    supabase = createClient<Db>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
     oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
