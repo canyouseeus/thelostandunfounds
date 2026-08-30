@@ -30,6 +30,9 @@
  *   7. legal         — the trust/legal set has been read by a human before
  *                      a production build ships pages that make commitments
  *                      about how personal data is handled
+ *   8. images        — every <img> carries alt text and explicit width and
+ *                      height, so a photograph cannot ship unlabelled or
+ *                      shift the layout as it loads
  *
  * Gate 6 is the one that matters most and the one no microsite course
  * enforces. Google's March 2024 spam policies name "scaled content abuse"
@@ -167,6 +170,11 @@ writeFileSync(
 /* ------------------------------------------------------------------ *
  * Gates
  * ------------------------------------------------------------------ */
+/* The gates, named. The pass message counts this rather than a literal, so
+ * adding a gate cannot leave the build reporting the old number — a summary
+ * line that can go stale is its own small lie. */
+const GATES = ['placeholders', 'design', 'headings', 'meta', 'links', 'similarity', 'legal', 'images'];
+
 const errors = [];
 const warns = [];
 const fail = (gate, msg) => errors.push(`[${gate}] ${msg}`);
@@ -392,4 +400,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`\n  all 8 gates passed\n`);
+console.log(`\n  all ${GATES.length} gates passed\n`);
