@@ -224,6 +224,19 @@ input,textarea,select{
 input::placeholder,textarea::placeholder{color:rgba(255,255,255,.3)}
 textarea{resize:vertical;min-height:5.5rem}
 
+/* The honeypot. Off-screen rather than display:none, because a bot that reads
+   computed styles skips anything hidden outright but will happily fill a field
+   it can see in the DOM. Never announced to assistive tech, never focusable. */
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* Only rendered when the endpoint bounced the submission back with ?error=. */
+.fmsg{background:rgba(255,255,255,.10);padding:.85rem 1rem;margin-bottom:1px;font-size:.9rem}
+
+/* The second path out of the form, for a visitor who has already decided and
+   wants a date rather than a price. */
+.alt{padding:1.1rem 0 0;font-size:.85rem;color:rgba(255,255,255,.55)}
+.alt a{color:#fff}
+
 /* ---- footer ----
    Two columns from 340px up. A single column put 17 links in a 916px stack on
    a 390px phone — a full screen of footer under every page. The breakpoint was
@@ -457,13 +470,19 @@ const blocks = {
    * endpoint and the privacy policy all come from one definition. Adding a
    * field to the config adds it to the form and to the policy at once.
    *
-   * The endpoint is configuration rather than a hardcoded default because the
-   * platform's own /api/booking is a JSON API with no CORS header on /api/*,
-   * so a plain form action there would land the visitor on raw JSON. See the
-   * comment in site.json for the three ways to close this.
+   * It posts as an ordinary HTML form to the platform's own
+   * /api/microsite/lead, which answers with a 303 back to redirectPath. That
+   * shape is deliberate: a plain form post is a CORS "simple request", so it
+   * crosses origins with no preflight and no Access-Control-Allow-Origin —
+   * which vercel.json does not set on /api/* and should not start setting.
+   * Nothing here needs JavaScript to work.
+   *
+   * Three spam guards, since the endpoint is public and cross-origin:
+   * a honeypot, a fill-time stamp, and Turnstile. Only the last needs script,
+   * and only when a site key is configured.
    */
   quoteform: (_b, ctx) => {
-    const { quoteForm, domain } = ctx.site;
+    const { quoteForm, business } = ctx.site;
     const field = (f) => {
       const req = f.required ? ' required' : '';
       const ac = f.autocomplete ? ` autocomplete="${esc(f.autocomplete)}"` : '';
@@ -478,18 +497,58 @@ const blocks = {
       else input = `<input type="${esc(f.type)}" name="${esc(f.name)}"${req}${ac}${ph}>`;
       return `      <label><span class="lb">${esc(f.label)}</span>${input}</label>`;
     };
+
+    const siteKey = quoteForm.turnstileSiteKey;
+    const turnstile = siteKey
+      ? `      <div class="cf-turnstile" data-sitekey="${esc(siteKey)}" data-theme="dark"></div>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n`
+      : '';
+
+    // The booking flow, for the visitor who is past asking what it costs.
+    // business.bookingUrl existed in config for weeks with nothing reading it.
+    const bookNow = business.bookingUrl
+      ? `    <p class="alt">Already know your dates? <a href="${esc(business.bookingUrl)}">Book a shoot directly</a>.</p>\n`
+      : '';
+
     return `
 <section>
   <div class="wrap">
+    <div id="fmsg" hidden class="fmsg"></div>
     <form method="${esc(quoteForm.method)}" action="${esc(quoteForm.action)}">
-      <input type="hidden" name="source" value="${esc(domain)}">
-      <input type="hidden" name="event_type" value="Airbnb / Short-Term Rental">
-      <input type="hidden" name="_next" value="https://${esc(domain)}${esc(quoteForm.redirectPath)}">
+      <input type="hidden" name="site" value="${esc(ctx.site.id)}">
+      <input type="hidden" name="redirect" value="${esc(quoteForm.redirectPath)}">
+      <input type="hidden" name="source" id="qf-source" value="">
+      <input type="hidden" name="t" id="qf-t" value="">
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 ${quoteForm.fields.map(field).join('\n')}
-      <button class="btn" type="submit">Request quote</button>
+${turnstile}      <button class="btn" type="submit">Request quote</button>
     </form>
-  </div>
-</section>`;
+${bookNow}  </div>
+</section>
+<script>
+/* Two jobs, both optional — the form submits correctly without either.
+   1. Stamp when the form rendered, so the endpoint can reject a submission
+      that arrived faster than a person could type. A build-time constant
+      would be stale on a static page, so it has to be set here.
+   2. Show the reason if the endpoint bounced the submission back. */
+(function () {
+  var t = document.getElementById('qf-t');
+  if (t) t.value = String(Date.now());
+  var src = document.getElementById('qf-source');
+  if (src) src.value = location.href;
+  var err = new URLSearchParams(location.search).get('error');
+  if (!err) return;
+  var msg = {
+    missing: 'Please fill in your name, email and the property address.',
+    email: 'That email address does not look right — please check it.',
+    captcha: 'The security check did not pass. Please try again.',
+    server: 'Something went wrong on our end. Please try again, or email us directly.'
+  }[err];
+  if (!msg) return;
+  var box = document.getElementById('fmsg');
+  if (box) { box.textContent = msg; box.hidden = false; }
+})();
+</script>`;
   },
 };
 

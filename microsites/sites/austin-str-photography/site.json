@@ -84,9 +84,12 @@
     "phoneLinkClass": "wc-phone"
   },
   "quoteForm": {
-    "action": "REPLACE_ME_FORM_ENDPOINT",
+    "action": "https://www.thelostandunfounds.com/api/microsite/lead",
+    "actionNote": "The platform's own endpoint. It takes an ordinary form-encoded POST and answers 303 to redirectPath, which needs no CORS header — a plain form post is a CORS simple request. Leads land in microsite_leads, not bookings: bookings.event_date is NOT NULL and a quote request has no date.",
     "method": "POST",
     "redirectPath": "/thank-you/",
+    "turnstileSiteKey": "0x4AAAAAACAOHJSfRl-nikjS",
+    "turnstileNote": "Public site key, the same widget the main site uses; the secret lives only in TURNSTILE_SECRET_KEY on the server. BEFORE LAUNCH: add austinairbnbphotography.com to this widget's domain list in the Cloudflare dashboard, or every submission from the real domain fails the check.",
     "fields": [
       {
         "name": "name",

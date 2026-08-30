@@ -26,7 +26,7 @@ const REVENUE = {
   series: [0,0,0,0,0,0,45,0,0,120,0,0,0,0,0,0,270,0,0,0,0,55,0,0,0,0,0,0,130,95],
   refunds: 45,
 }
-const REGISTRY = { photos: 13275, users: 17, posts: 9, products: 24, writers: 12, affiliates: 3, subscribers: 123 }
+const REGISTRY = { photos: 13275, users: 17, posts: 9, products: 24, writers: 12, affiliates: 3, subscribers: 123, leads: 8 }
 const ANALYTICS = {
   views: 9795, visitors: 2140, bounceRate: 42,
   trend: [12,8,15,6,22,31,9,7,40,22,18,52,26,30,41,19,61,34,28,70,45,38,52,61,59,72,48,80,66,91],

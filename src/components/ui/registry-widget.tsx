@@ -157,6 +157,8 @@ export interface RegistryWidgetData {
   writers: number;
   affiliates: number;
   subscribers: number;
+  /** Quote requests captured by the microsites. */
+  leads: number;
 }
 
 const fmt = (n: number) => n.toLocaleString();
@@ -237,6 +239,7 @@ export function RegistryWidget({ size = '4x2', data, census, onOpenPanel, classN
     { label: 'Writers', value: data.writers },
     { label: 'Affiliates', value: data.affiliates },
     { label: 'Subs', value: data.subscribers },
+    { label: 'Leads', value: data.leads },
   ];
 
   return (
