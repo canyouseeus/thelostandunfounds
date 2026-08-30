@@ -13,20 +13,39 @@ profile.
 
 ---
 
-## What I need from you
+## What the profile says — read off it 30 August 2026
 
-I cannot see the profile, so two values have to come across exactly as they
-appear on it. They go into `site.json`, and from there into the site's
-structured data:
+| Field | Value | Where it went |
+|---|---|---|
+| Name | `THE LOST+UNFOUNDS` | `business.legalName` — already matched, unchanged |
+| Phone | `(512) 350-1869` | `business.phone`, in the profile's own format |
+| Primary category | Photography service | left alone, deliberately |
+| Location | Serves Austin — service-area, no storefront | matches the `GeoCircle` in the JSON-LD |
+| Hours | Open 24 hours | — |
+| Messaging | Text message enabled | — |
 
-1. **The profile name, character for character.** Probably `THE LOST+UNFOUNDS`,
-   but if Google made you save it as `The Lost+Unfounds` then that is the
-   canonical string and `business.legalName` must change to match.
-2. **The phone number on the profile.**
+The name and phone are two halves of one NAP and Google reconciles them against
+the site's `ProfessionalService` markup, which is why the phone is stored in the
+format the profile displays rather than reformatted. Both values are now set and
+the phone no longer blocks the build.
 
-These are two halves of one NAP and Google reconciles them. A mismatch is a
-weaker signal than an omission, which is why the build currently refuses to
-ship with the phone unset rather than guessing.
+The `tel:` href is `+15123501869` while the visible text stays `(512) 350-1869`.
+Those are two different jobs: the text is the NAP string, the href has to be
+dialable from a roaming handset or a VoIP client, where a bare 10-digit number
+is not.
+
+### One thing the profile does not say
+
+The profile describes the business as *"an editorial and nightlife photography
+brand and digital media group based in Austin, Texas."* Real estate and
+short-term rental work does not appear in it anywhere, and the primary category
+is the generic Photography service.
+
+That is the gap this sheet is really about. Google reads the profile to decide
+what the business does, and right now nothing on it suggests property work — so
+the profile lends the microsite almost no topical support. The secondary
+categories and the service list below are what close that, and they are the
+highest-value edits here.
 
 ---
 
@@ -97,8 +116,8 @@ tracking number before launching — you need the number you already have.
 
 ## Order
 
-1. Send me the exact profile name and phone. I set them in `site.json`, which
-   clears one of the three production blockers.
+1. ~~Send me the exact profile name and phone.~~ Done — both are set in
+   `site.json`, which cleared one of the three production blockers.
 2. Add secondary categories and the service list.
 3. Upload photos.
 4. Ask for reviews.

@@ -576,7 +576,27 @@ function phoneLink(site) {
   const phone = site.business.phone;
   if (!/^\+?[\d\s().-]{10,}$/.test(phone)) return '';
   const cls = site.analytics?.phoneLinkClass;
-  return `<a ${cls ? `class="${esc(cls)}" ` : ''}href="tel:${esc(phone.replace(/[^\d+]/g, ''))}">${esc(phone)}</a>`;
+  return `<a ${cls ? `class="${esc(cls)}" ` : ''}href="tel:${esc(telHref(site))}">${esc(phone)}</a>`;
+}
+
+/**
+ * The tel: href, as E.164 where we can work it out.
+ *
+ * The visible text stays in the Google Business Profile's own format, because
+ * that string is half of a NAP that Google reconciles against the profile. The
+ * href is a different job: a bare 10-digit tel: is only dialable if the handset
+ * assumes the local country, which is not true on a roaming phone or a VoIP
+ * client. So a US number is promoted to +1, and anything already carrying a +
+ * or an unrecognised shape is left exactly as written rather than guessed at.
+ */
+function telHref(site) {
+  const raw = site.business.phone.replace(/[^\d+]/g, '');
+  if (raw.startsWith('+')) return raw;
+  if (site.geo?.country === 'US') {
+    if (raw.length === 10) return `+1${raw}`;
+    if (raw.length === 11 && raw.startsWith('1')) return `+${raw}`;
+  }
+  return raw;
 }
 
 function footer(ctx) {

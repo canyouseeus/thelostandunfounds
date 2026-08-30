@@ -16,8 +16,8 @@
   },
   "business": {
     "legalName": "THE LOST+UNFOUNDS",
-    "phone": "REPLACE_ME_GBP_PHONE",
-    "phoneNote": "Must exactly match the phone on the Google Business Profile. Call tracking is handled by dynamic number insertion via analytics.phoneLinkClass, not by putting a different number here.",
+    "phone": "(512) 350-1869",
+    "phoneNote": "Read off the Google Business Profile for THE LOST+UNFOUNDS on 30 August 2026, in the profile's own display format, because the GBP and this site's JSON-LD are the two halves of one NAP and Google reconciles them. Do not reformat it and do not substitute a call-tracking number — tracking is handled by dynamic number insertion via analytics.phoneLinkClass, which swaps the displayed number while this one stays canonical.",
     "email": "media@thelostandunfounds.com",
     "bookingUrl": "https://www.thelostandunfounds.com/booking",
     "parentUrl": "https://www.thelostandunfounds.com",

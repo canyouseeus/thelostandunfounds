@@ -216,16 +216,15 @@ lake level, the building stock.
 
 ## Before this goes live
 
-The production build is **blocked on purpose** — `site.json` carries
-`REPLACE_ME_GBP_PHONE` and `REPLACE_ME_FORM_ENDPOINT`, and the placeholder gate
-refuses to ship either. That is the intended behaviour, per `brand-ethos`: *"no
+The production build is **blocked on purpose** — `site.json` still carries
+`REPLACE_ME_FORM_ENDPOINT`, and the placeholder gate refuses to ship it. That is the intended behaviour, per `brand-ethos`: *"no
 placeholders … If it's not wired to a real data source, it doesn't ship."*
 
-Three things block the build, and one of them is not a purchase:
+Two things still block the build:
 
-1. **The phone from the Google Business Profile**, into `business.phone`.
-   Not a call-tracking number — see below. THE LOST+UNFOUNDS already has a
-   profile, so this is a number you have, not one you buy.
+1. ~~**The phone from the Google Business Profile.**~~ Done — read off the
+   profile on 30 August 2026 and set to `(512) 350-1869`, in the profile's own
+   format. `business.legalName` already matched the profile name exactly.
 2. **`quoteForm.action`.** Verified: `/api/booking` will not work as a plain
    form action — it is a JSON API and `vercel.json` sets no
    `Access-Control-Allow-Origin` on `/api/*`, so a form pointed there lands the
