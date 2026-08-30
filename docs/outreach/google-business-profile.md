@@ -1,13 +1,33 @@
 # Google Business Profile — what to change on the existing one
 
-THE LOST+UNFOUNDS already has a profile. **Do not create a second one.**
+THE LOST+UNFOUNDS already has a profile. **Do not create a second one for a
+photography microsite.**
 
-A service-area business is allowed exactly one profile unless it runs separate
-teams in genuinely non-overlapping areas. A second profile for the microsite
-would be a duplicate listing, and duplicates get suspended — which would take
-the working profile down with the new one. This is also why there is no
-profile-per-microsite strategy: every future microsite points at this same
-profile.
+The rule is one profile per *business*, per location — not one profile per
+person. A second profile named for a photography service line in Austin would
+be THE LOST+UNFOUNDS listed twice: same owner, same category, same service
+area. That is a duplicate, and duplicates get suspended, which can take the
+working profile down with the new one.
+
+**A genuinely different business is a different matter and gets its own
+profile.** Different name, different category, different customers, its own
+phone and its own website — that is not a duplicate, and Google expects it to
+be listed separately. Owning several businesses is ordinary; listing one
+business twice is the violation.
+
+So the test is not "how many microsites am I running", it is "whose business is
+this":
+
+| The microsite is… | Profile |
+|---|---|
+| Another service line of THE LOST+UNFOUNDS — short-term rental, real estate, events | This one. No new profile. |
+| A different business, with its own name, phone and customers | Its own profile. |
+
+What keeps a separate business's profile clean: its own phone number — never
+share this one, a shared number across two profiles is the most common
+duplicate signal there is — its own website or domain, its own primary
+category, and its own verification. If the business belongs to someone else, it
+is better for them to own the profile with you added as a manager.
 
 **Checked 30 August 2026.**
 
@@ -126,6 +146,8 @@ tracking number before launching — you need the number you already have.
 
 ## What not to do
 
-Do not create a second profile. Do not rename the existing one to include
-"Austin" or "photography". Do not change the primary category casually. Do not
-put a tracking number anywhere the structured data can see it.
+Do not create a second profile *for this business* — see the top of this file
+for where a genuinely separate business does get its own. Do not rename the
+existing one to include "Austin" or "photography". Do not change the primary
+category casually. Do not put a tracking number anywhere the structured data
+can see it.
