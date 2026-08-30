@@ -1,3 +1,4 @@
+import { adminFetch } from '../utils/adminAuth'
 /**
  * Newsletter Management Component
  * Allows admins to compose and send newsletters to subscribers
@@ -166,11 +167,10 @@ export default function NewsletterManagement() {
 
     try {
       // Use secure server-side API endpoint
-      const response = await fetch('/api/newsletter/delete', {
+      const response = await adminFetch('/api/newsletter/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds: [campaignId] }),
       });
@@ -207,11 +207,10 @@ export default function NewsletterManagement() {
     try {
       // Use secure server-side API endpoint
       const campaignIds = campaigns.map(c => c.id);
-      const response = await fetch('/api/newsletter/delete', {
+      const response = await adminFetch('/api/newsletter/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds }),
       });
@@ -261,11 +260,10 @@ export default function NewsletterManagement() {
 
     try {
       // Use secure server-side API endpoint
-      const response = await fetch('/api/newsletter/delete', {
+      const response = await adminFetch('/api/newsletter/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds: Array.from(selectedCampaigns) }),
       });
@@ -319,7 +317,7 @@ export default function NewsletterManagement() {
   const loadCampaignLogs = async (campaignId: string) => {
     try {
       setLoadingLogs(campaignId);
-      const response = await fetch(`/api/newsletter/logs?campaignId=${campaignId}`);
+      const response = await adminFetch(`/api/newsletter/logs?campaignId=${campaignId}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -341,7 +339,7 @@ export default function NewsletterManagement() {
   const retryFailedEmails = async (campaignId: string, emails?: string[]) => {
     try {
       setRetrying(campaignId);
-      const response = await fetch('/api/newsletter/retry', {
+      const response = await adminFetch('/api/newsletter/retry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -500,7 +498,7 @@ export default function NewsletterManagement() {
 
     try {
       setSending(true);
-      const response = await fetch('/api/newsletter/send', {
+      const response = await adminFetch('/api/newsletter/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -562,7 +560,7 @@ export default function NewsletterManagement() {
 
     try {
       setSendingTest(true);
-      const response = await fetch('/api/newsletter/send', {
+      const response = await adminFetch('/api/newsletter/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

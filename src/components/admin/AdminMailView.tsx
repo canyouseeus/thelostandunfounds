@@ -1,3 +1,4 @@
+import { adminFetch } from '../../utils/adminAuth'
 /**
  * AdminMailView - Full Webmail Interface for Admin
  * Features: Inbox, Sent, Drafts, Compose, Search, Attachments
@@ -137,11 +138,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     options: RequestInit = {}
   ) => {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'X-Admin-Email': user?.email || ''
+      'Content-Type': 'application/json'
     };
 
-    const response = await fetch(`/api/mail/${endpoint}`, {
+    const response = await adminFetch(`/api/mail/${endpoint}`, {
       ...options,
       headers: { ...headers, ...options.headers }
     });
@@ -450,8 +450,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Download attachment
   const handleDownloadAttachment = useCallback(async (messageId: string, attachment: MailAttachment) => {
     try {
-      const response = await fetch(`/api/mail/attachment?messageId=${encodeURIComponent(messageId)}&attachmentId=${encodeURIComponent(attachment.attachmentId)}`, {
-        headers: { 'X-Admin-Email': user?.email || '' }
+      const response = await adminFetch(`/api/mail/attachment?messageId=${encodeURIComponent(messageId)}&attachmentId=${encodeURIComponent(attachment.attachmentId)}`, {
+        headers: {}
       });
 
       if (!response.ok) throw new Error('Download failed');
