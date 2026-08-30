@@ -117,41 +117,98 @@ Fabricated trust pages are worse than absent ones.
 
 ### The quote form and call tracking
 
-`site.quoteForm` defines the endpoint, method, redirect and every field. The
-endpoint is deliberately a placeholder rather than a default, because the
-platform's own `/api/booking?action=request` is a **JSON** API (`name`,
-`business_name`, `email`, `phone`, `event_type`…) and `vercel.json` sets no
-`Access-Control-Allow-Origin` on `/api/*` — a plain form action pointed there
-lands the visitor on raw JSON. Three ways to close it, in `site.json`:
+`site.quoteForm` defines the endpoint, method, redirect and every field, so the
+form, the endpoint and the privacy policy all come from one definition. Adding a
+field to the config adds it to the form and to the policy at once.
 
-1. a form service (Formspree, Basin) — fastest, no platform change
-2. a new form-encoded endpoint on the platform that 303-redirects back
-3. keep `/api/booking`, add CORS, and submit by `fetch`
+**Leads go to the platform, not to a form service.** `quoteForm.action` is
+`https://www.thelostandunfounds.com/api/microsite/lead`. A third-party service
+would have put the highest-intent enquiries this business gets in someone else's
+dashboard, while its bookings, invoices, contracts and CRM all live here — and
+`CLAUDE.md`'s Capability Rule says not to send the owner to a third-party
+dashboard when the app already holds the credentials.
 
-**Options 2 and 3 both need a table before they need an endpoint**, and the
-`bookings` table is not it. Checked against the live schema on
-`cxpyqjxhbvuygnxyukli`:
+### Why it is an ordinary form post
+
+The form posts `application/x-www-form-urlencoded` and the endpoint answers
+`303` back to `redirectPath`. That shape is doing real work:
+
+- A plain form post is a CORS **simple request**. It crosses origins with no
+  preflight and no `Access-Control-Allow-Origin` — which `vercel.json` does not
+  set on `/api/*` and should not start setting for this.
+- The visitor never sees JSON.
+- **It works with JavaScript disabled.** The two inline scripts on the page are
+  both optional.
+
+`/api/booking` could not have done this: it is a JSON API, so a form action
+pointed there lands the visitor on raw JSON.
+
+### Why leads have their own table
+
+Checked against the live schema on `cxpyqjxhbvuygnxyukli`, not assumed:
 
 ```
-event_type   text  NOT NULL  (no default)
-event_date   date  NOT NULL  (no default)
+bookings.event_type   text  NOT NULL  (no default)
+bookings.event_date   date  NOT NULL  (no default)
 ```
 
-A quote request from the microsite collects a name, an email, an optional
-phone, a property address, a bedroom count and a note. It does not collect a
-date, because at this stage the visitor is asking what a shoot costs, not
-picking a slot. Writing one into `bookings` therefore means inventing an
-`event_date` — which puts a shoot on the calendar that nobody agreed to, and
-puts it in front of the availability and buffer logic in
-`api/booking/index.ts` that exists to stop exactly that.
+A quote request collects a name, an email, an optional phone, a property
+address, a bedroom count and a note. It has no date, because at this stage the
+visitor is asking what a shoot costs, not choosing a slot. Writing one into
+`bookings` therefore means inventing an `event_date` — which puts a shoot nobody
+agreed to on the calendar, in front of the availability and travel-buffer logic
+in `api/booking/index.ts` that exists to prevent exactly that.
 
-So option 2 is: a `microsite_leads` table, an endpoint that accepts
-`application/x-www-form-urlencoded` and 303s back to `redirectPath`, and spam
-protection, since unlike `/api/booking` it would be a public write reachable
-from any origin. That is a real piece of platform work with a production
-migration in it, not a config change — which is why `quoteForm.action` is still
-a placeholder rather than a guess. Option 1 costs nothing and needs none of it;
-it is the right choice unless leads are wanted inside the platform's own admin.
+So a quote request is a `microsite_leads` row. RLS is on with a single
+`service_role` policy and **no anon or authenticated policy at all**: these rows
+carry a member of the public's name, email, phone and property address, and
+nothing in a browser has any business reading them. The admin registry endpoint
+is the only read path, which is why the dashboard's lead count comes from
+`/api/admin/registry?section=leads` rather than the browser Supabase client.
+
+No IP address and no user agent are stored. The privacy policy generates from
+`quoteForm.fields`, so retaining anything beyond those fields would be a promise
+the policy does not make.
+
+### Three spam guards
+
+The endpoint is public and cross-origin, so it is a spam target.
+
+| Guard | What it catches | Needs JS |
+|---|---|---|
+| Honeypot | Bots that fill every field they find | no |
+| Fill-time stamp | Submissions faster than a person could type | yes, skipped without |
+| Turnstile | The rest | yes |
+
+The first two answer with an ordinary-looking success. Telling a bot which check
+caught it is telling it how to pass next time.
+
+The honeypot is positioned off-screen rather than `display:none`, because a bot
+reading computed styles skips what is hidden outright but will fill a field it
+can see in the DOM. It is `aria-hidden` and untabbable, so nobody using
+assistive tech or a keyboard ever meets it.
+
+Turnstile is required whenever `TURNSTILE_SECRET_KEY` is set, so omitting the
+token is not a way past it. It is skipped outside production, where there is no
+widget to solve — which is what makes the endpoint testable on a preview deploy.
+
+> **Before launch:** add `austinairbnbphotography.com` to the Turnstile widget's
+> domain list in Cloudflare. The site key is the public half of the same widget
+> the main site uses, and it is bound to a domain list. Miss this and every
+> submission from the real domain fails the check.
+
+### The redirect is not an open redirect
+
+`lib/api-handlers/_microsite-sites.ts` is a server-side registry of the sites
+the platform will accept a lead from, and the origins each is served from. The
+endpoint resolves the posted `site` id against it and builds the redirect from a
+**registry** origin plus a validated path. A request cannot name its own
+destination — the risk any public endpoint answering with a `303` otherwise
+carries. `safeRedirectPath` refuses protocol-relative and backslash forms
+outright rather than trying to sanitise them.
+
+Adding a microsite means adding a row to that registry. That is deliberate: a
+new site should be a decision, not something a form field can assert.
 
 `analytics.headScripts` is injected verbatim into every page's `<head>` between
 `<!-- head-scripts:start -->` and `<!-- head-scripts:end -->`, and every `tel:`
@@ -216,21 +273,32 @@ lake level, the building stock.
 
 ## Before this goes live
 
-The production build is **blocked on purpose** — `site.json` still carries
-`REPLACE_ME_FORM_ENDPOINT`, and the placeholder gate refuses to ship it. That is the intended behaviour, per `brand-ethos`: *"no
+**One thing still blocks the build**, and it is not a purchase. Both
+placeholders are now real values, so the placeholder gate passes; the `legal`
+gate does not, which is the intended behaviour per `brand-ethos`: *"no
 placeholders … If it's not wired to a real data source, it doesn't ship."*
-
-Two things still block the build:
 
 1. ~~**The phone from the Google Business Profile.**~~ Done — read off the
    profile on 30 August 2026 and set to `(512) 350-1869`, in the profile's own
    format. `business.legalName` already matched the profile name exactly.
-2. **`quoteForm.action`.** Verified: `/api/booking` will not work as a plain
-   form action — it is a JSON API and `vercel.json` sets no
-   `Access-Control-Allow-Origin` on `/api/*`, so a form pointed there lands the
-   visitor on raw JSON. Pick one of the three options above.
+2. ~~**`quoteForm.action`.**~~ Done — built into the platform rather than
+   handed to a form service. See *The quote form* above for the endpoint, the
+   table and the three spam guards.
 3. **`legal.reviewed`.** The trust pages state how personal data is handled.
-   That claim should be true, and should be one you have read.
+   That claim should be true, and should be one you have read. **This is the
+   only remaining blocker, and only you can clear it** — it is a statement about
+   your business, not a technical gap.
+
+A draft build prints exactly this, so the checklist and the build cannot drift:
+
+```
+1 warning(s):
+  ! [legal] legal pages have not been marked reviewed. Read /about/, /faq/,
+    /privacy-policy/, /terms/ and /accessibility/, then set legal.reviewed and
+    legal.reviewedBy in site.json.
+
+all 8 gates passed
+```
 
 Then, to launch:
 
