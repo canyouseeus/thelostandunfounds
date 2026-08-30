@@ -219,7 +219,7 @@
         "heading": "What actually moves the price",
         "body": [
           "Bedroom count is the main driver, because it sets both shoot time and photo count. A studio is one room and a bathroom. A 4BR is nine or ten spaces that each need two or three usable angles.",
-          "Add-ons are the second driver. Twilight exteriors run $95 to $400 across this market; drone runs $95 to $400 depending on whether the operator is Part 107 licensed and whether the property sits inside controlled airspace. A large share of Austin — anything near Bergstrom or under the Class C shelf — requires LAANC authorization, and shooters without it either skip the aerial or fly it illegally.",
+          "Add-ons are the second driver. Aerial drone work runs $95 to $400 across this market, with the typical Austin add-on around $148, depending on whether the operator is Part 107 licensed and whether the property sits inside controlled airspace. A large share of Austin — anything near Bergstrom or under the Class C shelf — requires LAANC authorization, and shooters without it either skip the aerial or fly it illegally. Twilight sessions run $125 to $400, and the spread is mostly about model: a twilight add-on shot on the same trip as the day photos is far cheaper than a separate evening callout.",
           "Travel is the third. Most Austin shooters include the urban core and charge past Lakeway, Dripping Springs or Georgetown."
         ]
       },
@@ -239,6 +239,25 @@
         ]
       },
       {
+        "type": "sources",
+        "heading": "Where these numbers come from",
+        "checkedOn": "30 August 2026",
+        "items": [
+          {
+            "label": "Key Listing Media — Real Estate Photography Cost in Austin, 2026 pricing guide",
+            "url": "https://keylistingmedia.com/how-much-does-real-estate-photography-cost-in-austin-2026-pricing-guide/"
+          },
+          {
+            "label": "Olga Denisova Photography — published Austin package pricing",
+            "url": "https://denisovaphoto.com/services"
+          },
+          {
+            "label": "TK Images — real estate photography cost in Texas",
+            "url": "https://www.tkimages.com/blog/how-much-does-real-estate-photography-cost-in-texas/"
+          }
+        ]
+      },
+      {
         "type": "cta",
         "heading": "Austin rates, fixed and published",
         "body": "Studio $195 · 2BR $265 · 3BR $335 · 4BR+ from $425.",
@@ -247,7 +266,8 @@
           "href": "/pricing/"
         }
       }
-    ]
+    ],
+    "factsCheckedOn": "2026-08-30"
   },
   {
     "slug": "austin-str-license-and-your-listing",
