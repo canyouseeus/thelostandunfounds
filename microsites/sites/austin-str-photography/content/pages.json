@@ -17,7 +17,8 @@
         "secondary": {
           "label": "See pricing",
           "href": "/pricing/"
-        }
+        },
+        "image": "bedroom-hero"
       },
       {
         "type": "prose",
@@ -26,6 +27,18 @@
           "Airbnb's own listing data puts professionally photographed listings ahead of phone-shot ones on both click-through and nightly rate. That gap is not about camera quality. It is about a complete, correctly ordered set of frames that answers every question a guest has before they book — how big is the bed, where do I work, is there parking, what does the shower look like.",
           "A shoot is one to two hours on site depending on bedroom count. You get a full set of edited, correctly-ordered photos sized for Airbnb, VRBO and your own direct-booking site, with no per-image licensing and no watermarks. You own them."
         ]
+      },
+      {
+        "type": "gallery",
+        "cols": 3,
+        "surface": "raised",
+        "heading": "Recent Austin work",
+        "keys": [
+          "living-arcade",
+          "kitchen",
+          "bedroom-wide"
+        ],
+        "note": "Short-term rentals near Pease Park and on West 30th, shot and delivered in the last month."
       },
       {
         "type": "pricing",
@@ -116,6 +129,11 @@
         "body": [
           "Priced by bedroom count so you know the number before anyone shows up. No hourly billing, no travel fee inside the Austin metro, no per-image licensing on the back end."
         ]
+      },
+      {
+        "type": "image",
+        "key": "bedroom-wide",
+        "caption": "Pease Park short-term rental — included in a $195 studio/1BR shoot."
       },
       {
         "type": "pricing",
@@ -408,6 +426,11 @@
         ]
       },
       {
+        "type": "image",
+        "key": "bedroom-hero",
+        "caption": "Linen pressed, bed made hotel-tight, one deliberate accent. This is what the checklist below produces."
+      },
+      {
         "type": "checklist",
         "heading": "The night before",
         "intro": "Do these when you have time. They take longer than you think.",
@@ -480,6 +503,19 @@
         "body": [
           "Every bedroom with the bed as the subject. Every bathroom including the shower interior. The kitchen wide and one detail frame. The living space from two angles. Every outdoor space. The workspace, if there is one — remote-work filtering is now a meaningful share of Austin booking traffic. Parking and entry, so arrival is not a mystery. And one hero frame that carries the whole listing."
         ]
+      },
+      {
+        "type": "gallery",
+        "cols": 3,
+        "keys": [
+          "bedroom-hero",
+          "kitchen",
+          "bathroom",
+          "living-arcade",
+          "dining",
+          "entry-door"
+        ],
+        "note": "Every room, not only the flattering ones. The bathroom and the entry are the frames guests look for and most listings skip."
       },
       {
         "type": "prose",

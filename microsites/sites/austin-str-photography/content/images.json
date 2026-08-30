@@ -1,0 +1,39 @@
+{
+  "_comment": "Real work, not stock. Two Austin short-term rentals shot by THE LOST+UNFOUNDS: the Pease Park unit (2026-08-02) and 501 W 30th St #2 (2026-08-11). Images are NOT bundled — they are served from the platform's own gallery endpoint, which already holds them, returns any requested width, and ships a one-year immutable cache. `alt` is required on every entry and the build fails without it: the site publishes a WCAG 2.1 AA accessibility statement, and an unlabelled photograph on a photography site is the one image a screen reader most needs described.",
+
+  "bedroom-hero": {
+    "fileId": "1VqUY5I9lH4rEycpPnC6IQPpG2P2VuiPu",
+    "property": "Pease Park",
+    "alt": "Bedroom in an Austin short-term rental: a four-poster bed made up in white linen with a folded orange throw across the foot, beneath a framed black and white print."
+  },
+  "bedroom-wide": {
+    "fileId": "1KNwYJ-ZFqSKwmtxUxSThW5vSpttD--8a",
+    "property": "Pease Park",
+    "alt": "Wider view of the same Austin rental bedroom, showing the four-poster frame, ceiling fan, window blinds and folded towels laid out on the bed."
+  },
+  "living-arcade": {
+    "fileId": "1FW5gTSvHpLLsEmJNoKroo2qpYZxh6JPY",
+    "property": "Pease Park",
+    "alt": "Living room of an Austin short-term rental with a patterned mural wall, a stand-up arcade cabinet, wall-mounted television and a sectional sofa."
+  },
+  "kitchen": {
+    "fileId": "111KiVsaDAyYnoCpGUr34oKUOtbQmTKN-",
+    "property": "Pease Park",
+    "alt": "Kitchen of an Austin short-term rental with stainless steel appliances, a gas range, trailing plants above the cabinets and a wooden dining table."
+  },
+  "dining": {
+    "fileId": "1y-jGfmG2LVGd_VAUQib3J-p7Nc_19Aal",
+    "property": "Pease Park",
+    "alt": "Dining area and galley kitchen in an Austin short-term rental, with a small table, framed abstract art and a potted plant on the counter."
+  },
+  "bathroom": {
+    "fileId": "1BI5XBhR-xO3LrEotVGT1RcUHMcXkc-wP",
+    "property": "Pease Park",
+    "alt": "Bathroom in an Austin short-term rental, showing the vanity, mirror, overhead lighting and wall cabinet."
+  },
+  "entry-door": {
+    "fileId": "1xZEW-hZRoSavHRuQ3V551kmb_ExXdFi7",
+    "property": "Pease Park",
+    "alt": "Covered entry walkway of an Austin short-term rental leading to a bright blue front door, with trees visible beyond the railing."
+  }
+}

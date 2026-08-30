@@ -67,6 +67,10 @@ const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const site = readJson(join(siteDir, 'site.json'));
 const areas = readJson(join(siteDir, 'content', 'areas.json'));
 const corePages = readJson(join(siteDir, 'content', 'pages.json'));
+const imagesPath = join(siteDir, 'content', 'images.json');
+const images = existsSync(imagesPath)
+  ? Object.fromEntries(Object.entries(readJson(imagesPath)).filter(([k]) => !k.startsWith('_')))
+  : {};
 
 /* ------------------------------------------------------------------ *
  * The page matrix.
@@ -145,7 +149,7 @@ mkdirSync(outDir, { recursive: true });
 
 const rendered = new Map();
 for (const page of pages) {
-  const ctx = { site, areas, pages, page, path: pathOf(page), draft: DRAFT };
+  const ctx = { site, areas, pages, page, images, path: pathOf(page), draft: DRAFT };
   const html = renderPage(ctx, head(site, page, { draft: DRAFT }));
   const dest = join(outDir, page.slug, 'index.html');
   mkdirSync(dirname(dest), { recursive: true });
@@ -304,6 +308,30 @@ const warn = (gate, msg) => warns.push(`[${gate}] ${msg}`);
     );
 }
 
+/* --- 8. images --- *
+ * Every registered image needs a fileId and real alt text, and every rendered
+ * <img> needs a non-empty alt. The site publishes a WCAG 2.1 AA accessibility
+ * statement; an unlabelled photograph on a photography site is precisely the
+ * image a screen reader most needs described, and a decorative-empty alt would
+ * be a lie about content that is the whole point of the page. Also checks the
+ * dimensions are present, since a missing width/height is a layout-shift
+ * regression that no visual test would catch. */
+{
+  for (const [key, img] of Object.entries(images)) {
+    if (!img.fileId) fail('images', `registry entry "${key}" has no fileId`);
+    if (!img.alt || img.alt.trim().length < 15)
+      fail('images', `registry entry "${key}" has missing or too-short alt text`);
+  }
+  for (const [path, html] of rendered) {
+    for (const tag of html.match(/<img\b[^>]*>/g) || []) {
+      if (!/\salt="[^"]{5,}"/.test(tag))
+        fail('images', `${path} — an <img> has missing or empty alt text`);
+      if (!/\swidth="\d+"/.test(tag) || !/\sheight="\d+"/.test(tag))
+        fail('images', `${path} — an <img> is missing width/height (layout shift)`);
+    }
+  }
+}
+
 /* --- 7b. fact staleness --- *
  * A page carrying municipal or regulatory claims goes stale silently, and a
  * wrong fee or deadline on a page people act on is worse than no page. Warn
@@ -364,4 +392,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`\n  all 7 gates passed\n`);
+console.log(`\n  all 8 gates passed\n`);

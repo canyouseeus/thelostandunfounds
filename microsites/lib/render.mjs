@@ -145,6 +145,25 @@ section{padding:3rem 0}
 @media(min-width:640px){.hero{padding:5.5rem 0 4.5rem}}
 .hero p.lede{font-size:clamp(1rem,2.4vw,1.2rem);color:rgba(255,255,255,.7);max-width:52ch;margin-top:1.5rem}
 
+/* ---- images ----
+   Served from the platform's own gallery endpoint at whatever width is asked
+   for, so this is a real srcset rather than one file scaled by the browser.
+   Every image carries width/height so the box is reserved before the bytes
+   arrive: layout shift is a Core Web Vitals penalty and a microsite has no
+   authority to spare. The 16:9 ratio and faint fill give that reserved space
+   a visible surface while it loads, on the same rgba(255,255,255,.05) as
+   every other card. No border, no radius. */
+figure{margin:0}
+figure img{
+  display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;
+  background:rgba(255,255,255,.05);border-radius:0;
+}
+figcaption{font-size:.72rem;color:rgba(255,255,255,.45);padding:.6rem 0 0;letter-spacing:.04em}
+.gal{display:grid;gap:1px;grid-template-columns:1fr}
+@media(min-width:560px){.gal{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.gal.g3{grid-template-columns:repeat(3,1fr)}}
+.hero-img{margin-top:2.5rem}
+
 /* ---- grid + cards ---- */
 .grid{display:grid;gap:1px;grid-template-columns:1fr}
 @media(min-width:560px){.grid.c2,.grid.c3,.grid.c4{grid-template-columns:repeat(2,1fr)}}
@@ -247,6 +266,7 @@ const blocks = {
       ${b.primary ? `<a class="btn" href="${esc(b.primary.href)}">${esc(b.primary.label)}</a>` : ''}
       ${b.secondary ? `<a class="btn-ghost" href="${esc(b.secondary.href)}">${esc(b.secondary.label)}</a>` : ''}
     </div>` : ''}
+    ${b.image ? `<div class="hero-img">${image(ctx, b.image, { sizes: '(min-width:64rem) 60rem, 100vw', priority: true })}</div>` : ''}
   </div>
 </header>`,
 
@@ -393,6 +413,29 @@ const blocks = {
    * prose) means a page carrying legal or municipal claims cannot quietly ship
    * without them — and the reader can go verify rather than trust us.
    */
+  /** One full-width image. */
+  image: (b, ctx) => `
+<section${b.surface === 'raised' ? ' class="raised"' : ''}>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    ${image(ctx, b.key, { sizes: '(min-width:64rem) 60rem, 100vw', caption: b.caption })}
+  </div>
+</section>`,
+
+  /** A grid of images. Two up by default, three with cols: 3. */
+  gallery: (b, ctx) => `
+<section${b.surface === 'raised' ? ' class="raised"' : ''}>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="gal${b.cols === 3 ? ' g3' : ''}">
+      ${b.keys.map((k) => image(ctx, k, { sizes: b.cols === 3
+          ? '(min-width:900px) 20rem, (min-width:560px) 50vw, 100vw'
+          : '(min-width:560px) 30rem, 100vw' })).join('')}
+    </div>
+    ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}
+  </div>
+</section>`,
+
   sources: (b) => `
 <section>
   <div class="wrap">
@@ -453,6 +496,41 @@ ${quoteForm.fields.map(field).join('\n')}
 /* ------------------------------------------------------------------ *
  * Page shell
  * ------------------------------------------------------------------ */
+
+/**
+ * One gallery-endpoint URL at a given pixel width. The endpoint honours
+ * arbitrary widths (verified 400/800/1200/1600/2400) and returns
+ * cache-control: public, max-age=31536000, immutable.
+ */
+const imgUrl = (fileId, w) =>
+  `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&size=${w}`;
+
+const IMG_WIDTHS = [400, 800, 1200, 1600];
+
+/**
+ * Render one image from the registry.
+ *
+ * `priority` marks the LCP image: eager, with fetchpriority=high. Lazy-loading
+ * the largest element above the fold delays the very metric it is meant to
+ * help. Everything else is lazy and async-decoded.
+ *
+ * Alt text is never invented here. It comes from the registry, and the build
+ * fails if it is missing.
+ */
+function image(ctx, key, { sizes, priority = false, caption } = {}) {
+  const img = ctx.images?.[key];
+  if (!img) throw new Error(`Unknown image key "${key}"`);
+  const srcset = IMG_WIDTHS.map((w) => `${esc(imgUrl(img.fileId, w))} ${w}w`).join(', ');
+  return `<figure>
+      <img src="${esc(imgUrl(img.fileId, 1200))}"
+           srcset="${srcset}"
+           sizes="${esc(sizes || '100vw')}"
+           width="1600" height="900"
+           alt="${esc(img.alt)}"
+           ${priority ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'}>
+      ${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}
+    </figure>`;
+}
 
 const NAV = [
   ['/pricing/', 'Pricing'],
