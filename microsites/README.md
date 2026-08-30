@@ -29,9 +29,10 @@ Output lands in `microsites/dist/<site-id>/` — deploy that directory as-is.
 
 ```
 microsites/
-  build.mjs                   orchestrator + the six gates
+  build.mjs                   orchestrator + the seven gates
   lib/render.mjs              block renderers, Noir stylesheet
   lib/seo.mjs                 meta, JSON-LD, sitemap, robots
+  lib/legal.mjs               trust/legal pages, generated from site.json
   prompts/                    page-type prompts for generating new content
   sites/<site-id>/
     site.json                 domain, geo, business identity, price ladder
@@ -50,9 +51,9 @@ once and can never drift between the pricing page, the area pages and the
 
 ---
 
-## The six gates
+## The seven gates
 
-A build is not a build until all six pass. Every one has been verified failing
+A build is not a build until all seven pass. Every one has been verified failing
 on an injected violation — a check that cannot fail is not a check.
 
 | Gate | Enforces |
@@ -63,6 +64,7 @@ on an injected violation — a check that cannot fail is not a check.
 | `meta` | Title ≤60 chars, description 70–165, both unique site-wide |
 | `links` | Every internal href resolves to a generated page |
 | `similarity` | No two pages exceed 50% near-duplicate overlap |
+| `legal` | The trust/legal set has been read by a human before production |
 
 ### Why the similarity gate is the one that matters
 
@@ -86,6 +88,56 @@ The gate is a backstop, not a standard. It cannot tell you the content is
 failure of craft.
 
 ---
+
+### Trust and legal pages
+
+Six pages ship with every site: About, FAQ, Privacy Policy, Terms, Accessibility
+and a Thank You page (the form's redirect target, `noindex` and kept out of the
+sitemap). They are footer-linked only — there to be found when looked for, not
+to compete in the main nav — and carry sitemap priority `0.3` so they never
+outrank a money page.
+
+**The privacy policy is generated from `site.quoteForm.fields`.** Every field
+tagged `personalData` appears in the policy automatically, so adding a field to
+the form updates the policy in the same commit. The usual failure of a
+boilerplate privacy policy is describing collection that does not match the
+actual form; here it cannot drift.
+
+The `legal` gate blocks a production build until `legal.reviewed` and
+`legal.reviewedBy` are set in `site.json`. Generated legal text is a starting
+draft, not advice — these pages make factual commitments about handling
+personal data, and shipping them unread is a real exposure. Draft builds warn
+instead of failing.
+
+Deliberately **not** ported from the source pattern: "Meet the Team" and
+"Careers" would mean inventing staff and vacancies for a solo operator, a
+"Complaints Policy" duplicates Contact, and a "Referral Marketing Disclosure"
+belongs on the parent platform that actually runs an affiliate program.
+Fabricated trust pages are worse than absent ones.
+
+### The quote form and call tracking
+
+`site.quoteForm` defines the endpoint, method, redirect and every field. The
+endpoint is deliberately a placeholder rather than a default, because the
+platform's own `/api/booking?action=request` is a **JSON** API (`name`,
+`business_name`, `email`, `phone`, `event_type`…) and `vercel.json` sets no
+`Access-Control-Allow-Origin` on `/api/*` — a plain form action pointed there
+lands the visitor on raw JSON. Three ways to close it, in `site.json`:
+
+1. a form service (Formspree, Basin) — fastest, no platform change
+2. a new form-encoded endpoint on the platform that 303-redirects back
+3. keep `/api/booking`, add CORS, and submit by `fetch`
+
+Field names already mirror the platform's booking payload, so option 2 needs no
+remapping.
+
+`analytics.headScripts` is injected verbatim into every page's `<head>` between
+`<!-- head-scripts:start -->` and `<!-- head-scripts:end -->`, and every `tel:`
+link carries `analytics.phoneLinkClass` so a dynamic-number-insertion script can
+find and swap it. Draft builds omit the scripts so preview traffic is not
+counted as leads. **The design gate skips the marked region** — a vendor's
+inline shadow is not ours to lint, and failing our own build over it would be a
+false positive. The gate still applies to everything outside the markers.
 
 ## Design constraints
 
@@ -157,13 +209,15 @@ To launch:
    lever — the site is largely invisible for "near me" and map-pack intent
    without it. The name, address and phone must match the `ProfessionalService`
    JSON-LD exactly. A mismatched NAP is worse than no markup.
-4. **Wire the quote form.** It currently POSTs to the platform's booking
-   endpoint with `source` set to the microsite domain. Confirm that endpoint
-   accepts a cross-origin form POST, or point it at a dedicated handler.
-5. **Shoot two or three real Austin STR properties** and add the images. This
+4. **Set `quoteForm.action`.** Verified: the platform's `/api/booking` will
+   not work as a plain form action (JSON API, no CORS). Pick one of the three
+   options above. This unblocks the production build.
+5. **Read the legal pages and set `legal.reviewed`.** They state how personal
+   data is handled; that claim should be true and should be one you have read.
+6. **Shoot two or three real Austin STR properties** and add the images. This
    site currently has no photography on it, which for a photography business is
    the single largest remaining gap.
-6. Deploy, verify, then submit the sitemap in Search Console.
+7. Deploy, verify, then submit the sitemap in Search Console.
 
 Do not skip 3. It is the difference between a site that ranks and a site that
 exists.

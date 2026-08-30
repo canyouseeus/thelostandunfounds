@@ -108,6 +108,18 @@ function breadcrumbs(site, page) {
 
 export const pathOf = (page) => (page.slug ? `/${page.slug}/` : '/');
 
+/**
+ * Marker comments around the injected third-party head scripts.
+ *
+ * Two jobs. They make it obvious in view-source where our markup stops and a
+ * vendor's begins, and they give the design gate a region to skip: a
+ * call-tracking or analytics snippet may contain inline styles with shadows or
+ * borders, and failing our own build over a vendor's CSS would be a false
+ * positive on code we do not control.
+ */
+export const HEAD_SCRIPTS_OPEN = '<!-- head-scripts:start -->';
+export const HEAD_SCRIPTS_CLOSE = '<!-- head-scripts:end -->';
+
 /** Build the full <head> contents for one page. */
 export function head(site, page, { draft }) {
   const url = abs(site, pathOf(page));
@@ -115,13 +127,25 @@ export function head(site, page, { draft }) {
     Boolean
   );
 
+  // Owner-configured analytics / call-tracking markup, injected verbatim —
+  // escaping it would break every snippet. Never populate from user input.
+  // Draft builds omit it so preview traffic is not counted as real leads.
+  const injected =
+    !draft && site.analytics?.headScripts
+      ? `${HEAD_SCRIPTS_OPEN}\n${site.analytics.headScripts}\n${HEAD_SCRIPTS_CLOSE}`
+      : '';
+
   return [
     `<title>${esc(page.title)}</title>`,
     `<meta name="description" content="${esc(page.description)}">`,
     `<link rel="canonical" href="${url}">`,
     // A draft build must never be indexable. This is the guard against
-    // pushing a half-finished microsite live and having it crawled.
-    draft ? '<meta name="robots" content="noindex,nofollow">' : '<meta name="robots" content="index,follow,max-image-preview:large">',
+    // pushing a half-finished microsite live and having it crawled. Some
+    // pages are noindex on their own merits too — a form's thank-you page
+    // has no search value and should not be reachable without submitting.
+    draft || page.noindex
+      ? '<meta name="robots" content="noindex,nofollow">'
+      : '<meta name="robots" content="index,follow,max-image-preview:large">',
     `<meta property="og:type" content="website">`,
     `<meta property="og:site_name" content="${esc(site.brand)}">`,
     `<meta property="og:title" content="${esc(page.title)}">`,
@@ -132,6 +156,7 @@ export function head(site, page, { draft }) {
     `<meta name="geo.placename" content="${esc(site.geo.city)}">`,
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
     json({ '@context': 'https://schema.org', '@graph': graph }),
+    injected,
   ]
     .filter(Boolean)
     .join('\n');
@@ -140,9 +165,13 @@ export function head(site, page, { draft }) {
 export function sitemap(site, pages) {
   const today = new Date().toISOString().slice(0, 10);
   const urls = pages
+    // A noindex page in a sitemap is a contradictory signal: the sitemap asks
+    // for crawling, the meta tag refuses indexing. Leave it out entirely.
+    .filter((p) => !p.noindex)
     .map((p) => {
       // Home carries top priority; money pages above informational ones.
-      const pr = !p.slug ? '1.0' : p.type === 'guide' ? '0.6' : '0.8';
+      // Trust pages are indexable but never compete with the money pages.
+      const pr = !p.slug ? '1.0' : p.type === 'legal' ? '0.3' : p.type === 'guide' ? '0.6' : '0.8';
       return `  <url><loc>${abs(site, pathOf(p))}</loc><lastmod>${today}</lastmod><priority>${pr}</priority></url>`;
     })
     .join('\n');

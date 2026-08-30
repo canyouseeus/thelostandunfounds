@@ -4,7 +4,6 @@
   "brand": "Austin STR Photography",
   "niche": "Airbnb and short-term rental photography",
   "primaryKeyword": "airbnb photography austin",
-
   "geo": {
     "city": "Austin",
     "region": "TX",
@@ -15,7 +14,6 @@
     "lng": -97.7431,
     "serviceRadiusMiles": 40
   },
-
   "business": {
     "legalName": "THE LOST+UNFOUNDS",
     "phone": "REPLACE_ME_TRACKING_NUMBER",
@@ -24,21 +22,139 @@
     "parentUrl": "https://www.thelostandunfounds.com",
     "priceRange": "$$",
     "foundingYear": 2023,
-    "sameAs": ["https://www.thelostandunfounds.com"]
+    "sameAs": [
+      "https://www.thelostandunfounds.com"
+    ]
   },
-
   "services": [
-    { "id": "studio",  "name": "Studio / 1BR",        "price": 195,  "unit": "flat", "photos": "25–35 edited photos", "turnaround": "24–72 hrs" },
-    { "id": "2br",     "name": "2 Bedroom",           "price": 265,  "unit": "flat", "photos": "30–40 edited photos", "turnaround": "24–72 hrs" },
-    { "id": "3br",     "name": "3 Bedroom",           "price": 335,  "unit": "flat", "photos": "40–50 edited photos", "turnaround": "24–72 hrs" },
-    { "id": "luxury",  "name": "4BR+ / Luxury",       "price": 425,  "unit": "from", "photos": "50+ edited photos",   "turnaround": "48–72 hrs" }
+    {
+      "id": "studio",
+      "name": "Studio / 1BR",
+      "price": 195,
+      "unit": "flat",
+      "photos": "25–35 edited photos",
+      "turnaround": "24–72 hrs"
+    },
+    {
+      "id": "2br",
+      "name": "2 Bedroom",
+      "price": 265,
+      "unit": "flat",
+      "photos": "30–40 edited photos",
+      "turnaround": "24–72 hrs"
+    },
+    {
+      "id": "3br",
+      "name": "3 Bedroom",
+      "price": 335,
+      "unit": "flat",
+      "photos": "40–50 edited photos",
+      "turnaround": "24–72 hrs"
+    },
+    {
+      "id": "luxury",
+      "name": "4BR+ / Luxury",
+      "price": 425,
+      "unit": "from",
+      "photos": "50+ edited photos",
+      "turnaround": "48–72 hrs"
+    }
   ],
-
   "addons": [
-    { "name": "Twilight exteriors", "price": 125, "note": "Shot in the 25-minute window after sunset. The single highest-impact add-on for a hero image." },
-    { "name": "Drone / aerial",     "price": 150, "note": "Part 107 licensed. Useful for lakefront, hill-country and multi-building properties." },
-    { "name": "3D virtual tour",    "price": 200, "note": "Matterport-style walkthrough. Airbnb does not host it; use it on your direct-booking site." }
+    {
+      "name": "Twilight exteriors",
+      "price": 125,
+      "note": "Shot in the 25-minute window after sunset. The single highest-impact add-on for a hero image."
+    },
+    {
+      "name": "Drone / aerial",
+      "price": 150,
+      "note": "Part 107 licensed. Useful for lakefront, hill-country and multi-building properties."
+    },
+    {
+      "name": "3D virtual tour",
+      "price": 200,
+      "note": "Matterport-style walkthrough. Airbnb does not host it; use it on your direct-booking site."
+    }
   ],
-
-  "analytics": { "plausibleDomain": "austinairbnbphotography.com" }
+  "analytics": {
+    "plausibleDomain": "austinairbnbphotography.com",
+    "headScripts": "",
+    "phoneLinkClass": "wc-phone"
+  },
+  "quoteForm": {
+    "action": "REPLACE_ME_FORM_ENDPOINT",
+    "method": "POST",
+    "redirectPath": "/thank-you/",
+    "fields": [
+      {
+        "name": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true,
+        "autocomplete": "name",
+        "placeholder": "Your name",
+        "personalData": "your name"
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true,
+        "autocomplete": "email",
+        "placeholder": "you@example.com",
+        "personalData": "your email address"
+      },
+      {
+        "name": "phone",
+        "label": "Phone",
+        "type": "tel",
+        "required": false,
+        "autocomplete": "tel",
+        "placeholder": "Optional",
+        "personalData": "your phone number, if you give one"
+      },
+      {
+        "name": "address",
+        "label": "Property address or neighborhood",
+        "type": "text",
+        "required": true,
+        "placeholder": "E.g. 78704, or 1200 S Congress Ave",
+        "personalData": "the property address you enter"
+      },
+      {
+        "name": "bedrooms",
+        "label": "Bedrooms",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Studio / 1BR",
+          "2 Bedroom",
+          "3 Bedroom",
+          "4BR+ / Luxury"
+        ]
+      },
+      {
+        "name": "notes",
+        "label": "Anything else",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "Target listing date, add-ons you're considering, access details",
+        "personalData": "anything you choose to write in the notes field"
+      }
+    ]
+  },
+  "legal": {
+    "reviewed": false,
+    "reviewedBy": null,
+    "reviewedOn": null,
+    "governingLaw": "the State of Texas, United States",
+    "dataProcessors": [
+      "the form provider configured in quoteForm.action, which receives and relays your enquiry",
+      "our email provider, which delivers the enquiry to us and stores the resulting thread"
+    ],
+    "retention": "Enquiries are kept for as long as needed to answer them and to keep a record of work quoted or performed, then deleted on request.",
+    "cookies": "none",
+    "accessibilityTarget": "WCAG 2.1 Level AA"
+  }
 }

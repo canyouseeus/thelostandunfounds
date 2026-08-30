@@ -27,6 +27,9 @@
  *   4. meta          — title <= 60 chars, description 70-165, both unique
  *   5. links         — every internal href resolves to a generated page
  *   6. similarity    — no two pages exceed the near-duplicate threshold
+ *   7. legal         — the trust/legal set has been read by a human before
+ *                      a production build ships pages that make commitments
+ *                      about how personal data is handled
  *
  * Gate 6 is the one that matters most and the one no microsite course
  * enforces. Google's March 2024 spam policies name "scaled content abuse"
@@ -40,7 +43,8 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderPage } from './lib/render.mjs';
-import { head, sitemap, robots, pathOf } from './lib/seo.mjs';
+import { head, sitemap, robots, pathOf, HEAD_SCRIPTS_OPEN, HEAD_SCRIPTS_CLOSE } from './lib/seo.mjs';
+import { legalPages } from './lib/legal.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
@@ -127,7 +131,7 @@ function areaPage(area) {
   };
 }
 
-const pages = [...corePages, ...areas.map(areaPage)];
+const pages = [...corePages, ...areas.map(areaPage), ...legalPages(site)];
 
 /* ------------------------------------------------------------------ *
  * Render
@@ -186,9 +190,18 @@ const warn = (gate, msg) => warns.push(`[${gate}] ${msg}`);
     [/(?:linear|radial|conic)-gradient/gi, 'gradient'],
     [/class="[^"]*\b(?:border|shadow|ring|rounded)(?:-[\w/]+)?\b[^"]*"/gi, 'banned utility class'],
   ];
+  // Third-party analytics / call-tracking markup is not ours to lint; failing
+  // our build over a vendor's inline shadow would be a false positive.
+  const stripVendor = (html) => {
+    const a = html.indexOf(HEAD_SCRIPTS_OPEN);
+    if (a === -1) return html;
+    const b = html.indexOf(HEAD_SCRIPTS_CLOSE, a);
+    return b === -1 ? html.slice(0, a) : html.slice(0, a) + html.slice(b + HEAD_SCRIPTS_CLOSE.length);
+  };
   for (const [path, html] of rendered) {
+    const ours = stripVendor(html);
     for (const [re, label] of banned) {
-      const m = html.match(re);
+      const m = ours.match(re);
       if (m) fail('design', `${path} — ${label}: ${[...new Set(m)].slice(0, 3).join(' | ')}`);
     }
   }
@@ -288,11 +301,33 @@ const warn = (gate, msg) => warns.push(`[${gate}] ${msg}`);
     );
 }
 
+/* --- 7. legal --- *
+ * The trust pages state how personal data is handled and what the service
+ * commits to. Generated text is a starting draft, not advice, and shipping an
+ * unread privacy policy on a site that collects names, emails and property
+ * addresses is a real exposure rather than a style problem. Draft builds warn;
+ * production refuses. Flip `legal.reviewed` once a human has actually read it. */
+{
+  const legal = site.legal ?? {};
+  if (!legal.reviewed) {
+    const msg =
+      'legal pages have not been marked reviewed. Read /about/, /faq/, ' +
+      '/privacy-policy/, /terms/ and /accessibility/, then set legal.reviewed ' +
+      'and legal.reviewedBy in site.json.';
+    if (DRAFT) warn('legal', msg);
+    else fail('legal', msg);
+  } else if (!legal.reviewedBy) {
+    fail('legal', 'legal.reviewed is true but legal.reviewedBy is empty — record who reviewed them.');
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * Report
  * ------------------------------------------------------------------ */
 console.log(`\n${site.brand} — https://${site.domain}${DRAFT ? '  [DRAFT]' : ''}`);
-console.log(`  pages        ${pages.length} (${corePages.length} authored + ${areas.length} area)`);
+console.log(
+  `  pages        ${pages.length} (${corePages.length} authored + ${areas.length} area + ${legalPages(site).length} trust/legal)`
+);
 console.log(`  output       microsites/dist/${siteId}`);
 
 if (warns.length) {
@@ -307,4 +342,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`\n  all 6 gates passed\n`);
+console.log(`\n  all 7 gates passed\n`);

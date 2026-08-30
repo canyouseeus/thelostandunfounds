@@ -178,7 +178,8 @@ textarea{resize:vertical;min-height:5.5rem}
 /* ---- footer ---- */
 .ftr{background:#0a0a0a;padding:3rem 0 2.5rem;margin-top:1px}
 .ftr .cols{display:grid;gap:2rem;grid-template-columns:1fr}
-@media(min-width:640px){.ftr .cols{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:480px){.ftr .cols{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:860px){.ftr .cols{grid-template-columns:repeat(4,1fr)}}
 .ftr h3{
   font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(255,255,255,.45);margin-bottom:.9rem;
@@ -350,29 +351,45 @@ const blocks = {
   </div>
 </section>`,
 
-  /* The form posts to the parent platform's existing booking intake rather
-     than standing up a second backend for a static site. */
-  quoteform: (_b, ctx) => `
+  /**
+   * The quote form renders entirely from `site.quoteForm`, so the fields, the
+   * endpoint and the privacy policy all come from one definition. Adding a
+   * field to the config adds it to the form and to the policy at once.
+   *
+   * The endpoint is configuration rather than a hardcoded default because the
+   * platform's own /api/booking is a JSON API with no CORS header on /api/*,
+   * so a plain form action there would land the visitor on raw JSON. See the
+   * comment in site.json for the three ways to close this.
+   */
+  quoteform: (_b, ctx) => {
+    const { quoteForm, domain } = ctx.site;
+    const field = (f) => {
+      const req = f.required ? ' required' : '';
+      const ac = f.autocomplete ? ` autocomplete="${esc(f.autocomplete)}"` : '';
+      const ph = f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : '';
+      let input;
+      if (f.type === 'textarea') input = `<textarea name="${esc(f.name)}"${req}${ph}></textarea>`;
+      else if (f.type === 'select')
+        input =
+          `<select name="${esc(f.name)}"${req}><option value="">Select…</option>` +
+          f.options.map((o) => `<option>${esc(o)}</option>`).join('') +
+          `</select>`;
+      else input = `<input type="${esc(f.type)}" name="${esc(f.name)}"${req}${ac}${ph}>`;
+      return `      <label><span class="lb">${esc(f.label)}</span>${input}</label>`;
+    };
+    return `
 <section>
   <div class="wrap">
-    <form method="POST" action="${esc(ctx.site.business.bookingUrl)}">
-      <input type="hidden" name="source" value="${esc(ctx.site.domain)}">
-      <input type="hidden" name="service" value="Airbnb / Short-Term Rental">
-      <label><span class="lb">Name</span><input name="name" required autocomplete="name" placeholder="Your name"></label>
-      <label><span class="lb">Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@example.com"></label>
-      <label><span class="lb">Property address or neighborhood</span><input name="address" required placeholder="E.g. 78704, or 1200 S Congress Ave"></label>
-      <label><span class="lb">Bedrooms</span>
-        <select name="bedrooms" required>
-          <option value="">Select…</option>
-          <option>Studio / 1BR</option><option>2 Bedroom</option>
-          <option>3 Bedroom</option><option>4BR+ / Luxury</option>
-        </select>
-      </label>
-      <label><span class="lb">Anything else</span><textarea name="notes" placeholder="Target listing date, add-ons you're considering, access details"></textarea></label>
+    <form method="${esc(quoteForm.method)}" action="${esc(quoteForm.action)}">
+      <input type="hidden" name="source" value="${esc(domain)}">
+      <input type="hidden" name="event_type" value="Airbnb / Short-Term Rental">
+      <input type="hidden" name="_next" value="https://${esc(domain)}${esc(quoteForm.redirectPath)}">
+${quoteForm.fields.map(field).join('\n')}
       <button class="btn" type="submit">Request quote</button>
     </form>
   </div>
-</section>`,
+</section>`;
+  },
 };
 
 /* ------------------------------------------------------------------ *
@@ -402,10 +419,32 @@ function header(ctx) {
 </header>`;
 }
 
+/**
+ * Trust and legal links live in the footer only. They are there to be found
+ * when looked for, not to compete for attention in the main nav.
+ */
+const LEGAL_NAV = [
+  ['/about/', 'About'],
+  ['/faq/', 'FAQ'],
+  ['/privacy-policy/', 'Privacy'],
+  ['/terms/', 'Terms'],
+  ['/accessibility/', 'Accessibility'],
+];
+
+/**
+ * Phone links carry the configured tracking class so a dynamic-number-insertion
+ * script (WhatConverts and similar) can find and swap them. Harmless when no
+ * such script is configured — it is an unstyled class on an ordinary tel: link.
+ */
+function phoneLink(site) {
+  const phone = site.business.phone;
+  if (!/^\+?[\d\s().-]{10,}$/.test(phone)) return '';
+  const cls = site.analytics?.phoneLinkClass;
+  return `<a ${cls ? `class="${esc(cls)}" ` : ''}href="tel:${esc(phone.replace(/[^\d+]/g, ''))}">${esc(phone)}</a>`;
+}
+
 function footer(ctx) {
   const { site, areas } = ctx;
-  const phone = site.business.phone;
-  const phoneOk = /^\+?[\d\s().-]{10,}$/.test(phone);
   return `
 <footer class="ftr">
   <div class="wrap">
@@ -419,9 +458,13 @@ function footer(ctx) {
         ${NAV.map(([h, l]) => `<a href="${h}">${esc(l)}</a>`).join('\n        ')}
       </div>
       <div>
+        <h3>Company</h3>
+        ${LEGAL_NAV.map(([h, l]) => `<a href="${h}">${esc(l)}</a>`).join('\n        ')}
+      </div>
+      <div>
         <h3>Contact</h3>
         <a href="mailto:${esc(site.business.email)}">${esc(site.business.email)}</a>
-        ${phoneOk ? `<a href="tel:${esc(phone.replace(/[^\d+]/g, ''))}">${esc(phone)}</a>` : ''}
+        ${phoneLink(site)}
         <a href="${esc(site.business.parentUrl)}">${esc(site.business.legalName)}</a>
       </div>
     </div>
