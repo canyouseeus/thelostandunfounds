@@ -352,6 +352,30 @@ const blocks = {
 </section>`,
 
   /**
+   * Citations for a page that makes checkable external claims.
+   *
+   * A local-service site has no business asserting regulatory detail without
+   * showing where it came from. Rendering sources as a first-class block (not
+   * prose) means a page carrying legal or municipal claims cannot quietly ship
+   * without them — and the reader can go verify rather than trust us.
+   */
+  sources: (b) => `
+<section>
+  <div class="wrap">
+    <h2>${esc(b.heading || 'Sources')}</h2>
+    ${b.checkedOn ? `<p class="note">Checked ${esc(b.checkedOn)}. Rules change; verify against the City before acting.</p>` : ''}
+    <ul class="check">
+      ${b.items
+        .map(
+          (i) =>
+            `<li><a href="${esc(i.url)}" rel="nofollow noopener"${/austintexas\.gov$/.test(new URL(i.url).hostname) ? '' : ' target="_blank"'}>${esc(i.label)}</a></li>`
+        )
+        .join('\n      ')}
+    </ul>
+  </div>
+</section>`,
+
+  /**
    * The quote form renders entirely from `site.quoteForm`, so the fields, the
    * endpoint and the privacy policy all come from one definition. Adding a
    * field to the config adds it to the form and to the policy at once.

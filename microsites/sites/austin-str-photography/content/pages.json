@@ -250,6 +250,131 @@
     ]
   },
   {
+    "slug": "austin-str-license-and-your-listing",
+    "type": "guide",
+    "factsCheckedOn": "2026-08-30",
+    "title": "Austin STR License Rules: What They Mean for Your Listing",
+    "description": "What Austin's STR licensing rules mean for your Airbnb listing — the occupancy cap, the delisting timeline, and what to update before enforcement resumes.",
+    "h1": "Austin STR Licensing and Your Listing",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "We are photographers, not attorneys or license consultants. This page covers one narrow thing: what Austin's licensing shake-up changes about the listing itself — the copy, the capacity you advertise, and the photos. For the licensing process, the City of Austin is the only source that counts, and it is linked at the bottom of this page.",
+          "Everything factual below is sourced and dated. If you are reading this well after the check date, verify before acting."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where things actually stand",
+        "body": [
+          "Since 1 July 2026, Airbnb, VRBO and other platforms must carry a license field on every Austin listing, must remove a listing within 10 days of a City delist request, and may not collect booking fees on an unlicensed rental.",
+          "But enforcement is phased, not instant. The City paused mass delist notices for roughly six months after its new licensing system launched in May 2026, and said it would phase them in starting with properties that generate nuisance complaints. In practice that means the window has been open through most of 2026 and is closing rather than closed.",
+          "The scale is not small. As of May 2026 the City estimated 3,000 to 4,000 Austin short-term rentals were operating without a valid license, having already identified roughly 2,785 unlicensed addresses by 1 April. Penalties run $500 per offense, per day, with each day counted separately."
+        ]
+      },
+      {
+        "type": "table",
+        "heading": "What the City charges",
+        "columns": [
+          "Item",
+          "Cost",
+          "Note"
+        ],
+        "rows": [
+          [
+            "New license",
+            "$836.30",
+            "$789 license fee plus $47.30 notification fee"
+          ],
+          [
+            "Renewal",
+            "$385.30",
+            "$338 renewal fee plus $47.30 notification fee"
+          ],
+          [
+            "Term",
+            "Up to 2 years",
+            "Non-transferable, one required per unit"
+          ],
+          [
+            "Hotel Occupancy Tax",
+            "11%",
+            "9% occupancy plus 2% venue project; platforms have collected this automatically since April 2025"
+          ]
+        ],
+        "note": "Fees and license types (Type 1, Type 2 Residential, Type 2 Commercial, Type 3) as published by Austin Development Services. Apply online through Austin Finance Online, in person at the Permitting and Development Center, or by mail."
+      },
+      {
+        "type": "prose",
+        "heading": "The change most listings have not made yet",
+        "body": [
+          "Austin now enforces an occupancy formula of two guests per bedroom plus two additional guests, capped at ten people per unit regardless of size.",
+          "That is the rule most likely to have quietly invalidated your listing. A 4-bedroom advertised as sleeping 12 is now advertising above the cap. A 2-bedroom listed at 8 is over. The number in your listing title, the number in your description, the guest slider, and the photos showing the bed configuration all need to agree with the formula — and for a lot of Austin listings written before the change, they do not.",
+          "This is the one place where the licensing story and a photo set genuinely meet. If the sleeping arrangement you show no longer matches the capacity you are allowed to sell, both the copy and the images are out of date."
+        ]
+      },
+      {
+        "type": "checklist",
+        "heading": "What to reconcile on your listing",
+        "intro": "Working through this costs nothing and is worth doing whether or not you use us:",
+        "items": [
+          "Recalculate your maximum: (2 × bedrooms) + 2, capped at 10. Compare it to the guest count your listing currently sells.",
+          "Update the guest slider, the title, and any 'sleeps N' claim in the description to match.",
+          "Check that the beds shown in your photos match the configuration you now advertise. A sofa bed you no longer count should not be the hero of a frame.",
+          "Add your license number to the platform's license field rather than waiting to be asked.",
+          "If you removed beds to come under the cap, the rooms they were in need reshooting — an empty corner where a bed used to be reads as a mistake.",
+          "Check the amenity list against what is actually in the property today. Enforcement attention tends to arrive alongside complaint attention."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "What a shrinking market means for the listings that stay",
+        "body": [
+          "Austin's active listing count fell about 11% year over year to roughly 17,165 as of July 2026, while occupancy rose almost 9%. Fewer listings are absorbing similar demand.",
+          "For a licensed operator that is the favourable side of a bad-sounding statistic. The casual hosts most likely to exit are the ones who were never going to invest in the listing anyway, and the guests who would have booked them are still coming to Austin. Whether that demand lands on your listing or your neighbour's is decided in the search results, where the photo is the entire first impression.",
+          "If you are re-listing after sorting out a license, you are re-entering a thinner market. That is the moment the listing is worth getting right rather than restoring as it was."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where we come in, honestly",
+        "body": [
+          "We shoot short-term rentals. We cannot file your license, we cannot advise you on which type you need, and we would be the wrong people to ask. What we can do is make the listing you relaunch better than the one that came down — flat rates by bedroom count, 24 to 72 hour turnaround, and full rights to the images.",
+          "If your listing already reflects the occupancy rule and the photos still represent the property accurately, you do not need us for this. Nothing on this page is a reason to book a shoot you would not otherwise book."
+        ]
+      },
+      {
+        "type": "sources",
+        "heading": "Sources",
+        "checkedOn": "30 August 2026",
+        "items": [
+          {
+            "label": "City of Austin — Short-Term Rentals (official licensing page, fees and application methods)",
+            "url": "https://www.austintexas.gov/department/short-term-rentals"
+          },
+          {
+            "label": "Austin Current — Austin cracks down on short-term rental licenses (ordinance changes, caps, platform enforcement)",
+            "url": "https://austincurrent.org/2026/03/19/austin-short-term-rental-airbnb-vrbo/"
+          },
+          {
+            "label": "AirDNA — Austin, Texas short-term rental market data (listing counts, occupancy, ADR)",
+            "url": "https://www.airdna.co/vacation-rental-data/app/us/texas/austin/overview"
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Relaunching a listing",
+        "body": "Send the address and bedroom count for a fixed price the same day.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
     "slug": "how-to-prep-your-airbnb-for-photos",
     "type": "guide",
     "title": "How to Prep Your Airbnb for a Photo Shoot | Austin Checklist",

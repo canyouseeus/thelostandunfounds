@@ -301,6 +301,25 @@ const warn = (gate, msg) => warns.push(`[${gate}] ${msg}`);
     );
 }
 
+/* --- 7b. fact staleness --- *
+ * A page carrying municipal or regulatory claims goes stale silently, and a
+ * wrong fee or deadline on a page people act on is worse than no page. Warn
+ * once the check date passes 90 days so it gets re-verified rather than
+ * quietly rotting. A warning, not a failure: the page is not wrong yet. */
+{
+  const MAX_AGE_DAYS = 90;
+  for (const page of pages) {
+    if (!page.factsCheckedOn) continue;
+    const age = Math.floor((Date.now() - Date.parse(page.factsCheckedOn)) / 86400000);
+    if (age > MAX_AGE_DAYS)
+      warn(
+        'facts',
+        `${pathOf(page)} — external facts last checked ${age} days ago ` +
+          `(${page.factsCheckedOn}). Re-verify against the cited sources and bump factsCheckedOn.`
+      );
+  }
+}
+
 /* --- 7. legal --- *
  * The trust pages state how personal data is handled and what the service
  * commits to. Generated text is a starting draft, not advice, and shipping an
