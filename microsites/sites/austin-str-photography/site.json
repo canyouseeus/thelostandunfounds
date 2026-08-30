@@ -16,7 +16,8 @@
   },
   "business": {
     "legalName": "THE LOST+UNFOUNDS",
-    "phone": "REPLACE_ME_TRACKING_NUMBER",
+    "phone": "REPLACE_ME_GBP_PHONE",
+    "phoneNote": "Must exactly match the phone on the Google Business Profile. Call tracking is handled by dynamic number insertion via analytics.phoneLinkClass, not by putting a different number here.",
     "email": "media@thelostandunfounds.com",
     "bookingUrl": "https://www.thelostandunfounds.com/booking",
     "parentUrl": "https://www.thelostandunfounds.com",

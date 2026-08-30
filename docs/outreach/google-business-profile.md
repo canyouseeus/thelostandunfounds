@@ -1,137 +1,112 @@
-# Google Business Profile — setup sheet
+# Google Business Profile — what to change on the existing one
 
-Everything pre-decided, so this is a copy-paste job rather than a series of
-judgement calls. **Checked 30 August 2026.**
+THE LOST+UNFOUNDS already has a profile. **Do not create a second one.**
 
-## What I could not do, and why it is not a tooling gap
+A service-area business is allowed exactly one profile unless it runs separate
+teams in genuinely non-overlapping areas. A second profile for the microsite
+would be a duplicate listing, and duplicates get suspended — which would take
+the working profile down with the new one. This is also why there is no
+profile-per-microsite strategy: every future microsite points at this same
+profile.
 
-I cannot create or verify this profile. Two hard blocks, neither of which more
-credentials would solve:
-
-1. **Verification is deliberately human.** Google verifies by postcard to a
-   physical address, a recorded video showing the business and its equipment, or
-   a phone/email code. It is designed to resist automation. There is no API path
-   around it.
-2. **The platform holds Drive scopes only** (`auth/drive`,
-   `auth/drive.readonly`). No Business Profile API access, and requesting it
-   would need Google to approve the API project plus fresh OAuth consent — and
-   would still leave verification untouched.
-
-So this is yours to click through. It takes about twenty minutes, and everything
-below is already decided.
+**Checked 30 August 2026.**
 
 ---
 
-## The two things that would have gone wrong
+## What I need from you
 
-### 1. The profile is NOT called "Austin Short-Term Rental Photography"
+I cannot see the profile, so two values have to come across exactly as they
+appear on it. They go into `site.json`, and from there into the site's
+structured data:
 
-Name it **THE LOST+UNFOUNDS**.
+1. **The profile name, character for character.** Probably `THE LOST+UNFOUNDS`,
+   but if Google made you save it as `The Lost+Unfounds` then that is the
+   canonical string and `business.legalName` must change to match.
+2. **The phone number on the profile.**
 
-Google requires the profile name to be the real-world business name without
-descriptors. Adding a city or a service — exactly what the microsite brand is —
-is keyword stuffing, and it is among the most common suspension triggers.
-Google has been suspending faster and on thinner grounds through 2026, and
-newly created or freshly edited profiles are the ones being pulled.
-
-The microsite brand is a trading name. It belongs on the site, not on the
-profile. The site's structured data has been corrected to match: `name` is now
-`THE LOST+UNFOUNDS` with `Austin Short-Term Rental Photography` as
-`alternateName`, so the GBP and the markup form one consistent NAP.
-
-*Caveat on the stylisation:* all-caps is disallowed unless it is genuinely the
-official brand form. It is here, so it should pass — but if Google pushes back,
-accept "The Lost+Unfounds" and change `business.legalName` in `site.json` to
-match, rather than arguing.
-
-### 2. You get ONE profile, not one per microsite
-
-A service-area business is limited to a single profile unless it runs separate
-teams in genuinely non-overlapping areas. So there is no profile-per-microsite
-strategy: every microsite points at this one profile. Worth knowing before
-building a second site on the assumption it gets its own.
+These are two halves of one NAP and Google reconciles them. A mismatch is a
+weaker signal than an omission, which is why the build currently refuses to
+ship with the phone unset rather than guessing.
 
 ---
 
-## Fields
+## The phone: I had this wrong
 
-| Field | Value |
-|---|---|
-| **Business name** | `THE LOST+UNFOUNDS` |
-| **Primary category** | `Photographer` |
-| **Secondary categories** | `Commercial photographer`, `Real estate photographer` if offered in your account |
-| **Business type** | Service-area business — hide the address, set the service area |
-| **Service area** | Austin, Round Rock, Cedar Park, Lakeway, Dripping Springs, Buda, Kyle, Pflugerville, Georgetown |
-| **Phone** | The call-tracking number — the *same* one that goes in `site.json` |
-| **Website** | `https://austinairbnbphotography.com` |
-| **Email** | `media@thelostandunfounds.com` |
+I previously specced a **call-tracking number** for the site. That was a
+mistake, and it would have actively hurt you.
 
-On categories: primary is the strongest single ranking signal. `Photographer`
-is the safe base. Add the specific ones as secondary rather than reaching for a
-narrow primary that may not exist in your account — a community thread suggests
-`Real estate photographer` is not universally available and has to be requested.
+Publishing a tracking number in the site's markup while the profile shows a
+different number breaks NAP consistency — exactly the signal the profile exists
+to strengthen. `site.json` now asks for `REPLACE_ME_GBP_PHONE`: the real number
+from the profile.
 
-### Description (750 char limit — this is 712)
+Tracking still works, and needs no second number. Every `tel:` link on the site
+carries the `wc-phone` class, so a dynamic number insertion script swaps the
+**displayed** number at runtime while the canonical number stays in the
+structured data. That is what the class was built for.
 
-> THE LOST+UNFOUNDS is an Austin creative studio. We photograph short-term
-> rentals, multifamily properties and brands across the Austin metro, within
-> about forty miles of downtown.
->
-> Short-term rental shoots are priced flat by bedroom count rather than by the
-> hour: a studio or one-bedroom is $195, a two-bedroom $265, a three-bedroom
-> $335, and larger or luxury properties start at $425. Edited sets come back in
-> 24 to 72 hours, ordered for upload. Twilight exteriors, Part 107 licensed
-> drone and 3D virtual tours are available as add-ons.
->
-> Property managers are quoted per portfolio, with per-property packages and
-> ongoing retainers.
->
-> You receive full commercial rights to every image, with no watermark and no
-> per-platform licensing.
-
-### Services to add
-
-Name each one, and reuse the pricing already on the site so the profile and the
-site cannot disagree.
-
-- Airbnb / short-term rental photography — from $195
-- Real estate & multifamily photography — from $225
-- Property photography package — $850
-- Twilight exteriors — $125
-- Drone / aerial photography — $150
-- 3D virtual tour — $200
+**This removes a blocker rather than adding one.** You do not need to buy a
+tracking number before launching — you need the number you already have.
 
 ---
 
-## Photos
+## What to change on the profile
 
-The profile needs photographs immediately; a profile without them converts
-badly and looks abandoned. Use the same Austin work now on the microsite —
-Pease Park and 501 W 30th. Upload the full-resolution originals from Drive
-(`AIRBNB CLIENTS`), not the web-sized copies.
+### Leave alone
+- **Name.** Do not add a city or a service. Keyword-stuffed names are among the
+  most common suspension triggers, and Google has been suspending faster and on
+  thinner grounds through 2026, mostly on recently *edited* profiles. Editing a
+  working profile carries real risk, so make deliberate changes and stop.
+- **Primary website.** Keep `thelostandunfounds.com`. The profile represents the
+  whole business; the microsite is one service line and connects through
+  Services and Posts instead.
 
-Google weights recency, so add a few every month rather than dumping everything
-once.
+### Add or check
+- **Secondary categories** — `Commercial photographer`, and `Real estate
+  photographer` if your account offers it. Leave the primary as is; changing a
+  primary category on an established profile is the riskiest single edit here.
+- **Services**, priced from the same numbers the site uses so the two cannot
+  disagree:
+
+  | Service | Price |
+  |---|---|
+  | Airbnb / short-term rental photography | from $195 |
+  | Real estate & multifamily photography | from $225 |
+  | Property photography package | $850 |
+  | Twilight exteriors | $125 |
+  | Drone / aerial photography | $150 |
+  | 3D virtual tour | $200 |
+
+  Where a service accepts its own link, point it at the matching page:
+  `/short-term-rental-photography/`, `/property-managers/`, `/pricing/`.
+
+- **Photos.** Upload the full-resolution Pease Park and 501 W 30th originals
+  from Drive (`AIRBNB CLIENTS`), not the web-sized copies the site uses. Google
+  weights recency, so add a few monthly rather than all at once.
+
+- **Posts.** This is the honest way to link the microsite from the profile. One
+  post per topic, each linking a real page — the licensing changes, the prep
+  checklist, what a shoot costs. Posts expire, so this is a recurring job, not a
+  one-off.
+
+- **Reviews.** Ask the Pease Park and 501 W 30th owners. Two real reviews beat
+  an empty review section by a wide margin and review count is a ranking factor.
+  Never incentivise them; that is its own violation.
 
 ---
 
-## Order of operations
+## Order
 
-1. Create the profile as **THE LOST+UNFOUNDS**, service-area, no public address.
-2. Set primary category `Photographer`, then secondaries.
-3. Start verification immediately — postcards take one to two weeks and
-   everything else waits on it.
-4. While waiting: description, services, hours, service area, photos.
-5. **Register the domain and set the call-tracking number** — the same number
-   must appear on the profile, in `site.json`, and therefore in the site's
-   JSON-LD. A mismatched phone is a weaker signal than no phone at all.
-6. Once verified, set the website field to the microsite.
-7. Ask the Pease Park and 501 W 30th owners for reviews. Two real reviews beat
-   an empty profile by a wide margin, and review count is a ranking factor.
+1. Send me the exact profile name and phone. I set them in `site.json`, which
+   clears one of the three production blockers.
+2. Add secondary categories and the service list.
+3. Upload photos.
+4. Ask for reviews.
+5. Once the domain is registered and the site is live, start posting to the
+   profile with links into it.
 
 ## What not to do
 
-Do not put keywords in the name. Do not create a second profile for a second
-microsite. Do not use a residential address you do not operate from as a
-verified storefront. Each of these is a suspension, and reinstatement is far
-more work than doing it correctly once.
+Do not create a second profile. Do not rename the existing one to include
+"Austin" or "photography". Do not change the primary category casually. Do not
+put a tracking number anywhere the structured data can see it.
