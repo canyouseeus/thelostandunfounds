@@ -29,8 +29,8 @@
     "proposal:css:check": "node scripts/sync-proposal-css.mjs --check",
     "proposal:pdf": "node scripts/proposal-pdf.mjs",
     "microsite": "node microsites/build.mjs",
-    "microsite:draft": "node microsites/build.mjs --draft",
-    "microsite:serve": "node microsites/build.mjs --draft && python3 -m http.server 8099 --directory microsites/dist"
+    "microsite:draft": "node microsites/build.mjs austin-str-photography --draft",
+    "microsite:serve": "node microsites/build.mjs austin-str-photography --draft && python3 -m http.server 8099 --directory microsites/dist/austin-str-photography"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

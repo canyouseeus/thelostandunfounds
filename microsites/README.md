@@ -128,8 +128,30 @@ lands the visitor on raw JSON. Three ways to close it, in `site.json`:
 2. a new form-encoded endpoint on the platform that 303-redirects back
 3. keep `/api/booking`, add CORS, and submit by `fetch`
 
-Field names already mirror the platform's booking payload, so option 2 needs no
-remapping.
+**Options 2 and 3 both need a table before they need an endpoint**, and the
+`bookings` table is not it. Checked against the live schema on
+`cxpyqjxhbvuygnxyukli`:
+
+```
+event_type   text  NOT NULL  (no default)
+event_date   date  NOT NULL  (no default)
+```
+
+A quote request from the microsite collects a name, an email, an optional
+phone, a property address, a bedroom count and a note. It does not collect a
+date, because at this stage the visitor is asking what a shoot costs, not
+picking a slot. Writing one into `bookings` therefore means inventing an
+`event_date` — which puts a shoot on the calendar that nobody agreed to, and
+puts it in front of the availability and buffer logic in
+`api/booking/index.ts` that exists to stop exactly that.
+
+So option 2 is: a `microsite_leads` table, an endpoint that accepts
+`application/x-www-form-urlencoded` and 303s back to `redirectPath`, and spam
+protection, since unlike `/api/booking` it would be a public write reachable
+from any origin. That is a real piece of platform work with a production
+migration in it, not a config change — which is why `quoteForm.action` is still
+a placeholder rather than a guess. Option 1 costs nothing and needs none of it;
+it is the right choice unless leads are wanted inside the platform's own admin.
 
 `analytics.headScripts` is injected verbatim into every page's `<head>` between
 `<!-- head-scripts:start -->` and `<!-- head-scripts:end -->`, and every `tel:`
@@ -194,33 +216,59 @@ lake level, the building stock.
 
 ## Before this goes live
 
-The production build is **currently blocked on purpose** — `site.json` carries
-`REPLACE_ME_TRACKING_NUMBER`, and the placeholder gate refuses to ship it.
-That is the intended behaviour, per `brand-ethos`: *"no placeholders … If it's
-not wired to a real data source, it doesn't ship."*
+The production build is **blocked on purpose** — `site.json` carries
+`REPLACE_ME_GBP_PHONE` and `REPLACE_ME_FORM_ENDPOINT`, and the placeholder gate
+refuses to ship either. That is the intended behaviour, per `brand-ethos`: *"no
+placeholders … If it's not wired to a real data source, it doesn't ship."*
 
-To launch:
+Three things block the build, and one of them is not a purchase:
 
-1. **Register the domain.** `austinairbnbphotography.com`, ~$12/yr.
-2. **Get a call-tracking number** and put it in `site.json`. This is what
-   unblocks the production build. A tracking number rather than the main line
-   is what lets you attribute leads to the microsite at all.
-3. **Create the Google Business Profile.** This is the actual local ranking
-   lever — the site is largely invisible for "near me" and map-pack intent
-   without it. The name, address and phone must match the `ProfessionalService`
-   JSON-LD exactly. A mismatched NAP is worse than no markup.
-4. **Set `quoteForm.action`.** Verified: the platform's `/api/booking` will
-   not work as a plain form action (JSON API, no CORS). Pick one of the three
-   options above. This unblocks the production build.
-5. **Read the legal pages and set `legal.reviewed`.** They state how personal
-   data is handled; that claim should be true and should be one you have read.
-6. **Shoot two or three real Austin STR properties** and add the images. This
-   site currently has no photography on it, which for a photography business is
-   the single largest remaining gap.
-7. Deploy, verify, then submit the sitemap in Search Console.
+1. **The phone from the Google Business Profile**, into `business.phone`.
+   Not a call-tracking number — see below. THE LOST+UNFOUNDS already has a
+   profile, so this is a number you have, not one you buy.
+2. **`quoteForm.action`.** Verified: `/api/booking` will not work as a plain
+   form action — it is a JSON API and `vercel.json` sets no
+   `Access-Control-Allow-Origin` on `/api/*`, so a form pointed there lands the
+   visitor on raw JSON. Pick one of the three options above.
+3. **`legal.reviewed`.** The trust pages state how personal data is handled.
+   That claim should be true, and should be one you have read.
 
-Do not skip 3. It is the difference between a site that ranks and a site that
+Then, to launch:
+
+4. **Register the domain.** `austinairbnbphotography.com`, ~$12/yr.
+5. **Update the existing Google Business Profile** — do not create a second
+   one. The profile is the actual local ranking lever; the site is largely
+   invisible for "near me" and map-pack intent without it, and its name,
+   address and phone must match the `ProfessionalService` JSON-LD exactly. A
+   mismatched NAP is worse than no markup, and a duplicate profile gets
+   suspended, taking the working one down with it. Full sheet:
+   `docs/outreach/google-business-profile.md`.
+6. Deploy, verify, then submit the sitemap in Search Console.
+
+Do not skip 5. It is the difference between a site that ranks and a site that
 exists.
+
+### Why there is no call-tracking number
+
+An earlier version of this file said to buy one. That was wrong, and it would
+have cost you the thing the profile is for: publishing a tracking number in the
+markup while the profile shows a different number breaks NAP consistency, and a
+mismatch is a weaker signal than an omission. `business.phone` takes the real
+number from the profile.
+
+Tracking still works and needs no second line. Every `tel:` link carries
+`analytics.phoneLinkClass` (`wc-phone`), so a dynamic-number-insertion script
+swaps the **displayed** number at runtime while the canonical number stays in
+the structured data. That is what the class is for.
+
+### Photography
+
+Done. `content/images.json` registers seven real photographs from the Pease
+Park and 501 W 30th shoots, placed twelve times across the site and served
+through the platform's gallery stream with `srcset` and explicit dimensions.
+The `images` gate fails the build on a missing `alt` or a missing
+`width`/`height`. Adding a third property is worth doing, but it is no longer a
+launch blocker.
 
 ---
 

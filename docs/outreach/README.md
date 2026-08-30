@@ -61,9 +61,11 @@ per-unit, per-property and retainer scopes.
 
 ## Before you send anything
 
-1. **The site has no photographs on it.** Sending a photographer's website with
-   no photographs on it is worse than sending nothing. Shoot two or three real
-   Austin properties first. This is the blocker for the whole list.
+1. **The site is not live yet.** It has real photographs on it now — seven from
+   the Pease Park and 501 W 30th shoots — but the domain is unregistered and the
+   build is still blocked on the profile phone, the form endpoint and the legal
+   review. Do not send anyone a link that does not resolve. The launch checklist
+   is in `microsites/README.md`.
 2. **Find a name.** Every row here is a company and a contact form, not a person.
    Ten minutes on LinkedIn per company turns a form submission into an email to
    someone who can decide. The form is the fallback, not the plan.
