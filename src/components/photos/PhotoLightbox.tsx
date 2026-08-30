@@ -3,15 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import DownloadEmailModal from '../DownloadEmailModal';
 import PrintOrderModal from './PrintOrderModal';
-
-interface Photo {
-    id: string;
-    title: string;
-    thumbnail_url: string;
-    google_drive_file_id: string;
-    mime_type?: string | null;
-    metadata?: { width?: number; height?: number } | null;
-}
+import type { Photo } from '../../types/photo';
 
 interface PhotoLightboxProps {
     photo: Photo | null;
