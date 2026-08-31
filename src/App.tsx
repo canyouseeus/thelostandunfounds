@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
+import CookieConsent from './components/CookieConsent'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
 import { GalleryProvider } from './contexts/GalleryContext'
@@ -438,6 +439,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Analytics />
+            <CookieConsent />
           </ErrorBoundary>
         </SageModeProvider>
         </GalleryProvider>
