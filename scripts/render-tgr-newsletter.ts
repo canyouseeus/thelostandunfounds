@@ -65,10 +65,14 @@ ${renderImageButton(WORKBOOK_URL, 'btn-workbook', 'OPEN THE WORKBOOK')}
 `.trim();
 }
 
-const out = process.argv[2] || 'tgr-newsletter-preview.html';
-const html = generateNewsletterEmail(buildBody(), 'preview@thelostandunfounds.com');
-writeFileSync(out, html);
-console.log(`subject: ${SUBJECT}`);
-console.log(`audible: ${AUDIBLE_URL}`);
-console.log(`workbook: ${WORKBOOK_URL}`);
-console.log(`wrote ${out} (${html.length} bytes)`);
+// Only write when run directly. Importing this module (the send script does,
+// to reuse buildBody) must not drop a file in the working directory.
+if (process.argv[1] && process.argv[1].endsWith('render-tgr-newsletter.ts')) {
+  const out = process.argv[2] || 'tgr-newsletter-preview.html';
+  const html = generateNewsletterEmail(buildBody(), 'preview@thelostandunfounds.com');
+  writeFileSync(out, html);
+  console.log(`subject: ${SUBJECT}`);
+  console.log(`audible: ${AUDIBLE_URL}`);
+  console.log(`workbook: ${WORKBOOK_URL}`);
+  console.log(`wrote ${out} (${html.length} bytes)`);
+}
