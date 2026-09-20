@@ -60,8 +60,7 @@ ${renderImageButton(WORKBOOK_URL, 'btn-workbook', 'OPEN THE WORKBOOK')}
 
 <p style="${EMAIL_STYLES.muted}">
   Trial terms are set by Audible and can change without notice — check the offer on their page
-  before you sign up. Amazon Affiliate Disclosure: As an Amazon Associate,
-  <strong>THE LOST+UNFOUNDS</strong> earns from qualifying purchases.
+  before you sign up.
 </p>
 `.trim();
 }

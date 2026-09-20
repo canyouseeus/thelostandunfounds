@@ -648,11 +648,6 @@ export default function ThinkAndGrowRichWorkbook() {
             Your checkmarks and notes are saved in this browser only. They don't sync between
             devices and clearing site data wipes them.
           </p>
-          <p className="text-xs text-white/35 text-left leading-relaxed max-w-[64ch]">
-            Amazon Affiliate Disclosure: As an Amazon Associate,{' '}
-            <strong className="text-white/55">THE LOST+UNFOUNDS</strong> earns from qualifying
-            purchases.
-          </p>
         </div>
       </div>
     </>
