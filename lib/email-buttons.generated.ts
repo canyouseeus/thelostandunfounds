@@ -7,6 +7,8 @@ export const EMAIL_BUTTON_FILES: Record<string, string> = {
   'btn-affiliate': 'btn-affiliate.427c1a46.png',
   'btn-services': 'btn-services.0f8e8e86.png',
   'btn-chip-in': 'btn-chip-in.e97fdcf6.png',
+  'btn-audible-trial': 'btn-audible-trial.8d2d7d24.png',
+  'btn-workbook': 'btn-workbook.605dc23d.png',
   'btn-pay-deposit': 'btn-pay-deposit.cb17233e.png',
   'btn-pay-balance': 'btn-pay-balance.f1aa2ace.png',
   'btn-open-gallery': 'btn-open-gallery.91b13346.png',

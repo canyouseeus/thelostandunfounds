@@ -51,6 +51,8 @@ BUTTONS = {
     "btn-affiliate": "JOIN THE AFFILIATE PROGRAM",
     "btn-services": "SEE THE SERVICES",
     "btn-chip-in": "CHIP IN",
+    "btn-audible-trial": "START THE FREE TRIAL",
+    "btn-workbook": "OPEN THE WORKBOOK",
     # Transactional. Labels are fixed, never per-invoice: the amount already
     # appears in the amount-due panel directly above the button, and a label
     # that varies would mean generating a PNG per invoice at send time.
