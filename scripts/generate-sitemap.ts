@@ -237,9 +237,19 @@ async function generateSitemap() {
     <priority>0.4</priority>
   </url>
 
+  <!-- Book club: free public companion workbook. The /book-club index itself
+       stays out (admin-gated), but this child route is public. -->
+  <url>
+    <loc>${baseUrl}/book-club/think-and-grow-rich</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
        /newtheory are intentionally omitted: pricing is deleted, booking is
-       admin-gated, and the five column pages are admin-only. -->
+       admin-gated, and the five column pages are admin-only. The one
+       exception is the public workbook above. -->
 
   <!-- Privacy Policy -->
   <url>

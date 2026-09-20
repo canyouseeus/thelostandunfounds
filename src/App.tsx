@@ -35,6 +35,7 @@ import AllArticles from './pages/AllArticles'
 import BlogPost from './pages/BlogPost'
 import UserBlog from './pages/UserBlog'
 import BookClub from './pages/BookClub'
+import ThinkAndGrowRichWorkbook from './pages/ThinkAndGrowRichWorkbook'
 import GearHeads from './pages/GearHeads'
 import Borderlands from './pages/Borderlands'
 import Science from './pages/Science'
@@ -326,6 +327,9 @@ function App() {
               </Route>
               <Route path="/book-club" element={<Layout />}>
                 <Route index element={<AdminAuthGate><BookClub /></AdminAuthGate>} />
+                {/* Public: the workbook is a free resource linked from the
+                    newsletter, so it sits outside the AdminAuthGate above. */}
+                <Route path="think-and-grow-rich" element={<ThinkAndGrowRichWorkbook />} />
               </Route>
               <Route path="/gearheads" element={<Layout />}>
                 <Route index element={<AdminAuthGate><GearHeads /></AdminAuthGate>} />

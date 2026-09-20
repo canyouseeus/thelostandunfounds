@@ -11,11 +11,12 @@
 import { writeFileSync } from 'node:fs';
 import { generateNewsletterEmail, renderImageButton, EMAIL_STYLES } from '../lib/email-template.js';
 
-// Swap this for the real Audible link before any send. The workbook link is
-// the artifact URL for now; it becomes a thelostandunfounds.com URL if the
-// workbook is ported onto the site.
-export const AUDIBLE_URL = 'https://www.audible.com/';
-export const WORKBOOK_URL = 'https://claude.ai/artifact/HNAqsFZzJUj9M48C2hQuXG';
+// Both links are live. The Audible URL is the owner's own share link, kept
+// verbatim including its source_code attribution parameter.
+export const AUDIBLE_URL =
+  'https://www.audible.com/pd/B0D5P4MXBW?source_code=ASSORAP0511160006&share_location=library_overflow';
+export const WORKBOOK_URL =
+  'https://www.thelostandunfounds.com/book-club/think-and-grow-rich';
 
 export const SUBJECT = 'A free copy of Think and Grow Rich, and a workbook to go with it';
 
