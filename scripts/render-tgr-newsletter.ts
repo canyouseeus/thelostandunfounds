@@ -80,11 +80,9 @@ ${renderImageButton(AUDIBLE_URL, 'btn-audible-trial', 'START THE FREE TRIAL')}
 </p>
 
 <p style="${EMAIL_STYLES.paragraph}">
-  It also tells you where the book doesn't hold up. Hill's chapters on programming your
-  subconscious, on thought as a radio signal, and on the sixth sense have no evidence behind them,
-  and we say so on the chapter instead of repeating it quietly. The parts that do work — a written
-  goal with a number and a date, learning the exact skill your goal needs, deciding fast and
-  reversing slow, a small group of people who cover your gaps — are worth the read on their own.
+  A written goal with a number and a date. The exact skill your goal needs. Deciding fast and
+  reversing slow. A small group of people who cover your gaps. The workbook turns each of those
+  into something you can check off, so the book leaves you with more than notes.
 </p>
 
 ${renderImageButton(WORKBOOK_URL, 'btn-workbook', 'OPEN THE WORKBOOK')}
