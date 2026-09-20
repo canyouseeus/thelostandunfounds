@@ -20,12 +20,47 @@ export const WORKBOOK_URL =
 
 export const SUBJECT = 'A free copy of Think and Grow Rich, and a workbook to go with it';
 
-export const PREHEADER =
-  'Audible is running a 30-day free trial. Here is the book, and the workbook we built for it.';
+/**
+ * "Thinking" by Walter D. Wintle, which Hill quotes in the Faith chapter.
+ *
+ * It opens the email, directly below the banner. It cannot go above the
+ * banner — brand-email-manager: "No content above the banner."
+ *
+ * The capitals on the last line are Hill's emphasis, not the poem's. The
+ * poem dates to around 1905 and is public domain.
+ *
+ * Line breaks are <br> inside one paragraph rather than separate <p> tags,
+ * so the stanzas hold their shape in clients that collapse paragraph
+ * margins. No left rail or border: the no-border rule applies to email too.
+ */
+const POEM = `<p style="${EMAIL_STYLES.paragraph} font-style: italic; margin-bottom: 8px;">
+  If you think you are beaten, you are,<br>
+  If you think you dare not, you don't<br>
+  If you like to win, but you think you can't,<br>
+  It is almost certain you won't.<br><br>
+  If you think you'll lose, you're lost<br>
+  For out in the world we find,<br>
+  Success begins with a fellow's will&mdash;<br>
+  It's all in the state of mind.<br><br>
+  If you think you are outclassed, you are,<br>
+  You've got to think high to rise,<br>
+  You've got to be sure of yourself before<br>
+  You can ever win a prize.<br><br>
+  Life's battles don't always go<br>
+  To the stronger or faster man,<br>
+  But soon or late the man who wins<br>
+  Is the man <strong>WHO THINKS HE CAN!</strong>
+</p>
+
+<p style="${EMAIL_STYLES.muted} margin-bottom: 28px;">
+  &mdash; &ldquo;Thinking,&rdquo; usually credited to Walter D. Wintle. Hill quotes it in the
+  chapter on faith, without crediting anyone.
+</p>`;
 
 export function buildBody(): string {
   return `
-<!--preheader:${PREHEADER}-->
+${POEM}
+
 <h1 style="${EMAIL_STYLES.heading1}">READ IT FOR FREE</h1>
 
 <p style="${EMAIL_STYLES.paragraph}">
