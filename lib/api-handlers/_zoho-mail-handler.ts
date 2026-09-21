@@ -547,35 +547,30 @@ export async function getAttachmentInfo(
 }
 
 /**
- * Fetch the raw source of a message, so an inline (cid:) image can be pulled
- * out of the MIME tree directly.
+ * Fetch the raw RFC822 source of a message, so an inline (cid:) image can be
+ * pulled straight out of the MIME tree.
  *
- * Zoho's path for this is not consistent across accounts — the folder-scoped
- * `originalmessage` 404s on this one — so try the known variants in order and
- * report which answered. `probe` returns the per-candidate status instead of
- * the body, which is what makes this diagnosable without a deploy per guess.
+ * This is the only route that actually reaches an inline image on this account:
+ * the body yields just a cid, and attachmentinfo reports no parts for it. Note
+ * the path is NOT folder-scoped — the folder-scoped form 404s here, which is
+ * the opposite of getAttachment above. Verified against a real message with an
+ * inline image: the flat path returned the full MIME, the folder-scoped one 404.
+ * The folder-scoped form is kept as a fallback in case other accounts differ.
  */
 export async function getOriginalMessage(
   messageId: string,
-  folderId: string,
-  probe = false
-): Promise<{ success: boolean; raw?: string; via?: string; probes?: any[]; error?: string }> {
+  folderId?: string
+): Promise<{ success: boolean; raw?: string; via?: string; error?: string }> {
   try {
     const auth = await getZohoAuthContext();
     const base = `${ZOHO_MAIL_API}/${auth.accountId}`;
 
     const candidates = [
-      `${base}/folders/${folderId}/messages/${messageId}/originalmessage`,
       `${base}/messages/${messageId}/originalmessage`,
-      `${base}/folders/${folderId}/messages/${messageId}/originalMessage`,
-      `${base}/messages/${messageId}/originalMessage`,
-      `${base}/folders/${folderId}/messages/${messageId}/attachmentinfo`,
-      `${base}/messages/${messageId}/attachmentinfo`,
-      `${base}/folders/${folderId}/messages/${messageId}/content?includeInlineImage=true`,
-      `${base}/messages/${messageId}/message/attachments?inline=true`
+      ...(folderId ? [`${base}/folders/${folderId}/messages/${messageId}/originalmessage`] : [])
     ];
 
-    const probes: any[] = [];
+    let lastStatus = 0;
 
     for (const url of candidates) {
       const response = await rateLimitedFetch(url, {
@@ -583,33 +578,29 @@ export async function getOriginalMessage(
         headers: { 'Authorization': `Zoho-oauthtoken ${auth.accessToken}` }
       });
 
-      const text = response.ok ? await response.text() : await response.text().catch(() => '');
-
-      probes.push({
-        url: url.replace(base, ''),
-        status: response.status,
-        bytes: text.length,
-        preview: text.slice(0, 180)
-      });
-
-      if (response.ok && text.length > 0) {
-        if (probe) continue;
-
-        let raw = text;
-        try {
-          const json = JSON.parse(text);
-          raw = json?.data?.content || json?.data?.originalMessage || json?.data || text;
-          if (typeof raw !== 'string') raw = JSON.stringify(json);
-        } catch {
-          // bare MIME, use as-is
-        }
-        return { success: true, raw, via: url.replace(base, '') };
+      if (!response.ok) {
+        lastStatus = response.status;
+        continue;
       }
+
+      const text = await response.text();
+      if (!text) { lastStatus = 204; continue; }
+
+      // Zoho wraps the source as {"status":…,"data":{"content":"…"}}; some
+      // accounts return bare MIME. Accept either.
+      let raw = text;
+      try {
+        const json = JSON.parse(text);
+        raw = json?.data?.content || json?.data?.originalMessage || json?.data || text;
+        if (typeof raw !== 'string') raw = JSON.stringify(json);
+      } catch {
+        // bare MIME, use as-is
+      }
+
+      return { success: true, raw, via: url.replace(base, '') };
     }
 
-    if (probe) return { success: true, probes };
-
-    return { success: false, error: 'No original-message endpoint answered', probes };
+    return { success: false, error: `Failed to get original message: ${lastStatus}` };
   } catch (error: any) {
     console.error('Error fetching original message:', error);
     return { success: false, error: error.message || 'Unknown error' };

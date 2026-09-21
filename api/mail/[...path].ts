@@ -308,18 +308,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(405).json({ error: 'Method not allowed' });
         }
         const messageId = (pathSegments[1] || req.query.messageId) as string;
-        const folderId = req.query.folderId as string;
-        if (!messageId || !folderId) {
-          return res.status(400).json({ error: 'messageId and folderId are required' });
+        const folderId = req.query.folderId as string | undefined;
+        if (!messageId) {
+          return res.status(400).json({ error: 'messageId is required' });
         }
-        const probe = req.query.probe === '1';
-        const result = await mailHandler.getOriginalMessage(messageId, folderId, probe);
+        const result = await mailHandler.getOriginalMessage(messageId, folderId);
         if (!result.success) {
           console.error('getOriginalMessage error:', result.error);
-          return res.status(500).json({ error: result.error, probes: result.probes });
-        }
-        if (probe) {
-          return res.status(200).json({ probes: result.probes });
+          return res.status(500).json({ error: result.error });
         }
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('X-Zoho-Source', result.via || 'unknown');
