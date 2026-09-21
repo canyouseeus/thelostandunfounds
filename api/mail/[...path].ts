@@ -312,12 +312,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId || !folderId) {
           return res.status(400).json({ error: 'messageId and folderId are required' });
         }
-        const result = await mailHandler.getOriginalMessage(messageId, folderId);
+        const probe = req.query.probe === '1';
+        const result = await mailHandler.getOriginalMessage(messageId, folderId, probe);
         if (!result.success) {
           console.error('getOriginalMessage error:', result.error);
-          return res.status(500).json({ error: result.error });
+          return res.status(500).json({ error: result.error, probes: result.probes });
+        }
+        if (probe) {
+          return res.status(200).json({ probes: result.probes });
         }
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('X-Zoho-Source', result.via || 'unknown');
         return res.status(200).send(result.raw);
       }
 

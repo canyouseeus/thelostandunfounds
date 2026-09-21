@@ -547,45 +547,69 @@ export async function getAttachmentInfo(
 }
 
 /**
- * Fetch the raw RFC822 source of a message. This is the reliable way to reach
- * an inline image: the body only yields a cid, and Zoho's attachmentinfo does
- * not list inline parts for every message. The raw MIME always carries them,
- * base64-encoded, so the caller can walk the parts itself.
+ * Fetch the raw source of a message, so an inline (cid:) image can be pulled
+ * out of the MIME tree directly.
+ *
+ * Zoho's path for this is not consistent across accounts — the folder-scoped
+ * `originalmessage` 404s on this one — so try the known variants in order and
+ * report which answered. `probe` returns the per-candidate status instead of
+ * the body, which is what makes this diagnosable without a deploy per guess.
  */
 export async function getOriginalMessage(
   messageId: string,
-  folderId: string
-): Promise<{ success: boolean; raw?: string; error?: string }> {
+  folderId: string,
+  probe = false
+): Promise<{ success: boolean; raw?: string; via?: string; probes?: any[]; error?: string }> {
   try {
     const auth = await getZohoAuthContext();
-    const url = `${ZOHO_MAIL_API}/${auth.accountId}/folders/${folderId}/messages/${messageId}/originalmessage`;
+    const base = `${ZOHO_MAIL_API}/${auth.accountId}`;
 
-    const response = await rateLimitedFetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Zoho-oauthtoken ${auth.accessToken}`
+    const candidates = [
+      `${base}/folders/${folderId}/messages/${messageId}/originalmessage`,
+      `${base}/messages/${messageId}/originalmessage`,
+      `${base}/folders/${folderId}/messages/${messageId}/originalMessage`,
+      `${base}/messages/${messageId}/originalMessage`,
+      `${base}/folders/${folderId}/messages/${messageId}/attachmentinfo`,
+      `${base}/messages/${messageId}/attachmentinfo`,
+      `${base}/folders/${folderId}/messages/${messageId}/content?includeInlineImage=true`,
+      `${base}/messages/${messageId}/message/attachments?inline=true`
+    ];
+
+    const probes: any[] = [];
+
+    for (const url of candidates) {
+      const response = await rateLimitedFetch(url, {
+        method: 'GET',
+        headers: { 'Authorization': `Zoho-oauthtoken ${auth.accessToken}` }
+      });
+
+      const text = response.ok ? await response.text() : await response.text().catch(() => '');
+
+      probes.push({
+        url: url.replace(base, ''),
+        status: response.status,
+        bytes: text.length,
+        preview: text.slice(0, 180)
+      });
+
+      if (response.ok && text.length > 0) {
+        if (probe) continue;
+
+        let raw = text;
+        try {
+          const json = JSON.parse(text);
+          raw = json?.data?.content || json?.data?.originalMessage || json?.data || text;
+          if (typeof raw !== 'string') raw = JSON.stringify(json);
+        } catch {
+          // bare MIME, use as-is
+        }
+        return { success: true, raw, via: url.replace(base, '') };
       }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Zoho originalmessage API error:', response.status, errorText);
-      return { success: false, error: `Failed to get original message: ${response.status}` };
     }
 
-    const text = await response.text();
-    // Zoho wraps it as {"status":…,"data":{"content":"…"}} on some accounts and
-    // returns the bare MIME on others. Accept either.
-    let raw = text;
-    try {
-      const json = JSON.parse(text);
-      raw = json?.data?.content || json?.data?.originalMessage || json?.data || text;
-      if (typeof raw !== 'string') raw = JSON.stringify(json);
-    } catch {
-      // bare MIME, use as-is
-    }
+    if (probe) return { success: true, probes };
 
-    return { success: true, raw };
+    return { success: false, error: 'No original-message endpoint answered', probes };
   } catch (error: any) {
     console.error('Error fetching original message:', error);
     return { success: false, error: error.message || 'Unknown error' };
