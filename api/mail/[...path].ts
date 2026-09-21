@@ -282,6 +282,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // GET /api/mail/attachment?messageId=X&attachmentId=Y
+      // GET /api/mail/attachmentinfo?messageId=X&folderId=Y
+      // Lists all parts including inline images, which the message body omits.
+      case 'attachmentinfo': {
+        if (req.method !== 'GET') {
+          return res.status(405).json({ error: 'Method not allowed' });
+        }
+        const messageId = (pathSegments[1] || req.query.messageId) as string;
+        const folderId = req.query.folderId as string;
+        if (!messageId || !folderId) {
+          return res.status(400).json({ error: 'messageId and folderId are required' });
+        }
+        const result = await mailHandler.getAttachmentInfo(messageId, folderId);
+        if (!result.success) {
+          console.error('getAttachmentInfo error:', result.error);
+          return res.status(500).json({ error: result.error });
+        }
+        return res.status(200).json({ attachments: result.attachments });
+      }
+
+      // GET /api/mail/original?messageId=X&folderId=Y
+      // Raw RFC822 source, so inline (cid:) parts can be extracted by the caller.
+      case 'original': {
+        if (req.method !== 'GET') {
+          return res.status(405).json({ error: 'Method not allowed' });
+        }
+        const messageId = (pathSegments[1] || req.query.messageId) as string;
+        const folderId = req.query.folderId as string | undefined;
+        if (!messageId) {
+          return res.status(400).json({ error: 'messageId is required' });
+        }
+        const result = await mailHandler.getOriginalMessage(messageId, folderId);
+        if (!result.success) {
+          console.error('getOriginalMessage error:', result.error);
+          return res.status(500).json({ error: result.error });
+        }
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('X-Zoho-Source', result.via || 'unknown');
+        return res.status(200).send(result.raw);
+      }
+
       case 'attachment': {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
@@ -298,7 +338,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId || !attachmentId) {
           return res.status(400).json({ error: 'messageId and attachmentId are required' });
         }
-        const result = await mailHandler.getAttachment(messageId, attachmentId);
+        // folderId is optional but required for inline (cid:) images — see getAttachment.
+        const attFolderId = req.query.folderId as string | undefined;
+        const result = await mailHandler.getAttachment(messageId, attachmentId, attFolderId);
         if (!result.success || !result.content) {
           console.error('getAttachment error:', result.error);
           return res.status(500).json({ error: result.error });

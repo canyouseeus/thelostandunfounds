@@ -465,11 +465,17 @@ export async function searchMessages(
  */
 export async function getAttachment(
   messageId: string,
-  attachmentId: string
+  attachmentId: string,
+  folderId?: string
 ): Promise<{ success: boolean; content?: ArrayBuffer; contentType?: string; error?: string }> {
   try {
     const auth = await getZohoAuthContext();
-    const url = `${ZOHO_MAIL_API}/${auth.accountId}/messages/${messageId}/attachments/${attachmentId}`;
+    // Inline images (cid: references in the body) are not reachable on the
+    // flat /messages/:id/attachments/:attId form — that 404s. Zoho only serves
+    // them from the folder-scoped path, so use it whenever we know the folder.
+    const url = folderId
+      ? `${ZOHO_MAIL_API}/${auth.accountId}/folders/${folderId}/messages/${messageId}/attachments/${attachmentId}`
+      : `${ZOHO_MAIL_API}/${auth.accountId}/messages/${messageId}/attachments/${attachmentId}`;
 
     const response = await rateLimitedFetch(url, {
       method: 'GET',
@@ -490,6 +496,113 @@ export async function getAttachment(
     return { success: true, content, contentType };
   } catch (error: any) {
     console.error('Error fetching attachment:', error);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+/**
+ * List every part Zoho holds for a message, including inline images that never
+ * appear in the message's `attachments` array. This is what makes a cid: image
+ * in the body downloadable — the body only gives you the cid, this gives you
+ * the attachmentId to fetch it with.
+ */
+export async function getAttachmentInfo(
+  messageId: string,
+  folderId: string
+): Promise<{ success: boolean; attachments?: MailAttachment[]; error?: string }> {
+  try {
+    const auth = await getZohoAuthContext();
+    const url = `${ZOHO_MAIL_API}/${auth.accountId}/folders/${folderId}/messages/${messageId}/attachmentinfo`;
+
+    const response = await rateLimitedFetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Zoho-oauthtoken ${auth.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Zoho attachmentinfo API error:', response.status, errorText);
+      return { success: false, error: `Failed to get attachment info: ${response.status}` };
+    }
+
+    const json = await response.json();
+    const raw = json?.data?.attachments || json?.data || [];
+    const list = Array.isArray(raw) ? raw : [];
+
+    const attachments: MailAttachment[] = list.map((a: any) => ({
+      attachmentId: String(a.attachmentId || a.attachment_id || a.id || a.index || ''),
+      attachmentName: a.attachmentName || a.attachment_name || a.name || '',
+      attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
+      contentType: a.contentType || a.content_type || a.type || 'application/octet-stream'
+    }));
+
+    return { success: true, attachments };
+  } catch (error: any) {
+    console.error('Error fetching attachment info:', error);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+/**
+ * Fetch the raw RFC822 source of a message, so an inline (cid:) image can be
+ * pulled straight out of the MIME tree.
+ *
+ * This is the only route that actually reaches an inline image on this account:
+ * the body yields just a cid, and attachmentinfo reports no parts for it. Note
+ * the path is NOT folder-scoped — the folder-scoped form 404s here, which is
+ * the opposite of getAttachment above. Verified against a real message with an
+ * inline image: the flat path returned the full MIME, the folder-scoped one 404.
+ * The folder-scoped form is kept as a fallback in case other accounts differ.
+ */
+export async function getOriginalMessage(
+  messageId: string,
+  folderId?: string
+): Promise<{ success: boolean; raw?: string; via?: string; error?: string }> {
+  try {
+    const auth = await getZohoAuthContext();
+    const base = `${ZOHO_MAIL_API}/${auth.accountId}`;
+
+    const candidates = [
+      `${base}/messages/${messageId}/originalmessage`,
+      ...(folderId ? [`${base}/folders/${folderId}/messages/${messageId}/originalmessage`] : [])
+    ];
+
+    let lastStatus = 0;
+
+    for (const url of candidates) {
+      const response = await rateLimitedFetch(url, {
+        method: 'GET',
+        headers: { 'Authorization': `Zoho-oauthtoken ${auth.accessToken}` }
+      });
+
+      if (!response.ok) {
+        lastStatus = response.status;
+        continue;
+      }
+
+      const text = await response.text();
+      if (!text) { lastStatus = 204; continue; }
+
+      // Zoho wraps the source as {"status":…,"data":{"content":"…"}}; some
+      // accounts return bare MIME. Accept either.
+      let raw = text;
+      try {
+        const json = JSON.parse(text);
+        raw = json?.data?.content || json?.data?.originalMessage || json?.data || text;
+        if (typeof raw !== 'string') raw = JSON.stringify(json);
+      } catch {
+        // bare MIME, use as-is
+      }
+
+      return { success: true, raw, via: url.replace(base, '') };
+    }
+
+    return { success: false, error: `Failed to get original message: ${lastStatus}` };
+  } catch (error: any) {
+    console.error('Error fetching original message:', error);
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
