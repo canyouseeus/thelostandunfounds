@@ -155,7 +155,18 @@ export function ensureBannerHtml(htmlContent: string): string {
   return ensureShell(bannerBlock + html)
 }
 
+// Zoho rate-limits refresh-token grants aggressively ("You have made too many
+// requests continuously"), and a webmail page load fans out into folders +
+// messages + per-attachment calls. Without a cache each of those burned its own
+// refresh and tripped the limit. Access tokens are valid for an hour; cache in
+// module scope (per warm lambda) and retire a minute early for clock skew.
+let cachedToken: { token: string; expiresAt: number } | null = null
+
 async function getZohoAccessToken(): Promise<string> {
+  if (cachedToken && Date.now() < cachedToken.expiresAt) {
+    return cachedToken.token
+  }
+
   const { clientId, clientSecret, refreshToken } = getZohoEnv()
 
   const response = await fetch(ZOHO_TOKEN_URL, {
@@ -175,6 +186,8 @@ async function getZohoAccessToken(): Promise<string> {
   }
 
   const data: ZohoTokenResponse = await response.json()
+  const ttlSeconds = typeof data.expires_in === 'number' && data.expires_in > 60 ? data.expires_in : 3600
+  cachedToken = { token: data.access_token, expiresAt: Date.now() + (ttlSeconds - 60) * 1000 }
   return data.access_token
 }
 
