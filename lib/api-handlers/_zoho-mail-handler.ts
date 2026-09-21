@@ -3,7 +3,7 @@
  * Full webmail functionality: folders, messages, send, search, attachments
  */
 
-import { getZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils.js';
+import { getZohoAuthContext, ensureBannerHtml, uploadZohoAttachment } from './_zoho-email-utils.js';
 
 export type { ZohoAuthContext } from './_zoho-email-utils.js';
 export { getZohoAuthContext } from './_zoho-email-utils.js';
@@ -290,12 +290,21 @@ export async function sendMessage(
     if (params.bcc) body.bccAddress = params.bcc;
     if (params.inReplyTo) body.inReplyTo = params.inReplyTo;
 
+    // Zoho does not accept inline attachment bytes on the send call. A file has
+    // to go to its attachment store first, and the send then references the
+    // returned storeName/attachmentPath/attachmentName triplet. Passing raw
+    // base64 as `attachmentData` fails silently: the mail sends, the file is
+    // simply absent. sendZohoEmail in _zoho-email-utils has always done this
+    // correctly; this path had not.
     if (params.attachments && params.attachments.length > 0) {
-      body.attachments = params.attachments.map(a => ({
-        attachmentName: a.name,
-        attachmentData: a.content,
-        mimeType: a.contentType
-      }));
+      const uploaded = [];
+      for (const a of params.attachments) {
+        const bytes = Buffer.from(a.content, 'base64');
+        uploaded.push(
+          await uploadZohoAttachment(auth, bytes, a.name, a.contentType || 'application/octet-stream')
+        );
+      }
+      body.attachments = uploaded;
     }
 
     const response = await rateLimitedFetch(url, {
