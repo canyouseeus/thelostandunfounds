@@ -62,7 +62,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         };
     }, []);
 
-    // Helper: read/write newsletter cookie (30-day expiry)
+    // Helper: read/write newsletter cookie. Written only on a successful
+    // subscribe (handleNewsletterSuccess), never on dismissal — a dismissal is
+    // session-only via sessionStorage. Hence the 10-year expiry: once someone
+    // has actually subscribed, we should never prompt them again. Disclosed by
+    // name and duration in the privacy policy's Cookies and Tracking section.
     const hasNewsletterCookie = () => document.cookie.split(';').some(c => c.trim().startsWith('nl_done='));
     const setNewsletterCookie = () => {
         const expires = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toUTCString();

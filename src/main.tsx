@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
 import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
+import { initConsent } from './utils/consent'
 import './index.css'
 
 declare global {
@@ -61,6 +62,15 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('📦 All imports loaded successfully')
+
+// Resolve the marketing-storage consent gate as early as possible.
+//
+// Kicked off here rather than from a component because it must run even when
+// the consent prompt never renders: a visitor outside the EU/UK zone needs the
+// gate to resolve to 'not-required' before affiliate attribution can be written
+// at all. Until it resolves the gate denies, so nothing gated is ever written
+// while this is in flight.
+void initConsent()
 
 // Skip error monitor for now to isolate issue
 // try {
