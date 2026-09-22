@@ -103,6 +103,53 @@ const loadMessage = useCallback(async (messageId: string, folderId?: string) => 
 
 ---
 
+## Symptom: no photos in the body, and no attachments to download
+
+Three separate causes, all fixed together — check all three before concluding it is something else.
+
+**1. Zoho's message `content` response carries no attachment metadata on this account.** An
+attachment strip built from `m.attachments` alone is always empty even when the list view shows a
+paperclip (that comes from `hasAttachment`). `getMessage` now falls back to `listMessageAttachments`,
+which tries `attachmentinfo` first and then parses the raw source.
+
+**2. `cid:` images can never render.** Embedded photos are `<img src="cid:logo@zoho">`, and a `cid:`
+URL only resolves inside the MIME message — a browser has nothing to fetch. The reader now calls
+`GET /api/mail/inline?messageId=X&folderId=Y`, which returns inline parts keyed by Content-ID, and
+rewrites each `src` to a `data:` URL before sanitizing.
+
+> DOMPurify keeps `data:` URLs on `<img>` (img is in its DATA_URI_TAGS) but strips `blob:`, which is
+> not in its allowed-URI regexp. Use `data:` for body images. Object URLs are fine for `<img>` tags
+> React renders itself, like the attachment previews — those never pass through the sanitizer.
+
+**3. Downloads need `folderId` and the filename.** Same class of bug as opening a message:
+
+```ts
+// WRONG — Zoho 404s the flat attachment path, the route turns that into a 500
+fetch(`/api/mail/attachment?messageId=${id}&attachmentId=${attId}`)
+
+// CORRECT
+fetch(`/api/mail/attachment?messageId=${id}&attachmentId=${attId}&folderId=${folderId}&name=${name}`)
+```
+
+`name` is what lets the handler recover the part from the message source when Zoho rejects the id,
+and it is also what the browser saves the file as — without it every download lands as `attachment`.
+
+### Where the bytes actually come from
+
+`lib/api-handlers/_mime-parse.ts` parses the raw RFC822 source from `originalmessage`. It is the
+only path that reliably reaches both inline images and attachments on this account. Parts found this
+way get an id of `mime:<index>` instead of a Zoho attachment id, which is how `getAttachment` knows
+to serve them from the source. Parsed parts are cached ~5 minutes so opening one message is one
+download, not one per image.
+
+If attachments stop appearing, check in this order:
+1. `GET /api/mail/original?messageId=X&folderId=Y` — does the raw source come back at all? The
+   `X-Zoho-Source` response header says which Zoho path answered.
+2. Is it multipart? A message whose source is a single `text/html` part genuinely has no attachments.
+3. `GET /api/mail/inline?messageId=X&folderId=Y` — does it list the Content-IDs the body references?
+
+---
+
 ## Symptom: Auth works for newsletters/receipts but fails for webmail
 
 The newsletter and transactional send path use `lib/api-handlers/_zoho-email-utils.ts`. The webmail handler (`_zoho-mail-handler.ts`) must import auth from the same file — never inline a copy:

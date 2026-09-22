@@ -94,6 +94,10 @@ interface AdminMailViewProps {
   onBack: () => void;
 }
 
+// Image attachments previewed inline when a message is opened. Past a handful
+// this is a lot of downloading for photos the reader may never scroll to.
+const MAX_INLINE_PREVIEWS = 8;
+
 // Cache for folders (5 minutes)
 let foldersCache: { data: MailFolder[]; timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -128,8 +132,20 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const [showFolderDrawer, setShowFolderDrawer] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
 
+  // Body with cid: references already swapped for displayable data URLs, and
+  // object URLs for image attachments so they can be previewed in place.
+  const [resolvedHtml, setResolvedHtml] = useState<string | null>(null);
+  const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
   const PAGE_SIZE = 25;
   const contentRef = useRef<HTMLDivElement>(null);
+  // Object URLs currently handed to <img>; revoked when the message changes.
+  const previewUrlsRef = useRef<string[]>([]);
+  // The message the reader is actually looking at. Image loading is async and a
+  // click through the list can outrun it, so every result is checked against
+  // this before it lands — otherwise one message's photos appear under another.
+  const openMessageRef = useRef<string | null>(null);
 
   // API helper
   const mailApi = useCallback(async (
@@ -234,6 +250,87 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     }
   }, [mailApi]);
 
+  // Fetch one attachment's bytes. folderId and the filename both matter: Zoho
+  // only serves inline parts from the folder-scoped path, and the name lets the
+  // API recover a part straight from the message source when the id 404s.
+  const fetchAttachmentBlob = useCallback(async (
+    messageId: string,
+    folderId: string | undefined,
+    attachment: MailAttachment
+  ): Promise<Blob> => {
+    const params = new URLSearchParams({
+      messageId,
+      attachmentId: attachment.attachmentId,
+      name: attachment.attachmentName
+    });
+    if (folderId) params.set('folderId', folderId);
+
+    const response = await fetch(`/api/mail/attachment?${params.toString()}`, {
+      headers: { 'X-Admin-Email': user?.email || '' }
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => null);
+      throw new Error(detail?.error || `Download failed (${response.status})`);
+    }
+    return response.blob();
+  }, [user?.email]);
+
+  /**
+   * Make a message's images visible.
+   *
+   * Embedded photos arrive as `<img src="cid:...">`, which no browser can
+   * resolve on its own — the bytes live in the MIME message, not at a URL. The
+   * API hands them back keyed by Content-ID and they are swapped in here.
+   * Image attachments get an inline preview at the same time, so a photo sent
+   * as a file is visible without downloading it first.
+   */
+  const resolveInlineImages = useCallback(async (message: MailMessageFull) => {
+    const html = message.htmlContent || '';
+    const isStillOpen = () => openMessageRef.current === message.messageId;
+
+    if (/src\s*=\s*["']?cid:/i.test(html)) {
+      try {
+        const params = new URLSearchParams({ messageId: message.messageId });
+        if (message.folderId) params.set('folderId', message.folderId);
+        const data = await mailApi(`inline?${params.toString()}`);
+
+        const byContentId = new Map<string, string>(
+          (data.images || []).map((img: { contentId: string; contentType: string; content: string }) => [
+            img.contentId,
+            `data:${img.contentType};base64,${img.content}`
+          ])
+        );
+
+        if (byContentId.size > 0 && isStillOpen()) {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          doc.querySelectorAll('img[src^="cid:"], img[src^="CID:"]').forEach(img => {
+            const cid = (img.getAttribute('src') || '').slice(4).replace(/^<|>$/g, '');
+            const replacement = byContentId.get(cid) || byContentId.get(decodeURIComponent(cid));
+            if (replacement) img.setAttribute('src', replacement);
+          });
+          setResolvedHtml(doc.body.innerHTML);
+        }
+      } catch (err) {
+        // A body that renders with broken images still beats no body at all.
+        console.error('Failed to load inline images:', err);
+      }
+    }
+
+    const images = (message.attachments || []).filter(a => a.contentType.startsWith('image/'));
+    for (const attachment of images.slice(0, MAX_INLINE_PREVIEWS)) {
+      if (!isStillOpen()) return;
+      try {
+        const blob = await fetchAttachmentBlob(message.messageId, message.folderId, attachment);
+        if (!isStillOpen()) return;
+        const url = URL.createObjectURL(blob);
+        previewUrlsRef.current.push(url);
+        setAttachmentPreviews(prev => ({ ...prev, [attachment.attachmentId]: url }));
+      } catch (err) {
+        console.error(`Preview failed for ${attachment.attachmentName}:`, err);
+      }
+    }
+  }, [mailApi, fetchAttachmentBlob]);
+
   // Load single message
   const loadMessage = useCallback(async (messageId: string, folderId?: string) => {
     try {
@@ -242,7 +339,18 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       const qs = folderId ? `&folderId=${encodeURIComponent(folderId)}` : '';
       const data = await mailApi(`message?id=${encodeURIComponent(messageId)}${qs}`);
+
+      // Drop the previous message's images before showing the new one.
+      openMessageRef.current = messageId;
+      previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      previewUrlsRef.current = [];
+      setAttachmentPreviews({});
+      setResolvedHtml(null);
       setSelectedMessage(data.message);
+
+      resolveInlineImages(data.message).catch(err =>
+        console.error('Inline image resolution failed:', err)
+      );
 
       // Mark as read
       if (!data.message.isRead) {
@@ -263,7 +371,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     } finally {
       setLoadingMessage(false);
     }
-  }, [mailApi]);
+  }, [mailApi, resolveInlineImages]);
 
   // Search
   const handleSearch = useCallback(async () => {
@@ -448,31 +556,42 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   }, [selectedMessage]);
 
   // Download attachment
-  const handleDownloadAttachment = useCallback(async (messageId: string, attachment: MailAttachment) => {
+  const handleDownloadAttachment = useCallback(async (
+    messageId: string,
+    folderId: string | undefined,
+    attachment: MailAttachment
+  ) => {
+    setDownloadingId(attachment.attachmentId);
     try {
-      const response = await fetch(`/api/mail/attachment?messageId=${encodeURIComponent(messageId)}&attachmentId=${encodeURIComponent(attachment.attachmentId)}`, {
-        headers: { 'X-Admin-Email': user?.email || '' }
-      });
-
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
+      const blob = await fetchAttachmentBlob(messageId, folderId, attachment);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = attachment.attachmentName;
+      // Safari ignores a click on an element that is not in the document.
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      // Revoking immediately can cancel the download in some browsers.
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (err: any) {
       console.error('Download failed:', err);
-      showError('Failed to download attachment');
+      showError(err.message || 'Failed to download attachment');
+    } finally {
+      setDownloadingId(null);
     }
-  }, [user?.email, showError]);
+  }, [fetchAttachmentBlob, showError]);
 
   // Effects
   useEffect(() => {
     loadFolders();
   }, [loadFolders]);
+
+  // Release every object URL handed to an <img> when the view goes away.
+  useEffect(() => () => {
+    previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    previewUrlsRef.current = [];
+  }, []);
 
   useEffect(() => {
     if (selectedFolder) {
@@ -822,21 +941,47 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
               {/* Attachments */}
               {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
                 <div className="px-4 py-3 border-none bg-white/[0.02]">
-                  <div className="text-xs text-white/40 mb-2">Attachments</div>
+                  <div className="text-xs text-white/40 mb-2">
+                    Attachments ({selectedMessage.attachments.length})
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {selectedMessage.attachments.map(att => (
-                      <button
-                        key={att.attachmentId}
-                        onClick={() => handleDownloadAttachment(selectedMessage.messageId, att)}
-                        className="flex items-center gap-2 px-3 py-2 bg-white/5 border-none hover:bg-white/10 transition text-sm"
-                      >
-                        <Paperclip className="w-4 h-4 text-white/40" />
-                        <span className="text-white/80">{att.attachmentName}</span>
-                        <span className="text-white/40 text-xs">
-                          ({formatSize(att.attachmentSize)})
-                        </span>
-                      </button>
-                    ))}
+                    {selectedMessage.attachments.map(att => {
+                      const preview = attachmentPreviews[att.attachmentId];
+                      const isDownloading = downloadingId === att.attachmentId;
+
+                      return (
+                        <button
+                          key={att.attachmentId}
+                          onClick={() => handleDownloadAttachment(
+                            selectedMessage.messageId,
+                            selectedMessage.folderId,
+                            att
+                          )}
+                          disabled={isDownloading}
+                          className="flex flex-col gap-2 p-2 bg-white/5 border-none hover:bg-white/10 transition text-sm text-left disabled:opacity-50"
+                          title={`Download ${att.attachmentName}`}
+                        >
+                          {preview && (
+                            <img
+                              src={preview}
+                              alt={att.attachmentName}
+                              className="max-h-40 max-w-[16rem] object-contain bg-black/40"
+                            />
+                          )}
+                          <span className="flex items-center gap-2">
+                            {isDownloading ? (
+                              <Loader className="w-4 h-4 text-white/40 animate-spin" />
+                            ) : (
+                              <Paperclip className="w-4 h-4 text-white/40" />
+                            )}
+                            <span className="text-white/80">{att.attachmentName}</span>
+                            <span className="text-white/40 text-xs">
+                              ({formatSize(att.attachmentSize)})
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -848,9 +993,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
               >
                 {selectedMessage.htmlContent ? (
                   <div
-                    className="prose prose-invert max-w-none text-white/80"
+                    className="prose prose-invert max-w-none text-white/80 [&_img]:max-w-full [&_img]:h-auto"
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(selectedMessage.htmlContent, {
+                      // resolvedHtml is the same body with cid: images swapped
+                      // for data URLs; it is null until (and unless) that
+                      // resolves, so the text is never held back on it.
+                      __html: DOMPurify.sanitize(resolvedHtml || selectedMessage.htmlContent, {
                         ADD_TAGS: ['style'],
                         ADD_ATTR: ['target']
                       })
