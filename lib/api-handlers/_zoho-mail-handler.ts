@@ -8,6 +8,7 @@ import {
   parseMimeParts,
   isAttachmentPart,
   isInlineImagePart,
+  guessContentType,
   type MimePart
 } from './_mime-parse.js';
 
@@ -510,7 +511,7 @@ export async function getAttachment(
           part.content.byteOffset,
           part.content.byteOffset + part.content.byteLength
         ) as ArrayBuffer,
-        contentType: part.contentType || 'application/octet-stream',
+        contentType: guessContentType(part.name, part.contentType),
         name: part.name
       };
     }
@@ -542,9 +543,11 @@ export async function getAttachment(
     }
 
     const content = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    // Zoho streams attachments as octet-stream, so an <img> built from these
+    // bytes would not render. Recover the real type from the filename.
+    const contentType = guessContentType(name || '', response.headers.get('content-type') || '');
 
-    return { success: true, content, contentType };
+    return { success: true, content, contentType, name };
   } catch (error: any) {
     console.error('Error fetching attachment:', error);
     return { success: false, error: error.message || 'Unknown error' };
@@ -583,12 +586,17 @@ export async function getAttachmentInfo(
     const raw = json?.data?.attachments || json?.data || [];
     const list = Array.isArray(raw) ? raw : [];
 
-    const attachments: MailAttachment[] = list.map((a: any) => ({
-      attachmentId: String(a.attachmentId || a.attachment_id || a.id || a.index || ''),
-      attachmentName: a.attachmentName || a.attachment_name || a.name || '',
-      attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
-      contentType: a.contentType || a.content_type || a.type || 'application/octet-stream'
-    }));
+    const attachments: MailAttachment[] = list.map((a: any) => {
+      const attachmentName = a.attachmentName || a.attachment_name || a.name || '';
+      return {
+        attachmentId: String(a.attachmentId || a.attachment_id || a.id || a.index || ''),
+        attachmentName,
+        attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
+        // Zoho labels photo attachments application/octet-stream here, which
+        // would hide them from the reader's image previews.
+        contentType: guessContentType(attachmentName, a.contentType || a.content_type || a.type || '')
+      };
+    });
 
     return { success: true, attachments };
   } catch (error: any) {
@@ -783,7 +791,10 @@ function normalizeAttachments(raw: any[]): MailAttachment[] {
     attachmentId: String(a.attachmentId || a.attachment_id || a.id || ''),
     attachmentName: a.attachmentName || a.attachment_name || a.name || 'attachment',
     attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
-    contentType: a.contentType || a.content_type || a.mimeType || 'application/octet-stream'
+    contentType: guessContentType(
+      a.attachmentName || a.attachment_name || a.name || '',
+      a.contentType || a.content_type || a.mimeType || ''
+    )
   })).filter(a => a.attachmentId);
 }
 
@@ -847,7 +858,7 @@ export async function listMessageAttachments(
     attachmentId: `${MIME_ATTACHMENT_PREFIX}${part.index}`,
     attachmentName: part.name || `attachment-${part.index}`,
     attachmentSize: part.content.byteLength,
-    contentType: part.contentType || 'application/octet-stream'
+    contentType: guessContentType(part.name, part.contentType)
   }));
 }
 
@@ -870,7 +881,7 @@ async function getAttachmentFromSource(
         part.content.byteOffset,
         part.content.byteOffset + part.content.byteLength
       ) as ArrayBuffer,
-      contentType: part.contentType || 'application/octet-stream',
+      contentType: guessContentType(part.name, part.contentType),
       name: part.name
     };
   } catch (error: any) {

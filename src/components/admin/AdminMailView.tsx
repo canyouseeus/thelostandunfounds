@@ -98,6 +98,22 @@ interface AdminMailViewProps {
 // this is a lot of downloading for photos the reader may never scroll to.
 const MAX_INLINE_PREVIEWS = 8;
 
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|webp|bmp|svg|heic|heif|avif|tiff?)$/i;
+
+/**
+ * Whether an attachment should be shown as a picture.
+ *
+ * The declared type alone is not enough: Zoho reports ordinary photo
+ * attachments as `application/octet-stream` (seen on production with four
+ * JPEGs on one message), which would leave a message full of photos showing
+ * nothing but filenames. The API now repairs the type from the filename, and
+ * this checks the filename too so a preview never depends on that alone.
+ */
+function isImageAttachment(attachment: MailAttachment): boolean {
+  return attachment.contentType.startsWith('image/')
+    || IMAGE_EXTENSIONS.test(attachment.attachmentName);
+}
+
 // Cache for folders (5 minutes)
 let foldersCache: { data: MailFolder[]; timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -316,7 +332,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     }
 
-    const images = (message.attachments || []).filter(a => a.contentType.startsWith('image/'));
+    const images = (message.attachments || []).filter(isImageAttachment);
     for (const attachment of images.slice(0, MAX_INLINE_PREVIEWS)) {
       if (!isStillOpen()) return;
       try {
