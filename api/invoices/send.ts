@@ -1,3 +1,4 @@
+import { getAdminUser } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * POST /api/invoices/send
  *
@@ -7,7 +8,7 @@
  *   invoice_id  string   — UUID of the invoice to send
  *   to_email?   string   — Optional override (for testing). Falls back to client's email.
  *
- * Auth: localhost is allowed, otherwise `x-admin-email` or `x-admin-secret`.
+ * Auth: verified Supabase admin session (Authorization: Bearer <token>).
  */
 
 import * as dotenv from 'dotenv'
@@ -23,15 +24,10 @@ import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-
 import { generateInvoicePdf, InvoicePdfLineItem } from '../../lib/api-handlers/_invoice-pdf.js'
 
 const FROM_EMAIL = 'media@thelostandunfounds.com'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
 
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true
-  const adminEmail = (req.headers['x-admin-email'] as string || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(adminEmail)) return true
-  const host = req.headers.host || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return true
-  return false
+async function isAdmin(req: VercelRequest): Promise<boolean> {
+    // Verifies a real Supabase session; never trusts a header as identity.
+    return (await getAdminUser(req)) !== null
 }
 
 interface LineItem {
@@ -82,11 +78,11 @@ function buildPersonalMessageBody(message: string, invoiceNumber: string): strin
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Secret')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await isAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const { invoice_id, to_email, cc_email, message } = (req.body || {}) as {
     invoice_id?: string

@@ -1,3 +1,4 @@
+import { adminFetch } from '../../utils/adminAuth'
 /**
  * BookingInvoicePanel
  *
@@ -76,7 +77,6 @@ function getAdminHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
     'x-admin-secret': secret,
-    'x-admin-email': 'thelostandunfounds@gmail.com',
   };
 }
 
@@ -155,7 +155,7 @@ const EmailThread: React.FC<EmailThreadProps> = ({
     setSending(true);
     setSendError(null);
     try {
-      const res = await fetch('/api/mail/send', {
+      const res = await adminFetch('/api/mail/send', {
         method: 'POST',
         headers: getAdminHeaders(),
         body: JSON.stringify({
@@ -379,7 +379,7 @@ const BookingInvoicePanel: React.FC<Props> = ({ booking, onClose, onInvoiceCreat
     setFeedback(null);
 
     try {
-      const res = await fetch('/api/booking/create-quote', {
+      const res = await adminFetch('/api/booking/create-quote', {
         method: 'POST',
         headers: getAdminHeaders(),
         body: JSON.stringify({

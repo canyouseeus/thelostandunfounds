@@ -1,3 +1,4 @@
+import { getAdminUser } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * POST /api/booking/create-quote
  *
@@ -13,7 +14,7 @@
  *   lineItems?   Array<LineItem>         — optional itemised breakdown
  *   description? string
  *
- * Auth: x-admin-secret, x-admin-email, or localhost.
+ * Auth: verified Supabase admin session (Authorization: Bearer <token>).
  */
 
 import * as dotenv from 'dotenv'
@@ -39,26 +40,20 @@ import {
   upsertClientForBooking,
 } from '../../lib/api-handlers/_booking-payment-utils.js'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
 
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {
-    return true
-  }
-  const adminEmail = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(adminEmail)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
+async function isAdmin(req: VercelRequest): Promise<boolean> {
+    // Verifies a real Supabase session; never trusts a header as identity.
+    return (await getAdminUser(req)) !== null
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Secret')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await isAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const {
     bookingId,

@@ -24,6 +24,7 @@ import { cn } from '../ui/utils';
 import { LoadingSpinner } from '../Loading';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { logApiCall, logError } from '../../lib/adminErrorLog';
+import { adminFetch } from '../../utils/adminAuth'
 
 type ProductStatus = 'active' | 'draft';
 
@@ -104,7 +105,6 @@ interface ProdigiOrder {
   prodigi_products?: { title: string; sku: string } | null;
 }
 
-const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' };
 const STATUS_LABEL: Record<ProductStatus, string> = { active: 'Publish', draft: 'Drafts' };
 
 const ORDER_STATUS_COLOR: Record<string, string> = {
@@ -163,7 +163,7 @@ export default function AdminPrintShopView() {
 
   const loadProducts = () => {
     setLoading(true);
-    fetch('/api/admin/prodigi-products', { headers: ADMIN_HEADERS })
+    adminFetch('/api/admin/prodigi-products')
       .then((r) => {
         logApiCall('GET', '/api/admin/prodigi-products', r.status, '');
         return r.json();
@@ -179,7 +179,7 @@ export default function AdminPrintShopView() {
 
   const loadOrders = () => {
     setOrdersLoading(true);
-    fetch('/api/admin/prodigi-orders', { headers: ADMIN_HEADERS })
+    adminFetch('/api/admin/prodigi-orders')
       .then((r) => {
         logApiCall('GET', '/api/admin/prodigi-orders', r.status, '');
         return r.json();
@@ -204,7 +204,7 @@ export default function AdminPrintShopView() {
   useEffect(() => {
     if (activeTab !== 'sizes' || sizesLoaded) return;
     setSizesLoading(true);
-    fetch('/api/admin/print-catalog', { headers: ADMIN_HEADERS })
+    adminFetch('/api/admin/print-catalog')
       .then((r) => { logApiCall('GET', '/api/admin/print-catalog', r.status, ''); return r.json(); })
       .then((data) => { setSizeOptions(data.data || []); setSizesLoaded(true); })
       .catch((e) => logError(e.message || 'Failed to load print sizes'))
@@ -214,7 +214,7 @@ export default function AdminPrintShopView() {
   useEffect(() => {
     if (activeTab !== 'frames' || framesLoaded) return;
     setFramesLoading(true);
-    fetch('/api/admin/frame-templates', { headers: ADMIN_HEADERS })
+    adminFetch('/api/admin/frame-templates')
       .then((r) => { logApiCall('GET', '/api/admin/frame-templates', r.status, ''); return r.json(); })
       .then((data) => { setFrameTemplates(data.data || []); setFramesLoaded(true); })
       .catch((e) => logError(e.message || 'Failed to load frame templates'))
@@ -225,9 +225,9 @@ export default function AdminPrintShopView() {
     setCreating(true);
     try {
       const stamp = Date.now().toString(36);
-      const res = await fetch('/api/admin/prodigi-products', {
+      const res = await adminFetch('/api/admin/prodigi-products', {
         method: 'POST',
-        headers: ADMIN_HEADERS,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sku: `NEW-SKU-${stamp}`,
           slug: `new-print-${stamp}`,
@@ -253,7 +253,7 @@ export default function AdminPrintShopView() {
     setSyncing(true);
     setSyncMessage(null);
     try {
-      const res = await fetch('/api/admin/seed-prodigi-stripe-products', { method: 'POST', headers: ADMIN_HEADERS });
+      const res = await adminFetch('/api/admin/seed-prodigi-stripe-products', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       logApiCall('POST', '/api/admin/seed-prodigi-stripe-products', res.status, '');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Stripe sync failed');
@@ -272,7 +272,7 @@ export default function AdminPrintShopView() {
     setVerifying(true);
     setVerifyError(null);
     try {
-      const res = await fetch('/api/prodigi/verify-catalog', { method: 'POST', headers: ADMIN_HEADERS });
+      const res = await adminFetch('/api/prodigi/verify-catalog', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       logApiCall('POST', '/api/prodigi/verify-catalog', res.status, '');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Catalog verification failed');
@@ -610,9 +610,9 @@ function ProductDetail({
     setUploading(kind);
     setError(null);
     try {
-      const res = await fetch('/api/admin/upload-product-image', {
+      const res = await adminFetch('/api/admin/upload-product-image', {
         method: 'POST',
-        headers: { 'Content-Type': file.type, 'X-Admin-Email': 'thelostandunfounds@gmail.com', 'X-Product-Id': `${product.id}-${kind}` },
+        headers: { 'Content-Type': file.type, 'X-Product-Id': `${product.id}-${kind}` },
         body: file,
       });
       logApiCall('POST', '/api/admin/upload-product-image', res.status, kind);
@@ -649,9 +649,9 @@ function ProductDetail({
     setSaved(false);
 
     try {
-      const res = await fetch(`/api/admin/prodigi-products?id=${product.id}`, {
+      const res = await adminFetch(`/api/admin/prodigi-products?id=${product.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sku,
           title,
@@ -683,9 +683,8 @@ function ProductDetail({
     if (!window.confirm(`Delete "${product.title}"? This can't be undone.`)) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/prodigi-products?id=${product.id}`, {
+      const res = await adminFetch(`/api/admin/prodigi-products?id=${product.id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Email': 'thelostandunfounds@gmail.com' },
       });
       logApiCall('DELETE', '/api/admin/prodigi-products', res.status, product.id);
       if (!res.ok) throw new Error('Failed to delete');
@@ -839,9 +838,9 @@ function SizeOptionRow({ option, onSaved }: { option: PrintOption; onSaved: (row
     setError(null);
     setSaved(false);
     try {
-      const res = await fetch(`/api/admin/print-catalog?id=${option.id}`, {
+      const res = await adminFetch(`/api/admin/print-catalog?id=${option.id}`, {
         method: 'PUT',
-        headers: ADMIN_HEADERS,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ skuLandscape, skuPortrait, baseCost: cost, price, status }),
       });
       logApiCall('PUT', '/api/admin/print-catalog', res.status, option.id);
@@ -940,9 +939,9 @@ function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onS
     setUploading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/upload-product-image', {
+      const res = await adminFetch('/api/admin/upload-product-image', {
         method: 'POST',
-        headers: { 'Content-Type': file.type, 'X-Admin-Email': 'thelostandunfounds@gmail.com', 'X-Product-Id': `frame-${template.id}` },
+        headers: { 'Content-Type': file.type, 'X-Product-Id': `frame-${template.id}` },
         body: file,
       });
       logApiCall('POST', '/api/admin/upload-product-image', res.status, template.id);
@@ -963,9 +962,9 @@ function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onS
     setError(null);
     setSaved(false);
     try {
-      const res = await fetch(`/api/admin/frame-templates?id=${template.id}`, {
+      const res = await adminFetch(`/api/admin/frame-templates?id=${template.id}`, {
         method: 'PUT',
-        headers: ADMIN_HEADERS,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ templateUrl, bounds }),
       });
       logApiCall('PUT', '/api/admin/frame-templates', res.status, template.id);

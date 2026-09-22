@@ -22,6 +22,7 @@ import { cn } from './ui/utils';
 import { LoadingSpinner } from './Loading';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from './ui/expandable-screen';
 import { SERVICE_PRODUCTS, ServiceProduct } from '../data/stripe-products';
+import { adminFetch } from '../utils/adminAuth'
 
 type ProductStatus = 'active' | 'draft';
 type ProductSource = 'local' | 'fourthwall';
@@ -76,7 +77,6 @@ const CATEGORY_OPTIONS: ServiceProduct['category'][] = ['photography', 'web-dev'
 
 const STATUS_LABEL: Record<ProductStatus, string> = { active: 'Publish', draft: 'Drafts' };
 
-const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' };
 
 function mergeProduct(product: ServiceProduct, row: ProductCost | undefined): MergedProduct {
   return {
@@ -138,7 +138,7 @@ export function ProductCostManagement() {
   const [shopLoaded, setShopLoaded] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/product-costs?source=local')
+    adminFetch('/api/admin/product-costs?source=local')
       .then((r) => r.json())
       .then((data) => {
         const map: Record<string, ProductCost> = {};
@@ -159,7 +159,7 @@ export function ProductCostManagement() {
 
     Promise.all([
       fetch('/api/shop/products', { cache: 'no-store' }).then((r) => r.json()),
-      fetch('/api/admin/product-costs?source=fourthwall')
+      adminFetch('/api/admin/product-costs?source=fourthwall')
         .then((r) => r.json())
         .catch(() => ({ data: [] })),
     ])
@@ -425,11 +425,10 @@ function ProductDetail({
     setError(null);
 
     try {
-      const res = await fetch('/api/admin/upload-product-image', {
+      const res = await adminFetch('/api/admin/upload-product-image', {
         method: 'POST',
         headers: {
           'Content-Type': file.type,
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
           'X-Product-Id': product.id,
         },
         body: file,
@@ -476,22 +475,22 @@ function ProductDetail({
       };
 
       const res = costRow
-        ? await fetch(`/api/admin/product-costs?id=${costRow.id}`, {
+        ? await adminFetch(`/api/admin/product-costs?id=${costRow.id}`, {
             method: 'PUT',
-            headers: ADMIN_HEADERS,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           })
-        : await fetch('/api/admin/product-costs', {
+        : await adminFetch('/api/admin/product-costs', {
             method: 'POST',
-            headers: ADMIN_HEADERS,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productId: product.id, source: 'local', ...payload }),
           });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save');
 
-      const stripeRes = await fetch('/api/admin/update-stripe-product', {
+      const stripeRes = await adminFetch('/api/admin/update-stripe-product', {
         method: 'POST',
-        headers: ADMIN_HEADERS,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: product.id,
           name,
@@ -723,14 +722,14 @@ function ShopProductDetail({
 
     try {
       const res = costRow
-        ? await fetch(`/api/admin/product-costs?id=${costRow.id}`, {
+        ? await adminFetch(`/api/admin/product-costs?id=${costRow.id}`, {
             method: 'PUT',
-            headers: ADMIN_HEADERS,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cost }),
           })
-        : await fetch('/api/admin/product-costs', {
+        : await adminFetch('/api/admin/product-costs', {
             method: 'POST',
-            headers: ADMIN_HEADERS,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productId: product.id, source: 'fourthwall', cost }),
           });
       const data = await res.json();

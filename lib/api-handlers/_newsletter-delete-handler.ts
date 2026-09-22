@@ -3,26 +3,15 @@
  * Secure server-side deletion using service role key
  */
 
+import { getAdminUser } from './_admin-auth.js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
 // Admin emails that are allowed to delete campaigns
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
 
-function isAdminRequest(req: VercelRequest): boolean {
-  const adminEmail = req.headers['x-admin-email'] as string
-  
-  if (adminEmail && ADMIN_EMAILS.includes(adminEmail.toLowerCase())) {
-    return true
-  }
-  
-  // Also accept requests from localhost in development
-  const host = req.headers.host || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) {
-    return true
-  }
-  
-  return false
+async function isAdminRequest(req: VercelRequest): Promise<boolean> {
+  // Verifies a real Supabase session; never trusts a header as identity.
+  return (await getAdminUser(req)) !== null
 }
 
 export default async function handler(
@@ -35,7 +24,7 @@ export default async function handler(
   }
 
   // Admin check
-  if (!isAdminRequest(req)) {
+  if (!await isAdminRequest(req)) {
     return res.status(403).json({ error: 'Admin access required' })
   }
 

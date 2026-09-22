@@ -1,3 +1,4 @@
+import { getAdminUser } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * POST /api/contracts/admin  — admin-gated contract + template management.
  *
@@ -15,7 +16,7 @@
  * One function rather than eight files: Vercel's per-deployment function
  * budget is nearly spent, and these all share the same admin gate.
  *
- * Auth: `x-admin-secret` or `x-admin-email`, matching the other admin endpoints.
+ * Auth: verified Supabase admin session (Authorization: Bearer <token>).
  */
 
 import * as dotenv from 'dotenv'
@@ -40,15 +41,12 @@ import {
   type ContractSigner,
 } from '../../lib/api-handlers/_contracts-utils.js'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
 /** Business address of record — every client-facing send is copied here. */
 const BUSINESS_CC = 'media@thelostandunfounds.com'
 
-function isAdmin(req: VercelRequest): boolean {
-  const secret = process.env.ADMIN_SECRET
-  if (secret && req.headers['x-admin-secret'] === secret) return true
-  const email = String(req.headers['x-admin-email'] || '').toLowerCase()
-  return ADMIN_EMAILS.includes(email)
+async function isAdmin(req: VercelRequest): Promise<boolean> {
+    // Verifies a real Supabase session; never trusts a header as identity.
+    return (await getAdminUser(req)) !== null
 }
 
 function escapeHtml(s: unknown): string {
@@ -112,15 +110,15 @@ function buildInviteHtml(params: {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Secret, X-Admin-Email')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Secret')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await isAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const body = (req.body || {}) as Record<string, any>
   const action = String(body.action || '')
-  const actor = String(req.headers['x-admin-email'] || 'admin')
+  const actor = (await getAdminUser(req))?.email || 'admin'
 
   try {
     // Inside the try so missing service credentials return a readable JSON
