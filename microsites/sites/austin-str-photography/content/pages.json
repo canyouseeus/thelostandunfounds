@@ -1,0 +1,724 @@
+[
+  {
+    "slug": "",
+    "type": "home",
+    "title": "Airbnb Photography Austin | Short-Term Rental Photos",
+    "description": "Airbnb and short-term rental photography in Austin, TX. Flat rate from $195 for a studio or 1BR, 25–35 edited photos, 24–72 hour delivery.",
+    "h1": "Airbnb Photography in Austin",
+    "blocks": [
+      {
+        "type": "hero",
+        "kicker": "Austin, TX · 40-mile service radius",
+        "sub": "Flat-rate short-term rental photography. Studio or 1BR from $195, 25–35 edited photos, delivered in 24 to 72 hours.",
+        "primary": {
+          "label": "Get a quote",
+          "href": "/contact/"
+        },
+        "secondary": {
+          "label": "See pricing",
+          "href": "/pricing/"
+        },
+        "image": "bedroom-hero"
+      },
+      {
+        "type": "prose",
+        "heading": "What you are actually buying",
+        "body": [
+          "Airbnb's own listing data puts professionally photographed listings ahead of phone-shot ones on both click-through and nightly rate. That gap is not about camera quality. It is about a complete, correctly ordered set of frames that answers every question a guest has before they book — how big is the bed, where do I work, is there parking, what does the shower look like.",
+          "A shoot is one to two hours on site depending on bedroom count. You get a full set of edited, correctly-ordered photos sized for Airbnb, VRBO and your own direct-booking site, with no per-image licensing and no watermarks. You own them."
+        ]
+      },
+      {
+        "type": "gallery",
+        "cols": 3,
+        "surface": "raised",
+        "heading": "Recent Austin work",
+        "keys": [
+          "living-arcade",
+          "kitchen",
+          "bedroom-wide"
+        ],
+        "note": "Short-term rentals near Pease Park and on West 30th, shot and delivered in the last month."
+      },
+      {
+        "type": "pricing",
+        "heading": "Flat-rate pricing",
+        "note": "Priced by bedroom count, not by hour. No travel fee inside the 40-mile radius."
+      },
+      {
+        "type": "addons",
+        "heading": "Add-ons"
+      },
+      {
+        "type": "steps",
+        "heading": "How it works",
+        "items": [
+          {
+            "title": "Quote",
+            "body": "Send the address and bedroom count. You get a fixed price back the same day — not a range, not a call first."
+          },
+          {
+            "title": "Schedule",
+            "body": "We book around your turnover window. Between a checkout and the next check-in is usually the cleanest slot, and the unit is already staged."
+          },
+          {
+            "title": "Shoot",
+            "body": "One to two hours on site. You do not need to be there — a lockbox or smart-lock code is fine."
+          },
+          {
+            "title": "Deliver",
+            "body": "Edited set in 24 to 72 hours via download link, ordered for upload so you can drag the folder straight into the listing."
+          }
+        ]
+      },
+      {
+        "type": "areas",
+        "heading": "Where we shoot",
+        "note": "Austin metro, 40 miles from downtown. Neighborhood-specific notes on each page."
+      },
+      {
+        "type": "faq",
+        "heading": "Common questions",
+        "items": [
+          {
+            "q": "How much does Airbnb photography cost in Austin?",
+            "a": "A studio or 1BR is $195 flat. 2BR is $265, 3BR is $335, and 4BR or luxury properties start at $425. Twilight exteriors add $125, drone adds $150, and a 3D virtual tour adds $200. There is no travel fee within 40 miles of downtown Austin."
+          },
+          {
+            "q": "How long does the shoot take?",
+            "a": "One to two hours on site for most properties. A studio is usually under an hour; a 4BR with a pool and outdoor space can run past two. We do not bill by the hour, so an extra thirty minutes does not change your invoice."
+          },
+          {
+            "q": "Do I need to be there?",
+            "a": "No. A lockbox code, smart-lock code or cleaner letting us in all work. Most owners we shoot for are not local — several are not in Texas."
+          },
+          {
+            "q": "When will I get the photos?",
+            "a": "24 to 72 hours. If you have a listing going live on a deadline, say so when you book and we will schedule to hit it."
+          },
+          {
+            "q": "Do I own the photos?",
+            "a": "Yes. Full commercial rights to use them on Airbnb, VRBO, Booking.com, your own site, and in paid ads. No watermarks, no per-platform licensing, no expiry."
+          },
+          {
+            "q": "Should the unit be cleaned and staged first?",
+            "a": "Yes, and it matters more than anything on our end. The camera does not fix a wrinkled duvet or a cluttered counter. There is a prep checklist on this site — working through it is worth more to the final set than any add-on you can buy."
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Get a fixed price today",
+        "body": "Send the address and bedroom count. You get a number back the same day.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "pricing",
+    "type": "page",
+    "title": "Airbnb Photography Pricing in Austin | Flat Rates from $195",
+    "description": "Flat-rate Airbnb and short-term rental photography pricing for Austin, TX. Studio $195, 2BR $265, 3BR $335, 4BR+ from $425. Twilight, drone and 3D tour add-ons.",
+    "h1": "Pricing",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "Priced by bedroom count so you know the number before anyone shows up. No hourly billing, no travel fee inside the Austin metro, no per-image licensing on the back end."
+        ]
+      },
+      {
+        "type": "image",
+        "key": "bedroom-wide",
+        "caption": "Pease Park short-term rental — included in a $195 studio/1BR shoot."
+      },
+      {
+        "type": "pricing",
+        "heading": "Short-term rental photography",
+        "note": "Each tier includes the full edited set, delivered ordered for upload."
+      },
+      {
+        "type": "addons",
+        "heading": "Add-ons"
+      },
+      {
+        "type": "prose",
+        "heading": "What is included at every tier",
+        "body": [
+          "Full edited set at the photo count listed, colour-corrected and perspective-corrected. Delivered as high-resolution files plus web-sized copies, in upload order. Full commercial rights with no watermark and no expiry. Reshoot of any frame you are not happy with, free, within 14 days."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "How this compares locally",
+        "body": [
+          "Austin MLS listing photography runs roughly $150 to $325 with a median near $185. Dedicated short-term rental shoots in this market run $100 to $400 for a standard unit, with budget operators starting around $149.",
+          "The $195 entry point sits deliberately below the mid-market without landing in the budget bracket. What you give up at $149 is usually photo count, turnaround, or the perspective correction that keeps vertical lines vertical — which is the difference between a listing that looks professional and one that looks like it was shot on a phone with a wide lens."
+        ]
+      },
+      {
+        "type": "faq",
+        "heading": "Pricing questions",
+        "items": [
+          {
+            "q": "Is there a travel fee?",
+            "a": "Not within 40 miles of downtown Austin. That covers Round Rock, Cedar Park, Lakeway, Dripping Springs, Buda and Kyle. Past that, ask and we will quote it."
+          },
+          {
+            "q": "Do you charge by the hour?",
+            "a": "No. The price is set by bedroom count before the shoot. If the property takes longer than expected, that is our problem, not a line on your invoice."
+          },
+          {
+            "q": "What if I have multiple properties?",
+            "a": "Portfolio and property-manager rates exist and are quoted per portfolio. If you are shooting more than three units, get in touch rather than booking them one at a time."
+          },
+          {
+            "q": "Is the twilight add-on worth it?",
+            "a": "On a property with a good exterior, a pool, or a skyline view — yes, and it is usually the highest-converting single frame in the set. On an interior-only condo with no balcony, skip it."
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Ready to book",
+        "body": "Send the address and bedroom count for a fixed price the same day.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "airbnb-photography-cost-austin",
+    "type": "guide",
+    "title": "What Does Airbnb Photography Cost in Austin? (2026 Rates)",
+    "description": "What short-term rental photography actually costs in Austin, TX in 2026 — market rates, what moves the price, and when the cheaper option costs more.",
+    "h1": "What Airbnb Photography Costs in Austin",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "Short answer: $150 to $425 for a standard Austin short-term rental, depending on bedroom count and add-ons. The spread is wide because the market has three distinct tiers that do not sell the same thing."
+        ]
+      },
+      {
+        "type": "table",
+        "heading": "Austin market rates, 2026",
+        "columns": [
+          "Tier",
+          "Typical price",
+          "What you get"
+        ],
+        "rows": [
+          [
+            "Budget / new shooter",
+            "$100–149",
+            "15–25 photos, phone or entry DSLR, often no perspective correction, 3–7 day turnaround"
+          ],
+          [
+            "Standard rental shoot",
+            "$185–335",
+            "25–50 edited photos, wide-angle body, corrected verticals, 24–72 hour turnaround"
+          ],
+          [
+            "Luxury / large property",
+            "$425–800",
+            "50+ photos, twilight and aerial included, staging direction, 48–72 hours"
+          ]
+        ],
+        "note": "Reference points drawn from Austin MLS listing rates ($150–325, ~$185 median) and short-term rental shoots ($100–400 standard)."
+      },
+      {
+        "type": "prose",
+        "heading": "What actually moves the price",
+        "body": [
+          "Bedroom count is the main driver, because it sets both shoot time and photo count. A studio is one room and a bathroom. A 4BR is nine or ten spaces that each need two or three usable angles.",
+          "Add-ons are the second driver. Aerial drone work runs $95 to $400 across this market, with the typical Austin add-on around $148, depending on whether the operator is Part 107 licensed and whether the property sits inside controlled airspace. A large share of Austin — anything near Bergstrom or under the Class C shelf — requires LAANC authorization, and shooters without it either skip the aerial or fly it illegally. Twilight sessions run $125 to $400, and the spread is mostly about model: a twilight add-on shot on the same trip as the day photos is far cheaper than a separate evening callout.",
+          "Travel is the third. Most Austin shooters include the urban core and charge past Lakeway, Dripping Springs or Georgetown."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "When cheap costs more",
+        "body": [
+          "The specific failure of a sub-$150 shoot is almost never sharpness. It is two things: uncorrected perspective, where the walls bow outward from an over-wide lens and the room reads as distorted, and blown windows, where every exterior view is a white rectangle.",
+          "Both are fixable in post by someone who knows how, and neither is fixed by a better camera. If a quote is unusually low, ask to see a full set from one property rather than a portfolio of best frames — the giveaway is in the fifteenth photo, not the first."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "The number that actually matters",
+        "body": [
+          "A shoot is a one-time cost against a recurring nightly rate. On an Austin unit at a $180 average nightly rate, a $195 shoot is covered by roughly one extra booked night. The question is not whether $195 is cheap in the abstract — it is whether the photo set books one more night per year than what you have now."
+        ]
+      },
+      {
+        "type": "sources",
+        "heading": "Where these numbers come from",
+        "checkedOn": "30 August 2026",
+        "items": [
+          {
+            "label": "Key Listing Media — Real Estate Photography Cost in Austin, 2026 pricing guide",
+            "url": "https://keylistingmedia.com/how-much-does-real-estate-photography-cost-in-austin-2026-pricing-guide/"
+          },
+          {
+            "label": "Olga Denisova Photography — published Austin package pricing",
+            "url": "https://denisovaphoto.com/services"
+          },
+          {
+            "label": "TK Images — real estate photography cost in Texas",
+            "url": "https://www.tkimages.com/blog/how-much-does-real-estate-photography-cost-in-texas/"
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Austin rates, fixed and published",
+        "body": "Studio $195 · 2BR $265 · 3BR $335 · 4BR+ from $425.",
+        "button": {
+          "label": "See full pricing",
+          "href": "/pricing/"
+        }
+      }
+    ],
+    "factsCheckedOn": "2026-08-30"
+  },
+  {
+    "slug": "austin-str-license-and-your-listing",
+    "type": "guide",
+    "factsCheckedOn": "2026-08-30",
+    "title": "Austin Short-Term Rental License Rules for Your Listing",
+    "description": "What Austin's short-term rental licensing rules mean for your Airbnb listing — the occupancy cap, the delisting timeline, and what to update now.",
+    "h1": "Austin Short-Term Rental Licensing and Your Listing",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "We are photographers, not attorneys or license consultants. This page covers one narrow thing: what Austin's licensing shake-up changes about the listing itself — the copy, the capacity you advertise, and the photos. For the licensing process, the City of Austin is the only source that counts, and it is linked at the bottom of this page.",
+          "Everything factual below is sourced and dated. If you are reading this well after the check date, verify before acting."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where things actually stand",
+        "body": [
+          "Since 1 July 2026, Airbnb, VRBO and other platforms must carry a license field on every Austin listing, must remove a listing within 10 days of a City delist request, and may not collect booking fees on an unlicensed rental.",
+          "But enforcement is phased, not instant. The City paused mass delist notices for roughly six months after its new licensing system launched in May 2026, and said it would phase them in starting with properties that generate nuisance complaints. In practice that means the window has been open through most of 2026 and is closing rather than closed.",
+          "The scale is not small. As of May 2026 the City estimated 3,000 to 4,000 Austin short-term rentals were operating without a valid license, having already identified roughly 2,785 unlicensed addresses by 1 April. Penalties run $500 per offense, per day, with each day counted separately."
+        ]
+      },
+      {
+        "type": "table",
+        "heading": "What the City charges",
+        "columns": [
+          "Item",
+          "Cost",
+          "Note"
+        ],
+        "rows": [
+          [
+            "New license",
+            "$836.30",
+            "$789 license fee plus $47.30 notification fee"
+          ],
+          [
+            "Renewal",
+            "$385.30",
+            "$338 renewal fee plus $47.30 notification fee"
+          ],
+          [
+            "Term",
+            "Up to 2 years",
+            "Non-transferable, one required per unit"
+          ],
+          [
+            "Hotel Occupancy Tax",
+            "11%",
+            "9% occupancy plus 2% venue project; platforms have collected this automatically since April 2025"
+          ]
+        ],
+        "note": "Fees and license types (Type 1, Type 2 Residential, Type 2 Commercial, Type 3) as published by Austin Development Services. Apply online through Austin Finance Online, in person at the Permitting and Development Center, or by mail."
+      },
+      {
+        "type": "prose",
+        "heading": "The change most listings have not made yet",
+        "body": [
+          "Austin now enforces an occupancy formula of two guests per bedroom plus two additional guests, capped at ten people per unit regardless of size.",
+          "That is the rule most likely to have quietly invalidated your listing. A 4-bedroom advertised as sleeping 12 is now advertising above the cap. A 2-bedroom listed at 8 is over. The number in your listing title, the number in your description, the guest slider, and the photos showing the bed configuration all need to agree with the formula — and for a lot of Austin listings written before the change, they do not.",
+          "This is the one place where the licensing story and a photo set genuinely meet. If the sleeping arrangement you show no longer matches the capacity you are allowed to sell, both the copy and the images are out of date."
+        ]
+      },
+      {
+        "type": "checklist",
+        "heading": "What to reconcile on your listing",
+        "intro": "Working through this costs nothing and is worth doing whether or not you use us:",
+        "items": [
+          "Recalculate your maximum: (2 × bedrooms) + 2, capped at 10. Compare it to the guest count your listing currently sells.",
+          "Update the guest slider, the title, and any 'sleeps N' claim in the description to match.",
+          "Check that the beds shown in your photos match the configuration you now advertise. A sofa bed you no longer count should not be the hero of a frame.",
+          "Add your license number to the platform's license field rather than waiting to be asked.",
+          "If you removed beds to come under the cap, the rooms they were in need reshooting — an empty corner where a bed used to be reads as a mistake.",
+          "Check the amenity list against what is actually in the property today. Enforcement attention tends to arrive alongside complaint attention."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "What a shrinking market means for the listings that stay",
+        "body": [
+          "Austin's active listing count fell about 11% year over year to roughly 17,165 as of July 2026, while occupancy rose almost 9%. Fewer listings are absorbing similar demand.",
+          "For a licensed operator that is the favourable side of a bad-sounding statistic. The casual hosts most likely to exit are the ones who were never going to invest in the listing anyway, and the guests who would have booked them are still coming to Austin. Whether that demand lands on your listing or your neighbour's is decided in the search results, where the photo is the entire first impression.",
+          "If you are re-listing after sorting out a license, you are re-entering a thinner market. That is the moment the listing is worth getting right rather than restoring as it was."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where we come in, honestly",
+        "body": [
+          "We shoot short-term rentals. We cannot file your license, we cannot advise you on which type you need, and we would be the wrong people to ask. What we can do is make the listing you relaunch better than the one that came down — flat rates by bedroom count, 24 to 72 hour turnaround, and full rights to the images.",
+          "If your listing already reflects the occupancy rule and the photos still represent the property accurately, you do not need us for this. Nothing on this page is a reason to book a shoot you would not otherwise book."
+        ]
+      },
+      {
+        "type": "sources",
+        "heading": "Sources",
+        "checkedOn": "30 August 2026",
+        "items": [
+          {
+            "label": "City of Austin — Short-Term Rentals (official licensing page, fees and application methods)",
+            "url": "https://www.austintexas.gov/department/short-term-rentals"
+          },
+          {
+            "label": "Austin Current — Austin cracks down on short-term rental licenses (ordinance changes, caps, platform enforcement)",
+            "url": "https://austincurrent.org/2026/03/19/austin-short-term-rental-airbnb-vrbo/"
+          },
+          {
+            "label": "AirDNA — Austin, Texas short-term rental market data (listing counts, occupancy, ADR)",
+            "url": "https://www.airdna.co/vacation-rental-data/app/us/texas/austin/overview"
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Relaunching a listing",
+        "body": "Send the address and bedroom count for a fixed price the same day.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "how-to-prep-your-airbnb-for-photos",
+    "type": "guide",
+    "title": "How to Prep Your Airbnb for a Photo Shoot | Austin Checklist",
+    "description": "A room-by-room prep checklist for short-term rental photography. What to do the night before and the morning of so the shoot is worth what you paid for it.",
+    "h1": "How to Prep Your Airbnb for Photos",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "Preparation is worth more to the final photo set than any add-on on the price list. A well-prepped $195 studio outshoots a cluttered $425 house every time. This is the list we send clients before a shoot."
+        ]
+      },
+      {
+        "type": "image",
+        "key": "bedroom-hero",
+        "caption": "Linen pressed, bed made hotel-tight, one deliberate accent. This is what the checklist below produces."
+      },
+      {
+        "type": "checklist",
+        "heading": "The night before",
+        "intro": "Do these when you have time. They take longer than you think.",
+        "items": [
+          "Wash and press all bed linen. Wrinkles are the single most visible flaw in a listing photo and cannot be retouched cheaply.",
+          "Replace every dead bulb, and match colour temperature across the unit — one yellow bulb in a room of white ones turns the whole frame green.",
+          "Clear all countertops completely. Kitchen and bathroom counters photograph best empty, then styled back with one or two deliberate objects.",
+          "Remove personal items, mail, chargers, remotes, bins and pet bowls from every room.",
+          "Clean the interior of all windows and mirrors. Both show every mark under a wide lens.",
+          "Cut fresh greenery or buy a single simple arrangement. One is enough for the whole unit."
+        ]
+      },
+      {
+        "type": "checklist",
+        "heading": "The morning of",
+        "items": [
+          "Make every bed hotel-tight, then steam or hand-smooth the duvet one more time.",
+          "Open all blinds and curtains fully and level them to the same height.",
+          "Turn every light on, including lamps and range hoods, before we arrive.",
+          "Set the thermostat display to something neutral and hide the remote.",
+          "Park cars away from the front elevation and roll the bins out of frame.",
+          "Sweep or blow the porch, patio and pool deck.",
+          "Put toilet seats down and lids closed, and hang fresh, matching towels."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "The three things people forget",
+        "body": [
+          "Ceiling fans. Turn them off — a spinning fan blurs into a grey disc and ruins the frame.",
+          "Cords. Route phone chargers, lamp cords and console cables behind furniture. They are invisible to you and glaring in a photo.",
+          "The shower. It gets photographed, it is usually the least-prepped surface in the unit, and hard-water spotting on Austin's water shows up clearly on glass."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "What you do not need to do",
+        "body": [
+          "Do not buy furniture for the shoot. Do not repaint. Do not stage a fruit bowl you will remove an hour later — guests notice the gap between the photos and the reality, and that gap shows up in reviews. Shoot the property you actually rent, at its best."
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Prepped and ready",
+        "body": "Send the address and bedroom count for a fixed quote.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "short-term-rental-photography",
+    "type": "service",
+    "title": "Short-Term Rental Photography Austin | Airbnb & VRBO",
+    "description": "Short-term rental photography for Austin operators — Airbnb, VRBO, Booking.com and direct-booking sites. Flat rates, 24–72 hour delivery, full commercial rights.",
+    "h1": "Short-Term Rental Photography",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "Short-term rental photography is not real estate photography with a different label. A listing photo is not selling a building, it is selling a stay — which changes what gets shot, how many frames the set needs, and what order they go in.",
+          "Real estate photography sells the floor plan: wide, empty, architectural. Short-term rental photography sells the experience: the bed you sleep in, the counter you make coffee on, the patio where the evening happens. Sets that are shot like MLS listings underperform on Airbnb, and the reason is that they answer the wrong questions."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "What a complete set covers",
+        "body": [
+          "Every bedroom with the bed as the subject. Every bathroom including the shower interior. The kitchen wide and one detail frame. The living space from two angles. Every outdoor space. The workspace, if there is one — remote-work filtering is now a meaningful share of Austin booking traffic. Parking and entry, so arrival is not a mystery. And one hero frame that carries the whole listing."
+        ]
+      },
+      {
+        "type": "gallery",
+        "cols": 3,
+        "keys": [
+          "bedroom-hero",
+          "kitchen",
+          "bathroom",
+          "living-arcade",
+          "dining",
+          "entry-door"
+        ],
+        "note": "Every room, not only the flattering ones. The bathroom and the entry are the frames guests look for and most listings skip."
+      },
+      {
+        "type": "prose",
+        "heading": "Ordered for upload",
+        "body": [
+          "Airbnb weights the first five photos heavily, and most owners upload in whatever order the folder happens to sort. Sets are delivered numbered in booking order — hero, living, kitchen, primary bedroom, then the rest — so you can drag the folder in and it is already right."
+        ]
+      },
+      {
+        "type": "pricing",
+        "heading": "Rates",
+        "note": "Same flat rates across Airbnb, VRBO, Booking.com and direct-booking use."
+      },
+      {
+        "type": "faq",
+        "heading": "Questions",
+        "items": [
+          {
+            "q": "Can I use these on VRBO and my own site too?",
+            "a": "Yes. You get full commercial rights with no per-platform licensing. Use them anywhere, including paid ads."
+          },
+          {
+            "q": "Do you shoot occupied units?",
+            "a": "We shoot between guests. A turnover window right after the cleaner finishes is the ideal slot — the unit is already staged and there is nobody in it."
+          },
+          {
+            "q": "What about property managers with multiple units?",
+            "a": "Portfolio rates are quoted per portfolio rather than per unit. Over three properties, get in touch and we will price the whole set."
+          },
+          {
+            "q": "Do you do video?",
+            "a": "Short-form vertical video is available and quoted with the shoot. Airbnb does not host video on listings, but it is worth having for Instagram and a direct-booking site."
+          }
+        ]
+      },
+      {
+        "type": "areas",
+        "heading": "Service area"
+      },
+      {
+        "type": "cta",
+        "heading": "Book a shoot",
+        "body": "Fixed price back the same day.",
+        "button": {
+          "label": "Request a quote",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "property-managers",
+    "type": "service",
+    "title": "Photography for Austin Property Managers | Portfolio Rates",
+    "description": "Multifamily photography for Austin property managers — model units, amenity spaces and exteriors. $225 per unit, $850 per property, retainers from $1,600/mo.",
+    "h1": "Photography for Austin Property Managers",
+    "blocks": [
+      {
+        "type": "hero",
+        "kicker": "Multifamily · portfolios · Austin metro",
+        "sub": "One shooter across every community you manage, so twelve properties look like they belong to the same company. $225 per unit, $850 per property, retainers from $1,600/mo.",
+        "primary": {
+          "label": "Start a conversation",
+          "href": "/contact/"
+        },
+        "secondary": {
+          "label": "See STR rates",
+          "href": "/pricing/"
+        }
+      },
+      {
+        "type": "prose",
+        "heading": "This is not short-term rental photography",
+        "body": [
+          "A short-term rental is one listing, and the shoot sells a stay. A managed property is a portfolio asset, and the shoot sells a lease — which changes what gets photographed and how it gets priced.",
+          "You are not buying one unit. You are buying model units, amenity spaces, exteriors and signage, across however many communities you run. The scope is set by the property, not by a bedroom count, which is why this is quoted on a call instead of billed from a card. A twelve-unit boutique building and a three-hundred-unit complex cannot share one fixed price, and pretending otherwise would mean overcharging one of you."
+        ]
+      },
+      {
+        "type": "table",
+        "heading": "Rates",
+        "columns": [
+          "Scope",
+          "Price",
+          "What it covers"
+        ],
+        "rows": [
+          [
+            "Single model unit or vacant listing",
+            "$225",
+            "20–30 edited photos, one unit"
+          ],
+          [
+            "Property package",
+            "$850",
+            "Exteriors, amenity spaces and two model units"
+          ],
+          [
+            "Portfolio retainer",
+            "from $1,600/mo",
+            "Scheduled coverage across the properties you manage"
+          ],
+          [
+            "Drone / aerial",
+            "+$150",
+            "Part 107 licensed; LAANC filed where the airspace requires it"
+          ],
+          [
+            "3D virtual tour",
+            "+$200",
+            "Matterport-style walkthrough for your leasing site"
+          ]
+        ],
+        "note": "Quoted per portfolio. Send the property count and unit mix and you get a real number, not a range."
+      },
+      {
+        "type": "prose",
+        "heading": "Why amenity coverage carries the lease",
+        "body": [
+          "Austin renters comparison-shop across a handful of communities in the same submarket, usually on the same afternoon and usually on a phone. The floor plans in that comparison are close to identical. The pool, the gym, the coworking room, the dog run and the courtyard are what actually differ, and they are the frames most leasing galleries under-shoot.",
+          "Amenity spaces are also the hardest thing on a property to photograph well. They are large, mixed-light, often glass-walled, and frequently occupied. They need a scheduled slot and a plan, not the last twenty minutes of a unit shoot."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Consistency is the reason to use one shooter",
+        "body": [
+          "Managing eight communities and hiring eight local photographers gets you eight different colour treatments, eight different focal lengths and eight different ideas of what a kitchen photo looks like. Side by side on your own website that reads as eight unrelated buildings.",
+          "A portfolio shot to one standard uploads cleanly to every ILS you syndicate to — Apartments.com, Zillow Rentals, your own site — because it was shot and exported to one spec rather than reconciled afterwards."
+        ]
+      },
+      {
+        "type": "prose",
+        "heading": "Where a retainer earns its money",
+        "body": [
+          "A property is never finished. Units get renovated, amenities get upgraded, a lease-up stabilises, seasons change what the courtyard looks like, and a pool that photographs beautifully in June looks abandoned in January.",
+          "A retainer covers that cadence: scheduled shoots across the portfolio through the year rather than an emergency booking every time a property needs refreshing. It also means we already know your properties, your access process and your brand standard, so a reshoot does not start from scratch."
+        ]
+      },
+      {
+        "type": "faq",
+        "heading": "Property manager questions",
+        "items": [
+          {
+            "q": "How does portfolio pricing work?",
+            "a": "It is quoted per portfolio rather than per unit, because the scope is driven by property count, unit mix and how much amenity and exterior coverage each site needs. Send the list and you get a fixed number. Retainers start at $1,600/mo."
+          },
+          {
+            "q": "Can you shoot occupied units?",
+            "a": "We prefer model units and vacants, which is what leasing galleries should show anyway. If an occupied unit has to be shot we will do it, but it needs resident notice and it will never photograph like a staged model."
+          },
+          {
+            "q": "Do you handle lease-up properties?",
+            "a": "Yes, and they are a different job from a stabilised property. A lease-up needs everything at once and usually on a deadline tied to the opening. Say so early and we will schedule backwards from it."
+          },
+          {
+            "q": "Who owns the images?",
+            "a": "You do. Full commercial rights across your website, every ILS you syndicate to, print collateral and paid ads. No watermark, no per-platform licensing, no expiry."
+          },
+          {
+            "q": "Do you work with the on-site team or corporate?",
+            "a": "Either. Scheduling usually runs through the on-site manager because they control access and know when the amenity spaces are quiet. Billing and the standard normally sit with corporate."
+          },
+          {
+            "q": "What about drone over a multifamily site?",
+            "a": "Part 107 licensed, and we file LAANC where the airspace requires it — a large share of Austin sits under controlled airspace. We will tell you before the shoot if a property cannot be flown legally rather than after."
+          }
+        ]
+      },
+      {
+        "type": "cta",
+        "heading": "Send us your portfolio",
+        "body": "Property count and unit mix is enough to get a real number back.",
+        "button": {
+          "label": "Start a conversation",
+          "href": "/contact/"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "contact",
+    "type": "contact",
+    "title": "Request a Quote | Austin Airbnb Photography",
+    "description": "Request a fixed-price quote for Airbnb or short-term rental photography in Austin, TX. Send the address and bedroom count and get a number back the same day.",
+    "h1": "Request a Quote",
+    "blocks": [
+      {
+        "type": "prose",
+        "body": [
+          "Send the property address and bedroom count. You get a fixed price back the same day — not a range, and not a discovery call first."
+        ]
+      },
+      {
+        "type": "quoteform"
+      },
+      {
+        "type": "prose",
+        "heading": "What to include",
+        "body": [
+          "Address or neighborhood, bedroom count, whether the property is furnished and staged yet, your target date for the listing going live, and any add-ons you are considering. If you are not sure about add-ons, say so and we will tell you whether they are worth it for your specific property."
+        ]
+      }
+    ]
+  }
+]

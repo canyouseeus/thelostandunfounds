@@ -27,6 +27,7 @@ import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import type { Photo } from '../../types/photo';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
 // pulling the entire library on every (often bot-driven) page view was the
@@ -38,29 +39,6 @@ const GALLERY_PAGE_SIZE = 150;
 // it always did.
 export function isVideoPhoto(photo: { mime_type?: string | null }): boolean {
     return Boolean(photo.mime_type?.startsWith('video/'));
-}
-
-interface Photo {
-    id: string;
-    title: string;
-    thumbnail_url: string;
-    google_drive_file_id: string;
-    mime_type?: string | null;
-    created_at: string;
-    price?: number;
-    library_id: string;
-    metadata?: {
-        camera_make?: string;
-        camera_model?: string;
-        iso?: number;
-        focal_length?: number;
-        aperture?: number;
-        shutter_speed?: number;
-        date_taken?: string;
-        time?: string;
-        copyright?: string;
-        [key: string]: any;
-    };
 }
 
 interface PhotoLibrary {
@@ -1149,9 +1127,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     title: mapPhoto.title,
                                     google_drive_file_id: mapPhoto.google_drive_file_id || '',
                                     thumbnail_url: mapPhoto.thumbnail_url || '',
-                                    created_at: '',
+                                    created_at: mapPhoto.date_taken || '',
                                     library_id: mapPhoto.library_id,
-                                    metadata: mapPhoto.metadata,
+                                    // The map query selects flat metadata->> aliases rather
+                                    // than the whole JSONB, to keep egress down, so there is
+                                    // no `metadata` object on a MapPhoto to forward. Reading
+                                    // one handed the lightbox undefined every time; rebuild
+                                    // it from the two fields the query does select.
+                                    metadata: {
+                                        camera_model: mapPhoto.camera_model || undefined,
+                                        date_taken: mapPhoto.date_taken || undefined,
+                                    },
                                 });
                             }
                         }}

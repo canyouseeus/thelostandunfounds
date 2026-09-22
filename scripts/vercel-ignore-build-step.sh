@@ -36,9 +36,23 @@ fi
 
 # Define important patterns that SHOULD trigger a build.
 # Any code that affects the deployed app or serverless functions belongs here.
-IMPORTANT_PATTERNS="src/|public/|scripts/|api/|lib/|supabase/|package.json|package-lock.json|vite.config.ts|tsconfig.json|vercel.json|tailwind.config.js|postcss.config.js|index.html"
+#
+# These are ANCHORED, and that matters. git diff --name-only prints paths
+# relative to the repo root, so an unanchored "lib/" matches anywhere in a
+# path — which meant every edit under microsites/lib/ contained the substring
+# and triggered a full seven-minute rebuild of an app it cannot affect. Same
+# for a nested index.html. The directory group needs a trailing slash so it
+# matches a directory rather than a prefix, and the root-file group is pinned
+# at both ends with its dots escaped so package.json cannot be matched by
+# packageXjson or by some/nested/package.json.
+#
+# The flip side of anchoring: if this repo is ever restructured so the app
+# lives under a prefix (apps/web/src/, say), these patterns stop matching and
+# real changes get skipped. Update them at the same time as the move.
+IMPORTANT_DIRS='^(src|public|scripts|api|lib|supabase)/'
+IMPORTANT_ROOT_FILES='^(package\.json|package-lock\.json|vite\.config\.ts|tsconfig\.json|vercel\.json|tailwind\.config\.js|postcss\.config\.js|index\.html)$'
 
-if echo "$CHANGED_FILES" | grep -qE "$IMPORTANT_PATTERNS"; then
+if echo "$CHANGED_FILES" | grep -qE "$IMPORTANT_DIRS|$IMPORTANT_ROOT_FILES"; then
   echo "✅ Important files changed. Proceeding with build."
   exit 1
 fi

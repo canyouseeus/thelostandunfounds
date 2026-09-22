@@ -54,7 +54,7 @@ export default async function handleAffiliates(req: VercelRequest, res: VercelRe
                     // Optimized: Fetch all users (paged) if list is small, or just skip if too slow.
                     // Given typical affiliate sizes, we'll fetch list and map.
                     const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({
-                        per_page: 1000
+                        perPage: 1000
                     });
 
                     if (!usersError && users) {

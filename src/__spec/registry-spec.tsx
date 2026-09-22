@@ -13,6 +13,7 @@ const DATA: RegistryWidgetData = {
   writers: 12,
   affiliates: 37,
   subscribers: 123,
+  leads: 8,
 }
 
 function Lattice({ id, size, phone, neighbours }: {

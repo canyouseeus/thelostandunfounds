@@ -23,7 +23,7 @@ export default function SendWelcomeEmailsButton() {
     totalUsers: number;
     usersProcessed?: string[];
     errors?: string[];
-    debug?: any;
+    debug?: { subdomainsWithoutEmails?: string[] };
   } | null>(null);
 
   const handleSendEmails = async (isTest = false) => {

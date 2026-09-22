@@ -238,7 +238,7 @@ export default function Admin() {
   const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [registeredWriters, setRegisteredWriters] = useState<number>(0);
-  const [censusCounts, setCensusCounts] = useState<{ posts: number; products: number; users: number | null }>({ posts: 0, products: 0, users: null });
+  const [censusCounts, setCensusCounts] = useState<{ posts: number; products: number; users: number | null; leads: number }>({ posts: 0, products: 0, users: null, leads: 0 });
   const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
@@ -865,7 +865,15 @@ export default function Admin() {
               const r = await fetch('/api/admin/registry?section=users');
               if (r.ok) realUsers = (await r.json()).total ?? null;
             } catch { /* tile falls back to the legacy figure */ }
-            setCensusCounts({ posts: postsRes.count || 0, products: productsRes.count || 0, users: realUsers });
+            // Microsite leads are RLS-locked to the service role, so the count
+            // has to come from the registry endpoint rather than the browser
+            // client — the browser cannot read that table at all, by design.
+            let leadCount = 0;
+            try {
+              const r = await fetch('/api/admin/registry?section=leads');
+              if (r.ok) leadCount = (await r.json()).total ?? 0;
+            } catch { /* tile shows zero rather than breaking the dashboard */ }
+            setCensusCounts({ posts: postsRes.count || 0, products: productsRes.count || 0, users: realUsers, leads: leadCount });
           } catch (err) {
             console.warn('Error fetching census counts:', err);
           }
@@ -1918,6 +1926,7 @@ export default function Admin() {
                 { label: 'Writers', value: registeredWriters, panel: 'blog', section: 'writers' },
                 { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0, panel: 'affiliates', section: 'affiliates' },
                 { label: 'Subscribers', value: stats?.newsletterSubscribers || 0, panel: 'newsletter', section: 'subscribers' },
+                { label: 'Microsite Leads', value: censusCounts.leads, panel: 'bookings', section: 'leads' },
               ];
               return cell(invertIfLight(
                 <RegistryWidget
@@ -1931,6 +1940,7 @@ export default function Admin() {
                     writers: registeredWriters,
                     affiliates: affiliateStats?.totalAffiliates || 0,
                     subscribers: stats?.newsletterSubscribers || 0,
+                    leads: censusCounts.leads,
                   }}
                   census={census}
                   onOpenPanel={openPanel}

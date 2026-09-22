@@ -261,9 +261,10 @@ export function ProductShowcaseCard() {
               <ExpandableContent
                 preset="fade"
                 keepMounted={false}
+                animateOut={{ opacity: 0, y: 20 }}
                 animateIn={{
-                  initial: { opacity: 0, y: 20 },
-                  animate: { opacity: 1, y: 0 },
+                  opacity: 1,
+                  y: 0,
                   transition: { type: "spring", stiffness: 300, damping: 20 },
                 }}
               >
@@ -354,9 +355,11 @@ export function WeatherForecastCard() {
                   stagger
                   staggerChildren={0.1}
                   keepMounted={true}
+                  animateOut={{ opacity: 0, y: 20, rotate: -5 }}
                   animateIn={{
-                    initial: { opacity: 0, y: 20, rotate: -5 },
-                    animate: { opacity: 1, y: 0, rotate: 0 },
+                    opacity: 1,
+                    y: 0,
+                    rotate: 0,
                     transition: { type: "spring", stiffness: 300, damping: 20 },
                   }}
                 >
@@ -371,9 +374,11 @@ export function WeatherForecastCard() {
               stagger
               staggerChildren={0.1}
               keepMounted={true}
+              animateOut={{ opacity: 0, y: 20, rotate: -5 }}
               animateIn={{
-                initial: { opacity: 0, y: 20, rotate: -5 },
-                animate: { opacity: 1, y: 0, rotate: 0 },
+                opacity: 1,
+                y: 0,
+                rotate: 0,
                 transition: { type: "spring", stiffness: 300, damping: 20 },
               }}
             >

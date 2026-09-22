@@ -162,6 +162,18 @@ class ErrorMonitor {
     this.startPeriodicCheck();
   }
 
+  /**
+   * Report an error caught by a React error boundary.
+   *
+   * logError stays private: it is the internal sink for the console and window
+   * handlers this class installs on itself. A boundary is a legitimate caller
+   * but an external one, so it gets a named entry point instead of reaching
+   * through the encapsulation.
+   */
+  public reportBoundaryError(message: string, error: unknown, info?: unknown) {
+    this.logError('error', info === undefined ? [message, error] : [message, error, info]);
+  }
+
   private logError(type: 'error' | 'warning' | 'unhandledrejection', args: any[]) {
     const message = args.map(arg => 
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)

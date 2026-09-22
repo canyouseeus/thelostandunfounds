@@ -1,0 +1,733 @@
+/**
+ * Microsite renderer.
+ *
+ * Turns a page's block list into a complete static HTML document.
+ *
+ * Design constraints are inherited from the platform skills and are not
+ * stylistic preferences — they are enforced by `npm run microsites:lint`:
+ *   - `.claude/skills/no-border-design`  : no border-*, no shadow, no ring,
+ *                                          no outline, no gradient. Ever.
+ *   - `.claude/skills/noir-design`       : #000 background, white text,
+ *                                          border-radius 0, UPPERCASE h1/h2,
+ *                                          body copy always left-aligned.
+ *   - CLAUDE.md "Page Title Style Rule"  : h1 headings are UPPERCASE.
+ *   - `frontend-style-guide` rule 2      : nothing clips at 320px.
+ *
+ * Separation comes from surface tone and spacing only. The surface ladder:
+ *   base #000 · raised #0a0a0a · subtle rgba(255,255,255,.05)
+ *   · interactive rgba(255,255,255,.10) · inverted #fff on #000
+ */
+
+const esc = (s) =>
+  String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const money = (n) => '$' + Number(n).toLocaleString('en-US');
+
+/* ------------------------------------------------------------------ *
+ * Stylesheet — inlined into every page.
+ *
+ * Inlined rather than linked on purpose: the whole sheet is ~4KB, and a
+ * microsite lives or dies on Core Web Vitals. One render-blocking request
+ * removed is worth more here than cache reuse across a 16-page site.
+ * ------------------------------------------------------------------ */
+export function css() {
+  return `
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:#000;color:rgba(255,255,255,.87);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.65;text-align:left;
+  overflow-x:hidden;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:#fff;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Focus indicator by tone inversion, not an outline.
+   no-border-design bans outline/ring; dropping focus styling entirely
+   would be an accessibility regression, so we invert the surface instead. */
+a:focus-visible,button:focus-visible,input:focus-visible,
+textarea:focus-visible,select:focus-visible{
+  outline:none;background:#fff;color:#000;text-decoration:none;
+}
+
+.wrap{max-width:64rem;margin:0 auto;padding:0 1.25rem}
+@media(min-width:640px){.wrap{padding:0 2rem}}
+
+/* ---- header ---- */
+.hdr{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.95);backdrop-filter:blur(12px)}
+.hdr-in{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:.75rem;flex-wrap:wrap;
+  /* padding-block, NOT the 'padding' shorthand. The element carries both
+     the wrap and hdr-in classes, and a shorthand here has equal specificity to
+     .wrap and comes later, so it silently zeroed .wrap's horizontal padding
+     and pinned the logo to the very left edge of the screen. */
+  padding-block:.6rem;
+}
+.logo{font-weight:800;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;line-height:1.2}
+/* The "Austin, TX" sub-line is redundant on a phone once the name itself
+   begins with Austin, and dropping it keeps the sticky header off a third
+   row. It returns at tablet width where there is room for it. */
+.logo span{display:none;font-weight:500;font-size:.62rem;letter-spacing:.22em;color:rgba(255,255,255,.45)}
+@media(min-width:480px){
+  .logo{font-size:.8rem;letter-spacing:.18em}
+  .logo span{display:block}
+}
+
+/* The nav is a single-line scroller, never a wrapping block.
+   frontend-style-guide rule 2 allows either flex-wrap OR overflow-x-auto with
+   flex-shrink-0 items. Wrapping was technically compliant and looked broken:
+   five items became two ragged rows and pushed the sticky header to 141px,
+   about a sixth of a phone screen, on every page. One line that can scroll is
+   the right reading of that rule here. */
+.nav{
+  display:flex;gap:.15rem;align-items:center;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  max-width:100%;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav{margin-left:-.5rem}
+@media(min-width:640px){.nav{margin-left:0}}
+.nav a{
+  font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  color:rgba(255,255,255,.55);padding:.45rem .5rem;flex-shrink:0;white-space:nowrap;
+}
+@media(min-width:640px){.nav{gap:.25rem}.nav a{letter-spacing:.18em;padding:.5rem .6rem}}
+.nav a:hover{color:#fff;background:rgba(255,255,255,.1);text-decoration:none}
+.nav a[aria-current="page"]{color:#fff}
+
+/* ---- type ---- */
+h1{
+  text-transform:uppercase;font-weight:800;color:#fff;line-height:1.05;
+  font-size:clamp(1.9rem,7vw,3.4rem);letter-spacing:-.01em;
+  overflow-wrap:break-word;
+}
+h2{
+  text-transform:uppercase;font-weight:800;color:#fff;line-height:1.15;
+  font-size:clamp(1.15rem,3.4vw,1.6rem);letter-spacing:.02em;
+  margin-bottom:1.1rem;overflow-wrap:break-word;
+}
+h3{font-weight:700;color:#fff;font-size:1rem;line-height:1.35;margin-bottom:.4rem}
+p{margin-bottom:1rem;max-width:64ch}
+p:last-child{margin-bottom:0}
+
+.kicker{
+  font-size:.65rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700;
+  color:rgba(255,255,255,.45);margin-bottom:1.1rem;
+}
+section{padding:3rem 0}
+@media(min-width:640px){section{padding:4rem 0}}
+.raised{background:#0a0a0a}
+.sub{background:rgba(255,255,255,.05)}
+
+/* ---- buttons ---- */
+.btn,.btn-ghost{
+  display:inline-block;border-radius:0;font-weight:800;font-size:.72rem;
+  letter-spacing:.18em;text-transform:uppercase;padding:.95rem 1.6rem;
+  transition:background .15s,color .15s;cursor:pointer;
+  font-family:inherit;
+}
+.btn{background:#fff;color:#000}
+.btn:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff}
+.btn-ghost:hover{background:#fff;color:#000;text-decoration:none}
+.btns{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2rem}
+
+/* ---- hero ---- */
+.hero{padding:3.5rem 0 3rem}
+@media(min-width:640px){.hero{padding:5.5rem 0 4.5rem}}
+.hero p.lede{font-size:clamp(1rem,2.4vw,1.2rem);color:rgba(255,255,255,.7);max-width:52ch;margin-top:1.5rem}
+
+/* ---- images ----
+   Served from the platform's own gallery endpoint at whatever width is asked
+   for, so this is a real srcset rather than one file scaled by the browser.
+   Every image carries width/height so the box is reserved before the bytes
+   arrive: layout shift is a Core Web Vitals penalty and a microsite has no
+   authority to spare. The 16:9 ratio and faint fill give that reserved space
+   a visible surface while it loads, on the same rgba(255,255,255,.05) as
+   every other card. No border, no radius. */
+figure{margin:0}
+figure img{
+  display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;
+  background:rgba(255,255,255,.05);border-radius:0;
+}
+figcaption{font-size:.72rem;color:rgba(255,255,255,.45);padding:.6rem 0 0;letter-spacing:.04em}
+.gal{display:grid;gap:1px;grid-template-columns:1fr}
+@media(min-width:560px){.gal{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.gal.g3{grid-template-columns:repeat(3,1fr)}}
+.hero-img{margin-top:2.5rem}
+
+/* ---- grid + cards ---- */
+.grid{display:grid;gap:1px;grid-template-columns:1fr}
+@media(min-width:560px){.grid.c2,.grid.c3,.grid.c4{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.grid.c3{grid-template-columns:repeat(3,1fr)}.grid.c4{grid-template-columns:repeat(4,1fr)}}
+.card{background:rgba(255,255,255,.05);border-radius:0;padding:1.5rem}
+.card.link:hover{background:rgba(255,255,255,.1)}
+.card .meta{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700}
+.price{font-size:2rem;font-weight:800;color:#fff;line-height:1;margin:.65rem 0 .3rem}
+.price .from{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);display:block;margin-bottom:.35rem}
+
+/* ---- steps ---- */
+.step{background:rgba(255,255,255,.05);padding:1.5rem}
+.step .n{
+  font-size:.65rem;letter-spacing:.24em;font-weight:800;
+  color:rgba(255,255,255,.45);margin-bottom:.75rem;display:block;
+}
+
+/* ---- checklist ---- */
+ul.check{list-style:none;display:grid;gap:1px}
+ul.check li{background:rgba(255,255,255,.05);padding:1rem 1.25rem;max-width:none}
+ul.check li::before{content:"—";color:rgba(255,255,255,.4);margin-right:.75rem;font-weight:700}
+
+/* ---- faq ---- */
+.faq{display:grid;gap:1px}
+.faq details{background:rgba(255,255,255,.05);padding:1.25rem 1.5rem}
+.faq summary{
+  cursor:pointer;font-weight:700;color:#fff;list-style:none;
+  display:flex;justify-content:space-between;gap:1rem;align-items:baseline;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:rgba(255,255,255,.45);font-weight:800;flex-shrink:0}
+.faq details[open] summary::after{content:"–"}
+.faq details[open] summary{margin-bottom:.85rem}
+.faq p{color:rgba(255,255,255,.72)}
+
+/* ---- table ---- */
+.tw{overflow-x:auto;background:rgba(255,255,255,.05)}
+table{border-collapse:collapse;width:100%;min-width:34rem;font-size:.9rem}
+th,td{text-align:left;padding:.9rem 1.1rem;vertical-align:top}
+th{
+  font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);font-weight:800;background:#0a0a0a;
+}
+tbody tr:nth-child(even){background:rgba(255,255,255,.04)}
+.note{font-size:.78rem;color:rgba(255,255,255,.45);margin-top:.9rem}
+
+/* ---- form ---- */
+form{display:grid;gap:1px;max-width:38rem}
+label{display:block;background:rgba(255,255,255,.05);padding:1rem 1.25rem}
+label .lb{
+  display:block;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,255,255,.45);margin-bottom:.5rem;
+}
+input,textarea,select{
+  width:100%;background:transparent;color:#fff;border:0;border-radius:0;
+  font:inherit;font-size:.95rem;padding:0;
+}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.3)}
+textarea{resize:vertical;min-height:5.5rem}
+
+/* The honeypot. Off-screen rather than display:none, because a bot that reads
+   computed styles skips anything hidden outright but will happily fill a field
+   it can see in the DOM. Never announced to assistive tech, never focusable. */
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* Only rendered when the endpoint bounced the submission back with ?error=. */
+.fmsg{background:rgba(255,255,255,.10);padding:.85rem 1rem;margin-bottom:1px;font-size:.9rem}
+
+/* The second path out of the form, for a visitor who has already decided and
+   wants a date rather than a price. */
+.alt{padding:1.1rem 0 0;font-size:.85rem;color:rgba(255,255,255,.55)}
+.alt a{color:#fff}
+
+/* ---- footer ----
+   Two columns from 340px up. A single column put 17 links in a 916px stack on
+   a 390px phone — a full screen of footer under every page. The breakpoint was
+   480px, which a 390px iPhone never reaches. */
+.ftr{background:#0a0a0a;padding:2.25rem 0 2rem;margin-top:1px}
+.ftr .cols{display:grid;gap:1.5rem 1rem;grid-template-columns:1fr}
+@media(min-width:340px){.ftr .cols{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:720px){.ftr .cols{grid-template-columns:repeat(3,1fr);gap:2rem}}
+@media(min-width:640px){.ftr{padding:3rem 0 2.5rem}}
+.ftr h3{
+  font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);margin-bottom:.6rem;
+}
+.ftr a{color:rgba(255,255,255,.65);font-size:.82rem;line-height:1.45;display:block;padding:.18rem 0}
+.ftr a:hover{color:#fff}
+.legal{margin-top:1.75rem;font-size:.7rem;color:rgba(255,255,255,.35);line-height:1.6}
+
+/* ---- draft banner ---- */
+.draft{background:#fff;color:#000;padding:.6rem 0;font-weight:800;
+  font-size:.65rem;letter-spacing:.2em;text-transform:uppercase}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.skip:focus-visible{position:fixed;top:.5rem;left:.5rem;width:auto;height:auto;
+  clip:auto;padding:.75rem 1rem;z-index:100}
+`.trim();
+}
+
+/* ------------------------------------------------------------------ *
+ * Block renderers
+ * ------------------------------------------------------------------ */
+
+const blocks = {
+  hero: (b, ctx) => `
+<header class="hero">
+  <div class="wrap">
+    ${b.kicker ? `<div class="kicker">${esc(b.kicker)}</div>` : ''}
+    <h1>${esc(ctx.page.h1)}</h1>
+    ${b.sub ? `<p class="lede">${esc(b.sub)}</p>` : ''}
+    ${b.primary || b.secondary ? `<div class="btns">
+      ${b.primary ? `<a class="btn" href="${esc(b.primary.href)}">${esc(b.primary.label)}</a>` : ''}
+      ${b.secondary ? `<a class="btn-ghost" href="${esc(b.secondary.href)}">${esc(b.secondary.label)}</a>` : ''}
+    </div>` : ''}
+    ${b.image ? `<div class="hero-img">${image(ctx, b.image, { sizes: '(min-width:64rem) 60rem, 100vw', priority: true })}</div>` : ''}
+  </div>
+</header>`,
+
+  prose: (b) => `
+<section>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    ${(b.body || []).map((p) => `<p>${esc(p)}</p>`).join('\n    ')}
+  </div>
+</section>`,
+
+  pricing: (b, ctx) => `
+<section class="raised">
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="grid c4">
+      ${ctx.site.services
+        .map(
+          (s) => `<div class="card">
+        <div class="meta">${esc(s.name)}</div>
+        <div class="price">${s.unit === 'from' ? '<span class="from">From</span>' : ''}${money(s.price)}</div>
+        <p>${esc(s.photos)}<br>${esc(s.turnaround)} delivery</p>
+      </div>`
+        )
+        .join('\n      ')}
+    </div>
+    ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}
+  </div>
+</section>`,
+
+  addons: (b, ctx) => `
+<section>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="grid c3">
+      ${ctx.site.addons
+        .map(
+          (a) => `<div class="card">
+        <div class="meta">+${money(a.price)}</div>
+        <h3>${esc(a.name)}</h3>
+        <p>${esc(a.note)}</p>
+      </div>`
+        )
+        .join('\n      ')}
+    </div>
+  </div>
+</section>`,
+
+  steps: (b) => `
+<section class="raised">
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="grid c4">
+      ${b.items
+        .map(
+          (s, i) => `<div class="step">
+        <span class="n">${String(i + 1).padStart(2, '0')}</span>
+        <h3>${esc(s.title)}</h3>
+        <p>${esc(s.body)}</p>
+      </div>`
+        )
+        .join('\n      ')}
+    </div>
+  </div>
+</section>`,
+
+  checklist: (b) => `
+<section>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    ${b.intro ? `<p>${esc(b.intro)}</p><div style="height:1.25rem"></div>` : ''}
+    <ul class="check">
+      ${b.items.map((i) => `<li>${esc(i)}</li>`).join('\n      ')}
+    </ul>
+  </div>
+</section>`,
+
+  faq: (b) => `
+<section class="raised">
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="faq">
+      ${b.items
+        .map(
+          (f) => `<details>
+        <summary>${esc(f.q)}</summary>
+        <p>${esc(f.a)}</p>
+      </details>`
+        )
+        .join('\n      ')}
+    </div>
+  </div>
+</section>`,
+
+  areas: (b, ctx) => `
+<section>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="grid c3">
+      ${ctx.areas
+        .map(
+          (a) => `<a class="card link" href="/areas/${esc(a.slug)}/">
+        <div class="meta">${esc(a.zips.join(' · '))}</div>
+        <h3>${esc(a.name)}</h3>
+        <p>${esc(a.typical)}</p>
+      </a>`
+        )
+        .join('\n      ')}
+    </div>
+    ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}
+  </div>
+</section>`,
+
+  table: (b) => `
+<section>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="tw">
+      <table>
+        <thead><tr>${b.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${b.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('\n          ')}
+        </tbody>
+      </table>
+    </div>
+    ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}
+  </div>
+</section>`,
+
+  cta: (b) => `
+<section class="sub">
+  <div class="wrap">
+    <h2>${esc(b.heading)}</h2>
+    ${b.body ? `<p>${esc(b.body)}</p>` : ''}
+    <div class="btns"><a class="btn" href="${esc(b.button.href)}">${esc(b.button.label)}</a></div>
+  </div>
+</section>`,
+
+  /**
+   * Citations for a page that makes checkable external claims.
+   *
+   * A local-service site has no business asserting regulatory detail without
+   * showing where it came from. Rendering sources as a first-class block (not
+   * prose) means a page carrying legal or municipal claims cannot quietly ship
+   * without them — and the reader can go verify rather than trust us.
+   */
+  /** One full-width image. */
+  image: (b, ctx) => `
+<section${b.surface === 'raised' ? ' class="raised"' : ''}>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    ${image(ctx, b.key, { sizes: '(min-width:64rem) 60rem, 100vw', caption: b.caption })}
+  </div>
+</section>`,
+
+  /** A grid of images. Two up by default, three with cols: 3. */
+  gallery: (b, ctx) => `
+<section${b.surface === 'raised' ? ' class="raised"' : ''}>
+  <div class="wrap">
+    ${b.heading ? `<h2>${esc(b.heading)}</h2>` : ''}
+    <div class="gal${b.cols === 3 ? ' g3' : ''}">
+      ${b.keys.map((k) => image(ctx, k, { sizes: b.cols === 3
+          ? '(min-width:900px) 20rem, (min-width:560px) 50vw, 100vw'
+          : '(min-width:560px) 30rem, 100vw' })).join('')}
+    </div>
+    ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}
+  </div>
+</section>`,
+
+  sources: (b) => `
+<section>
+  <div class="wrap">
+    <h2>${esc(b.heading || 'Sources')}</h2>
+    ${b.checkedOn ? `<p class="note">Checked ${esc(b.checkedOn)}. Rules change; verify against the City before acting.</p>` : ''}
+    <ul class="check">
+      ${b.items
+        .map(
+          (i) =>
+            `<li><a href="${esc(i.url)}" rel="nofollow noopener"${/austintexas\.gov$/.test(new URL(i.url).hostname) ? '' : ' target="_blank"'}>${esc(i.label)}</a></li>`
+        )
+        .join('\n      ')}
+    </ul>
+  </div>
+</section>`,
+
+  /**
+   * The quote form renders entirely from `site.quoteForm`, so the fields, the
+   * endpoint and the privacy policy all come from one definition. Adding a
+   * field to the config adds it to the form and to the policy at once.
+   *
+   * It posts as an ordinary HTML form to the platform's own
+   * /api/microsite/lead, which answers with a 303 back to redirectPath. That
+   * shape is deliberate: a plain form post is a CORS "simple request", so it
+   * crosses origins with no preflight and no Access-Control-Allow-Origin —
+   * which vercel.json does not set on /api/* and should not start setting.
+   * Nothing here needs JavaScript to work.
+   *
+   * Three spam guards, since the endpoint is public and cross-origin:
+   * a honeypot, a fill-time stamp, and Turnstile. Only the last needs script,
+   * and only when a site key is configured.
+   */
+  quoteform: (_b, ctx) => {
+    const { quoteForm, business } = ctx.site;
+    const field = (f) => {
+      const req = f.required ? ' required' : '';
+      const ac = f.autocomplete ? ` autocomplete="${esc(f.autocomplete)}"` : '';
+      const ph = f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : '';
+      let input;
+      if (f.type === 'textarea') input = `<textarea name="${esc(f.name)}"${req}${ph}></textarea>`;
+      else if (f.type === 'select')
+        input =
+          `<select name="${esc(f.name)}"${req}><option value="">Select…</option>` +
+          f.options.map((o) => `<option>${esc(o)}</option>`).join('') +
+          `</select>`;
+      else input = `<input type="${esc(f.type)}" name="${esc(f.name)}"${req}${ac}${ph}>`;
+      return `      <label><span class="lb">${esc(f.label)}</span>${input}</label>`;
+    };
+
+    const siteKey = quoteForm.turnstileSiteKey;
+    const turnstile = siteKey
+      ? `      <div class="cf-turnstile" data-sitekey="${esc(siteKey)}" data-theme="dark"></div>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n`
+      : '';
+
+    // The booking flow, for the visitor who is past asking what it costs.
+    // business.bookingUrl existed in config for weeks with nothing reading it.
+    const bookNow = business.bookingUrl
+      ? `    <p class="alt">Already know your dates? <a href="${esc(business.bookingUrl)}">Book a shoot directly</a>.</p>\n`
+      : '';
+
+    return `
+<section>
+  <div class="wrap">
+    <div id="fmsg" hidden class="fmsg"></div>
+    <form method="${esc(quoteForm.method)}" action="${esc(quoteForm.action)}">
+      <input type="hidden" name="site" value="${esc(ctx.site.id)}">
+      <input type="hidden" name="redirect" value="${esc(quoteForm.redirectPath)}">
+      <input type="hidden" name="source" id="qf-source" value="">
+      <input type="hidden" name="t" id="qf-t" value="">
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+${quoteForm.fields.map(field).join('\n')}
+${turnstile}      <button class="btn" type="submit">Request quote</button>
+    </form>
+${bookNow}  </div>
+</section>
+<script>
+/* Two jobs, both optional — the form submits correctly without either.
+   1. Stamp when the form rendered, so the endpoint can reject a submission
+      that arrived faster than a person could type. A build-time constant
+      would be stale on a static page, so it has to be set here.
+   2. Show the reason if the endpoint bounced the submission back. */
+(function () {
+  var t = document.getElementById('qf-t');
+  if (t) t.value = String(Date.now());
+  var src = document.getElementById('qf-source');
+  if (src) src.value = location.href;
+  var err = new URLSearchParams(location.search).get('error');
+  if (!err) return;
+  var msg = {
+    missing: 'Please fill in your name, email and the property address.',
+    email: 'That email address does not look right — please check it.',
+    captcha: 'The security check did not pass. Please try again.',
+    server: 'Something went wrong on our end. Please try again, or email us directly.'
+  }[err];
+  if (!msg) return;
+  var box = document.getElementById('fmsg');
+  if (box) { box.textContent = msg; box.hidden = false; }
+})();
+</script>`;
+  },
+};
+
+/* ------------------------------------------------------------------ *
+ * Page shell
+ * ------------------------------------------------------------------ */
+
+/**
+ * One gallery-endpoint URL at a given pixel width. The endpoint honours
+ * arbitrary widths (verified 400/800/1200/1600/2400) and returns
+ * cache-control: public, max-age=31536000, immutable.
+ */
+const imgUrl = (fileId, w) =>
+  `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&size=${w}`;
+
+const IMG_WIDTHS = [400, 800, 1200, 1600];
+
+/**
+ * Render one image from the registry.
+ *
+ * `priority` marks the LCP image: eager, with fetchpriority=high. Lazy-loading
+ * the largest element above the fold delays the very metric it is meant to
+ * help. Everything else is lazy and async-decoded.
+ *
+ * Alt text is never invented here. It comes from the registry, and the build
+ * fails if it is missing.
+ */
+function image(ctx, key, { sizes, priority = false, caption } = {}) {
+  const img = ctx.images?.[key];
+  if (!img) throw new Error(`Unknown image key "${key}"`);
+  const srcset = IMG_WIDTHS.map((w) => `${esc(imgUrl(img.fileId, w))} ${w}w`).join(', ');
+  return `<figure>
+      <img src="${esc(imgUrl(img.fileId, 1200))}"
+           srcset="${srcset}"
+           sizes="${esc(sizes || '100vw')}"
+           width="1600" height="900"
+           alt="${esc(img.alt)}"
+           ${priority ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'}>
+      ${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}
+    </figure>`;
+}
+
+const NAV = [
+  ['/pricing/', 'Pricing'],
+  ['/short-term-rental-photography/', 'Service'],
+  ['/property-managers/', 'Managers'],
+  ['/how-to-prep-your-airbnb-for-photos/', 'Prep'],
+  ['/contact/', 'Quote'],
+];
+
+function header(ctx) {
+  return `
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="/">${esc(ctx.site.brand)}<span>${esc(ctx.site.geo.city)}, ${esc(ctx.site.geo.region)}</span></a>
+    <nav class="nav" aria-label="Main">
+      ${NAV.map(
+        ([href, label]) =>
+          `<a href="${href}"${ctx.path === href ? ' aria-current="page"' : ''}>${esc(label)}</a>`
+      ).join('\n      ')}
+    </nav>
+  </div>
+</header>`;
+}
+
+/**
+ * Trust and legal links live in the footer only. They are there to be found
+ * when looked for, not to compete for attention in the main nav.
+ */
+const LEGAL_NAV = [
+  ['/about/', 'About'],
+  ['/faq/', 'FAQ'],
+  ['/privacy-policy/', 'Privacy'],
+  ['/terms/', 'Terms'],
+  ['/accessibility/', 'Accessibility'],
+];
+
+/**
+ * Phone links carry the configured tracking class so a dynamic-number-insertion
+ * script (WhatConverts and similar) can find and swap them. Harmless when no
+ * such script is configured — it is an unstyled class on an ordinary tel: link.
+ */
+function phoneLink(site) {
+  const phone = site.business.phone;
+  if (!/^\+?[\d\s().-]{10,}$/.test(phone)) return '';
+  const cls = site.analytics?.phoneLinkClass;
+  return `<a ${cls ? `class="${esc(cls)}" ` : ''}href="tel:${esc(telHref(site))}">${esc(phone)}</a>`;
+}
+
+/**
+ * The tel: href, as E.164 where we can work it out.
+ *
+ * The visible text stays in the Google Business Profile's own format, because
+ * that string is half of a NAP that Google reconciles against the profile. The
+ * href is a different job: a bare 10-digit tel: is only dialable if the handset
+ * assumes the local country, which is not true on a roaming phone or a VoIP
+ * client. So a US number is promoted to +1, and anything already carrying a +
+ * or an unrecognised shape is left exactly as written rather than guessed at.
+ */
+function telHref(site) {
+  const raw = site.business.phone.replace(/[^\d+]/g, '');
+  if (raw.startsWith('+')) return raw;
+  if (site.geo?.country === 'US') {
+    if (raw.length === 10) return `+1${raw}`;
+    if (raw.length === 11 && raw.startsWith('1')) return `+${raw}`;
+  }
+  return raw;
+}
+
+function footer(ctx) {
+  const { site, areas } = ctx;
+  return `
+<footer class="ftr">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>Service area</h3>
+        ${areas.slice(0, 5).map((a) => `<a href="/areas/${esc(a.slug)}/">${esc(a.name)}</a>`).join('\n        ')}
+      </div>
+      <div>
+        <h3>Company</h3>
+        ${LEGAL_NAV.map(([h, l]) => `<a href="${h}">${esc(l)}</a>`).join('\n        ')}
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <a href="mailto:${esc(site.business.email)}">${esc(site.business.email)}</a>
+        ${phoneLink(site)}
+        <a href="${esc(site.business.parentUrl)}">${esc(site.business.legalName)}</a>
+      </div>
+    </div>
+    <p class="legal">
+      ${esc(site.brand)} is the ${esc(site.geo.city)} short-term rental photography service of
+      ${esc(site.business.legalName)}. Serving ${esc(site.geo.city)} and the surrounding
+      ${site.geo.serviceRadiusMiles}-mile metro.<br>
+      &copy; ${new Date().getFullYear()} ${esc(site.business.legalName)}. All rights reserved.
+    </p>
+  </div>
+</footer>`;
+}
+
+/**
+ * Render one page to a complete HTML document.
+ * `head` carries the SEO block (meta, canonical, JSON-LD) built by seo.mjs.
+ */
+export function renderPage(ctx, head) {
+  const { page, draft } = ctx;
+  const body = page.blocks
+    .map((b) => {
+      const fn = blocks[b.type];
+      if (!fn) throw new Error(`Unknown block type "${b.type}" on page "/${page.slug}"`);
+      return fn(b, ctx);
+    })
+    .join('\n');
+
+  // Pages without a hero block still need their h1 rendered.
+  const hasHero = page.blocks.some((b) => b.type === 'hero');
+  const title = hasHero
+    ? ''
+    : `<header class="hero"><div class="wrap"><h1>${esc(page.h1)}</h1></div></header>`;
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+${head}
+<style>${css()}</style>
+</head>
+<body>
+<a class="sr skip btn" href="#main">Skip to content</a>
+${draft ? '<div class="draft"><div class="wrap">Draft build — not for deployment</div></div>' : ''}
+${header(ctx)}
+<main id="main">
+${title}${body}
+</main>
+${footer(ctx)}
+</body>
+</html>
+`;
+}
+
+export { esc, money };
