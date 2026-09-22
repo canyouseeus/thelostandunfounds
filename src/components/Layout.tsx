@@ -23,6 +23,7 @@ import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
 import AffiliateBanner from './affiliate/AffiliateBanner'
 import { useGallery } from '../contexts/GalleryContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -102,6 +103,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const showAdBanner = location.pathname === '/' && !userIsAdmin && !loading
   const { activeGallery, closeGallery } = useGallery()
   const { state: sageModeState, toggleSageMode } = useSageMode()
+  const { t } = useLanguage()
   const navigate = useNavigate()
 
   // Load user subdomain for profile link
@@ -267,12 +269,12 @@ export default function Layout({ children }: { children?: ReactNode }) {
         {/* Header Row (for close button) */}
         <div className="flex items-center justify-between h-16 w-full px-4 shrink-0">
           <div className="flex items-center h-12">
-            <span className="text-white text-sm font-bold">MENU</span>
+            <span className="text-white text-sm font-bold">{t('nav.menu')}</span>
           </div>
           <button
             onClick={() => setMenuOpen(false)}
             className="flex items-center justify-center h-12 w-12 text-white"
-            aria-label="Close menu"
+            aria-label={t('nav.closeMenu')}
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -407,7 +409,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                         e.stopPropagation();
                         setMenuOpen(!menuOpen);
                       }}
-                      aria-label="Toggle menu"
+                      aria-label={t('nav.toggleMenu')}
                       aria-expanded={menuOpen}
                     >
                       <Bars3Icon className="w-6 h-6 text-white" />
