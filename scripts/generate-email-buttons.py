@@ -49,6 +49,7 @@ FONT_PATH = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
 BUTTONS = {
     # Newsletter
     "btn-affiliate": "JOIN THE AFFILIATE PROGRAM",
+    "btn-newsletter": "JOIN THE NEWSLETTER",
     "btn-services": "SEE THE SERVICES",
     "btn-chip-in": "CHIP IN",
     "btn-audible-trial": "START THE FREE TRIAL",

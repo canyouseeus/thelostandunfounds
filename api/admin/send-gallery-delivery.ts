@@ -68,13 +68,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { slug, message, testEmail, photoCount, videoNote } = (req.body || {}) as {
-    slug?: string
-    message?: string
-    testEmail?: string
-    photoCount?: number
-    videoNote?: string
-  }
+  const { slug, message, testEmail, photoCount, videoNote, includeAffiliateCta, includeNewsletterCta } =
+    (req.body || {}) as {
+      slug?: string
+      message?: string
+      testEmail?: string
+      photoCount?: number
+      videoNote?: string
+      // Fixed, hardcoded destinations only (/become-affiliate, the homepage) —
+      // these two booleans toggle a real image button (brand-email-manager RULE:
+      // buttons are images, never a bare URL in message text, which Gmail does
+      // not reliably linkify and which never gets the branded black/white
+      // button styling). Kept boolean rather than an arbitrary href so this
+      // endpoint stays narrow — see the file header on why that matters.
+      includeAffiliateCta?: boolean
+      includeNewsletterCta?: boolean
+    }
 
   if (!slug) return res.status(400).json({ error: 'slug is required' })
 
@@ -152,6 +161,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       <p style="${EMAIL_STYLES.paragraph}">
         The gallery doesn't expire — come back and pull anything you need, whenever you need it.
       </p>
+
+      ${
+        includeAffiliateCta
+          ? `<p style="${EMAIL_STYLES.paragraph}">
+               Know anyone who could use a photographer? <strong>THE AFFILIATE PROGRAM</strong> pays
+               42% lifetime commission on anyone you send our way.
+             </p>
+             ${renderImageButton(`${SITE}/become-affiliate`, 'btn-affiliate', 'JOIN THE AFFILIATE PROGRAM')}`
+          : ''
+      }
+
+      ${
+        includeNewsletterCta
+          ? `<p style="${EMAIL_STYLES.paragraph}">
+               Want to hear about future shoots and openings? Join the newsletter.
+             </p>
+             ${renderImageButton(SITE, 'btn-newsletter', 'JOIN THE NEWSLETTER')}`
+          : ''
+      }
 
       <hr style="${EMAIL_STYLES.divider}">
 
