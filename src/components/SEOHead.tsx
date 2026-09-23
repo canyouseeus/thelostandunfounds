@@ -5,7 +5,20 @@
  * robots directives, and structured data.
  */
 
-import { Helmet } from 'react-helmet-async';
+/**
+ * No Helmet here on purpose.
+ *
+ * This project is on React 19 (react 19.2.3) with react-helmet-async@2.0.5,
+ * which is unmaintained and silently renders nothing under React 19 — verified
+ * in the browser: on /admin, /tools and /contact the document head contained
+ * zero `[data-rh]` nodes and document.title never changed. Every SEOHead on the
+ * site was a no-op, which is why un-prerendered routes like /admin kept the
+ * "Not Found | THE LOST+UNFOUNDS" title stamped on the shell by
+ * scripts/generate-404-html.ts even though the page had loaded fine.
+ *
+ * React 19 hoists <title>, <meta> and <link> to the document head on its own,
+ * so the tags below are rendered directly with no library in between.
+ */
 
 interface SEOHeadProps {
   /** Page title - will be prefixed with "THE LOST+UNFOUNDS | " unless noSuffix/noPrefix is true */
@@ -62,7 +75,7 @@ export default function SEOHead({
   const resolvedOgImage = ogImage || DEFAULT_OG_IMAGE;
 
   return (
-    <Helmet>
+    <>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonicalUrl} />
@@ -86,10 +99,11 @@ export default function SEOHead({
 
       {/* Structured Data */}
       {structuredData && (
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
       )}
-    </Helmet>
+    </>
   );
 }

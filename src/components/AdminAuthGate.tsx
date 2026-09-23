@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { LoadingOverlay } from './Loading'
 import AuthModal from './auth/AuthModal'
 import { isAdminUser, elevateToAdminSession } from '../utils/admin'
+import SEOHead from './SEOHead'
 
 /**
  * Replaces ProtectedRoute on /admin routes.
@@ -49,11 +50,25 @@ export default function AdminAuthGate({ children }: { children: ReactNode }) {
     window.location.href = '/admin'
   }
 
-  if (loading) return <LoadingOverlay />
+  // The gate's own branches need a title: /admin isn't pre-rendered, so Vercel's
+  // catch-all serves it the noindex shell, whose <title> is
+  // "Not Found | THE LOST+UNFOUNDS" (scripts/generate-404-html.ts). Admin.tsx has
+  // a SEOHead, but it only mounts once the gate lets you through — so while this
+  // is showing the loading overlay or the sign-in panel the tab read "Not Found".
+  // These branches never render alongside {children}, so there is no double title.
+  if (loading) {
+    return (
+      <>
+        <SEOHead title="Admin" description="Administrative dashboard for THE LOST+UNFOUNDS." canonicalPath="/admin" noIndex={true} />
+        <LoadingOverlay />
+      </>
+    )
+  }
 
   if (!user || !isAdmin) {
     return (
       <>
+        <SEOHead title="Admin" description="Administrative dashboard for THE LOST+UNFOUNDS." canonicalPath="/admin" noIndex={true} />
         <div
           style={{
             opacity: show ? 1 : 0,
