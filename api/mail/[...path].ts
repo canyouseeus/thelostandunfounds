@@ -5,15 +5,22 @@
  * Endpoints:
  * - GET /api/mail/folders - List folders
  * - GET /api/mail/messages?folderId=X&limit=50&start=0 - List messages
- * - GET /api/mail/message/:id - Get single message
+ * - GET /api/mail/message?id=X - Get single message
  * - POST /api/mail/send - Send email
  * - POST /api/mail/draft - Save draft
  * - PUT /api/mail/move - Move message
  * - PUT /api/mail/read - Mark as read/unread
  * - PUT /api/mail/star - Mark as starred/unstarred
- * - DELETE /api/mail/message/:id - Delete message
+ * - DELETE /api/mail/message?id=X - Delete message
  * - GET /api/mail/search?q=X - Search
- * - GET /api/mail/attachment/:messageId/:attachmentId - Download attachment
+ * - GET /api/mail/attachment?messageId=X&attachmentId=Y - Download attachment
+ *
+ * The path-segment forms of message and attachment (/message/:id and
+ * /attachment/:messageId/:attachmentId) are served by dedicated routes —
+ * api/mail/message/[id].ts and api/mail/attachment/[messageId]/[attachmentId].ts —
+ * because Vercel's catch-all routing here doesn't reliably match multi-segment
+ * paths in production. The query-string forms above still work through this
+ * catch-all and remain what the admin UI uses.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
