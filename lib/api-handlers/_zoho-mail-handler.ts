@@ -4,6 +4,13 @@
  */
 
 import { getZohoAuthContext, ensureBannerHtml, uploadZohoAttachment } from './_zoho-email-utils.js';
+import {
+  parseMimeParts,
+  isAttachmentPart,
+  isInlineImagePart,
+  guessContentType,
+  type MimePart
+} from './_mime-parse.js';
 
 export type { ZohoAuthContext } from './_zoho-email-utils.js';
 export { getZohoAuthContext } from './_zoho-email-utils.js';
@@ -253,13 +260,23 @@ export async function getMessage(
       isStarred: m.isStarred === true || m.is_starred === true,
       content: m.content || '',
       htmlContent: m.htmlContent || m.html_content || m.content || '',
-      attachments: (m.attachments || m.attachmentList || []).map((a: any) => ({
-        attachmentId: a.attachmentId || a.attachment_id || a.id,
-        attachmentName: a.attachmentName || a.attachment_name || a.name,
-        attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
-        contentType: a.contentType || a.content_type || a.mimeType || 'application/octet-stream'
-      }))
+      attachments: normalizeAttachments(m.attachments || m.attachmentList || [])
     };
+
+    // Zoho's message `content` response carries no attachment metadata on this
+    // account, so an attachment strip built from it alone is always empty. Fall
+    // back to attachmentinfo, then to the raw MIME source, which always has the
+    // files. Never let this sink the message itself — a readable body with no
+    // attachment list beats an error page.
+    if (message.attachments!.length === 0) {
+      try {
+        message.attachments = await listMessageAttachments(messageId, folderId);
+      } catch (attachErr) {
+        console.error('Attachment discovery failed:', attachErr);
+      }
+    }
+
+    message.hasAttachment = message.hasAttachment || message.attachments!.length > 0;
 
     return { success: true, message };
   } catch (error: any) {
@@ -475,9 +492,30 @@ export async function searchMessages(
 export async function getAttachment(
   messageId: string,
   attachmentId: string,
-  folderId?: string
-): Promise<{ success: boolean; content?: ArrayBuffer; contentType?: string; error?: string }> {
+  folderId?: string,
+  name?: string
+): Promise<{ success: boolean; content?: ArrayBuffer; contentType?: string; name?: string; error?: string }> {
   try {
+    // Parts discovered from the raw MIME source carry a mime: id — they are not
+    // Zoho attachment ids and must be served straight out of the source.
+    if (attachmentId.startsWith(MIME_ATTACHMENT_PREFIX)) {
+      const index = parseInt(attachmentId.slice(MIME_ATTACHMENT_PREFIX.length), 10);
+      const parts = await getMessageMimeParts(messageId, folderId);
+      const part = parts.find(pt => pt.index === index);
+      if (!part) {
+        return { success: false, error: `Attachment part ${index} not found in message source` };
+      }
+      return {
+        success: true,
+        content: part.content.buffer.slice(
+          part.content.byteOffset,
+          part.content.byteOffset + part.content.byteLength
+        ) as ArrayBuffer,
+        contentType: guessContentType(part.name, part.contentType),
+        name: part.name
+      };
+    }
+
     const auth = await getZohoAuthContext();
     // Inline images (cid: references in the body) are not reachable on the
     // flat /messages/:id/attachments/:attId form — that 404s. Zoho only serves
@@ -496,13 +534,20 @@ export async function getAttachment(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Zoho attachment API error:', response.status, errorText);
+      // The flat path 404s for inline parts and some accounts 404 the
+      // folder-scoped one too. The MIME source has the file either way, so
+      // match on name before giving up.
+      const fallback = await getAttachmentFromSource(messageId, folderId, name);
+      if (fallback) return fallback;
       return { success: false, error: `Failed to get attachment: ${response.status}` };
     }
 
     const content = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    // Zoho streams attachments as octet-stream, so an <img> built from these
+    // bytes would not render. Recover the real type from the filename.
+    const contentType = guessContentType(name || '', response.headers.get('content-type') || '');
 
-    return { success: true, content, contentType };
+    return { success: true, content, contentType, name };
   } catch (error: any) {
     console.error('Error fetching attachment:', error);
     return { success: false, error: error.message || 'Unknown error' };
@@ -541,12 +586,17 @@ export async function getAttachmentInfo(
     const raw = json?.data?.attachments || json?.data || [];
     const list = Array.isArray(raw) ? raw : [];
 
-    const attachments: MailAttachment[] = list.map((a: any) => ({
-      attachmentId: String(a.attachmentId || a.attachment_id || a.id || a.index || ''),
-      attachmentName: a.attachmentName || a.attachment_name || a.name || '',
-      attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
-      contentType: a.contentType || a.content_type || a.type || 'application/octet-stream'
-    }));
+    const attachments: MailAttachment[] = list.map((a: any) => {
+      const attachmentName = a.attachmentName || a.attachment_name || a.name || '';
+      return {
+        attachmentId: String(a.attachmentId || a.attachment_id || a.id || a.index || ''),
+        attachmentName,
+        attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
+        // Zoho labels photo attachments application/octet-stream here, which
+        // would hide them from the reader's image previews.
+        contentType: guessContentType(attachmentName, a.contentType || a.content_type || a.type || '')
+      };
+    });
 
     return { success: true, attachments };
   } catch (error: any) {
@@ -724,6 +774,157 @@ export async function markAsStarred(
     return { success: true };
   } catch (error: any) {
     console.error('Error starring message:', error);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+
+/**
+ * Attachments discovered by parsing the raw message source carry this prefix
+ * instead of a Zoho attachment id, so getAttachment knows to serve them from
+ * the MIME tree rather than asking Zoho for an id it never issued.
+ */
+const MIME_ATTACHMENT_PREFIX = 'mime:';
+
+function normalizeAttachments(raw: any[]): MailAttachment[] {
+  return (Array.isArray(raw) ? raw : []).map((a: any) => ({
+    attachmentId: String(a.attachmentId || a.attachment_id || a.id || ''),
+    attachmentName: a.attachmentName || a.attachment_name || a.name || 'attachment',
+    attachmentSize: parseInt(a.attachmentSize || a.attachment_size || a.size || '0', 10),
+    contentType: guessContentType(
+      a.attachmentName || a.attachment_name || a.name || '',
+      a.contentType || a.content_type || a.mimeType || ''
+    )
+  })).filter(a => a.attachmentId);
+}
+
+// Parsing the source costs a full message download, and opening one message
+// asks for it twice (attachment strip, then inline images). Cache briefly so
+// that is one fetch. Bounded so a long-lived warm function cannot grow without
+// limit; entries are per-message and expire on their own.
+const MIME_CACHE_TTL_MS = 5 * 60 * 1000;
+const MIME_CACHE_MAX_ENTRIES = 20;
+const mimePartsCache = new Map<string, { at: number; parts: MimePart[] }>();
+
+/**
+ * Parsed parts of a message's raw source, cached for a few minutes.
+ */
+export async function getMessageMimeParts(
+  messageId: string,
+  folderId?: string
+): Promise<MimePart[]> {
+  const key = `${messageId}:${folderId || ''}`;
+  const hit = mimePartsCache.get(key);
+  if (hit && Date.now() - hit.at < MIME_CACHE_TTL_MS) {
+    return hit.parts;
+  }
+
+  const result = await getOriginalMessage(messageId, folderId);
+  if (!result.success || !result.raw) {
+    throw new Error(result.error || 'Could not read message source');
+  }
+
+  const parts = parseMimeParts(result.raw);
+
+  if (mimePartsCache.size >= MIME_CACHE_MAX_ENTRIES) {
+    const oldest = [...mimePartsCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) mimePartsCache.delete(oldest[0]);
+  }
+  mimePartsCache.set(key, { at: Date.now(), parts });
+
+  return parts;
+}
+
+/**
+ * Every file on a message, whichever Zoho endpoint is willing to admit to it.
+ *
+ * attachmentinfo is tried first because its ids stream directly from Zoho; when
+ * it comes back empty (which it does for inline images, and on this account for
+ * ordinary attachments too) the raw source is parsed instead.
+ */
+export async function listMessageAttachments(
+  messageId: string,
+  folderId?: string
+): Promise<MailAttachment[]> {
+  if (folderId) {
+    const info = await getAttachmentInfo(messageId, folderId);
+    if (info.success && info.attachments && info.attachments.length > 0) {
+      return info.attachments.filter(a => a.attachmentId);
+    }
+  }
+
+  const parts = await getMessageMimeParts(messageId, folderId);
+  return parts.filter(isAttachmentPart).map(part => ({
+    attachmentId: `${MIME_ATTACHMENT_PREFIX}${part.index}`,
+    attachmentName: part.name || `attachment-${part.index}`,
+    attachmentSize: part.content.byteLength,
+    contentType: guessContentType(part.name, part.contentType)
+  }));
+}
+
+/** Last resort for a Zoho attachment id that 404s: find the part by filename. */
+async function getAttachmentFromSource(
+  messageId: string,
+  folderId: string | undefined,
+  name?: string
+): Promise<{ success: true; content: ArrayBuffer; contentType: string; name: string } | null> {
+  try {
+    const parts = (await getMessageMimeParts(messageId, folderId)).filter(isAttachmentPart);
+    const part = name
+      ? parts.find(pt => pt.name === name)
+      : parts.length === 1 ? parts[0] : undefined;
+    if (!part) return null;
+
+    return {
+      success: true,
+      content: part.content.buffer.slice(
+        part.content.byteOffset,
+        part.content.byteOffset + part.content.byteLength
+      ) as ArrayBuffer,
+      contentType: guessContentType(part.name, part.contentType),
+      name: part.name
+    };
+  } catch (error: any) {
+    console.error('MIME attachment fallback failed:', error?.message || error);
+    return null;
+  }
+}
+
+export interface InlineImage {
+  contentId: string;
+  contentType: string;
+  /** Base64 payload, ready to become a data: URL in the reader. */
+  content: string;
+}
+
+// An inline image is inlined into the JSON response as base64, so cap it. Past
+// this size the body is better served as a download than embedded in the page.
+const MAX_INLINE_IMAGE_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Inline images keyed by Content-ID, so the reader can turn `src="cid:…"` in
+ * the body into something a browser can actually display. A `cid:` URL only
+ * resolves inside the MIME message — left alone, every embedded photo in the
+ * webmail renders as a broken image.
+ */
+export async function getInlineImages(
+  messageId: string,
+  folderId?: string
+): Promise<{ success: boolean; images?: InlineImage[]; error?: string }> {
+  try {
+    const parts = await getMessageMimeParts(messageId, folderId);
+    const images = parts
+      .filter(isInlineImagePart)
+      .filter(part => part.content.byteLength <= MAX_INLINE_IMAGE_BYTES)
+      .map(part => ({
+        contentId: part.contentId,
+        contentType: part.contentType,
+        content: part.content.toString('base64')
+      }));
+
+    return { success: true, images };
+  } catch (error: any) {
+    console.error('Error fetching inline images:', error);
     return { success: false, error: error.message || 'Unknown error' };
   }
 }

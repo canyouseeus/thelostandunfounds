@@ -5,15 +5,22 @@
  * Endpoints:
  * - GET /api/mail/folders - List folders
  * - GET /api/mail/messages?folderId=X&limit=50&start=0 - List messages
- * - GET /api/mail/message/:id - Get single message
+ * - GET /api/mail/message?id=X - Get single message
  * - POST /api/mail/send - Send email
  * - POST /api/mail/draft - Save draft
  * - PUT /api/mail/move - Move message
  * - PUT /api/mail/read - Mark as read/unread
  * - PUT /api/mail/star - Mark as starred/unstarred
- * - DELETE /api/mail/message/:id - Delete message
+ * - DELETE /api/mail/message?id=X - Delete message
  * - GET /api/mail/search?q=X - Search
- * - GET /api/mail/attachment/:messageId/:attachmentId - Download attachment
+ * - GET /api/mail/attachment?messageId=X&attachmentId=Y - Download attachment
+ *
+ * The path-segment forms of message and attachment (/message/:id and
+ * /attachment/:messageId/:attachmentId) are served by dedicated routes —
+ * api/mail/message/[id].ts and api/mail/attachment/[messageId]/[attachmentId].ts —
+ * because Vercel's catch-all routing here doesn't reliably match multi-segment
+ * paths in production. The query-string forms above still work through this
+ * catch-all and remain what the admin UI uses.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -322,6 +329,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).send(result.raw);
       }
 
+      // GET /api/mail/inline?messageId=X&folderId=Y
+      // Inline (cid:) images from the message source, base64 encoded, so the
+      // reader can display embedded photos instead of broken images.
+      case 'inline': {
+        if (req.method !== 'GET') {
+          return res.status(405).json({ error: 'Method not allowed' });
+        }
+        const messageId = (pathSegments[1] || req.query.messageId) as string;
+        const folderId = req.query.folderId as string | undefined;
+        if (!messageId) {
+          return res.status(400).json({ error: 'messageId is required' });
+        }
+        const result = await mailHandler.getInlineImages(messageId, folderId);
+        if (!result.success) {
+          console.error('getInlineImages error:', result.error);
+          return res.status(500).json({ error: result.error });
+        }
+        return res.status(200).json({ images: result.images || [] });
+      }
+
       case 'attachment': {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
@@ -340,15 +367,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         // folderId is optional but required for inline (cid:) images — see getAttachment.
         const attFolderId = req.query.folderId as string | undefined;
-        const result = await mailHandler.getAttachment(messageId, attachmentId, attFolderId);
+        // The filename lets the handler recover the part from the raw message
+        // source when Zoho 404s the attachment id.
+        const attName = req.query.name as string | undefined;
+        const result = await mailHandler.getAttachment(messageId, attachmentId, attFolderId, attName);
         if (!result.success || !result.content) {
           console.error('getAttachment error:', result.error);
           return res.status(500).json({ error: result.error });
         }
 
-        // Stream the attachment
+        // Stream the attachment under its real filename — the browser uses this
+        // for the saved file, and "attachment" for everything is useless.
+        const filename = (result.name || attName || 'attachment').replace(/["\r\n]/g, '');
         res.setHeader('Content-Type', result.contentType || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `attachment; filename="attachment"`);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+        );
         return res.status(200).send(Buffer.from(result.content));
       }
 
