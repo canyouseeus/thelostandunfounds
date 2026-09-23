@@ -185,3 +185,48 @@ export function isAttachmentPart(part: MimePart): boolean {
 export function isInlineImagePart(part: MimePart): boolean {
   return Boolean(part.contentId) && part.contentType.startsWith('image/');
 }
+
+/**
+ * Best-guess media type for a part Zoho labels generically.
+ *
+ * Zoho's attachmentinfo reports `application/octet-stream` for ordinary photo
+ * attachments — verified on production: four JPEGs on one message all came back
+ * as octet-stream. A reader that decides "is this an image?" from the declared
+ * type therefore shows no preview for a message full of photos, so fall back to
+ * the filename extension when the declared type says nothing.
+ */
+const EXTENSION_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  bmp: 'image/bmp',
+  svg: 'image/svg+xml',
+  heic: 'image/heic',
+  heif: 'image/heif',
+  avif: 'image/avif',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  pdf: 'application/pdf'
+};
+
+const GENERIC_TYPES = new Set([
+  '',
+  'application/octet-stream',
+  'binary/octet-stream',
+  'application/unknown'
+]);
+
+export function guessContentType(name: string, declared: string): string {
+  const declaredType = (declared || '').toLowerCase().split(';')[0].trim();
+  if (!GENERIC_TYPES.has(declaredType)) return declaredType;
+
+  const ext = (name || '').toLowerCase().split('.').pop() || '';
+  return EXTENSION_TYPES[ext] || declaredType || 'application/octet-stream';
+}
+
+/** Whether the reader should render this part as a picture. */
+export function isDisplayableImage(name: string, declared: string): boolean {
+  return guessContentType(name, declared).startsWith('image/');
+}
