@@ -20,6 +20,9 @@ interface PhotoLightboxProps {
     onPrev: () => void;
     isSelected: boolean;
     isPurchased?: boolean;
+    // A zero-priced gallery: every photo is downloadable without a purchase.
+    // Unlocks the same way a purchase does, minus the PROPRIETARY badge.
+    isFree?: boolean;
     onToggleSelect: () => void;
     singlePhotoPrice?: number;
     galleryName?: string;
@@ -32,11 +35,13 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     onPrev,
     isSelected,
     isPurchased = false,
+    isFree = false,
     onToggleSelect,
     singlePhotoPrice = 5.00,
     galleryName
 }) => {
     const [isImageLoading, setIsImageLoading] = useState(true);
+    const isUnlocked = isPurchased || isFree;
     const [downloadEmailOpen, setDownloadEmailOpen] = useState(false);
     const [printModalOpen, setPrintModalOpen] = useState(false);
 
@@ -105,7 +110,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         <div className="relative w-fit h-auto flex items-center justify-center">
 
                             {/* Brand Overlay (preview protection) - Only if not purchased and image is loaded */}
-                            {!isPurchased && (
+                            {!isUnlocked && (
                                 <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
                                     <img
                                         src="/logo.png"
@@ -121,7 +126,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             )}
 
                             {/* Protection Layer - Intercepts all touch/click events when not purchased */}
-                            {!isPurchased && (
+                            {!isUnlocked && (
                                 <div
                                     className={`absolute inset-0 z-20 transition-opacity duration-300 ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                                     onContextMenu={(e) => e.preventDefault()}
@@ -152,7 +157,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 <img
                                     src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=3000`}
                                     alt={photo.title}
-                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isPurchased ? 'pointer-events-none' : 'pointer-events-auto'}`}
+                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isUnlocked ? 'pointer-events-none' : 'pointer-events-auto'}`}
                                     onContextMenu={(e) => e.preventDefault()}
                                     draggable={false}
                                     onLoad={() => setIsImageLoading(false)}
@@ -202,7 +207,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         className="mt-2 flex flex-col items-center gap-3 transition-opacity duration-300"
                     >
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                        {isPurchased ? (
+                        {isUnlocked ? (
                             <button
                                 onClick={handleDownloadClick}
                                 className="flex items-center gap-2 px-8 py-3 bg-white hover:bg-zinc-200 text-black rounded-none font-black text-[10px] uppercase tracking-[0.25em] transition-all shadow-xl"
