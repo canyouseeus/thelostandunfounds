@@ -15,6 +15,7 @@ import {
     MagnifyingGlassIcon,
     MapPinIcon,
     FunnelIcon,
+    ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -95,13 +96,17 @@ const PhotoCard: React.FC<{
     index: number;
     isSelected: boolean;
     isPurchased: boolean;
+    // Zero-priced gallery: unlocked for everyone, no purchase needed.
+    isFree?: boolean;
     activeTab: string;
     singlePrice: number;
     viewMode: 'grid' | 'single';
     onToggleSelect: () => void;
     onLightbox: () => void;
-}> = ({ photo, index, isSelected, isPurchased, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox }) => {
+    onDownload?: () => void;
+}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload }) => {
     const [rotation, setRotation] = useState(0);
+    const isUnlocked = isPurchased || isFree;
 
     // Dynamic styles based on view mode (Grid vs Single)
     const isSingle = viewMode === 'single';
@@ -137,7 +142,7 @@ const PhotoCard: React.FC<{
                     {/* Wrapper to constrain overlays to image bounds */}
                     <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
                         {/* Protection Layer - Intercepts all touch/click events to prevent saving */}
-                        {!isPurchased && (
+                        {!isUnlocked && (
                             <div
                                 className="absolute inset-0 z-20 cursor-pointer"
                                 onClick={(e) => { e.stopPropagation(); onLightbox(); }}
@@ -155,19 +160,19 @@ const PhotoCard: React.FC<{
                             // comes from the stream endpoint's image path.
                             <video
                                 src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}`}
-                                controls={isPurchased}
+                                controls={isUnlocked}
                                 playsInline
                                 preload="metadata"
-                                onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
-                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                onClick={(e) => { e.stopPropagation(); if (isUnlocked) onLightbox(); }}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'}`}
                                 onContextMenu={(e) => e.preventDefault()}
                             />
                         ) : (
                             <img
                                 src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=1200`}
                                 alt={photo.title}
-                                onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
-                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                onClick={(e) => { e.stopPropagation(); if (isUnlocked) onLightbox(); }}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'}`}
                                 draggable={false}
                                 loading="lazy"
                                 onContextMenu={(e) => e.preventDefault()}
@@ -180,7 +185,7 @@ const PhotoCard: React.FC<{
                         )}
 
                         {/* Brand overlay (preview protection) */}
-                        {!isPurchased && (
+                        {!isUnlocked && (
                             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
                                 <img src="/logo.png" alt="" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
                             </div>
@@ -208,6 +213,20 @@ const PhotoCard: React.FC<{
                                     : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
                                     }`}>
                                     {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                                </div>
+                            </button>
+                        )}
+
+                        {/* Direct download — purchased photos and every photo in a free gallery */}
+                        {isUnlocked && onDownload && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDownload(); }}
+                                className="absolute bottom-2 left-2 z-[45] outline-none"
+                                title="Download"
+                                aria-label="Download"
+                            >
+                                <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                                    <ArrowDownTrayIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                 </div>
                             </button>
                         )}
@@ -726,8 +745,49 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         return amount;
     };
 
+    // Same-origin anchor with the stream endpoint's attachment disposition —
+    // not window.open, which popup blockers eat when fired in a loop.
+    const triggerFileDownload = (photo: Photo, email: string) => {
+        const fileId = photo.google_drive_file_id || photo.id;
+        const a = document.createElement('a');
+        a.href = `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`;
+        a.download = '';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
+    const downloadPhotos = async (toDownload: Photo[]) => {
+        if (toDownload.length === 0) return;
+        const email = await requestDownloadEmail(toDownload);
+        if (!email) return; // user cancelled
+        setBuyerEmail(email);
+        if (toDownload.length === 1) {
+            triggerFileDownload(toDownload[0], email);
+            return;
+        }
+        setCheckoutPending(true);
+        try {
+            // Spaced out so the browser treats each as its own download rather
+            // than collapsing a burst into one.
+            for (let i = 0; i < toDownload.length; i++) {
+                triggerFileDownload(toDownload[i], email);
+                if (i < toDownload.length - 1) await new Promise(r => setTimeout(r, 1200));
+            }
+        } finally {
+            setCheckoutPending(false);
+        }
+    };
+
     const handleCheckout = async () => {
         if (selectedPhotos.length === 0) return;
+        // A zero-priced gallery has nothing to pay for — the server checkout
+        // rejects it outright — so the tray hands out the files directly.
+        if (isFreeGallery) {
+            await downloadPhotos(selectedPhotos);
+            return;
+        }
         let email = buyerEmail;
         if (!email) {
             email = await requestDownloadEmail(selectedPhotos);
@@ -817,6 +877,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         if (single) return Number(single.price) || 0;
         return library ? Number(library.price) || 0 : 0;
     })();
+
+    // No per-photo price and no paid bundle: the gallery is a free download.
+    // The all-public aggregate view carries a placeholder price of 0, so it
+    // is excluded — those photos belong to galleries with their own prices.
+    const isFreeGallery = !!library && !isAllPublic && singlePrice <= 0
+        && !pricingOptions.some(o => Number(o.price) > 0);
 
     // ── SEO ────────────────────────────────────────────────────────────────────
     // useMemo must be called unconditionally before any early returns.
@@ -1026,6 +1092,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         const headlinePrice = singleOption
                             ? Number(singleOption.price)
                             : Number(library.price);
+                        if (isFreeGallery) {
+                            return (
+                                <div className="space-y-3 max-w-sm">
+                                    <div className="inline-flex items-baseline gap-3">
+                                        <span className="text-4xl md:text-5xl font-black text-green-400 tracking-tighter leading-none">
+                                            FREE
+                                        </span>
+                                        <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
+                                            Download
+                                        </span>
+                                    </div>
+                                    <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
+                                        No checkout — download straight from the page
+                                    </p>
+                                </div>
+                            );
+                        }
                         if (!headlinePrice || headlinePrice <= 0) return null;
                         const bundles = pricingOptions
                             .filter(o => o.photo_count > 1)
@@ -1076,13 +1159,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">02</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Click "Checkout" in the tray below.
+                                {isFreeGallery
+                                    ? 'Click "Download" in the tray below.'
+                                    : 'Click "Checkout" in the tray below.'}
                             </p>
                         </div>
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">03</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Pick Card or Bitcoin and complete payment.
+                                {isFreeGallery
+                                    ? 'Or open any photo and download it directly.'
+                                    : 'Pick Card or Bitcoin and complete payment.'}
                             </p>
                         </div>
                         <div className="pt-3 mt-2 border-t border-white/5">
@@ -1306,11 +1393,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 index={index}
                                                 isSelected={!!selectedPhotos.find(p => p.id === photo.id)}
                                                 isPurchased={!!purchasedPhotos.find(p => p.id === photo.id)}
+                                                isFree={isFreeGallery}
                                                 activeTab={activeTab}
                                                 singlePrice={singlePrice}
                                                 viewMode={viewMode === 'map' ? 'grid' : viewMode}
                                                 onToggleSelect={() => handleToggleSelect(photo)}
                                                 onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
+                                                onDownload={() => downloadPhotos([photo])}
                                             />
                                         ))}
                                     </div>
@@ -1340,6 +1429,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 onPrev={() => setActivePhotoIndex(prev => prev !== null && (prev > 0) ? prev - 1 : (photos.length - 1))}
                 isSelected={activePhotoIndex !== null && !!photos[activePhotoIndex] && !!selectedPhotos.find(p => p.id === photos[activePhotoIndex!].id)}
                 isPurchased={activePhotoIndex !== null && !!photos[activePhotoIndex] && !!purchasedPhotos.find(p => p.id === photos[activePhotoIndex!].id)}
+                isFree={isFreeGallery}
                 onToggleSelect={() => activePhotoIndex !== null && !!photos[activePhotoIndex] && handleToggleSelect(photos[activePhotoIndex!])}
                 singlePhotoPrice={singlePrice}
                 galleryName={library?.name}
@@ -1543,6 +1633,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 onCheckout={handleCheckout}
                 loading={checkoutPending}
                 totalAmount={computeTotal(selectedPhotos.length)}
+                isFree={isFreeGallery}
             />
 
             {/* Payment method picker — Card vs Bitcoin */}

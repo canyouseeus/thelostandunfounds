@@ -2,7 +2,7 @@
 import React from 'react';
 import { LoadingSpinner } from '../Loading';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface Photo {
     id: string;
@@ -17,6 +17,9 @@ interface SelectionTrayProps {
     onCheckout: () => void;
     loading?: boolean;
     totalAmount: number;
+    // Zero-priced gallery: the button downloads the selection instead of
+    // opening checkout, and the amount reads FREE rather than $0.00.
+    isFree?: boolean;
 }
 
 const SelectionTray: React.FC<SelectionTrayProps> = ({
@@ -25,6 +28,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
     onCheckout,
     loading,
     totalAmount,
+    isFree = false,
 }) => {
     const count = selectedPhotos.length;
 
@@ -84,7 +88,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                 <div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2">
                     <div className="flex items-baseline gap-2.5">
                         <span className="text-2xl md:text-3xl font-black text-green-400 tracking-tighter leading-none">
-                            ${totalAmount.toFixed(2)}
+                            {isFree ? 'FREE' : `$${totalAmount.toFixed(2)}`}
                         </span>
                         <span className="text-[9px] font-black text-white/40 tracking-[0.2em] uppercase leading-none">
                             {count} Photo{count !== 1 ? 's' : ''}
@@ -98,6 +102,11 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                     >
                         {loading ? (
                             <LoadingSpinner size="sm" className="text-black" />
+                        ) : isFree ? (
+                            <>
+                                DOWNLOAD
+                                <ArrowDownTrayIcon className="w-3 h-3 md:w-4 md:h-4" />
+                            </>
                         ) : (
                             <>
                                 CHECKOUT
