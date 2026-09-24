@@ -54,7 +54,7 @@ const CORE_PAGES = [
     { path: 'tools', title: 'TOOL BOX | THE LOST+UNFOUNDS', description: 'Free tools from THE LOST+UNFOUNDS, including the TikTok downloader. Small utilities built in public and open to everyone.' },
     { path: 'tools/tiktok-downloader', title: 'TIKTOK DOWNLOADER | THE LOST+UNFOUNDS', description: 'Download TikTok videos without the watermark. A free browser tool from THE LOST+UNFOUNDS — paste a link and save the file.' },
     { path: 'docs/photographer-guide', title: 'PHOTOGRAPHER GUIDE | THE LOST+UNFOUNDS', description: 'The working guide for photographers shooting with THE LOST+UNFOUNDS: gallery delivery, naming, payouts, and the 80/20 split explained.' },
-    { path: 'book-club/think-and-grow-rich', title: 'THINK AND GROW RICH WORKBOOK | THE LOST+UNFOUNDS', description: 'A free companion workbook for Think and Grow Rich. All thirteen principles, the actions to run for each, and an honest note on which of Hill\'s claims hold up.' }
+    { path: 'book-club/think-and-grow-rich', title: 'THINK AND GROW RICH WORKBOOK | THE LOST+UNFOUNDS', description: 'A free companion workbook for Think and Grow Rich. All thirteen principles, what each one asks of you, and the actions to run — as a checklist you can work while you read.' }
 ];
 
 async function preRenderCorePages() {
