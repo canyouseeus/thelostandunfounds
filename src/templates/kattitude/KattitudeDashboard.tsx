@@ -222,6 +222,31 @@ function AgingBadge({ days }: { days: number }) {
   return <span className="text-[10px] font-mono font-bold" style={{ color }}>{days}d</span>;
 }
 
+/* One deposit row, shared by Overview and Deposits. On a phone the ID, aging and
+ * status fold under the client name so the row never runs past the screen edge;
+ * from `sm` up they sit in their own columns. */
+function DepositRow({ dep, action, background }: { dep: Deposit; action: React.ReactNode; background?: string }) {
+  return (
+    <div className="flex items-center gap-3 sm:gap-4 py-3 px-3 transition-colors hover:bg-white/[0.02]" style={{ background }}>
+      <span className="hidden sm:block font-mono text-[10px] text-white/25 w-24 flex-shrink-0">{dep.id}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-white/70 text-sm truncate">{dep.client}</div>
+        <div className="text-white/25 text-[11px] truncate">
+          <span className="sm:hidden">{dep.id} · </span>{dep.apptRef} · Appt {dep.apptDate}
+        </div>
+        <div className="flex items-center gap-2 mt-1.5 sm:hidden">
+          <AgingBadge days={dep.daysOut} />
+          <StatusBadge status={dep.status} />
+        </div>
+      </div>
+      <span className="hidden sm:block"><AgingBadge days={dep.daysOut} /></span>
+      <div className="text-white/50 font-mono text-sm sm:w-14 text-right flex-shrink-0">${dep.amount}</div>
+      <span className="hidden sm:block w-28 flex-shrink-0 text-right"><StatusBadge status={dep.status} /></span>
+      {action}
+    </div>
+  );
+}
+
 function SectionLabel({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
@@ -270,7 +295,7 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
               onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; }}
               onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; }}>
               <app.icon className="w-5 h-5" />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
+              <span className="hidden sm:block absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
                 style={{ background: PINK, color: '#ffffff' }}>
                 {app.title}
               </span>
@@ -479,7 +504,7 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
       </div>
 
       {/* Today + clock */}
-      <div className="grid xl:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
         <div className="xl:col-span-2">
           <div className="flex items-center justify-between mb-5">
             <SectionLabel eyebrow="Sunday Jun 22" title="Today's Schedule" />
@@ -554,7 +579,7 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
             ))}
           </div>
         </div>
-        <div className="grid xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
             <ResponsiveContainer width="100%" height={180}>
               {chartTab === 'revenue' ? (
@@ -600,12 +625,12 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
       </div>
 
       {/* Upcoming + calendar */}
-      <div className="grid xl:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
         <div className="xl:col-span-2">
           <div className="flex items-center justify-between mb-5">
             <SectionLabel eyebrow="Next 7 Days" title="Upcoming Appointments" />
           </div>
-          <table className="w-full text-sm">
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr>{['Date','Client','Artist','Style','Placement','Status'].map(h => (
                 <th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium">{h}</th>
@@ -624,6 +649,19 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
               ))}
             </tbody>
           </table>
+          {/* Phone: same rows, with artist · style · placement folded under the client */}
+          <div className="sm:hidden space-y-1">
+            {upcomingAppts.slice(0,7).map((a, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5">
+                <div className="w-12 flex-shrink-0 text-white/50 text-xs font-mono">{a.date}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white/70 text-sm truncate">{a.client}</div>
+                  <div className="text-white/30 text-[11px] truncate">{a.artist} · {a.style} · {a.placement}</div>
+                </div>
+                <StatusBadge status={a.status} />
+              </div>
+            ))}
+          </div>
         </div>
         <div>
           <div className="mb-3"><SectionLabel eyebrow="Booking Calendar" title="Schedule" /></div>
@@ -645,7 +683,7 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
       {/* Outstanding deposits */}
       <div>
         <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-end gap-3 flex-wrap">
             <SectionLabel eyebrow="Needs Attention" title="Outstanding Deposits" />
             <span className="text-[9px] font-bold px-2 py-0.5"
               style={{ color: '#ffb74d', background: 'rgba(255,183,77,0.1)' }}>
@@ -653,25 +691,15 @@ function OverviewPanel({ appts, deposits, onCompleteAppt, onMarkPaid }: {
             </span>
           </div>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1 -mx-3">
           {outstandingDeps.map(dep => (
-            <div key={dep.id} className="flex items-center gap-4 py-3 px-2 -mx-2 hover:bg-white/[0.02] transition-colors">
-              <div className="w-24 flex-shrink-0">
-                <span className="font-mono text-[10px] text-white/25">{dep.id}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-white/70 text-sm">{dep.client}</div>
-                <div className="text-white/25 text-[11px]">{dep.apptRef} · Appt {dep.apptDate}</div>
-              </div>
-              <AgingBadge days={dep.daysOut} />
-              <div className="text-white/50 font-mono text-sm w-16 text-right">${dep.amount}</div>
-              <StatusBadge status={dep.status} />
+            <DepositRow key={dep.id} dep={dep} action={
               <button onClick={() => onMarkPaid(dep.id)}
-                className="text-[9px] tracking-widest uppercase font-bold px-2.5 py-1.5 transition-colors flex-shrink-0"
+                className="text-[9px] tracking-widest uppercase font-bold px-2.5 py-1.5 transition-colors flex-shrink-0 whitespace-nowrap"
                 style={{ color: PINK, background: `${PINK}15` }}>
                 Mark Paid
               </button>
-            </div>
+            } />
           ))}
         </div>
       </div>
@@ -686,7 +714,7 @@ function SchedulePanel({ appts }: { appts: Appointment[] }) {
   return (
     <div className="space-y-8">
       <PanelHeader title="Schedule" sub="7-day booking view across all artists" />
-      <div className="grid xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-10">
           {dates.map(date => {
             const dayAppts = appts.filter(a => a.date === date && a.status !== 'completed');
@@ -782,8 +810,8 @@ function AppointmentsPanel({ appts, onComplete }: { appts: Appointment[]; onComp
         </div>
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden sm:block">
+      {/* Desktop table — 12 columns only fit once the sidebar layout kicks in */}
+      <div className="hidden lg:block">
         <table className="w-full text-sm">
           <thead>
             <tr>{['ID','Date','Time','Client','Artist','Style','Placement','Size','Deposit','Total','Status',''].map(h => (
@@ -817,8 +845,8 @@ function AppointmentsPanel({ appts, onComplete }: { appts: Appointment[]; onComp
         </table>
       </div>
 
-      {/* Mobile list */}
-      <div className="sm:hidden space-y-2">
+      {/* Phone / tablet list */}
+      <div className="lg:hidden space-y-2">
         {visible.map(a => (
           <div key={a.id} className="p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -861,7 +889,7 @@ function ArtistsPanel({ onAddArtist }: { onAddArtist: () => void }) {
         }
       />
 
-      <div className="grid sm:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
         {[
           { label:'Total Artists', value: String(ARTISTS_DATA.length), sub:'1 owner · 2 senior · 3 junior' },
           { label:'Sessions This Month', value: String(ARTISTS_DATA.reduce((s,a)=>s+a.sessionsMonth,0)), sub:'across all artists' },
@@ -875,7 +903,7 @@ function ArtistsPanel({ onAddArtist }: { onAddArtist: () => void }) {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {ARTISTS_DATA.map(a => (
           <button key={a.id} onClick={() => setSelected(selected === a.id ? null : a.id)}
             className="text-left p-5 transition-colors"
@@ -923,7 +951,7 @@ function ArtistsPanel({ onAddArtist }: { onAddArtist: () => void }) {
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
-          <div className="grid sm:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
             {[
               { label:'Sessions This Month', value: String(artist.sessionsMonth) },
               { label:'Monthly Revenue', value:`$${artist.revenueMonth.toLocaleString()}` },
@@ -962,12 +990,14 @@ function ClientsPanel() {
           className="bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none flex-1" />
       </div>
 
-      <div className="grid xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <table className="w-full text-sm">
             <thead>
+              {/* Sessions, Last Visit, Fav Style and Artist fold under the name on a phone */}
               <tr>{['Client','Sessions','Last Visit','Lifetime $','Fav Style','Artist',''].map(h => (
-                <th key={h} className="pb-3 text-left text-[9px] tracking-[0.2em] uppercase text-white/20 font-medium pr-4">{h}</th>
+                <th key={h} className={cn('pb-3 text-left text-[9px] tracking-[0.2em] uppercase text-white/20 font-medium pr-4 whitespace-nowrap',
+                  ['Sessions','Last Visit','Fav Style','Artist'].includes(h) && 'hidden sm:table-cell')}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -977,12 +1007,15 @@ function ClientsPanel() {
                   <td className="py-2.5 pr-4">
                     <div className="text-white/80 text-sm font-medium">{c.name}</div>
                     <div className="text-white/25 text-[10px]">{c.instagram}</div>
+                    <div className="sm:hidden text-white/30 text-[10px] mt-0.5">
+                      {c.sessions} sessions · Last {c.lastVisit} · {c.favStyle} · {c.preferredArtist}
+                    </div>
                   </td>
-                  <td className="py-2.5 text-white/50 text-xs font-mono pr-4">{c.sessions}</td>
-                  <td className="py-2.5 text-white/40 text-xs pr-4">{c.lastVisit}</td>
+                  <td className="hidden sm:table-cell py-2.5 text-white/50 text-xs font-mono pr-4">{c.sessions}</td>
+                  <td className="hidden sm:table-cell py-2.5 text-white/40 text-xs pr-4">{c.lastVisit}</td>
                   <td className="py-2.5 text-white/50 text-xs font-mono pr-4">${c.spend}</td>
-                  <td className="py-2.5 text-white/30 text-xs pr-4">{c.favStyle}</td>
-                  <td className="py-2.5 text-white/30 text-xs pr-4">{c.preferredArtist}</td>
+                  <td className="hidden sm:table-cell py-2.5 text-white/30 text-xs pr-4">{c.favStyle}</td>
+                  <td className="hidden sm:table-cell py-2.5 text-white/30 text-xs pr-4">{c.preferredArtist}</td>
                   <td className="py-2.5">
                     <ArrowRightIcon className="w-3 h-3 text-white/20" />
                   </td>
@@ -1056,7 +1089,7 @@ function DepositsPanel({ deposits, onMarkPaid }: { deposits: Deposit[]; onMarkPa
     <div className="space-y-10">
       <PanelHeader title="Deposits & Invoices" sub="Track deposits against upcoming appointments" />
 
-      <div className="grid sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
           { label:'Outstanding', value:`$${outstanding.reduce((s,d)=>s+d.amount,0)}`, sub:`${outstanding.length} pending`, color:'#ffb74d' },
           { label:'Overdue', value:`$${deposits.filter(d=>d.status==='overdue').reduce((s,d)=>s+d.amount,0)}`, sub:`${deposits.filter(d=>d.status==='overdue').length} past due`, color:'#ef9a9a' },
@@ -1070,29 +1103,22 @@ function DepositsPanel({ deposits, onMarkPaid }: { deposits: Deposit[]; onMarkPa
         ))}
       </div>
 
-      <div className="grid xl:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         <div className="xl:col-span-2 space-y-8">
           {outstanding.length > 0 && (
             <div>
               <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4">Awaiting Payment</div>
               <div className="space-y-1">
                 {outstanding.map(dep => (
-                  <div key={dep.id} className="flex items-center gap-4 py-3 px-3 transition-colors"
-                    style={{ background: dep.status === 'overdue' ? 'rgba(239,154,154,0.05)' : 'rgba(255,255,255,0.02)' }}>
-                    <span className="font-mono text-[10px] text-white/20 w-24 flex-shrink-0">{dep.id}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white/70">{dep.client}</div>
-                      <div className="text-[11px] text-white/30">{dep.apptRef} · Appt {dep.apptDate}</div>
-                    </div>
-                    <AgingBadge days={dep.daysOut} />
-                    <span className="font-mono text-sm text-white/50 w-12 text-right">${dep.amount}</span>
-                    <StatusBadge status={dep.status} />
-                    <button onClick={() => onMarkPaid(dep.id)}
-                      className="text-[9px] tracking-widest uppercase font-bold px-3 py-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
-                      style={{ color: '#ffffff', background: PINK }}>
-                      Paid
-                    </button>
-                  </div>
+                  <DepositRow key={dep.id} dep={dep}
+                    background={dep.status === 'overdue' ? 'rgba(239,154,154,0.05)' : 'rgba(255,255,255,0.02)'}
+                    action={
+                      <button onClick={() => onMarkPaid(dep.id)}
+                        className="text-[9px] tracking-widest uppercase font-bold px-3 py-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
+                        style={{ color: '#ffffff', background: PINK }}>
+                        Paid
+                      </button>
+                    } />
                 ))}
               </div>
             </div>
@@ -1102,16 +1128,21 @@ function DepositsPanel({ deposits, onMarkPaid }: { deposits: Deposit[]; onMarkPa
             <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4">Received</div>
             <table className="w-full text-sm">
               <thead>
+                {/* ID and Appt fold under the client on a phone */}
                 <tr>{['ID','Client','Appt','Amount','Paid On',''].map(h => (
-                  <th key={h} className="pb-3 text-left text-[9px] tracking-[0.2em] uppercase text-white/20 font-medium pr-4">{h}</th>
+                  <th key={h} className={cn('pb-3 text-left text-[9px] tracking-[0.2em] uppercase text-white/20 font-medium pr-4',
+                    (h === 'ID' || h === 'Appt') && 'hidden sm:table-cell')}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {paid.map(d => (
                   <tr key={d.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-2 font-mono text-[10px] text-white/20 pr-4">{d.id}</td>
-                    <td className="py-2 text-xs text-white/60 pr-4">{d.client}</td>
-                    <td className="py-2 text-xs text-white/30 font-mono pr-4">{d.apptRef}</td>
+                    <td className="hidden sm:table-cell py-2 font-mono text-[10px] text-white/20 pr-4">{d.id}</td>
+                    <td className="py-2 text-xs text-white/60 pr-4">
+                      {d.client}
+                      <div className="sm:hidden font-mono text-[10px] text-white/25 mt-0.5">{d.id} · {d.apptRef}</div>
+                    </td>
+                    <td className="hidden sm:table-cell py-2 text-xs text-white/30 font-mono pr-4">{d.apptRef}</td>
                     <td className="py-2 text-xs font-mono text-white/50 pr-4">${d.amount}</td>
                     <td className="py-2 text-xs text-white/30 pr-4">{d.paidDate}</td>
                     <td className="py-2"><StatusBadge status="paid" /></td>
@@ -1178,7 +1209,7 @@ function PortfolioPanel() {
         }
       />
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label:'Total Pieces', value: String(totalPieces) },
           { label:'This Month', value: '8' },
@@ -1253,7 +1284,7 @@ function SettingsPanel() {
     <div className="space-y-10">
       <PanelHeader title="Settings" sub="Business profile and booking preferences" />
 
-      <div className="grid xl:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
         {/* Business Info */}
         <div className="space-y-6">
           <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1488,7 +1519,7 @@ export default function KattitudeDashboard() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar section={section} onMenuOpen={() => setSidebarOpen(true)} onNewAppt={() => setModal('create-appointment')} />
 
-        <div className="flex-1 overflow-y-auto" style={{ background: '#0a0a0a' }}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: '#0a0a0a' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
             {section === 'overview' && (
               <OverviewPanel appts={appts} deposits={deposits}
