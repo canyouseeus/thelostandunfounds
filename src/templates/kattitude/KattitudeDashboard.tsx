@@ -28,7 +28,7 @@ const PINK = '#E91E8C';
  * token, so the site and the console cannot drift apart again. */
 const GOLD = '#FDE446';
 const BEE  = '/brand/kattitude-logo.png';
-const tooltipStyle = { backgroundColor: '#111111', border: 'none', borderRadius: 0, color: '#fff', fontSize: 11 };
+const tooltipStyle = { backgroundColor: '#000000', border: 'none', borderRadius: 0, color: '#fff', fontSize: 11 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -279,29 +279,26 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
     { id: 'portfolio',     icon: PhotoIcon,               title: 'Portfolio'    },
     { id: 'settings',      icon: Cog6ToothIcon,           title: 'Settings'     },
   ];
+  /* Same dock as the site's own admin console (src/pages/Admin.tsx, "Premium Dock"):
+   * frosted pill, round icon buttons, active inverts to white. Sized per the
+   * bento-design icon spec so all eight fit one row on a phone. */
   return (
-    <div className="flex flex-col items-center pt-8 pb-12">
-      <div className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4">Platform Console</div>
-      <div className="flex flex-wrap justify-center gap-2 p-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
-        {apps.map((app) => {
-          const isActive = activeSection === app.id;
-          return (
-            <button key={app.id} onClick={() => onNav(app.id)}
-              className="relative p-3 transition-all duration-200 group/btn"
-              style={{
-                background: isActive ? PINK : 'transparent',
-                color: isActive ? '#ffffff' : 'rgba(255,255,255,0.4)',
-              }}
-              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; }}>
-              <app.icon className="w-5 h-5" />
-              <span className="hidden sm:block absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
-                style={{ background: PINK, color: '#ffffff' }}>
-                {app.title}
-              </span>
-            </button>
-          );
-        })}
+    <div className="flex flex-col items-center pt-8 pb-12 px-4">
+      <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
+        {apps.map((app) => (
+          <button key={app.id} onClick={() => onNav(app.id)}
+            className={cn(
+              'relative p-2.5 sm:p-3 transition-all duration-300 rounded-full group/btn',
+              activeSection === app.id ? 'bg-white text-black scale-110' : 'text-white/60 hover:text-white hover:bg-white/10'
+            )}
+            title={app.title}>
+            <app.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:block absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              {app.title}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -313,7 +310,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg shadow-2xl" style={{ background: '#111111' }}>
+      <div className="relative w-full max-w-lg backdrop-blur-xl" style={{ background: 'rgba(0,0,0,0.95)' }}>
         <div className="flex items-center justify-between px-6 py-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div>
             <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-0.5">Action</div>
@@ -722,7 +719,7 @@ function SchedulePanel({ appts }: { appts: Appointment[] }) {
               <div key={date}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="text-[9px] tracking-[0.3em] uppercase text-white/20">{date}</div>
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="flex-1" />
                   <div className="text-[9px] text-white/20">{dayAppts.length} session{dayAppts.length !== 1 ? 's' : ''}</div>
                 </div>
                 <div className="space-y-1">
@@ -1062,7 +1059,7 @@ function ClientsPanel() {
                   </div>
                 ))}
               </div>
-              <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="pt-4">
                 <div className="text-[8px] tracking-widest uppercase text-white/20 mb-2">Artist Notes</div>
                 <p className="text-[11px] text-white/45 leading-relaxed">{client.note}</p>
               </div>
@@ -1287,7 +1284,7 @@ function SettingsPanel() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
         {/* Business Info */}
         <div className="space-y-6">
-          <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 pb-2">
             Business Profile
           </div>
           {[
@@ -1310,7 +1307,7 @@ function SettingsPanel() {
         <div className="space-y-8">
           {/* Hours */}
           <div>
-            <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4 pb-2">
               Business Hours
             </div>
             <div className="space-y-2">
@@ -1328,7 +1325,7 @@ function SettingsPanel() {
 
           {/* Booking Policy */}
           <div>
-            <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="text-[9px] tracking-[0.3em] uppercase text-white/20 mb-4 pb-2">
               Booking Policy
             </div>
             <div className="space-y-4">
@@ -1349,7 +1346,7 @@ function SettingsPanel() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center gap-4 pt-6">
         <button onClick={save}
           className="px-8 py-3 text-[10px] font-black tracking-widest uppercase text-white hover:opacity-90 transition-opacity"
           style={{ background: PINK }}>
@@ -1383,9 +1380,9 @@ function Sidebar({ section, onNav, onNewAppt, mobile, onClose }: {
   ];
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#0a0a0a' }}>
+    <div className="flex flex-col h-full" style={{ background: '#000000' }}>
       {/* Logo */}
-      <div className="flex items-center justify-between px-4 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center justify-between px-4 py-5">
         <div className="flex items-center gap-3">
           <img src={BEE} alt="Kattitude" className="w-8 h-8 object-contain rounded-full" />
           <div>
@@ -1401,7 +1398,7 @@ function Sidebar({ section, onNav, onNewAppt, mobile, onClose }: {
       </div>
 
       {/* New Appointment CTA */}
-      <div className="px-3 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <div className="px-3 py-3">
         <button onClick={onNewAppt} className="w-full flex items-center justify-center gap-2 py-2.5 text-[10px] font-black tracking-widest uppercase text-white hover:opacity-90 transition-opacity"
           style={{ background: PINK }}>
           <PlusIcon className="w-4 h-4" /> New Appointment
@@ -1430,7 +1427,7 @@ function Sidebar({ section, onNav, onNewAppt, mobile, onClose }: {
       </nav>
 
       {/* Artist indicator */}
-      <div className="px-3 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="px-3 py-4">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 flex items-center justify-center text-[10px] font-black" style={{ background: `${PINK}18`, color: PINK }}>KH</div>
           <div>
@@ -1454,7 +1451,7 @@ function Topbar({ section, onMenuOpen, onNewAppt }: { section: Section; onMenuOp
   };
   return (
     <div className="flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0"
-      style={{ background: '#0a0a0a', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: '#000000' }}>
       <div className="flex items-center gap-3">
         <button onClick={onMenuOpen} className="lg:hidden text-white/40 hover:text-white transition-colors mr-1">
           <Bars3Icon className="w-5 h-5" />
@@ -1498,9 +1495,9 @@ export default function KattitudeDashboard() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden font-sans" style={{ background: '#0a0a0a', color: '#ffffff' }}>
+    <div className="h-screen flex overflow-hidden font-sans" style={{ background: '#000000', color: '#ffffff' }}>
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex flex-col w-56 flex-shrink-0" style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="hidden lg:flex flex-col w-56 flex-shrink-0">
         <Sidebar section={section} onNav={setSection} onNewAppt={() => setModal('create-appointment')} />
       </div>
 
@@ -1519,7 +1516,7 @@ export default function KattitudeDashboard() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar section={section} onMenuOpen={() => setSidebarOpen(true)} onNewAppt={() => setModal('create-appointment')} />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: '#0a0a0a' }}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: '#000000' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
             {section === 'overview' && (
               <OverviewPanel appts={appts} deposits={deposits}
