@@ -279,29 +279,26 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
     { id: 'portfolio',     icon: PhotoIcon,               title: 'Portfolio'    },
     { id: 'settings',      icon: Cog6ToothIcon,           title: 'Settings'     },
   ];
+  /* Same dock as the site's own admin console (src/pages/Admin.tsx, "Premium Dock"):
+   * frosted pill, round icon buttons, active inverts to white. Sized per the
+   * bento-design icon spec so all eight fit one row on a phone. */
   return (
-    <div className="flex flex-col items-center pt-8 pb-12">
-      <div className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4">Platform Console</div>
-      <div className="flex flex-wrap justify-center gap-2 p-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
-        {apps.map((app) => {
-          const isActive = activeSection === app.id;
-          return (
-            <button key={app.id} onClick={() => onNav(app.id)}
-              className="relative p-3 transition-all duration-200 group/btn"
-              style={{
-                background: isActive ? PINK : 'transparent',
-                color: isActive ? '#ffffff' : 'rgba(255,255,255,0.4)',
-              }}
-              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; }}>
-              <app.icon className="w-5 h-5" />
-              <span className="hidden sm:block absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
-                style={{ background: PINK, color: '#ffffff' }}>
-                {app.title}
-              </span>
-            </button>
-          );
-        })}
+    <div className="flex flex-col items-center pt-8 pb-12 px-4">
+      <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
+        {apps.map((app) => (
+          <button key={app.id} onClick={() => onNav(app.id)}
+            className={cn(
+              'relative p-2.5 sm:p-3 transition-all duration-300 rounded-full group/btn',
+              activeSection === app.id ? 'bg-white text-black scale-110' : 'text-white/60 hover:text-white hover:bg-white/10'
+            )}
+            title={app.title}>
+            <app.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:block absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              {app.title}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
