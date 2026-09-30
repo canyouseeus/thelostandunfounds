@@ -280,12 +280,13 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
     { id: 'settings',      icon: Cog6ToothIcon,           title: 'Settings'     },
   ];
   /* Same dock as the site's own admin console (src/pages/Admin.tsx, "Premium Dock"):
-   * frosted pill, round icon buttons, active inverts to white. Sized per the
-   * bento-design icon spec so all eight fit one row on a phone. */
+   * round icon buttons, active inverts to white. It floats over the scrolling
+   * panels (bento-design Variant B: fixed at bottom-24, bg-white/10 glass) so it
+   * stays in one place on screen. From lg up it centres over the main column,
+   * not the viewport, so the 14rem sidebar doesn't push it off-centre. */
   return (
-    <div className="flex flex-col items-center pt-8 pb-12 px-4">
-      <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
-      <div className="flex flex-wrap justify-center gap-1 sm:gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
+    <div className="fixed bottom-24 left-1/2 lg:left-[calc(50%+7rem)] -translate-x-1/2 z-30">
+      <div className="flex items-center gap-1 sm:gap-2 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
         {apps.map((app) => (
           <button key={app.id} onClick={() => onNav(app.id)}
             className={cn(
@@ -308,7 +309,7 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
 
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg backdrop-blur-xl" style={{ background: 'rgba(0,0,0,0.95)' }}>
         <div className="flex items-center justify-between px-6 py-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -1503,7 +1504,7 @@ export default function KattitudeDashboard() {
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-40">
+        <div className="lg:hidden fixed inset-0 z-[9999]">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-64">
             <Sidebar section={section} onNav={setSection} onNewAppt={() => { setModal('create-appointment'); setSidebarOpen(false); }}
@@ -1517,7 +1518,7 @@ export default function KattitudeDashboard() {
         <Topbar section={section} onMenuOpen={() => setSidebarOpen(true)} onNewAppt={() => setModal('create-appointment')} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: '#000000' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-48">
             {section === 'overview' && (
               <OverviewPanel appts={appts} deposits={deposits}
                 onCompleteAppt={handleCompleteAppt} onMarkPaid={handleMarkPaid} />
@@ -1532,9 +1533,10 @@ export default function KattitudeDashboard() {
             {section === 'portfolio' && <PortfolioPanel />}
             {section === 'settings' && <SettingsPanel />}
           </div>
-          <ConsoleTray onNav={setSection} activeSection={section} />
         </div>
       </div>
+
+      <ConsoleTray onNav={setSection} activeSection={section} />
 
       {/* Modals */}
       {modal === 'create-appointment' && <CreateAppointmentModal onClose={() => setModal(null)} />}
