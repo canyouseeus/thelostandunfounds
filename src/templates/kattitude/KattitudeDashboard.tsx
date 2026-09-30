@@ -281,11 +281,14 @@ function ConsoleTray({ onNav, activeSection }: { onNav: (s: Section) => void; ac
   ];
   /* Same dock as the site's own admin console (src/pages/Admin.tsx, "Premium Dock"):
    * round icon buttons, active inverts to white. It floats over the scrolling
-   * panels (bento-design Variant B: fixed at bottom-24, bg-white/10 glass) so it
-   * stays in one place on screen. From lg up it centres over the main column,
-   * not the viewport, so the 14rem sidebar doesn't push it off-centre. */
+   * panels (bento-design Variant B glass, bg-white/10) so it stays in one place
+   * on screen. Sits 1rem off the bottom edge rather than Variant B's bottom-24
+   * (the owner wants it low; there is no back-to-top button here to line up
+   * with), and never less than the iPhone home-bar safe area. From lg up it
+   * centres over the main column, not the viewport, so the 14rem sidebar
+   * doesn't push it off-centre. */
   return (
-    <div className="fixed bottom-24 left-1/2 lg:left-[calc(50%+7rem)] -translate-x-1/2 z-30">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 lg:left-[calc(50%+7rem)] -translate-x-1/2 z-30">
       <div className="flex items-center gap-1 sm:gap-2 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
         {apps.map((app) => (
           <button key={app.id} onClick={() => onNav(app.id)}
@@ -1518,7 +1521,7 @@ export default function KattitudeDashboard() {
         <Topbar section={section} onMenuOpen={() => setSidebarOpen(true)} onNewAppt={() => setModal('create-appointment')} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: '#000000' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-48">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-32">
             {section === 'overview' && (
               <OverviewPanel appts={appts} deposits={deposits}
                 onCompleteAppt={handleCompleteAppt} onMarkPaid={handleMarkPaid} />
