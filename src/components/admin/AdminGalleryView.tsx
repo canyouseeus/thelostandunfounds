@@ -292,7 +292,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 google_drive_folder_id: uploadMode === 'drive' ? (modalData.google_drive_folder_id || null) : null,
                 cover_image_url: modalData.cover_image_url || null,
                 price: modalData.price || 5.00,
-                invited_emails: invitedEmails.join(','), // Persist invited emails
+                // Lowercased: Supabase Auth stores sign-in emails lowercased, and the
+                // photos RLS policy matches them against this list. A capitalised
+                // entry ("Jenna.taylor@...") let the client in to an empty gallery.
+                invited_emails: invitedEmails.map(e => e.trim().toLowerCase()).join(','),
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
@@ -1043,7 +1046,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter' || e.key === ',') {
                                                     e.preventDefault();
-                                                    const email = newEmailInput.trim().replace(',', '');
+                                                    const email = newEmailInput.trim().replace(',', '').toLowerCase();
                                                     if (email && email.includes('@') && !invitedEmails.includes(email)) {
                                                         setInvitedEmails([...invitedEmails, email]);
                                                         setNewEmailInput('');
@@ -1056,7 +1059,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                const email = newEmailInput.trim();
+                                                const email = newEmailInput.trim().toLowerCase();
                                                 if (email && email.includes('@') && !invitedEmails.includes(email)) {
                                                     setInvitedEmails([...invitedEmails, email]);
                                                     setNewEmailInput('');
