@@ -139,7 +139,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // and the client owns the commercial use of their own listing photos.
       price: 0,
       commercial_included: true,
-      invited_emails: clientEmail,
+      // Lowercased to match Supabase Auth, which the photos RLS policy compares against.
+      invited_emails: clientEmail.trim().toLowerCase(),
       photographer_handle: photographerHandle || null,
       metadata: metadata || {},
     }
