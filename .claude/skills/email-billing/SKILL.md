@@ -116,6 +116,10 @@ curl -sS 'https://www.thelostandunfounds.com/api/mail/messages?folderId=29334500
   -H 'X-Admin-Email: thelostandunfounds@gmail.com'
 ```
 
+Read the recipients from the **`to` and `cc` fields**. `_zoho-mail-handler.ts` renames Zoho's
+`toAddress`/`ccAddress` to `to`/`cc`, so a check that looks for `ccAddress` finds nothing and reads
+as a dropped CC when the CC landed.
+
 A quote with `stripe_payment_link_url` null is an invoice nobody can pay.
 
 ## Express booking for existing clients

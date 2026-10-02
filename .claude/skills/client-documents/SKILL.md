@@ -46,7 +46,8 @@ It is the business address of record; the thread has to stay on file regardless 
 CC, never BCC. A personal address is not a substitute.
 
 Confirm the CC landed rather than trusting the 200 — the API returns success whether or not Zoho
-honoured the field, and a dropped CC leaves a stakeholder silently off the thread.
+honoured the field, and a dropped CC leaves a stakeholder silently off the thread. Check the `cc`
+field of the sent message, not `ccAddress` — see `email-billing` RULE 6.
 
 ### Deposit paid, balance outstanding — the standing rule
 
