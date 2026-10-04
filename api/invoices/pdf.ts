@@ -63,6 +63,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else if (invoice.invoice_type === 'final') {
       amountDueLabel = 'Balance Due'
     }
+    // A paid invoice renders as a receipt: no pay button pointing at a link
+    // that has been deactivated, and the box shows what was paid, not $0 due.
+    const isPaid = invoice.status === 'paid'
+    if (isPaid) amountDueLabel = 'Paid in Full'
 
     const pdf = await generateInvoicePdf({
       docType,
@@ -75,9 +79,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       subtotal: Number(invoice.subtotal || 0),
       total,
       amountDueLabel,
-      amountDue,
-      paymentUrl: invoice.stripe_payment_link_url || null,
-      fullPaymentUrl: invoice.stripe_full_payment_link_url || null,
+      amountDue: isPaid ? total : amountDue,
+      paymentUrl: isPaid ? null : invoice.stripe_payment_link_url || null,
+      fullPaymentUrl: isPaid ? null : invoice.stripe_full_payment_link_url || null,
       clientName: client?.name || 'Client',
       clientBusiness: client?.business || null,
       clientEmail: client?.email || null,
