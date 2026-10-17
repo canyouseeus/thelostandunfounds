@@ -90,6 +90,7 @@ from the harness. Judgement calls have a human on the other end of them.
 |---|---|
 | `api/admin/deactivate-payment-link.ts` | Kills a Stripe Payment Link by id or invoice number, marks the invoice draft |
 | `api/admin/record-invoice-payment.ts` | Records an off-Stripe payment (Apple Pay, Zelle, cash) into `invoice_payments`, flips the invoice `paid` when settled, kills its payment link. `GET ?client=` looks invoices up |
+| `api/admin/create-invoice.ts` | Creates a standalone (no-booking) invoice row from line items — finds/creates the client by email. Then `create-payment-link` and `/api/invoices/send` |
 | `api/booking/create-negotiated-quote.ts` | Invoices a price agreed by email, with the concession as a line item |
 | `api/mail/send` | Sends branded mail with CC, which `sendTransactionalEmail` cannot do |
 | `api/admin/logs.ts` | Vercel runtime logs — **inert**, `VERCEL_ACCESS_TOKEN` is not set |
