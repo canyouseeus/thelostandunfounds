@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getStripe } from '../../lib/api-handlers/affiliates/_stripe-client.js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * Report the Stripe balance, the payout schedule and recent bank payouts.
  *
@@ -17,17 +18,6 @@ import { getStripe } from '../../lib/api-handlers/affiliates/_stripe-client.js'
  * payouts are draining the balance before transfers can use it.
  */
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {
-    return true
-  }
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(email)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
-}
 
 const usd = (cents: number) => Math.round(cents) / 100
 
@@ -35,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
   if (req.method === 'OPTIONS') return res.status(200).end()
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   try {
     const stripe = getStripe()

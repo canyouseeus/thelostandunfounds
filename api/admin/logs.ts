@@ -1,19 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
-function isAdmin(req: VercelRequest): boolean {
-  const email = (req.headers['x-admin-email'] as string || '').toLowerCase();
-  if (ADMIN_EMAILS.includes(email)) return true;
-  const host = req.headers.host || '';
-  return host.includes('localhost') || host.includes('127.0.0.1');
-}
-
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Admin access required' });
+  if (!(await verifyAdmin(req))) return res.status(403).json({ error: 'Admin access required' });
 
   const token = process.env.VERCEL_ACCESS_TOKEN;
   if (!token) {

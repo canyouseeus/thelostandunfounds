@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
 import { EMAIL_STYLES, renderImageButton } from '../../lib/email-template.js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * Tell a client their delivery gallery is ready, in the client's own words.
  *
@@ -26,15 +27,6 @@ const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.
 const SITE = 'https://www.thelostandunfounds.com'
 // Business record — client correspondence stays on file regardless of who replies.
 const RECORD_CC = 'media@thelostandunfounds.com'
-
-function isAdmin(req: VercelRequest): boolean {
-  const secret = req.headers['x-admin-secret']
-  if (secret && process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET) return true
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(email)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
-}
 
 function escapeHtml(s: string): string {
   return s
@@ -66,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const { slug, message, testEmail, photoCount, videoNote, includeAffiliateCta, includeNewsletterCta } =
     (req.body || {}) as {

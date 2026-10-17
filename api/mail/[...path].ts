@@ -28,25 +28,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Admin email check
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
-function isAdminRequest(req: VercelRequest): boolean {
-  const adminEmail = req.headers['x-admin-email'] as string;
-
-  if (adminEmail && ADMIN_EMAILS.includes(adminEmail.toLowerCase())) {
-    return true;
-  }
-
-  // Also accept requests from localhost in development
-  const host = req.headers.host || '';
-  if (host.includes('localhost') || host.includes('127.0.0.1')) {
-    return true;
-  }
-
-  return false;
-}
-
 // Static import to ensure bundling (no extension — esbuild resolves .ts reliably)
 import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler.js';
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Admin check
-  const isAdmin = isAdminRequest(req);
+  const isAdmin = await verifyAdmin(req);
   const adminEmail = req.headers['x-admin-email'] as string;
 
   if (!isAdmin) {

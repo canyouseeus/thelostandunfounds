@@ -9,20 +9,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as mailHandler from '../../../../lib/api-handlers/_zoho-mail-handler.js';
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
-function isAdminRequest(req: VercelRequest): boolean {
-  const adminEmail = req.headers['x-admin-email'] as string;
-  if (adminEmail && ADMIN_EMAILS.includes(adminEmail.toLowerCase())) {
-    return true;
-  }
-  const host = req.headers.host || '';
-  if (host.includes('localhost') || host.includes('127.0.0.1')) {
-    return true;
-  }
-  return false;
-}
-
+import { verifyAdmin } from '../../../../lib/api-handlers/_admin-auth.js'
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -32,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  if (!isAdminRequest(req)) {
+  if (!(await verifyAdmin(req))) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 

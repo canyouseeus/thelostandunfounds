@@ -113,7 +113,7 @@ select total_amount_cents, deposit_amount_cents, status from bookings where id =
 
 # the client actually received it — and media@ is on it
 curl -sS 'https://www.thelostandunfounds.com/api/mail/messages?folderId=2933450000000008022&limit=3' \
-  -H 'X-Admin-Email: thelostandunfounds@gmail.com'
+  -H "X-Admin-Secret: $ADMIN_SECRET"
 ```
 
 Read the recipients from the **`to` and `cc` fields**. `_zoho-mail-handler.ts` renames Zoho's
@@ -208,7 +208,7 @@ endpoint that accepts a price verbatim, which is why it is admin-only.**
 ```bash
 curl -sS -X POST https://www.thelostandunfounds.com/api/booking/create-negotiated-quote \
   -H 'Content-Type: application/json' \
-  -H 'X-Admin-Email: thelostandunfounds@gmail.com' \
+  -H "X-Admin-Secret: $ADMIN_SECRET" \
   -d '{
     "clientEmail": "kelly@rubyhopehomesolutions.com",
     "clientName":  "Kelly Kohler",

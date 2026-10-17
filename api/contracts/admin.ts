@@ -15,7 +15,7 @@
  * One function rather than eight files: Vercel's per-deployment function
  * budget is nearly spent, and these all share the same admin gate.
  *
- * Auth: `x-admin-secret` or `x-admin-email`, matching the other admin endpoints.
+ * Auth: verified admin session (Bearer token) or `x-admin-secret` — see lib/api-handlers/_admin-auth.ts.
  */
 
 import * as dotenv from 'dotenv'
@@ -40,16 +40,9 @@ import {
   type ContractSigner,
 } from '../../lib/api-handlers/_contracts-utils.js'
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
+import { verifyAdmin, verifiedAdminEmail } from '../../lib/api-handlers/_admin-auth.js'
 /** Business address of record — every client-facing send is copied here. */
 const BUSINESS_CC = 'media@thelostandunfounds.com'
-
-function isAdmin(req: VercelRequest): boolean {
-  const secret = process.env.ADMIN_SECRET
-  if (secret && req.headers['x-admin-secret'] === secret) return true
-  const email = String(req.headers['x-admin-email'] || '').toLowerCase()
-  return ADMIN_EMAILS.includes(email)
-}
 
 function escapeHtml(s: unknown): string {
   return String(s ?? '')
@@ -116,11 +109,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const body = (req.body || {}) as Record<string, any>
   const action = String(body.action || '')
-  const actor = String(req.headers['x-admin-email'] || 'admin')
+  const actor = (await verifiedAdminEmail(req)) || 'admin'
 
   try {
     // Inside the try so missing service credentials return a readable JSON
