@@ -190,6 +190,32 @@ Publishing a post is a **database write via the Supabase MCP server**. Read `sup
 the Supabase dashboard. The `/sql` page, `src/pages/SQL.tsx` and the `SQL_FILES` endpoint were
 removed — do not recreate them.
 
+## OWNER & BUSINESS IDENTITY — never ask the owner for these
+
+The owner has had to repeat this in session after session. Sessions start with no memory; this is the memory.
+
+- **Name:** Joshua Greene. **Business name (DBA) for all client and outreach writing: THE LOST+UNFOUNDS.**
+  Use "THE LOST AND UNFOUNDS LLC" only when the owner asks for the legal entity (contracts, invoices
+  that call for it).
+- **Business phone:** 512-350-1869 (same number everywhere). **Business email:** business@thelostandunfounds.com.
+  Site: thelostandunfounds.com. Location: Austin, TX.
+- **Signature for outreach:** `Joshua` / `THE LOST+UNFOUNDS` / business@thelostandunfounds.com / 512-350-1869.
+- Never ask for the owner's name, email or phone. If something else about them is missing, look first:
+  the **Sent folder** is the record of what he already writes and sends. Read it through the webmail
+  route (`GET /api/mail/folders`, `/api/mail/messages?folderId=<Sent id>`, `/api/mail/message/<id>`)
+  before asking. Mail sent through `POST /api/mail/send` supports `cc` and `isHtml:false` for plain text.
+  Verify the CC actually landed in the Sent folder after sending.
+- **Background he can claim:** 22+ years in the service industry (front and back of house; catering
+  events, restaurants, bars); separately, a private DJ business (weddings, restaurants, bars);
+  separately, sales every day. These are three distinct things — never merge them into one sentence.
+- **Never oversell work.** Barbershop (Fadebox), tattoo studio (Kattitude) and Silva Star are
+  demos/templates built to pitch, not delivered client sites. The kiosk is real and he built it.
+  Check `src/pages/Demos.tsx` and the proposals before describing past work, and say "demo" or
+  "template" when that is what it is.
+- **Outreach voice:** plain and direct, the way he talks. No ad copy ("working business, not a
+  brochure"), no stiff openers, no filler, no redundancy, no padded lists. Short beats thorough.
+  Lead with what the site actually does. Draft, show it, and when he says send, send.
+
 ## EMAIL SENDING RULE
 - Never claim you can't send email — use Zoho Mail integrations
 - Test: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with `{"testEmail":"target@example.com"}`
