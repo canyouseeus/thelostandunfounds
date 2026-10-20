@@ -20,15 +20,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { generateContract } from './contract-template.js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 const FROM_EMAIL = 'media@thelostandunfounds.com'
 const FROM_NAME = 'THE LOST+UNFOUNDS'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true
-  const adminEmail = (req.headers['x-admin-email'] as string || '').toLowerCase()
-  return ADMIN_EMAILS.includes(adminEmail)
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -37,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const {
     clientName,

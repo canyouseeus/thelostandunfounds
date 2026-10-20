@@ -162,7 +162,7 @@ session, and each round cost a full exchange.
 node --experimental-strip-types <render-script>.mjs   # assert palette locally
 curl -sS -X POST https://www.thelostandunfounds.com/api/mail/send \
   -H 'Content-Type: application/json' \
-  -H 'X-Admin-Email: thelostandunfounds@gmail.com' \
+  -H "X-Admin-Secret: $ADMIN_SECRET" \
   --data @<payload>.json                              # [TEST n] to admin only, no CC
 ```
 

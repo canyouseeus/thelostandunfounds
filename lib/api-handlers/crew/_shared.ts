@@ -15,25 +15,18 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  * also an affiliate we reuse the account the affiliate flow already created.
  */
 
-export const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+export { ADMIN_EMAILS } from '../_admin-auth.js';
+import { ADMIN_EMAILS } from '../_admin-auth.js';
 
-export function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {
-    return true;
-  }
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase();
-  if (ADMIN_EMAILS.includes(email)) return true;
-  const host = req.headers.host || '';
-  return host.includes('localhost') || host.includes('127.0.0.1');
-}
+/** Verified admin check — see _admin-auth.ts. Async: callers must await it. */
+export { verifyAdmin as isAdmin } from '../_admin-auth.js';
 
 /**
  * Prove the caller is the owner, from a token rather than a claim.
  *
- * `isAdmin` above trusts an `x-admin-email` header, which the caller sets. That
- * is fine for reading the roster; it is not fine for a route that mails the
- * whole crew from Joshua's own address. Anyone who guessed the path could send
- * repeatedly, and the domain being burned is the one that also carries client
+ * `isAdmin` above also admits ADMIN_SECRET and local dev. A route that mails
+ * the whole crew from Joshua's own address wants the owner's own session and
+ * nothing else — the domain being burned is the one that also carries client
  * invoices.
  *
  * So this verifies the Supabase session server-side and checks the returned
@@ -60,8 +53,8 @@ export function isCronAuthorized(req: VercelRequest): boolean {
  * Resolve the caller from a verified Supabase JWT.
  *
  * Every crew route that hands back access to someone's money must prove who is
- * asking. The `x-admin-email` header the older admin routes use is
- * caller-supplied and cannot do that, so these routes verify the session token
+ * asking. A caller-supplied header (what the old admin routes used) cannot
+ * do that, so these routes verify the session token
  * with Supabase and look the contractor up from the returned user id only —
  * never from a request body a caller controls.
  */

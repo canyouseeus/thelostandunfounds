@@ -240,7 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!isCronAuthorized(req) && !isAdmin(req)) {
+  if (!isCronAuthorized(req) && !(await isAdmin(req))) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

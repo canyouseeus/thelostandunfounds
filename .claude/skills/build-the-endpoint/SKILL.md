@@ -48,17 +48,20 @@ missing; it was just on the wrong side of an approval gate.
 1. **Name the operation** and find the credential it needs. If it is already in Vercel, this works.
 2. **Reuse the existing helper** — `getStripe()`, `getSupabaseAdmin()`, `getZohoAuthContext()`.
    Do not construct a second client with its own configuration.
-3. **Gate it as admin**, exactly like every other admin route:
+3. **Gate it as admin** with the shared check — never write a local `isAdmin`:
 
 ```ts
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(email)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
-}
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+
+if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 ```
+
+   It accepts a verified Supabase session for an admin email (the admin panel attaches
+   it automatically), `X-Admin-Secret` matching `ADMIN_SECRET` (agents and scripts), or
+   localhost in local dev. **`X-Admin-Email` is ignored** — it is a claim anyone can
+   send, and the owner's address is in the public bundle. Agents call admin routes with
+   `-H "X-Admin-Secret: $ADMIN_SECRET"`; if `ADMIN_SECRET` is not in the session's
+   environment, say so rather than looking for another way in.
 
 4. **Keep local state in step.** Deactivating a link and leaving the invoice marked `sent` is a
    trap for whoever reads the record next. Do both in the one call.

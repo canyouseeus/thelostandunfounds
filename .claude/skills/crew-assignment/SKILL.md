@@ -52,7 +52,7 @@ To look for a notification:
 ```bash
 # Sent folder id comes from /api/mail/folders
 curl -sS "$SITE/api/mail/messages?folderId=<sent-id>&limit=60" \
-  -H 'X-Admin-Email: thelostandunfounds@gmail.com'
+  -H "X-Admin-Secret: $ADMIN_SECRET"
 # then filter on the photographer's address in to/cc
 ```
 
@@ -99,7 +99,7 @@ Diagnose with a dry run before touching it:
 
 ```bash
 curl -sS -X POST "$SITE/api/admin/crew-payouts" \
-  -H 'Content-Type: application/json' -H 'X-Admin-Email: thelostandunfounds@gmail.com' \
+  -H 'Content-Type: application/json' -H "X-Admin-Secret: $ADMIN_SECRET" \
   -d '{"action":"send","payoutId":"<id>","dryRun":true}'
 ```
 

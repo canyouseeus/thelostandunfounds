@@ -179,7 +179,7 @@ To verify env vars are loaded and auth is working, hit the debug endpoint:
 
 ```
 GET /api/mail/debug
-X-Admin-Email: thelostandunfounds@gmail.com
+X-Admin-Secret: $ADMIN_SECRET
 ```
 
 Returns `{ accountId, email, tokenPreview }`. If `accountId` is missing or `tokenPreview` is short/empty, the env vars aren't set correctly.

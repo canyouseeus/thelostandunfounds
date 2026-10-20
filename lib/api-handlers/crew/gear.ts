@@ -177,7 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Admin roster read — every photographer with their kit attached, which is
     // the view the owner actually deploys from.
     if (req.method === 'GET' && req.query?.roster) {
-      if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+      if (!(await isAdmin(req))) return res.status(403).json({ error: 'Forbidden' });
 
       const { data: people } = await supabase
         .from('photographers')

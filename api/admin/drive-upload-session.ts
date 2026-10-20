@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { google } from 'googleapis'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * Open a Google Drive resumable upload session and hand back the session URI.
  *
@@ -29,16 +30,6 @@ import { google } from 'googleapis'
  * Then POST /api/admin/sync-library with the gallery slug, as with photos.
  */
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-
-function isAdmin(req: VercelRequest): boolean {
-  const secret = req.headers['x-admin-secret']
-  if (secret && process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET) return true
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(email)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
-}
 
 /**
  * Return a credentialed auth client AND the raw bearer token.
@@ -78,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const { fileName, parentId, mimeType, sizeBytes } = (req.body || {}) as {
     fileName?: string

@@ -94,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // blocked. An empty list for someone means available, and the caller
     // shouldn't have to infer that from their absence.
     if (req.method === 'GET' && req.query?.roster) {
-      if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+      if (!(await isAdmin(req))) return res.status(403).json({ error: 'Forbidden' });
 
       const { start, end } = readRange(req);
 

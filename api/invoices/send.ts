@@ -7,7 +7,7 @@
  *   invoice_id  string   — UUID of the invoice to send
  *   to_email?   string   — Optional override (for testing). Falls back to client's email.
  *
- * Auth: localhost is allowed, otherwise `x-admin-email` or `x-admin-secret`.
+ * Auth: verified admin session (Bearer token) or `x-admin-secret` — see lib/api-handlers/_admin-auth.ts.
  */
 
 import * as dotenv from 'dotenv'
@@ -22,17 +22,8 @@ import { wrapEmailContent, BRAND } from '../email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 import { generateInvoicePdf, InvoicePdfLineItem } from '../../lib/api-handlers/_invoice-pdf.js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 const FROM_EMAIL = 'media@thelostandunfounds.com'
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true
-  const adminEmail = (req.headers['x-admin-email'] as string || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(adminEmail)) return true
-  const host = req.headers.host || ''
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return true
-  return false
-}
 
 interface LineItem {
   description: string
@@ -86,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const { invoice_id, to_email, cc_email, message } = (req.body || {}) as {
     invoice_id?: string

@@ -121,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // ── Admin: the whole queue ──────────────────────────────────────────
     if (req.method === 'GET' && req.query?.admin) {
-      if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+      if (!(await isAdmin(req))) return res.status(403).json({ error: 'Forbidden' });
 
       const status = String(req.query?.status || '');
       let query = supabase
@@ -198,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Admin: reply / change status ────────────────────────────────────
     if (req.method === 'PATCH') {
-      if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden' });
+      if (!(await isAdmin(req))) return res.status(403).json({ error: 'Forbidden' });
 
       const id = String(req.body?.id || '');
       if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'valid id required' });

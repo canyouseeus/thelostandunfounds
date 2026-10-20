@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!(await isAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
 
   const supabase = getSupabaseAdmin();
 

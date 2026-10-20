@@ -9,6 +9,7 @@ import {
 } from '../../lib/api-handlers/_booking-payment-utils.js'
 import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
 function getSupabase(serviceRole = false) {
@@ -591,7 +592,7 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
 }
 
 async function handleAdminList(req: VercelRequest, res: VercelResponse) {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+    if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
     const { status } = req.query
@@ -612,7 +613,7 @@ async function handleAdminList(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+    if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
     const { id, status, admin_notes, total_amount_cents, affiliate_code, notify_customer } = req.body
@@ -755,7 +756,7 @@ function buildClientStatusUpdateBody(booking: any, status: string): string {
 }
 
 async function handleBlockDate(req: VercelRequest, res: VercelResponse) {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+    if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
     const { date, note } = req.body
@@ -771,7 +772,7 @@ async function handleBlockDate(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleUnblockDate(req: VercelRequest, res: VercelResponse) {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+    if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
     const { date } = req.body
@@ -785,12 +786,6 @@ async function handleUnblockDate(req: VercelRequest, res: VercelResponse) {
 
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json({ success: true })
-}
-
-function isAdmin(req: VercelRequest): boolean {
-    // Check for admin secret header from internal calls or admin UI
-    const secret = req.headers['x-admin-secret']
-    return secret === process.env.ADMIN_SECRET
 }
 
 async function handleNotify(req: VercelRequest, res: VercelResponse) {

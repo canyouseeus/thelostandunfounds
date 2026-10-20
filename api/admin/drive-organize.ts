@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * Move a gallery's files into a folder of their own.
  *
@@ -20,17 +21,6 @@ import { createClient } from '@supabase/supabase-js'
  * the originals loose in the parent for the next sync to find.
  */
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
-
-function isAdmin(req: VercelRequest): boolean {
-  if (req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {
-    return true
-  }
-  const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase()
-  if (ADMIN_EMAILS.includes(email)) return true
-  const host = req.headers.host || ''
-  return host.includes('localhost') || host.includes('127.0.0.1')
-}
 
 async function getDrive() {
   const { google } = await import('googleapis')
@@ -48,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
 
   const { slug, parentFolderId, folderName, repointLibrary = true } = (req.body || {}) as {
     slug?: string

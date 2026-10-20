@@ -4,6 +4,9 @@ import { HelmetProvider } from 'react-helmet-async'
 import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
 import './index.css'
+import { installApiAuth } from './lib/api-auth'
+
+installApiAuth()
 
 declare global {
   interface Window {

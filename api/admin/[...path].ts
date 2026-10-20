@@ -2,6 +2,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleAnalyticsRecord, handleAnalyticsStats, handleAnalyticsSiteStats } from '../../lib/api-handlers/_analytics-handler.js'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 
 export default async function handler(
   req: VercelRequest,
@@ -91,6 +92,23 @@ export default async function handler(
   }
 
   console.log('[Admin Router] Full route:', fullRoute)
+
+  // Every route here is admin-only unless listed. These are called by the
+  // public site (page-view tracking, signup notifications to the owner) or
+  // authenticate themselves (password reset, cron-secret reminder sweeps).
+  // manual-commission, update-affiliate, env-vars and the rest had no check of
+  // their own, so anyone could credit a payable commission.
+  const PUBLIC_ROUTES = new Set([
+    'analytics/record',
+    'new-subscription-notification',
+    'new-blog-contributor-notification',
+    'reset-password',
+    'affiliate-stripe-reminders',
+    'sync-library',
+  ])
+  if (!PUBLIC_ROUTES.has(fullRoute) && !(await verifyAdmin(req))) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
 
   // Route to appropriate handler
   try {

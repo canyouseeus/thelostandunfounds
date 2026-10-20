@@ -22,17 +22,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
-const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
-function isAdmin(req: VercelRequest): boolean {
-    const secret = req.headers['x-admin-secret'];
-    if (secret && process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET) return true;
-    const email = ((req.headers['x-admin-email'] as string) || '').toLowerCase();
-    if (ADMIN_EMAILS.includes(email)) return true;
-    const host = req.headers.host || '';
-    return host.includes('localhost') || host.includes('127.0.0.1');
-}
-
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
  * OAuth first: the refresh token acts as the account that owns the destination
  * folders, so it can write anywhere in that Drive. Matches drive-add.ts.
@@ -66,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST' && req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
-    if (!isAdmin(req)) {
+    if (!(await verifyAdmin(req))) {
         return res.status(403).json({ error: 'Admin access required' });
     }
 
