@@ -262,15 +262,21 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       };
     }
     case 'payout_failed': {
+      // Only reached for failures on the payout itself — a platform balance
+      // that hasn't settled never emails (see request-payout.ts). Stripe's raw
+      // error stays in payout_requests.error_message for the owner; it is
+      // written for developers and often describes the platform's account,
+      // not the affiliate's.
       const amount = fmtUsd(Number(data.amount || 0));
-      const reason = escapeHtml(data.reason || 'Unknown error');
       return {
-        subject: `Payout failed — please re-check your details`,
+        subject: `Your payout didn't go through yet`,
         content: `
-          <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">PAYOUT FAILED</h1>
+          <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">PAYOUT NOT SENT YET</h1>
           <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
-            We tried to send you ${amount} but Stripe rejected the transfer. Reason: <b>${reason}</b>.
-            Your commissions are still in your balance — please review your Stripe Connect status and try again.
+            We tried to send you ${amount}, but the transfer didn't go through. Nothing is lost — the full amount is still in your balance.
+          </p>
+          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+            Make sure your Stripe account shows as active in your dashboard. If it does, just reply to this email and we'll sort it out.
           </p>
           <p style="color:#999;font-size:12px;margin:24px 0 0 0;">
             <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;text-decoration:underline;">Open dashboard →</a>
