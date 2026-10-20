@@ -104,7 +104,7 @@ interface ProdigiOrder {
   prodigi_products?: { title: string; sku: string } | null;
 }
 
-const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' };
+const ADMIN_HEADERS = { 'Content-Type': 'application/json' };
 const STATUS_LABEL: Record<ProductStatus, string> = { active: 'Publish', draft: 'Drafts' };
 
 const ORDER_STATUS_COLOR: Record<string, string> = {
@@ -612,7 +612,7 @@ function ProductDetail({
     try {
       const res = await fetch('/api/admin/upload-product-image', {
         method: 'POST',
-        headers: { 'Content-Type': file.type, 'X-Admin-Email': 'thelostandunfounds@gmail.com', 'X-Product-Id': `${product.id}-${kind}` },
+        headers: { 'Content-Type': file.type, 'X-Product-Id': `${product.id}-${kind}` },
         body: file,
       });
       logApiCall('POST', '/api/admin/upload-product-image', res.status, kind);
@@ -651,7 +651,7 @@ function ProductDetail({
     try {
       const res = await fetch(`/api/admin/prodigi-products?id=${product.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sku,
           title,
@@ -685,7 +685,7 @@ function ProductDetail({
     try {
       const res = await fetch(`/api/admin/prodigi-products?id=${product.id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Email': 'thelostandunfounds@gmail.com' },
+        headers: {},
       });
       logApiCall('DELETE', '/api/admin/prodigi-products', res.status, product.id);
       if (!res.ok) throw new Error('Failed to delete');
@@ -942,7 +942,7 @@ function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onS
     try {
       const res = await fetch('/api/admin/upload-product-image', {
         method: 'POST',
-        headers: { 'Content-Type': file.type, 'X-Admin-Email': 'thelostandunfounds@gmail.com', 'X-Product-Id': `frame-${template.id}` },
+        headers: { 'Content-Type': file.type, 'X-Product-Id': `frame-${template.id}` },
         body: file,
       });
       logApiCall('POST', '/api/admin/upload-product-image', res.status, template.id);

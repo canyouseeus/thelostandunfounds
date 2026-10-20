@@ -23,7 +23,7 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSageMode } from '../contexts/SageModeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { isAdminEmail } from '../utils/admin';
+import { isAdminUser } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
@@ -73,7 +73,7 @@ export default function SageModeOverlay() {
   // once goes stale the moment anything scrolls or reflows.
   const targetElRef = useRef<HTMLElement | null>(null);
 
-  const isAdmin = isAdminEmail(user?.email || '');
+  const isAdmin = isAdminUser(user);
 
   // SAGE MODE lives in localStorage, so signing out used to leave it armed —
   // and armed means every tap is intercepted, including the "Sign in with

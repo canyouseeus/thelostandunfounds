@@ -99,10 +99,13 @@ export default function CrewOnboardingSend() {
     setBusy(true);
     setError(null);
     try {
-      await call({ testEmail: 'thelostandunfounds@gmail.com' });
+      // Previews go to whoever is signed in — no address in the bundle.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error('Sign in to send a preview.');
+      await call({ testEmail: user.email });
       setError(null);
       setResults(null);
-      alert('Preview sent to thelostandunfounds@gmail.com (one copy per variant).');
+      alert(`Preview sent to ${user.email} (one copy per variant).`);
     } catch (err: any) {
       setError(err?.message || 'Could not reach the server.');
     } finally {

@@ -377,7 +377,7 @@ window.fetch = previewFetch
 const MOCK_AUTH = {
   user: {
     id: MOCK_USER_ID,
-    email: 'thelostandunfounds@gmail.com',
+    email: 'you@example.com',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     app_metadata: {},

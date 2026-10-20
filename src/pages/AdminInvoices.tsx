@@ -269,7 +269,6 @@ export default function AdminInvoices() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ invoice_id: inv.id, to_email }),
       });
