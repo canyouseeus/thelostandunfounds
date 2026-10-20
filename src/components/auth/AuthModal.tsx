@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
-import { isAdminEmail, isAdmin } from '../../utils/admin';
+import { isAdminUser, isAdmin } from '../../utils/admin';
 import { logSignupEvent } from '../../utils/signupTelemetry';
 
 interface AuthModalProps {
@@ -82,11 +82,11 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
       try {
         adminStatus = await isAdmin();
       } catch {
-        adminStatus = isAdminEmail(user?.email || '');
+        adminStatus = isAdminUser(user);
       }
-      navigate(adminStatus || isAdminEmail(user?.email || '') ? '/admin' : '/dashboard');
+      navigate(adminStatus || isAdminUser(user) ? '/admin' : '/dashboard');
     } catch {
-      navigate(isAdminEmail(user?.email || '') ? '/admin' : '/dashboard');
+      navigate(isAdminUser(user) ? '/admin' : '/dashboard');
     }
   };
 

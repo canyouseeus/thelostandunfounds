@@ -76,7 +76,7 @@ const CATEGORY_OPTIONS: ServiceProduct['category'][] = ['photography', 'web-dev'
 
 const STATUS_LABEL: Record<ProductStatus, string> = { active: 'Publish', draft: 'Drafts' };
 
-const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' };
+const ADMIN_HEADERS = { 'Content-Type': 'application/json' };
 
 function mergeProduct(product: ServiceProduct, row: ProductCost | undefined): MergedProduct {
   return {
@@ -429,7 +429,6 @@ function ProductDetail({
         method: 'POST',
         headers: {
           'Content-Type': file.type,
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
           'X-Product-Id': product.id,
         },
         body: file,

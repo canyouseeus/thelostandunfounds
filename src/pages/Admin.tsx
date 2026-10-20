@@ -1180,11 +1180,6 @@ export default function Admin() {
               console.warn('Error fetching user metadata:', metaErr);
             }
 
-            // Check admin email list
-            if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-              isAdmin = true;
-            }
-
             return {
               id: userId,
               email: email,
@@ -1226,10 +1221,6 @@ export default function Admin() {
                     if (roleResult.data.email) {
                       email = roleResult.data.email;
                     }
-                  }
-
-                  if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-                    isAdmin = true;
                   }
                 } catch (e) {
                   // Ignore

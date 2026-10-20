@@ -170,7 +170,6 @@ export default function NewsletterManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds: [campaignId] }),
       });
@@ -211,7 +210,6 @@ export default function NewsletterManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds }),
       });
@@ -265,7 +263,6 @@ export default function NewsletterManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Email': 'thelostandunfounds@gmail.com',
         },
         body: JSON.stringify({ campaignIds: Array.from(selectedCampaigns) }),
       });

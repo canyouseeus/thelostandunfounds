@@ -8,6 +8,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
+import { isAdminUser } from '../utils/admin';
 
 interface UserRegistrationProps {
   isOpen: boolean;
@@ -43,8 +44,8 @@ export default function UserRegistration({
         setUsername(existingUsername);
       } else {
         // Set default username based on email for non-admin users
-        const isAdminUser = user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com';
-        if (isAdminUser) {
+        const isAdminAccount = isAdminUser(user);
+        if (isAdminAccount) {
           setUsername('THE LOST+UNFOUNDS');
         } else {
           const emailUsername = user.email?.split('@')[0] || '';

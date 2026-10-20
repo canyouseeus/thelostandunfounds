@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen';
 import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
 import { LoadingSpinner } from '@/components/Loading';
-import { isAdminEmail } from '@/utils/admin';
+import { isAdminUser } from '@/utils/admin';
 
 interface AdminGalleryViewProps {
     onBack: () => void;
@@ -142,7 +142,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (isPhotographerView && user && !isAdminEmail(user.email || '')) {
+            if (isPhotographerView && user && !isAdminUser(user)) {
                 query = query.eq('owner_id', user.id);
             }
 

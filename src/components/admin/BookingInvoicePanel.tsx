@@ -76,7 +76,6 @@ function getAdminHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
     'x-admin-secret': secret,
-    'x-admin-email': 'thelostandunfounds@gmail.com',
   };
 }
 

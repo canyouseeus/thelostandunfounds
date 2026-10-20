@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
-import { isAdmin, isAdminEmail } from '../../utils/admin';
+import { isAdmin, isAdminUser } from '../../utils/admin';
 
 export type SubscriptionTier = 'free' | 'premium' | 'pro';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired';
@@ -136,7 +136,7 @@ export async function canPerformAction(
     // Also check by email if we have user data
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && isAdminEmail(user.email || '')) {
+      if (user && isAdminUser(user)) {
         return {
           allowed: true,
           remaining: null,
@@ -244,7 +244,7 @@ export async function getDailyUsage(userId: string, toolId: string, action: stri
     // Also check by email if we have user data
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && isAdminEmail(user.email || '')) {
+      if (user && isAdminUser(user)) {
         return 0;
       }
     } catch (emailCheckError) {
@@ -316,7 +316,7 @@ export async function trackUsage(
     // Also check by email if we have user data
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && isAdminEmail(user.email || '')) {
+      if (user && isAdminUser(user)) {
         return { success: true }; // Skip tracking for admins
       }
     } catch (emailCheckError) {

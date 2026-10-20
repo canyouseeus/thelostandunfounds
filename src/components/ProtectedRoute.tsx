@@ -6,7 +6,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { isAdminEmail } from '../utils/admin';
+import { isAdminUser } from '../utils/admin';
 import { LoadingOverlay } from '../components/Loading';
 
 interface ProtectedRouteProps {
@@ -26,7 +26,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
   }
 
   // requireAdmin gates to admin accounts (previously only checked auth).
-  if (requireAdmin && !isAdminEmail(user.email || '')) {
+  if (requireAdmin && !isAdminUser(user)) {
     return <Navigate to="/" replace />;
   }
 

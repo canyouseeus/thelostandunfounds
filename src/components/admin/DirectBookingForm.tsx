@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { supabase } from '../../lib/supabase';
 
 interface DraftLineItem {
   description: string;
@@ -8,7 +9,6 @@ interface DraftLineItem {
 }
 
 const money = (n: number) => `$${n.toFixed(2)}`;
-const OWNER_EMAIL = 'thelostandunfounds@gmail.com';
 
 /**
  * "Someone booked directly" — a job taken by phone or email, billed and split
@@ -95,11 +95,14 @@ export function DirectBookingForm({ onDone, onCancel }: { onDone: () => void; on
   const sendInvite = async (test: boolean) => {
     setInviteMsg(null);
     try {
+      // A test goes to whoever is signed in.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (test && !user?.email) throw new Error('Sign in to send a test.');
       const data = await post({
         action: 'invite',
         referrerEmail: referrerEmail.trim(),
         referrerName: referrerName.trim() || undefined,
-        testEmail: test ? OWNER_EMAIL : undefined,
+        testEmail: test ? user?.email : undefined,
       });
       setInviteMsg(data.sent
         ? `${test ? 'Test sent' : 'Invite sent'} to ${data.to}${data.cc ? ` (cc ${data.cc})` : ''}`

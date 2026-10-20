@@ -15,6 +15,7 @@ import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import Shop from './Shop';
 import BookingPage from './BookingPage';
 import EmailSignup from '../components/EmailSignup';
+import { isAdminUser } from '../utils/admin';
 
 interface PhotoLibrary {
     id: string;
@@ -107,7 +108,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     // Track admin status
     useEffect(() => {
         if (user?.email) {
-            setUserIsAdmin(user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com');
+            setUserIsAdmin(isAdminUser(user));
         } else {
             setUserIsAdmin(false);
         }

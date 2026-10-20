@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { isAdminEmail, isAdmin } from '../utils/admin';
+import { isAdminUser, isAdmin } from '../utils/admin';
 import { logSignupEvent } from '../utils/signupTelemetry';
 import { LoadingOverlay } from '../components/Loading';
 
@@ -93,14 +93,14 @@ export default function AuthCallback() {
       // bounced back there instead of into the console).
       try {
         const adminStatus = await isAdmin();
-        const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
-        if (isAdminUser) {
+        const isAdminAccount = adminStatus || isAdminUser(currentUser);
+        if (isAdminAccount) {
           navigate('/admin');
           return;
         }
       } catch (err) {
         console.warn('Admin check failed, falling back to email check', err);
-        if (isAdminEmail(currentUser.email || '')) {
+        if (isAdminUser(currentUser)) {
           navigate('/admin');
           return;
         }
