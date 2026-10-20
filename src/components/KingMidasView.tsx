@@ -36,7 +36,7 @@ export function KingMidasView() {
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

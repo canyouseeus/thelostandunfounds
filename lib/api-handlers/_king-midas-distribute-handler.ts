@@ -20,7 +20,7 @@ export default async function handler(
   }
 
   try {
-    const targetDate = req.query.date as string || new Date().toISOString().split('T')[0]
+    const targetDate = req.query.date as string || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
 
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL

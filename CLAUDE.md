@@ -60,6 +60,15 @@ Vercel's environment variables are the source of truth for production; `.env` on
 runs. If a Supabase MCP call returns "You do not have permission to perform this action", you are
 almost certainly pointed at the retired project — check the ref before concluding you lack access.
 
+**Check which project the Supabase connector reaches before trusting it.** Run `list_projects`
+first. It has reached an unrelated project (`supabase-blue-cave`) in some sessions; when it does
+not list `cxpyqjxhbvuygnxyukli`, say so and stop — never apply a migration to whatever it does list.
+
+**Test money-path SQL before applying it.** Run it inside `DO $$ … RAISE EXCEPTION … $$` so the
+transaction always rolls back, with `SET LOCAL lock_timeout = '5s'`. Then confirm production is
+unchanged. `apply_migration` hangs on `DROP FUNCTION` (it waits on a confirmation that never shows):
+rename the old function aside instead.
+
 ## EVIDENCE RULE — every task, no exceptions
 
 Statements about your own process are reconstructions, not logs — they come out confident whether
@@ -93,7 +102,9 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | email, send, transactional, Zoho, Resend | `email-delivery` (authority), `brand-email-manager` |
 | newsletter, campaign, subscribers, outreach | `outreach-ops`, `brand-email-manager`, `email-delivery` |
 | admin, dashboard, analytics | `admin-ops` |
-| affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
+| affiliate, commission, tracking, Amazon links, King Midas, Secret Santa, MLM | `affiliate-ops`, `affiliate-program` |
+| booked by phone, booked directly, direct booking, referral for an off-site job | `email-billing`, `affiliate-program` |
+| send an invoice, payment link, pay an affiliate, any admin action from an agent session | ADMIN WORK RULE below, `build-the-endpoint` |
 | photographer assignment, crew, payout, 80/20 split, "does he know" | `crew-assignment` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
 | invoice, proposal, quote, estimate, client document | `client-documents` |
@@ -139,6 +150,65 @@ credential and add an admin-gated endpoint that does the job.
 
 Read `build-the-endpoint` first. It has the pattern, the admin gate, and the cases where this must
 NOT be used — chiefly, never rebuild a capability the owner deliberately denied.
+
+## ADMIN WORK RULE — how an agent does admin-dashboard work
+
+Admin routes (`/api/admin/*`, `/api/invoices/send`, `/api/mail/*`, the booking quote routes)
+accept only proof: the owner's logged-in session, or `ADMIN_SECRET`. **The owner will not put
+`ADMIN_SECRET` in an agent environment.** That is a standing decision, not a gap to work around.
+
+**Never** send `X-Admin-Email` (anyone can, and the owner's address is public), never read
+`ADMIN_SECRET` out of Vercel, and never add a bypass to `verifyAdmin`. Each of these reopens the
+hole closed in #290.
+
+**To do admin work, queue it.** Insert a row into `admin_jobs` through the Supabase connector
+(itself authenticated as the owner). `/api/cron/admin-jobs` runs it within a minute on Vercel's
+`CRON_SECRET`:
+
+```sql
+insert into admin_jobs (action, payload, requested_by, note, idempotency_key)
+values ('send_invoice', '{"invoice_number":"INV-014","to_email":"thelostandunfounds@gmail.com","test":true}',
+        'claude', 'test send before the real one', 'inv-014-test-1')
+returning id;
+-- then read the outcome back:
+select status, http_status, result, error from admin_jobs where id = '<id>';
+```
+
+| action | payload |
+|---|---|
+| `stripe_balance` | `{}` — read-only |
+| `create_invoice` | `{clientName, clientEmail, clientPhone?, description, eventDate?, lineItems[]}` |
+| `create_payment_link` | `{invoiceNumber}` |
+| `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
+| `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
+| `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
+
+- Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
+  Each calls the same function as the admin-panel route.
+- A job runs **at most once**. One stuck in `running` is marked failed, not retried. Check whether
+  it took effect (Sent folder, Stripe) before queueing it again.
+- Give every send or payment an `idempotency_key`, so a second insert of the same job is refused.
+- The usual rules still apply on top: test client and affiliate emails to
+  `thelostandunfounds@gmail.com` first, verify the CC landed, confirm the money in Stripe.
+- Read-only checks need no job: query the database directly, and use the Stripe connector for
+  balances.
+
+## AFFILIATE MONEY RULE
+
+Owner-confirmed 2026-10-20. Full detail in `affiliate-program`.
+
+- Every share is a percentage of **profit** (price − cost), never gross: affiliate 42%, MLM L1 2%,
+  L2 1%, King Midas pot 8%, Secret Santa 3%, the company keeps the rest. Cost =
+  `invoices.job_cost`, else the photographer's `contractor_payout`.
+- **Hold:** physical products only (30 days). Services and digital goods pay once the client's
+  payment settles. Never transfer before checking the platform's **available** balance.
+- **King Midas days are Central time** (`America/Chicago`), not UTC.
+- One writer: `register_referral_conversion` via `triggerReferralCommission()`. Never add another.
+- A job booked by phone or email goes through **Direct Booking** (`email-billing`), so it splits
+  exactly like a website booking.
+- The owner's own affiliate (`THELOSTANDUNFOUNDS`) is paid like any other, to his Stripe Connect
+  account.
+- Times to the owner are in **Central**.
 
 ## MODEL SELECTION RULE
 
@@ -192,7 +262,9 @@ removed — do not recreate them.
 
 ## EMAIL SENDING RULE
 - Never claim you can't send email — use Zoho Mail integrations
-- Test: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with `{"testEmail":"target@example.com"}`
+- Test sends from an agent session go through the ADMIN WORK RULE queue (`send_invoice` with
+  `test: true`, `direct_booking` invite with `testEmail`). The admin routes themselves need the
+  owner's session.
 - Required env vars: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_FROM_EMAIL`
 - **Always CC `media@thelostandunfounds.com`** on media-related outbound mail — client and booking
   correspondence, invoices, quotes, proposals, shoot confirmations, photographer coordination. It is

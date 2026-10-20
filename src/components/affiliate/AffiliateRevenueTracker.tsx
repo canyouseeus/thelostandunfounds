@@ -114,7 +114,7 @@ export function AffiliateRevenueTracker({
 
     let today: number | null = null;
     let best: number | null = null;
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
     for (const m of midas) {
       if (m.date === todayKey) today = m.rank ?? null;
       if (m.rank != null && (best == null || m.rank < best)) best = m.rank;

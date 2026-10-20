@@ -154,6 +154,8 @@ export default async function handler(
         return await handleUpdateAffiliate(req, res)
       case 'manual-commission':
         return await handleManualCommission(req, res)
+      case 'direct-booking':
+        return await handleDirectBooking(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
@@ -260,6 +262,14 @@ async function handleUpdateAffiliate(req: VercelRequest, res: VercelResponse) {
  */
 async function handleManualCommission(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/manual-commission.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Direct booking — a job booked by phone/email, billed and split like a website booking
+ */
+async function handleDirectBooking(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/direct-booking.js')
   return handler.default(req, res)
 }
 

@@ -6,6 +6,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { sendAffiliateEmail } from './_emails.js';
+import { OWNER_AFFILIATE_CODE, tieClientToReferrer } from './_referral-tie.js';
+import { triggerInvoiceCommission } from './_commission-trigger.js';
 
 /** Where new-affiliate notifications land. Overridable per environment. */
 const ADMIN_NOTIFICATION_EMAIL =
@@ -78,20 +80,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Resolve the referring affiliate, if the signup arrived through a ref
-    // link. Stored as referred_by so calculate-commission.ts can walk the
+    // link. Stored as referred_by so register_referral_conversion can walk the
     // upline — it reads this column at three levels and previously always
     // found null, because nothing ever wrote it.
+    //
+    // A signup that arrived without one — a bare /become-affiliate link, an
+    // invite typed by hand — falls back to the owner's code, so every
+    // affiliate has an upline and MLM Level 1 is never silently dropped.
     let referredBy: string | null = null
-    if (referred_by_code && typeof referred_by_code === 'string') {
+    const referrerCodes = [
+        typeof referred_by_code === 'string' ? referred_by_code.toUpperCase() : '',
+        OWNER_AFFILIATE_CODE,
+    ].filter(Boolean)
+    for (const refCode of referrerCodes) {
         const { data: referrer } = await supabase
             .from('affiliates')
             .select('id, user_id')
-            .eq('code', referred_by_code.toUpperCase())
+            .eq('code', refCode)
             .maybeSingle()
         // Ignore a self-referral — landing on your own link must not make you
         // your own upline.
         if (referrer && referrer.user_id !== user_id) {
             referredBy = referrer.id
+            break
         }
     }
 
@@ -124,6 +135,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // stripe_account_id once Stripe issues one. We deliberately do NOT
     // create a payout_settings row here — there is nothing to put in it
     // until the user completes Stripe Connect KYC.
+
+    // Clients this person referred before they had an account (a direct
+    // booking recorded them as pending_referrer_email) are tied to them now,
+    // and any of those jobs already paid get their commission. Best-effort:
+    // never fail a signup over it.
+    try {
+      const { data: userRow } = await supabase.auth.admin.getUserById(user_id);
+      const signupEmail = userRow?.user?.email?.toLowerCase();
+      if (signupEmail) {
+        const { data: pending } = await supabase
+          .from('clients')
+          .select('id, email')
+          // stored lowercased by tieClientToReferrer
+          .eq('pending_referrer_email', signupEmail);
+        for (const client of pending || []) {
+          if (!client.email) continue;
+          const tie = await tieClientToReferrer(supabase, {
+            clientId: client.id,
+            clientEmail: client.email,
+            affiliateCode: affiliate.code,
+          });
+          if (tie.status !== 'tied' && tie.status !== 'already_tied') {
+            console.warn('[affiliate-setup] pending referral not tied:', client.id, tie);
+            continue;
+          }
+          const { data: paid } = await supabase
+            .from('invoices')
+            .select('id')
+            .eq('client_id', client.id)
+            .is('booking_id', null)
+            .eq('status', 'paid');
+          for (const inv of paid || []) {
+            const result = await triggerInvoiceCommission(supabase, inv.id);
+            console.log('[affiliate-setup] pending referral commission:', inv.id, result.triggered, result.reason);
+          }
+        }
+      }
+    } catch (pendingErr: any) {
+      console.warn('[affiliate-setup] attaching pending referrals failed:', pendingErr?.message);
+    }
 
     // Best-effort welcome email (deduped on affiliate id)
     try {

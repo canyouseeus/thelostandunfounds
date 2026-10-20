@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
 import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { NewInvoiceForm } from '../components/admin/NewInvoiceForm';
+import { DirectBookingForm } from '../components/admin/DirectBookingForm';
 
 interface Client {
   id: string;
@@ -244,6 +245,7 @@ export default function AdminInvoices() {
   // Inline PDF viewer is opt-in per invoice — opening a row shouldn't fetch a PDF.
   const [showPdf, setShowPdf] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [directBooking, setDirectBooking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -363,6 +365,7 @@ export default function AdminInvoices() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Revenue Summary</p>
+          <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
             onClick={() => setCreatingInvoice(true)}
@@ -370,6 +373,14 @@ export default function AdminInvoices() {
             <PlusCircleIcon className="w-3.5 h-3.5" />
             New Invoice
           </button>
+          <button
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
+            onClick={() => setDirectBooking(true)}
+          >
+            <PlusCircleIcon className="w-3.5 h-3.5" />
+            Direct Booking
+          </button>
+          </div>
         </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5">
             {[
@@ -595,6 +606,20 @@ export default function AdminInvoices() {
                   clients={clients}
                   onCreated={() => { setCreatingInvoice(false); load(); }}
                   onCancel={() => setCreatingInvoice(false)}
+                />
+              )}
+            </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
+
+        {/* Direct booking — a job taken by phone/email, split like a website booking */}
+        <ExpandableScreen isOpen={directBooking} onOpenChange={(open) => { if (!open) setDirectBooking(false); }}>
+          <ExpandableScreenContent className="overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              {directBooking && (
+                <DirectBookingForm
+                  onDone={() => { setDirectBooking(false); load(); }}
+                  onCancel={() => setDirectBooking(false)}
                 />
               )}
             </div>

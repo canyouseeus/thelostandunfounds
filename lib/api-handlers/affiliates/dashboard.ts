@@ -272,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const profitByDay = new Map<string, number>();
     last30CommissionsRaw.forEach(item => {
-      const day = new Date(item.created_at).toISOString().split('T')[0];
+      const day = new Date(item.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
       const currentProfit = profitByDay.get(day) || 0;
       profitByDay.set(day, currentProfit + toNumber(item.profit_generated));
     });

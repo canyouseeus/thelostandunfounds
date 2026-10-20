@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
+import { triggerReferralCommission, jobCostForBooking } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
 import {
     createQuoteForBooking,
@@ -658,6 +658,8 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
                     source: 'booking',
                     sourceId: booking.id,
                     grossAmount: Number(booking.total_amount_cents) / 100,
+                    cost: await jobCostForBooking(supabase, booking.id),
+                    saleAt: booking.paid_at || null,
                     fallbackAffiliateCode: booking.affiliate_code || null,
                 })
                 if (result.triggered) {
