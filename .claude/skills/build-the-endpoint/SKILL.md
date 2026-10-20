@@ -59,17 +59,24 @@ if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorize
    It accepts a verified Supabase session for an admin email (the admin panel attaches
    it automatically), `X-Admin-Secret` matching `ADMIN_SECRET` (agents and scripts), or
    localhost in local dev. **`X-Admin-Email` is ignored** — it is a claim anyone can
-   send, and the owner's address is in the public bundle. Agents call admin routes with
-   `-H "X-Admin-Secret: $ADMIN_SECRET"`; if `ADMIN_SECRET` is not in the session's
-   environment, say so rather than looking for another way in.
+   send, and the owner's address is in the public bundle.
+
+   **Agents do not call admin routes.** The owner will not put `ADMIN_SECRET` in an agent
+   environment, and that is final. An agent runs an admin action by queueing it in
+   `admin_jobs` (see CLAUDE.md "ADMIN WORK RULE"); the every-minute cron runs it. So an
+   endpoint an agent will need also gets an entry in `lib/api-handlers/admin/_jobs.ts`
+   that calls the **same function** the route calls — extract the route's core into
+   `lib/` first. Never add a bypass to `verifyAdmin`, never read `ADMIN_SECRET` out of
+   Vercel, and never fall back to `X-Admin-Email`.
 
 4. **Keep local state in step.** Deactivating a link and leaving the invoice marked `sent` is a
    trap for whoever reads the record next. Do both in the one call.
 5. **Return the external state you actually achieved** — `active: false`, not `success: true`.
 6. **Deploy, then poll for the route.** It answers `{"error":"Admin route not found: …"}` until
    the build lands; that is normal for roughly five minutes, not a bug to debug.
-7. **Email the owner the tool** once it works — endpoint, paste-ready curl, and what it fixes.
-   A capability nobody knows about is not a capability.
+7. **Tell the owner the tool** once it works — where it is in the admin panel (or the
+   `admin_jobs` action name), and what it fixes. A capability nobody knows about is not a
+   capability.
 
 ## Do NOT use this to route around a decision
 

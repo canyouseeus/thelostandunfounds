@@ -15,7 +15,7 @@ This skill governs the growth and referral engine of THE LOST+UNFOUNDS.
 
 ## Program Management
 - **Tracking**: Ensure all external links include the correctly mapped affiliate tag or slug.
-- **Commission Flow**: 
+- **Commission Flow** (42% of **profit**, not gross — see `affiliate-program`): 
   - Verify purchase → capture → commission update.
   - Test the "Customer Lifetime Tie" (attaching customers to the referring affiliate for life).
 - **MLM Bonuses**: Handle tiered bonus calculations for multi-level referrals.
@@ -24,4 +24,5 @@ This skill governs the growth and referral engine of THE LOST+UNFOUNDS.
 - **Mechanical Dashboards**: Use high-contrast headers, square corners, and tabular data. **No borders and no shadows** — rows and sections separate by surface tone (`bg-white/5` / `bg-white/10`) and spacing. See `no-border-design`, which is the authority.
 - **Withdrawals**: 
   - The "Request Payout" flow must be stark and require explicit admin approval via the `AdminAffiliates` dashboard.
-  - **Holding Period**: Ensure funds remain in "Pending" status for 30 days post-sale to cover chargebacks.
+  - **Holding Period**: Only physical products (`prodigi_order`) are held 30 days. Services and digital
+    goods are payable once the client's payment settles. See `affiliate-program`.

@@ -27,6 +27,22 @@ booking request  →  price resolved server-side  →  quote invoice + Stripe de
 | Deposit paid | `_stripe-webhook-handler.ts` → `sendDepositConfirmationEmail()` |
 | Final balance | `api/booking/create-final-invoice.ts` |
 
+## Jobs booked by phone or email — Direct Booking
+
+"Someone booked directly" goes through the same money path as a website booking, not around it.
+Admin panel → Invoices → **Direct Booking** (or the `direct_booking` admin job):
+
+| Field | Why |
+|---|---|
+| Client, line items, scope & delivery terms | Creates the client + standalone invoice + Stripe link (shared `_standalone-invoice.ts`) |
+| **Job cost** (required, 0 allowed) | Stored as `invoices.job_cost`. Without it every dollar reads as profit and the affiliate is overpaid |
+| Referred by — affiliate code, or the person's email | Ties the client for life. Not an affiliate yet → invite with `?ref=THELOSTANDUNFOUNDS`, credited when they sign up |
+
+It sends nothing; the invoice goes out with the normal Send. When Stripe settles it, the webhook
+runs the affiliate split. **Existing invoice** mode attaches cost + referrer to a job already billed
+and, if paid, runs the split now — passing an existing commission id adopts it instead of writing a
+second one.
+
 ## RULE 1 — Never take a price from the request
 
 The client sends a **bedroom count**, never an amount. The rate is resolved from the server's own

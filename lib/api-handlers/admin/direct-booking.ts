@@ -116,14 +116,12 @@ async function snapshot(supabase: SupabaseClient, invoiceId: string, clientEmail
   return out
 }
 
-async function handleCreate(req: VercelRequest, supabase: SupabaseClient) {
-  const body = req.body || {}
+export async function createDirectBooking(supabase: SupabaseClient, body: Record<string, any>, origin: string) {
   const cost = parseCost(body.cost)
   if (cost === null) {
     // Without a cost every dollar reads as profit and the affiliate is overpaid.
     throw new InvoiceInputError('cost is required (0 if the job cost nothing)')
   }
-  const origin = siteOrigin(req)
   const invoice = await createStandaloneInvoice(supabase, body, origin)
   if (cost > invoice.total) throw new InvoiceInputError('cost cannot exceed the invoice total')
   await recordJobCost(supabase, invoice.invoiceId, cost)
@@ -152,8 +150,7 @@ async function handleCreate(req: VercelRequest, supabase: SupabaseClient) {
   }
 }
 
-async function handleAttach(req: VercelRequest, supabase: SupabaseClient) {
-  const body = req.body || {}
+export async function attachDirectBooking(supabase: SupabaseClient, body: Record<string, any>) {
   if (!body.invoiceNumber) throw new InvoiceInputError('invoiceNumber is required')
   const { data: inv } = await supabase
     .from('invoices').select('*, clients(id, email)').eq('invoice_number', body.invoiceNumber).maybeSingle()
@@ -193,8 +190,8 @@ async function handleAttach(req: VercelRequest, supabase: SupabaseClient) {
   return { invoiceNumber: inv.invoice_number, referral, commission, before, after }
 }
 
-async function handleInvite(req: VercelRequest) {
-  const { referrerEmail, referrerName, testEmail } = (req.body || {}) as {
+export async function sendReferrerInvite(body: Record<string, any>) {
+  const { referrerEmail, referrerName, testEmail } = (body || {}) as {
     referrerEmail?: string; referrerName?: string; testEmail?: string
   }
   if (!referrerEmail?.includes('@')) throw new InvoiceInputError('referrerEmail is required')
@@ -234,9 +231,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const action = (req.body?.action as string) || 'create'
   try {
     const supabase = getSupabaseAdmin()
-    if (action === 'create') return res.status(200).json(await handleCreate(req, supabase))
-    if (action === 'attach') return res.status(200).json(await handleAttach(req, supabase))
-    if (action === 'invite') return res.status(200).json(await handleInvite(req))
+    if (action === 'create') return res.status(200).json(await createDirectBooking(supabase, req.body || {}, siteOrigin(req)))
+    if (action === 'attach') return res.status(200).json(await attachDirectBooking(supabase, req.body || {}))
+    if (action === 'invite') return res.status(200).json(await sendReferrerInvite(req.body || {}))
     return res.status(400).json({ error: `Unknown action ${action}` })
   } catch (err: any) {
     if (err instanceof InvoiceInputError) return res.status(err.status).json({ error: err.message })
