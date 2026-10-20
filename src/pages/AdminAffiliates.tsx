@@ -327,7 +327,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
     }
     try {
       setActionMessage('Creating manual commission...');
-      await postJson('/api/admin/manual-commission', { affiliateId: affiliate.id, amount, status: 'approved', source: 'manual-adjustment' });
+      await postJson('/api/admin/manual-commission', { affiliateId: affiliate.id, amount, status: 'approved', source: 'local' });
       await load();
       setActionMessage('Manual commission added.');
     } catch (err: any) {

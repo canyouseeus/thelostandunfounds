@@ -1,10 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import {
-  createPaymentLink,
-  getStripe,
-  getSupabaseAdmin,
-  siteOrigin,
-} from '../../lib/api-handlers/_booking-payment-utils.js'
+import { getSupabaseAdmin, siteOrigin } from '../../lib/api-handlers/_booking-payment-utils.js'
+import { ensureInvoicePaymentLink, InvoiceInputError } from '../../lib/api-handlers/_standalone-invoice.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
@@ -35,67 +31,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!invoiceNumber) return res.status(400).json({ error: 'invoiceNumber is required' })
 
   try {
-    const supabase = getSupabaseAdmin()
-    const { data: inv } = await supabase
-      .from('invoices')
-      .select('id, invoice_number, status, amount_due, total, description, stripe_payment_link_id, stripe_payment_link_url, clients(name)')
-      .eq('invoice_number', invoiceNumber)
-      .maybeSingle()
-    if (!inv) return res.status(404).json({ error: `Invoice ${invoiceNumber} not found` })
-
-    if (['paid', 'void', 'cancelled'].includes(inv.status)) {
-      return res.status(409).json({ error: `Invoice ${invoiceNumber} is ${inv.status}` })
-    }
-
-    // One live link per invoice — a second would let the client pay twice.
-    if (inv.stripe_payment_link_id) {
-      const stripe = getStripe()
-      const existing = await stripe.paymentLinks.retrieve(inv.stripe_payment_link_id)
-      if (existing.active) {
-        return res.status(200).json({
-          invoiceNumber,
-          paymentLinkId: existing.id,
-          url: existing.url,
-          active: true,
-          created: false,
-        })
-      }
-    }
-
-    const amountDue = Number(inv.amount_due ?? inv.total ?? 0)
-    const amountCents = Math.round(amountDue * 100)
-    if (amountCents <= 0) return res.status(400).json({ error: `Invoice ${invoiceNumber} has nothing due` })
-
-    const clientName = (inv as any).clients?.name || 'Client'
-    const stripe = getStripe()
-    const link = await createPaymentLink(stripe, {
-      amountCents,
-      productName: `${invoiceNumber} — ${clientName}`,
-      description: `${invoiceNumber} — ${String(inv.description || '').slice(0, 200)}`,
-      metadata: { kind: 'standalone', invoiceId: inv.id },
-      redirectUrl: `${siteOrigin(req)}/?payment=success`,
-    })
-
-    const { error: updErr } = await supabase
-      .from('invoices')
-      .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url, payment_method: 'Stripe' })
-      .eq('id', inv.id)
-    if (updErr) {
-      // The link exists in Stripe but not on the invoice — the webhook could
-      // not settle a payment against it. Kill it rather than leave it orphaned.
-      await stripe.paymentLinks.update(link.id, { active: false })
-      return res.status(500).json({ error: 'Failed to save link on invoice; link deactivated', details: updErr.message })
-    }
-
-    return res.status(200).json({
-      invoiceNumber,
-      paymentLinkId: link.id,
-      url: link.url,
-      amount: amountDue,
-      active: true,
-      created: true,
-    })
+    return res.status(200).json(await ensureInvoicePaymentLink(getSupabaseAdmin(), invoiceNumber, siteOrigin(req)))
   } catch (err: any) {
+    if (err instanceof InvoiceInputError) return res.status(err.status).json({ error: err.message })
     console.error('[create-payment-link] failed:', err)
     return res.status(500).json({ error: err?.message || 'Failed to create payment link' })
   }

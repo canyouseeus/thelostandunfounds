@@ -228,14 +228,21 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
     case 'commission_earned': {
       const amount = fmtUsd(Number(data.amount || 0));
       const gross = fmtUsd(Number(data.grossAmount || 0));
-      const source = escapeHtml(data.source || 'order');
+      const hasProfit = data.profit !== undefined && data.profit !== null;
+      const profit = fmtUsd(Number(data.profit || 0));
+      const source = escapeHtml(String(data.source || 'order').replace(/_/g, ' '));
+      // Only physical products are held (chargeback / shipping risk).
+      const held = data.source === 'prodigi_order';
       return {
         subject: `Commission earned — ${amount}`,
         content: `
           <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">YOU EARNED ${amount}</h1>
           <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
-            One of your referrals just placed a ${source} for <b>${gross}</b>. Your share is <b>${amount}</b> (42%).
-            It enters a 30-day holding period before becoming payable, then you can request a payout from the dashboard.
+            One of your referrals just placed a ${source} for <b>${gross}</b>${hasProfit ? ` — <b>${profit}</b> profit after costs` : ''}.
+            Your share is <b>${amount}</b> (42% of profit).
+            ${held
+              ? 'Physical orders enter a 30-day holding period before becoming payable.'
+              : 'It is payable as soon as the client’s payment settles.'}
           </p>
           <p style="color:#999;font-size:12px;margin:24px 0 0 0;">
             <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;text-decoration:underline;">View in dashboard →</a>

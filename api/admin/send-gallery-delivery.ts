@@ -160,7 +160,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                Know anyone who could use a photographer? <strong>THE AFFILIATE PROGRAM</strong> pays
                42% lifetime commission on anyone you send our way.
              </p>
-             ${renderImageButton(`${SITE}/become-affiliate`, 'btn-affiliate', 'JOIN THE AFFILIATE PROGRAM')}`
+             ${renderImageButton(`${SITE}/become-affiliate?ref=THELOSTANDUNFOUNDS`, 'btn-affiliate', 'JOIN THE AFFILIATE PROGRAM')}`
           : ''
       }
 

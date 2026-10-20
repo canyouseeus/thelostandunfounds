@@ -1,7 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
-import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
+import {
+    triggerReferralCommission,
+    triggerInvoiceCommission,
+    jobCostForBooking,
+} from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
 import { accrueCrewPayout } from './crew/_shared.js'
@@ -814,6 +818,20 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
 
     if (!invoice.booking_id) {
         console.log('✅ Standalone invoice paid (no booking link):', invoice.id)
+        // A job booked directly (phone, email) is billed as a standalone
+        // invoice. Once it is paid in full it splits exactly like a website
+        // booking. Best-effort: never fail a webhook for a payment we have
+        // already recorded.
+        if (settled) {
+            try {
+                const result = await triggerInvoiceCommission(supabase, invoice.id)
+                if (result.triggered) {
+                    console.log('✅ Standalone invoice commission registered:', { invoice: invoice.id, amount: result.amount })
+                }
+            } catch (commissionErr: any) {
+                console.error('⚠️ Standalone invoice commission failed:', commissionErr?.message)
+            }
+        }
         return
     }
 
@@ -845,6 +863,8 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
                     source: 'booking',
                     sourceId: booking.id,
                     grossAmount,
+                    cost: await jobCostForBooking(supabase, booking.id),
+                    saleAt: paidAt,
                     fallbackAffiliateCode: booking.affiliate_code || null,
                 })
                 if (result.triggered) {

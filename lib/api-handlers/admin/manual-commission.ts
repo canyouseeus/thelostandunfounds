@@ -6,13 +6,24 @@ import { createClient } from '@supabase/supabase-js';
  * POST /api/admin/manual-commission
  * Body: { affiliateId?, affiliateCode?, amount, status?, source?, profit_generated?, product_cost? }
  */
+const COMMISSION_SOURCES = [
+  'paypal', 'fourthwall', 'local', 'stripe', 'photo_order', 'booking', 'event_ticket', 'prodigi_order',
+];
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { affiliateId, affiliateCode, amount, status = 'approved', source = 'manual', profit_generated, product_cost } =
+  const { affiliateId, affiliateCode, amount, status = 'approved', source = 'local', profit_generated, product_cost } =
     req.body || {};
+
+  // Mirrors the affiliate_commissions_source_check constraint. The admin
+  // panel used to send 'manual-adjustment' (and this defaulted to 'manual'),
+  // neither of which the constraint allows, so every manual commission failed.
+  if (!COMMISSION_SOURCES.includes(source)) {
+    return res.status(400).json({ error: `source must be one of: ${COMMISSION_SOURCES.join(', ')}` });
+  }
 
   if (!amount || Number(amount) <= 0) {
     return res.status(400).json({ error: 'amount must be greater than 0' });
