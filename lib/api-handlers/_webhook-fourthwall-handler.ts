@@ -278,7 +278,7 @@ async function handleOrderCreated(
   }
 
   // Update KING MIDAS daily stats
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
   await updateKingMidasStats(supabase as any, affiliateId, totalProfit, today)
 
   console.log(`Commission created: $${totalCommission.toFixed(2)} for affiliate ${affiliateRef} from order ${orderId} (available after ${holdDays} days)`)

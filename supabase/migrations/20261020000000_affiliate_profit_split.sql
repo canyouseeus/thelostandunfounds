@@ -13,6 +13,9 @@
 -- Hold: only physical products (prodigi_order) wait 30 days. Services and
 -- digital goods are payable as soon as the client's payment lands.
 --
+-- Days are Central (America/Chicago): a sale counts on the King Midas day,
+-- and in the Secret Santa year, it happened in Austin.
+--
 -- Also:
 --   * invoices.job_cost — what the job cost us, when it isn't (only) the
 --     contractor payout, e.g. a job the owner shot himself. Profit uses
@@ -25,6 +28,9 @@
 --     DEFINER and was callable with the public anon key via /rest/v1/rpc.
 -- =====================================================
 
+-- Fail fast rather than queue behind live traffic on invoices.
+SET LOCAL lock_timeout = '10s';
+
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS job_cost NUMERIC(10,2);
 COMMENT ON COLUMN invoices.job_cost IS
   'Total cost of the job for profit/commission purposes. NULL = use contractor_payout.';
@@ -33,16 +39,25 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS pending_referrer_email TEXT;
 COMMENT ON COLUMN clients.pending_referrer_email IS
   'Referrer who is not an affiliate yet. Cleared and tied when they sign up.';
 
-DROP FUNCTION IF EXISTS register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, UUID);
-DROP FUNCTION IF EXISTS register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, UUID, NUMERIC, TIMESTAMPTZ, UUID);
+-- The broken 5-arg version is renamed out of the way (execute revoked from
+-- everyone) rather than dropped, so nothing resolves to it by name.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+             WHERE n.nspname = 'public' AND p.proname = 'register_referral_conversion'
+               AND pg_get_function_identity_arguments(p.oid) = 'p_email text, p_source text, p_source_id text, p_gross_amount numeric, p_user_id uuid') THEN
+    ALTER FUNCTION public.register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, UUID) RENAME TO register_referral_conversion_legacy;
+    REVOKE ALL ON FUNCTION public.register_referral_conversion_legacy(TEXT, TEXT, TEXT, NUMERIC, UUID) FROM PUBLIC, anon, authenticated, service_role;
+  END IF;
+END $$;
 
-CREATE FUNCTION register_referral_conversion(
+CREATE OR REPLACE FUNCTION register_referral_conversion(
   p_email TEXT,
   p_source TEXT,
   p_source_id TEXT,
   p_gross_amount NUMERIC,
   p_user_id UUID DEFAULT NULL,
-  p_cost NUMERIC DEFAULT 0,
+  p_cost NUMERIC DEFAULT NULL,
   p_sale_at TIMESTAMPTZ DEFAULT NULL,
   p_adopt_commission_id UUID DEFAULT NULL
 )
@@ -65,7 +80,7 @@ AS $$
 #variable_conflict use_column
 DECLARE
   v_sale_at   TIMESTAMPTZ := COALESCE(p_sale_at, NOW());
-  v_cost      NUMERIC(10,2) := GREATEST(COALESCE(p_cost, 0), 0);
+  v_cost      NUMERIC(10,2);
   v_order     UUID;
   v_profit    NUMERIC(10,2);
   v_aff       UUID;
@@ -89,6 +104,21 @@ BEGIN
     RAISE EXCEPTION 'email, source, source_id are required';
   END IF;
   v_order := p_source_id::uuid;
+
+  -- No cost passed: a service job's cost is on its invoice(s) — job_cost,
+  -- else the contractor's payout. source_id is the booking id, or the invoice
+  -- id for a standalone job. Callers that know the cost pass it; this keeps a
+  -- caller that doesn't from splitting on gross.
+  IF p_cost IS NOT NULL THEN
+    v_cost := GREATEST(p_cost, 0);
+  ELSIF p_source = 'booking' THEN
+    SELECT COALESCE(MAX(COALESCE(i.job_cost, i.contractor_payout, 0)), 0) INTO v_cost
+    FROM invoices i
+    WHERE (i.id = v_order OR i.booking_id = v_order)
+      AND i.status <> 'superseded';
+  ELSE
+    v_cost := 0;
+  END IF;
 
   IF p_gross_amount IS NULL OR p_gross_amount <= 0 THEN
     RETURN;
@@ -205,9 +235,9 @@ BEGIN
   END IF;
 
   -- King Midas: the pot is 8% of the day's summed profit_generated
-  -- (_king-midas-distribute-handler.ts). Days are UTC, like the ranking cron.
+  -- (_king-midas-distribute-handler.ts), on the Central-time day.
   v_km := ROUND(v_profit * 0.08, 2);
-  v_day := (v_sale_at AT TIME ZONE 'UTC')::DATE;
+  v_day := (v_sale_at AT TIME ZONE 'America/Chicago')::DATE;
   UPDATE king_midas_daily_stats
   SET profit_generated = profit_generated + v_profit, updated_at = NOW()
   WHERE affiliate_id = v_aff AND date = v_day;
@@ -224,7 +254,7 @@ BEGIN
 
   -- Secret Santa: 3% into the sale year's pot, created on first use
   v_ss := ROUND(v_profit * 0.03, 2);
-  v_year := EXTRACT(YEAR FROM (v_sale_at AT TIME ZONE 'UTC'))::INTEGER;
+  v_year := EXTRACT(YEAR FROM (v_sale_at AT TIME ZONE 'America/Chicago'))::INTEGER;
   SELECT s.id INTO v_pot FROM secret_santa_pot s WHERE s.year = v_year;
   IF v_pot IS NULL THEN
     BEGIN
@@ -247,5 +277,5 @@ REVOKE ALL ON FUNCTION register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, U
 GRANT EXECUTE ON FUNCTION register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, UUID, NUMERIC, TIMESTAMPTZ, UUID)
   TO service_role;
 
-COMMENT ON FUNCTION register_referral_conversion IS
+COMMENT ON FUNCTION register_referral_conversion(TEXT, TEXT, TEXT, NUMERIC, UUID, NUMERIC, TIMESTAMPTZ, UUID) IS
   'Idempotent, profit-based referral split (42/2/1 + King Midas 8% + Secret Santa 3% + points). The only commission writer.';

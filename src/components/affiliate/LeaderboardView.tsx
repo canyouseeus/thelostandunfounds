@@ -48,7 +48,7 @@ export default function LeaderboardView({
 }: LeaderboardViewProps) {
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [stats, setStats] = useState<LeaderboardStats | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('today');
@@ -66,11 +66,11 @@ export default function LeaderboardView({
       if (dateRange === 'week') {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
-        dateFilter = weekAgo.toISOString().split('T')[0];
+        dateFilter = weekAgo.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
       } else if (dateRange === 'month') {
         const monthAgo = new Date();
         monthAgo.setMonth(monthAgo.getMonth() - 1);
-        dateFilter = monthAgo.toISOString().split('T')[0];
+        dateFilter = monthAgo.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
       }
 
       let query = supabase

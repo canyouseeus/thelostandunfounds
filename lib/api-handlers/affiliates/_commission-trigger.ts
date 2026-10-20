@@ -102,7 +102,8 @@ export async function triggerReferralCommission(
   input: CommissionTriggerInput
 ): Promise<CommissionTriggerResult> {
   const { email, source, sourceId, grossAmount, userId, fallbackAffiliateCode } = input;
-  const cost = Math.max(0, money(input.cost));
+  // null lets the RPC read a booking's cost off its invoices.
+  const cost = input.cost === undefined || input.cost === null ? null : Math.max(0, money(input.cost));
 
   if (!email || !sourceId || !Number.isFinite(grossAmount) || grossAmount <= 0) {
     return { triggered: false, reason: 'invalid_input' };

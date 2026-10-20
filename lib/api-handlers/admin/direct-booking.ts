@@ -91,7 +91,10 @@ async function snapshot(supabase: SupabaseClient, invoiceId: string, clientEmail
         .from('affiliates').select('id, code, total_mlm_earnings').eq('id', aff.referred_by).maybeSingle()
       out.upline = up || null
     }
-    const day = inv?.paid_at ? String(inv.paid_at).slice(0, 10) : null
+    // King Midas days are Central, like the RPC writes them.
+    const day = inv?.paid_at
+      ? new Date(inv.paid_at).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
+      : null
     if (day) {
       const { data: km } = await supabase
         .from('king_midas_daily_stats').select('date, profit_generated')
