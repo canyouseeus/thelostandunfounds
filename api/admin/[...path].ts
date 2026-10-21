@@ -156,6 +156,8 @@ export default async function handler(
         return await handleManualCommission(req, res)
       case 'direct-booking':
         return await handleDirectBooking(req, res)
+      case 'field-sales':
+        return await handleFieldSales(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
@@ -270,6 +272,14 @@ async function handleManualCommission(req: VercelRequest, res: VercelResponse) {
  */
 async function handleDirectBooking(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/direct-booking.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Street nights — one entry per night of field sales; queues the owner's 10%
+ */
+async function handleFieldSales(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/field-sales.js')
   return handler.default(req, res)
 }
 

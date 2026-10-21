@@ -34,6 +34,8 @@ interface RevenueTrackerProps {
     galleryRevenue: number;
     subscriberRevenue: number;
     bookingRevenue?: number;
+    /** Street nights — walk-up sales, recorded once per night. */
+    streetRevenue?: number;
     galleryPhotoCount?: number;
     usersCount?: number;
     history?: {
@@ -55,6 +57,7 @@ export function RevenueTracker({
     galleryRevenue = 0,
     subscriberRevenue = 0,
     bookingRevenue = 0,
+    streetRevenue = 0,
     galleryPhotoCount = 0,
     usersCount = 0,
     history,
@@ -65,7 +68,7 @@ export function RevenueTracker({
 
     // affiliateRevenue is the share of these sales that came through an
     // affiliate — already inside gallery/bookings, so it is not added again.
-    const totalRevenue = galleryRevenue + subscriberRevenue + bookingRevenue;
+    const totalRevenue = galleryRevenue + subscriberRevenue + bookingRevenue + streetRevenue;
 
     const sumBetween = (startTime: number, endTime: number) => {
         if (!history?.revenue) return 0;
@@ -218,9 +221,9 @@ export function RevenueTracker({
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Subs</div>
+                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Street</div>
                             <div className="text-lg md:text-xl font-bold text-white font-mono">
-                                $<AnimatedNumber value={subscriberRevenue} decimals={0} />
+                                $<AnimatedNumber value={streetRevenue} decimals={0} />
                             </div>
                         </div>
                         <div className="text-center">

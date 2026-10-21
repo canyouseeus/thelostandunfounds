@@ -144,6 +144,8 @@ interface DashboardStats {
   affiliateRevenue?: number;
   galleryRevenue?: number;
   bookingRevenue?: number;
+  /** Street nights (field_sales) — walk-up sales recorded once per night. */
+  streetRevenue?: number;
   contributorDetails?: Array<{
     authorName: string;
     email: string;
@@ -733,12 +735,19 @@ export default function Admin() {
           };
         });
 
+        // Street nights count on the night they happened.
+        const { data: streetRows } = await supabase.from('field_sales').select('night, total');
+        const streetHistory = (streetRows || []).map((r: any) => ({
+          date: `${r.night}T12:00:00Z`,
+          amount: Number(r.total || 0),
+        }));
+
         historyData = {
           // Bookings are part of total revenue, so the revenue series must
           // include them or the chart contradicts the Total Revenue tile.
           // Commission payouts are a cost, not revenue, and the sales they
           // pay on are already in orders/bookingHistory.
-          revenue: [...orders, ...bookingHistory],
+          revenue: [...orders, ...bookingHistory, ...streetHistory],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
           affiliates: affHist.data?.map((r: any) => r.created_at) || [],
           bookings: bookingHistory,
@@ -793,6 +802,7 @@ export default function Admin() {
       let affiliateRevenueTotal = 0;
       let galleryRevenueTotal = 0;
       let bookingRevenueTotal = 0;
+      let streetRevenueTotal = 0;
       let contributorDetailsArray: Array<{
         authorId: string;
         authorName: string;
@@ -969,6 +979,9 @@ export default function Admin() {
             collectedByInvoice.set(p.invoice_id, prior + Number(p.amount || 0));
           }
 
+          const { data: streetNights } = await supabase.from('field_sales').select('total');
+          streetRevenueTotal = (streetNights || []).reduce((sum, r: any) => sum + Number(r.total || 0), 0);
+
           bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
             // Invoices marked paid with no itemised payments still count in
             // full — older rows predate invoice_payments being populated.
@@ -1000,6 +1013,7 @@ export default function Admin() {
         affiliateRevenue: affiliateRevenueTotal,
         galleryRevenue: galleryRevenueTotal,
         bookingRevenue: bookingRevenueTotal,
+        streetRevenue: streetRevenueTotal,
         contributorDetails: contributorDetailsArray,
         galleryPhotoCount: galleryPhotoCountVal,
       });
@@ -1463,7 +1477,7 @@ export default function Admin() {
       id: 'revenue-performance',
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
-      primary: <span className="text-green-400">${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}</span>,
+      primary: <span className="text-green-400">${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0) + (stats?.streetRevenue || 0)).toLocaleString()}</span>,
       caption: 'Revenue, all sources',
       aside: (
         <Sparkline
@@ -1478,7 +1492,8 @@ export default function Admin() {
             <AdminBentoRow label="Via affiliates (in bookings/gallery)" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
             <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
             <AdminBentoRow label="Bookings" value={`$${(stats?.bookingRevenue || 0).toLocaleString()}`} />
-            <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
+            <AdminBentoRow label="Street nights" value={`$${(stats?.streetRevenue || 0).toLocaleString()}`} />
+            <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0) + (stats?.streetRevenue || 0)).toLocaleString()}`} />
           </div>
 
           {/* Was its own Profit Trend tile, which showed the same total as this
@@ -1700,9 +1715,10 @@ export default function Admin() {
               galleryRevenue={stats?.galleryRevenue || 0}
               subscriberRevenue={0}
               bookingRevenue={stats?.bookingRevenue || 0}
+              streetRevenue={stats?.streetRevenue || 0}
               history={stats?.history}
               stats={{
-                revenue: (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
+                revenue: (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0) + (stats?.streetRevenue || 0),
                 newsletter: stats?.newsletterSubscribers || 0,
                 affiliates: affiliateStats?.totalAffiliates || 0,
                 bookings: stats?.bookingRevenue || 0,

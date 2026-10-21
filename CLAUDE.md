@@ -183,6 +183,8 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
+| `record_field_sale` | `{night, location?, cashApp?, venmo?, applePay?, cash?, saleCount?, notes?}` — a street night as revenue (no affiliate split); queues `owner_pay` for 10% |
+| `owner_pay` | `{fieldSaleId?, amount}` — transfer to the owner's Stripe Connect account; checks the **available** balance, short → `waiting_funds`, retried hourly for 3 days |
 
 - Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
   Each calls the same function as the admin-panel route.

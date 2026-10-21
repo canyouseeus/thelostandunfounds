@@ -17,6 +17,7 @@ import { cn } from '../components/ui/utils';
 import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { NewInvoiceForm } from '../components/admin/NewInvoiceForm';
 import { DirectBookingForm } from '../components/admin/DirectBookingForm';
+import { StreetNightForm } from '../components/admin/StreetNightForm';
 
 interface Client {
   id: string;
@@ -246,6 +247,7 @@ export default function AdminInvoices() {
   const [showPdf, setShowPdf] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [directBooking, setDirectBooking] = useState(false);
+  const [streetNight, setStreetNight] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -378,6 +380,13 @@ export default function AdminInvoices() {
           >
             <PlusCircleIcon className="w-3.5 h-3.5" />
             Direct Booking
+          </button>
+          <button
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
+            onClick={() => setStreetNight(true)}
+          >
+            <PlusCircleIcon className="w-3.5 h-3.5" />
+            Street Night
           </button>
           </div>
         </div>
@@ -619,6 +628,20 @@ export default function AdminInvoices() {
                 <DirectBookingForm
                   onDone={() => { setDirectBooking(false); load(); }}
                   onCancel={() => setDirectBooking(false)}
+                />
+              )}
+            </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
+
+        {/* Street night — end-of-night walk-up totals, 10% owner pay */}
+        <ExpandableScreen isOpen={streetNight} onOpenChange={(open) => { if (!open) setStreetNight(false); }}>
+          <ExpandableScreenContent className="overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              {streetNight && (
+                <StreetNightForm
+                  onDone={() => setStreetNight(false)}
+                  onCancel={() => setStreetNight(false)}
                 />
               )}
             </div>

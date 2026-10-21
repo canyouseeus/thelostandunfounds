@@ -1181,7 +1181,7 @@ function NotesSection({
 // ─── Primitives ────────────────────────────────────────────────────────────────
 
 interface RecapSale {
-    source: 'shop' | 'gallery' | 'tickets' | 'invoice';
+    source: 'shop' | 'gallery' | 'tickets' | 'invoice' | 'street';
     customerName: string | null;
     customerEmail: string | null;
     amountCents: number;
@@ -1210,7 +1210,7 @@ const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
 const SOURCE_LABEL: Record<RecapSale['source'], string> = {
-    shop: 'SHOP', gallery: 'GALLERY', tickets: 'TICKETS', invoice: 'INVOICE',
+    shop: 'SHOP', gallery: 'GALLERY', tickets: 'TICKETS', invoice: 'INVOICE', street: 'STREET',
 };
 
 /**

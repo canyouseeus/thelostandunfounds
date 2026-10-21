@@ -25,7 +25,7 @@ const CARD_FEE_RATE = 0.029
 const CARD_FEE_FIXED_CENTS = 30
 
 interface Txn {
-    source: 'affiliate' | 'gallery' | 'bookings' | 'shop' | 'tickets'
+    source: 'gallery' | 'bookings' | 'shop' | 'tickets' | 'street'
     email: string | null
     cents: number
     at: string
@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fee = (cents: number) => Math.round(cents * CARD_FEE_RATE) + CARD_FEE_FIXED_CENTS
 
     try {
-        const [shop, gallery, tickets, invPaid, commissions, prodigi, refunds, invoicesOpen, commissionsOwed] =
+        const [shop, gallery, tickets, invPaid, commissions, prodigi, refunds, invoicesOpen, commissionsOwed, street] =
             await Promise.all([
                 supabase.from('shop_orders')
                     .select('customer_email, amount_total_cents, paid_at, status'),
@@ -68,6 +68,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 supabase.from('affiliate_commissions')
                     .select('amount')
                     .eq('status', 'available'),
+                supabase.from('field_sales')
+                    .select('night, total'),
             ])
 
         const txns: Txn[] = []
@@ -91,6 +93,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // fees on those are zero — estimate only when it looks like a card.
             const cents = Math.round(Number(p.amount ?? 0) * 100)
             txns.push({ source: 'bookings', email: null, cents, at: p.paid_at, feeCents: 0 })
+        }
+        for (const n of street.data ?? []) {
+            // Street nights: walk-up Cash App / Venmo / Apple Pay / cash, one
+            // row per night, no processor fee taken by us.
+            const cents = Math.round(Number(n.total ?? 0) * 100)
+            if (cents <= 0) continue
+            txns.push({ source: 'street', email: null, cents, at: `${n.night}T12:00:00Z`, feeCents: 0 })
         }
         // No affiliate rows: every commission is on a sale already pushed above
         // (an invoice payment, a gallery or shop order). Adding them counted
@@ -139,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const series = days.map(d => (byDay.get(d) ?? 0) / 100)
 
         // ── Sources ──────────────────────────────────────────────────────────
-        const sources = (['gallery', 'bookings', 'shop', 'tickets'] as const).map(s => {
+        const sources = (['gallery', 'bookings', 'shop', 'tickets', 'street'] as const).map(s => {
             const rows = txns.filter(t => t.source === s)
             const mtd = rows.filter(t => t.at >= monthStart).reduce((n, t) => n + t.cents, 0)
             const prev = rows.filter(t => t.at >= lastMonthStart && t.at < monthStart).reduce((n, t) => n + t.cents, 0)
