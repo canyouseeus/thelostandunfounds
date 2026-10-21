@@ -27,7 +27,8 @@ import {
   products,
   stripeResume,
   stripeReminders,
-  previewRegistrationEmail
+  previewRegistrationEmail,
+  publicStats
 } from '../../lib/api-handlers/affiliates/index.js';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
@@ -59,6 +60,7 @@ const handlerMap: Record<string, HandlerFn> = {
   'stripe-resume': stripeResume,
   'stripe-reminders': stripeReminders,
   'preview-registration-email': previewRegistrationEmail,
+  'public-stats': publicStats,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
