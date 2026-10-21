@@ -92,13 +92,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const cents = Math.round(Number(p.amount ?? 0) * 100)
             txns.push({ source: 'bookings', email: null, cents, at: p.paid_at, feeCents: 0 })
         }
-        for (const c of commissions.data ?? []) {
-            // Affiliate rows: the site's take is the gross sale minus what the
-            // affiliate is owed — profit_generated is that figure when present.
-            const cents = Math.round(Number(c.profit_generated ?? c.gross_amount ?? 0) * 100)
-            if (cents <= 0) continue
-            txns.push({ source: 'affiliate', email: null, cents, at: c.created_at, feeCents: 0 })
-        }
+        // No affiliate rows: every commission is on a sale already pushed above
+        // (an invoice payment, a gallery or shop order). Adding them counted
+        // each referred job twice.
 
         // ── Waterfall ────────────────────────────────────────────────────────
         const grossCents = txns.reduce((n, t) => n + t.cents, 0)
@@ -143,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const series = days.map(d => (byDay.get(d) ?? 0) / 100)
 
         // ── Sources ──────────────────────────────────────────────────────────
-        const sources = (['affiliate', 'gallery', 'bookings', 'shop', 'tickets'] as const).map(s => {
+        const sources = (['gallery', 'bookings', 'shop', 'tickets'] as const).map(s => {
             const rows = txns.filter(t => t.source === s)
             const mtd = rows.filter(t => t.at >= monthStart).reduce((n, t) => n + t.cents, 0)
             const prev = rows.filter(t => t.at >= lastMonthStart && t.at < monthStart).reduce((n, t) => n + t.cents, 0)
