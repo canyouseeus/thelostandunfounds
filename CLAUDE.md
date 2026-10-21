@@ -182,6 +182,7 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
+| `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
 
 - Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
   Each calls the same function as the admin-panel route.
