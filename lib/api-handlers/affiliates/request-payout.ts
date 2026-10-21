@@ -113,7 +113,10 @@ async function getAvailableCommissions(
     if (total >= upToAmount) break;
     const amt = toMoney(Number(c.amount ?? 0));
     selected.push({ id: c.id, amount: amt });
-    total += amt;
+    // Round as we go: 29.40 + 25.20 + 12.60 is 67.19999… in floating point,
+    // which reads as "not enough yet" and pulls in one more commission that
+    // would be marked paid without being transferred.
+    total = toMoney(total + amt);
   }
   return selected;
 }
@@ -206,7 +209,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       normalizeCode(affiliate.code) || normalizeCode(affiliate.affiliate_code) || 'UNKNOWN';
 
     const commissionsToMark = await getAvailableCommissions(supabase, affiliate.id, numericAmount);
-    const actualAmount = commissionsToMark.reduce((sum, c) => sum + c.amount, 0);
+    const actualAmount = toMoney(commissionsToMark.reduce((sum, c) => sum + c.amount, 0));
     if (actualAmount < numericAmount) {
       return res.status(400).json({
         error: 'Balance changed. Please try again.',
