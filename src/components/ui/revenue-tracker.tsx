@@ -63,7 +63,9 @@ export function RevenueTracker({
     const [timePeriod, setTimePeriod] = useState<TimePeriod>('all');
     const [isExpanded, setIsExpanded] = useState(true);
 
-    const totalRevenue = affiliateRevenue + galleryRevenue + subscriberRevenue + bookingRevenue;
+    // affiliateRevenue is the share of these sales that came through an
+    // affiliate — already inside gallery/bookings, so it is not added again.
+    const totalRevenue = galleryRevenue + subscriberRevenue + bookingRevenue;
 
     const sumBetween = (startTime: number, endTime: number) => {
         if (!history?.revenue) return 0;
@@ -210,7 +212,7 @@ export function RevenueTracker({
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Affiliates</div>
+                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Via Affiliates</div>
                             <div className="text-lg md:text-xl font-bold text-white font-mono">
                                 $<AnimatedNumber value={affiliateRevenue} decimals={0} />
                             </div>

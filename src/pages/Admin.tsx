@@ -736,7 +736,9 @@ export default function Admin() {
         historyData = {
           // Bookings are part of total revenue, so the revenue series must
           // include them or the chart contradicts the Total Revenue tile.
-          revenue: [...commissions, ...orders, ...bookingHistory],
+          // Commission payouts are a cost, not revenue, and the sales they
+          // pay on are already in orders/bookingHistory.
+          revenue: [...orders, ...bookingHistory],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
           affiliates: affHist.data?.map((r: any) => r.created_at) || [],
           bookings: bookingHistory,
@@ -897,19 +899,23 @@ export default function Admin() {
 
 
 
-        // Get affiliate revenue — sum actual sale amounts (profit_generated + product_cost)
-        // from non-cancelled commissions, not the commission payouts themselves
+        // Sales that came through an affiliate. NOT added to total revenue:
+        // every commission is on a sale already counted in its own table (a
+        // booking's invoice payments, a gallery order), so adding it counted
+        // each referred job twice. Only the seller's row names a sale — upline
+        // (mlm_level*), King Midas and Secret Santa rows are shares of one.
         const { data: commissions } = await supabase
           .from('affiliate_commissions')
-          .select('profit_generated, product_cost, status')
-          .neq('status', 'cancelled');
+          .select('gross_amount, status, source_table')
+          .not('status', 'in', '("cancelled","rejected")');
 
         if (commissions) {
-          affiliateRevenueTotal = commissions.reduce((sum, c) => {
-            const profit = parseFloat(c.profit_generated?.toString() || '0');
-            const cost = parseFloat(c.product_cost?.toString() || '0');
-            return sum + (isNaN(profit) ? 0 : profit) + (isNaN(cost) ? 0 : cost);
-          }, 0);
+          affiliateRevenueTotal = commissions
+            .filter(c => !/^(mlm_level|king_midas|secret_santa)/.test(c.source_table || ''))
+            .reduce((sum, c) => {
+              const gross = parseFloat(c.gross_amount?.toString() || '0');
+              return sum + (isNaN(gross) ? 0 : gross);
+            }, 0);
         }
 
         // Get gallery revenue with email and date filtering
@@ -1457,7 +1463,7 @@ export default function Admin() {
       id: 'revenue-performance',
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
-      primary: <span className="text-green-400">${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}</span>,
+      primary: <span className="text-green-400">${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}</span>,
       caption: 'Revenue, all sources',
       aside: (
         <Sparkline
@@ -1469,10 +1475,10 @@ export default function Admin() {
       content: (
         <div className="space-y-10 pt-2">
           <div className="space-y-4">
-            <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
+            <AdminBentoRow label="Via affiliates (in bookings/gallery)" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
             <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
             <AdminBentoRow label="Bookings" value={`$${(stats?.bookingRevenue || 0).toLocaleString()}`} />
-            <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
+            <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
           </div>
 
           {/* Was its own Profit Trend tile, which showed the same total as this
@@ -1696,7 +1702,7 @@ export default function Admin() {
               bookingRevenue={stats?.bookingRevenue || 0}
               history={stats?.history}
               stats={{
-                revenue: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
+                revenue: (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
                 newsletter: stats?.newsletterSubscribers || 0,
                 affiliates: affiliateStats?.totalAffiliates || 0,
                 bookings: stats?.bookingRevenue || 0,
