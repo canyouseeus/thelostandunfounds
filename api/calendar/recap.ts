@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const dayEnd = `${date}T23:59:59.999Z`
 
     interface Sale {
-        source: 'shop' | 'gallery' | 'tickets' | 'invoice'
+        source: 'shop' | 'gallery' | 'tickets' | 'invoice' | 'street'
         customerName: string | null
         customerEmail: string | null
         amountCents: number
@@ -45,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const [shop, gallery, tickets, invoicePayments, deployments] = await Promise.all([
+        const [shop, gallery, tickets, invoicePayments, deployments, street] = await Promise.all([
             supabase
                 .from('shop_orders')
                 .select('id, customer_email, amount_total_cents, stripe_payment_intent, paid_at, status')
@@ -67,6 +67,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .select('vercel_deployment_id, status, commit_sha, commit_message, url, created_at')
                 .gte('created_at', dayStart).lte('created_at', dayEnd)
                 .order('created_at', { ascending: true }),
+            supabase
+                .from('field_sales')
+                .select('id, location, total, night, sale_count')
+                .eq('night', date),
         ])
 
         const paidish = (s: string | null) => !!s && ['paid', 'completed', 'succeeded', 'confirmed'].includes(s.toLowerCase())
@@ -104,6 +108,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 amountCents: Math.round(Number(p.amount ?? 0) * 100), occurredAt: p.paid_at,
                 reference: p.method, invoiceId: inv?.id ?? null, invoiceNumber: inv?.invoice_number ?? null,
                 crmContactId: null,
+            })
+        }
+
+        for (const n of street.data ?? []) {
+            sales.push({
+                source: 'street', customerName: n.location ? `Street night — ${n.location}` : 'Street night',
+                customerEmail: null, amountCents: Math.round(Number(n.total ?? 0) * 100),
+                occurredAt: `${n.night}T12:00:00Z`,
+                reference: n.sale_count != null ? `${n.sale_count} sales` : null,
+                invoiceId: null, invoiceNumber: null, crmContactId: null,
             })
         }
 

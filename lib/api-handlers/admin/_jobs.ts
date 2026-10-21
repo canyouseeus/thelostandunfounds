@@ -5,6 +5,8 @@ import { createStandaloneInvoice, ensureInvoicePaymentLink } from '../_standalon
 import { sendInvoiceEmail } from '../_invoice-send.js'
 import { createDirectBooking, attachDirectBooking, sendReferrerInvite } from './direct-booking.js'
 import requestPayout from '../affiliates/request-payout.js'
+import { recordFieldSale } from './field-sales.js'
+import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referral-tie.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -183,6 +185,48 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
       { idempotencyKey: `admin-job-${jobId}`, apiVersion: '2025-08-27.basil' as any }
     )
     return ok({ payoutId: payout.id, status: payout.status, amount: payout.amount / 100, to: payload.to })
+  },
+
+  /** { night, location?, cashApp?, venmo?, applePay?, cash?, saleCount?, notes? } — same body as /api/admin/field-sales */
+  async record_field_sale(supabase, payload) {
+    return ok(await recordFieldSale(supabase, payload))
+  },
+
+  /**
+   * { fieldSaleId?, amount } — the owner's pay for a street night, to his
+   * Stripe Connect account. Queued by recordFieldSale. Waits (hourly, up to
+   * 3 days) when the available balance is short, like affiliate_payout.
+   */
+  async owner_pay(supabase, payload, jobId) {
+    const cents = Math.round(Number(payload.amount) * 100)
+    if (!(cents > 0)) return fail('a positive amount is required', 400)
+
+    const owner = await findAffiliateByCode(supabase, OWNER_AFFILIATE_CODE)
+    const { data: acct } = owner
+      ? await supabase.from('affiliates').select('stripe_account_id').eq('id', owner.id).maybeSingle()
+      : { data: null }
+    if (!acct?.stripe_account_id) return fail('The owner affiliate has no Stripe Connect account', 409)
+
+    const available = await availableUsd()
+    if (Math.round(available * 100) < cents) {
+      return {
+        status: 'waiting_funds',
+        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}`,
+        retryAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      }
+    }
+
+    const transfer = await getStripe().transfers.create(
+      {
+        amount: cents,
+        currency: 'usd',
+        destination: acct.stripe_account_id,
+        description: 'Owner pay — street night',
+        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '' },
+      },
+      { idempotencyKey: `admin-job-${jobId}` }
+    )
+    return ok({ transferId: transfer.id, amount: cents / 100 })
   },
 }
 
