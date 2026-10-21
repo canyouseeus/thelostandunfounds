@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Expandable,
@@ -87,6 +87,60 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
     );
 }
 
+interface ProgramStats {
+    total_affiliates: number;
+    total_paid_out: number;
+}
+
+const formatPaidOut = (amount: number) =>
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+
+function ProgramStatsStrip() {
+    const [stats, setStats] = useState<ProgramStats | null>(null);
+    const [failed, setFailed] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch('/api/affiliates/public-stats')
+            .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+            .then((data: ProgramStats) => {
+                if (!cancelled) setStats(data);
+            })
+            .catch((error) => {
+                console.error('Failed to fetch affiliate program stats:', error);
+                if (!cancelled) setFailed(true);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // A failed fetch hides the strip rather than showing zeros that read as real numbers.
+    if (failed) return null;
+
+    const tiles = [
+        { label: 'Total Paid Out', value: stats ? formatPaidOut(stats.total_paid_out) : '—' },
+        { label: 'Affiliates Enrolled', value: stats ? stats.total_affiliates.toLocaleString('en-US') : '—' },
+    ];
+
+    return (
+        <div className="px-4 md:px-8 lg:px-12 pt-2 pb-4 md:pb-6">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-2xl">
+                {tiles.map((tile) => (
+                    <div key={tile.label} className="bg-white/5 p-4 md:p-6 text-left" style={{ borderRadius: 0 }}>
+                        <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mb-2">
+                            {tile.label}
+                        </div>
+                        <div className="text-white text-2xl md:text-4xl font-black tracking-tighter tabular-nums">
+                            {tile.value}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export default function BecomeAffiliate() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -155,6 +209,9 @@ export default function BecomeAffiliate() {
                     </div>
                 </div>
             </div>
+
+            {/* Program totals */}
+            <ProgramStatsStrip />
 
             {/* Benefits Grid (expandable cards) */}
             <div className="py-10 md:py-14 px-4 md:px-8 lg:px-12">
