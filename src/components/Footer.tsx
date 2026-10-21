@@ -4,9 +4,8 @@ import { Link } from 'react-router-dom'
  * Footer link groups — customer-facing routes only.
  *
  * Two filters apply, and they are different things:
- *   1. Gated routes are excluded. /shop sits behind an admin gate, so /pay is
- *      the only checkout a visitor can actually reach; it gets its own call to
- *      action rather than being buried in a column.
+ *   1. Gated routes are excluded (/shop sits behind an admin gate). /pay is
+ *      not in the footer; visitors reach it from /support.
  *   2. Internal-audience routes are excluded even when technically public —
  *      /king-midas-leaderboard (affiliate program internals) and /docs
  *      (contributor and photographer guides) mean nothing to a customer.
@@ -73,14 +72,6 @@ export default function Footer() {
               Austin, TX based editorial and nightlife photography. Revealing
               findings from the frontier and beyond.
             </p>
-            {/* Site-wide entry point to checkout. /shop is admin-gated, so this
-                is the only route by which a visitor can pay anything. */}
-            <Link
-              to="/pay"
-              className="inline-block mt-5 px-5 py-2.5 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition-colors"
-            >
-              Make a Payment
-            </Link>
           </div>
 
           {COLUMNS.map((col) => (
