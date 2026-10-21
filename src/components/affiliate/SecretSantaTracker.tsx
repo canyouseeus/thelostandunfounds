@@ -127,10 +127,10 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
           <div className="bg-blue-500/10 rounded-none p-4">
             <h4 className="text-blue-400 font-medium mb-2">💡 How Secret Santa Works</h4>
             <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
-              <li>Pot accumulates unclaimed 3% MLM bonuses all year</li>
-              <li>Distributed on Christmas weighted by reward points</li>
+              <li>3% of every sale's profit goes into the pot, plus any King Midas prize nobody qualified for</li>
+              <li>Paid on Christmas Day, weighted by reward points earned this year</li>
               <li>More points = larger share of the pot</li>
-              <li>All active affiliates with points get a payout</li>
+              <li>Every active affiliate with points this year gets a payout</li>
             </ul>
           </div>
 

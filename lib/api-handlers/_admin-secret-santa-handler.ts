@@ -91,8 +91,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const distributionsResult = await supabase
       .from('affiliate_commissions')
       .select('id, affiliate_id, amount, status, created_at, affiliates(affiliate_code)')
-      .eq('type', 'secret_santa')
-      .eq('order_id', `SECRET-SANTA-${selectedYear}`)
+      // Written by distribute_secret_santa on/after Dec 25 of the pot's year.
+      .eq('source_table', 'secret_santa')
+      .gte('created_at', `${selectedYear}-12-25`)
+      .lt('created_at', `${selectedYear + 1}-03-01`)
       .order('created_at', { ascending: false })
 
     if (distributionsResult.error && !isMissingTable(distributionsResult.error)) {
@@ -112,11 +114,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const activeAffiliates = activeAffiliatesResult.count || 0
 
+    // Shares are weighted by reward points, so there is no single
+    // per-affiliate figure; report the average once paid, nothing before.
     const sharePerAffiliate =
       distributionItems.length > 0
-        ? toNumber(distributionItems[0].amount)
-        : pot && activeAffiliates > 0
-        ? toNumber(pot.total_amount) / activeAffiliates
+        ? distributionItems.reduce((s: number, i: any) => s + toNumber(i.amount), 0) / distributionItems.length
         : null
 
     return res.status(200).json({

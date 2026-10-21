@@ -24,7 +24,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'affiliate_id required' });
     }
 
-    const currentYear = new Date().getFullYear();
+    const currentYear = Number(
+      new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }).slice(0, 4)
+    );
 
     // Get current year pot
     const { data: pot, error: potError } = await supabase
@@ -37,22 +39,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Pot not found for current year' });
     }
 
-    // Get affiliate's reward points
-    const { data: affiliate } = await supabase
+    // The payout (distribute_secret_santa) weights by reward points EARNED THIS
+    // YEAR, active affiliates only. The estimate uses the same numbers.
+    const { data: active } = await supabase
       .from('affiliates')
-      .select('reward_points')
-      .eq('id', affiliate_id as string)
-      .single();
+      .select('id')
+      .eq('status', 'active');
+    const activeIds = new Set((active || []).map((a: any) => a.id));
 
-    // Get all active affiliates' points
-    const { data: allAffiliates } = await supabase
-      .from('affiliates')
-      .select('reward_points')
-      .eq('status', 'active')
-      .gt('reward_points', 0);
+    const { data: history } = await supabase
+      .from('reward_points_history')
+      .select('affiliate_id, points')
+      .gte('created_at', `${currentYear}-01-01T06:00:00`)
+      .lt('created_at', `${currentYear + 1}-01-01T06:00:00`);
 
-    const totalPoints = allAffiliates?.reduce((sum, a) => sum + (a.reward_points || 0), 0) || 1;
-    const yourPoints = affiliate?.reward_points || 0;
+    const byAffiliate = new Map<string, number>();
+    for (const h of history || []) {
+      if (!activeIds.has(h.affiliate_id)) continue;
+      byAffiliate.set(h.affiliate_id, (byAffiliate.get(h.affiliate_id) || 0) + (h.points || 0));
+    }
+    const allAffiliates = [...byAffiliate.values()].filter((p) => p > 0);
+    const totalPoints = allAffiliates.reduce((sum, p) => sum + p, 0);
+    const yourPoints = byAffiliate.get(affiliate_id as string) || 0;
     const potAmount = parseFloat(pot.total_amount);
 
     const yourPercentage = totalPoints > 0 && yourPoints > 0
@@ -68,7 +76,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       total_amount: potAmount,
       distributed: pot.distributed,
       distribution_date: pot.distribution_date,
-      total_affiliates: allAffiliates?.length || 0,
+      total_affiliates: allAffiliates.length,
+      your_points: yourPoints,
       total_points: totalPoints,
       your_estimated_share: yourEstimatedShare,
       your_percentage: yourPercentage
