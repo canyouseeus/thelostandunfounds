@@ -29,7 +29,18 @@ export interface JobOutcome {
   retryAt?: string
 }
 
-type Action = (supabase: SupabaseClient, payload: Record<string, any>) => Promise<JobOutcome>
+type Action = (supabase: SupabaseClient, payload: Record<string, any>, jobId: string) => Promise<JobOutcome>
+
+/**
+ * The platform's own Stripe financial accounts — the only places move_funds
+ * can send money. Named so a job says where it means, not a pasted id.
+ */
+const FINANCIAL_ACCOUNTS: Record<string, string> = {
+  business: 'fa_65UbOiP49XIyCjVLt9w16UbOGOJESQ1Wd0tevkXEB3w5km',
+  king_midas: 'fa_65Vc0ZpAuxheTRvd98q16UbOGOJESQ1Wd0tevkXEB3wDSi',
+  secret_santa: 'fa_65Vc0ZPs07Y7q1ibQPv16UbOGOJESQ1Wd0tevkXEB3wOEa',
+  affiliate_pay: 'fa_65Vc0aUTLSwK4YumRSn16UbOGOJESQ1Wd0tevkXEB3wPCa',
+}
 
 const ok = (result: unknown, httpStatus = 200): JobOutcome => ({ status: 'done', httpStatus, result })
 const fail = (error: string, httpStatus?: number, result?: unknown): JobOutcome => ({
@@ -143,6 +154,36 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
     })
     return result.status < 400 ? ok(result.body, result.status) : fail(result.body?.error || 'payout failed', result.status, result.body)
   },
+
+  /**
+   * { to: 'business' | 'king_midas' | 'secret_santa' | 'affiliate_pay', amount, note? }
+   * Payments balance → one of the platform's financial accounts (a v1 Payout
+   * with payout_method = the account). Refuses rather than waits when the
+   * available balance is short: unlike a payout someone is owed, a move the
+   * owner sized against today's balance should not fire days later.
+   */
+  async move_funds(_supabase, payload, jobId) {
+    const destination = FINANCIAL_ACCOUNTS[payload.to]
+    const cents = Math.round(Number(payload.amount) * 100)
+    if (!destination) return fail(`to must be one of: ${Object.keys(FINANCIAL_ACCOUNTS).join(', ')}`, 400)
+    if (!(cents > 0)) return fail('a positive amount is required', 400)
+    const available = await availableUsd()
+    if (Math.round(available * 100) < cents) {
+      return fail(`Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}`, 409)
+    }
+    const payout = await getStripe().payouts.create(
+      {
+        amount: cents,
+        currency: 'usd',
+        payout_method: destination,
+        description: payload.note || `Move to ${payload.to}`,
+        metadata: { admin_job_id: jobId, to: payload.to },
+      },
+      // payout_method needs a newer API version than the client default.
+      { idempotencyKey: `admin-job-${jobId}`, apiVersion: '2025-08-27.basil' as any }
+    )
+    return ok({ payoutId: payout.id, status: payout.status, amount: payout.amount / 100, to: payload.to })
+  },
 }
 
 /** A waiting_funds job gives up after this long and is marked failed. */
@@ -155,7 +196,7 @@ export async function runAdminJob(
   const action = ADMIN_JOB_ACTIONS[job.action]
   if (!action) return fail(`Unknown action "${job.action}". Allowed: ${Object.keys(ADMIN_JOB_ACTIONS).join(', ')}`)
   try {
-    const outcome = await action(supabase, job.payload || {})
+    const outcome = await action(supabase, job.payload || {}, job.id)
     if (outcome.status === 'waiting_funds' && Date.now() - new Date(job.created_at).getTime() > MAX_WAIT_MS) {
       return fail(`Gave up after 3 days waiting for funds: ${outcome.error}`)
     }

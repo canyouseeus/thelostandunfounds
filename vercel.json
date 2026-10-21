@@ -74,6 +74,14 @@
     {
       "path": "/api/cron/admin-jobs",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/shop/king-midas/distribute",
+      "schedule": "15 6 * * *"
+    },
+    {
+      "path": "/api/cron/distribute-secret-santa",
+      "schedule": "15 14 25 12 *"
     }
   ],
   "redirects": [
