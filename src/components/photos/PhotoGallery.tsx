@@ -33,6 +33,7 @@ import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 // pulling the entire library on every (often bot-driven) page view was the
 // cause of a large Supabase egress overage. Users load more on demand.
 const GALLERY_PAGE_SIZE = 150;
+const LIVE_POLL_MS = 10000;
 
 // A gallery holds video as well as stills. Everything below keys off this one
 // field, so a row that predates it (null) still renders as an image exactly as
@@ -48,6 +49,7 @@ interface Photo {
     google_drive_file_id: string;
     mime_type?: string | null;
     created_at: string;
+    updated_at?: string;
     price?: number;
     library_id: string;
     metadata?: {
@@ -74,6 +76,9 @@ interface PhotoLibrary {
     owner_id?: string;
     google_drive_folder_id?: string;
     gdrive_folder_id?: string;
+    // On during an event: photos the owner publishes from /admin/live appear
+    // here without a reload.
+    live_mode?: boolean;
     // Set on client work shot by a subcontractor. When `photographer` is
     // present the gallery renders a byline under the description; the
     // Instagram URL, when present, makes that byline a link to them.
@@ -441,6 +446,57 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
         return () => controller.abort();
     }, [user, library]);
+
+    // Live event: pick up photos as the owner publishes them.
+    //
+    // Keyed on updated_at, not created_at. created_at is the capture time, and
+    // a frame shot a minute ago can be published after one shot just now — a
+    // created_at cursor would skip it. updated_at is stamped by the database
+    // when the row is written, so it only moves forward. The cursor is always
+    // a server timestamp read back from a row, never this device's clock.
+    useEffect(() => {
+        if (!library?.live_mode || isAllPublic || loading) return;
+        const libraryId = library.id;
+        let cursor: string | null = null;
+        let stopped = false;
+
+        const baseline = async () => {
+            const { data } = await supabase
+                .from('photos')
+                .select('updated_at')
+                .eq('library_id', libraryId)
+                .order('updated_at', { ascending: false })
+                .limit(1);
+            cursor = data?.[0]?.updated_at ?? new Date(0).toISOString();
+        };
+        const poll = async () => {
+            if (stopped || cursor === null || document.visibilityState !== 'visible') return;
+            const { data, error } = await supabase
+                .from('photos')
+                .select('*')
+                .eq('library_id', libraryId)
+                .gt('updated_at', cursor)
+                .order('updated_at', { ascending: true })
+                .limit(100);
+            if (stopped || error || !data || data.length === 0) return;
+            cursor = (data[data.length - 1] as Photo).updated_at || cursor;
+            setPhotos(prev => {
+                const have = new Set(prev.map(p => p.google_drive_file_id || p.id));
+                const fresh = (data as Photo[]).filter(p => !have.has(p.google_drive_file_id || p.id));
+                // "Load more" pages by offset, so these rows shift its next page
+                // down by a few. It drops rows it already has, so the overlap
+                // costs a few duplicate fetches and never a missed photo.
+                return fresh.length === 0 ? prev : [...fresh.reverse(), ...prev];
+            });
+        };
+
+        baseline();
+        const timer = window.setInterval(poll, LIVE_POLL_MS);
+        return () => {
+            stopped = true;
+            window.clearInterval(timer);
+        };
+    }, [library?.id, library?.live_mode, isAllPublic, loading]);
 
     // For private galleries with a Drive folder but no Supabase photos, load directly from Drive
     useEffect(() => {
@@ -1051,6 +1107,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-white tracking-tight uppercase mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
                         {library?.name}
                     </h1>
+                    {library?.live_mode && (
+                        <p className="text-green-400 text-[10px] md:text-xs font-black uppercase tracking-[0.25em] mb-2">
+                            ● Live — new photos appear as they're published
+                        </p>
+                    )}
                     <p className="text-zinc-500 text-sm md:text-base font-medium tracking-tight mb-2">
                         {library?.description}
                     </p>

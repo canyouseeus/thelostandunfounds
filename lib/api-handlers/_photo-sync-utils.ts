@@ -448,6 +448,26 @@ function findNearestNeighborhood(
     return bestDist <= NEIGHBORHOOD_FALLBACK_MAX_M ? best : null;
 }
 
+/** Year, month and "Month Year" collection tags — the date names a photo files under. */
+function dateTagNames(metadata: any, file: DriveFile): string[] {
+    const dateStr = metadata.date_taken || file.createdTime;
+    if (!dateStr) return [];
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return [];
+    const year = d.getUTCFullYear().toString();
+    const month = MONTH_NAMES[d.getUTCMonth()];
+    return [year, month, `${month} ${year}`];
+}
+
+async function dateTagIds(ctx: SyncCtx, metadata: any, file: DriveFile): Promise<string[]> {
+    const ids: string[] = [];
+    for (const name of dateTagNames(metadata, file)) {
+        const id = await ensureTag(ctx, name, 'collection');
+        if (id) ids.push(id);
+    }
+    return ids;
+}
+
 async function writePhotoTags(ctx: SyncCtx, photoId: string, tagIds: Set<string>): Promise<void> {
     if (tagIds.size === 0) return;
     const rows = [...tagIds].map(tagId => ({ photo_id: photoId, tag_id: tagId }));
@@ -591,21 +611,7 @@ export async function processFolder(
                 tagIds.add(folderVenueOrLocationTagId);
             }
         }
-        const dateStr = metadata.date_taken || file.createdTime;
-        if (dateStr) {
-            const d = new Date(dateStr);
-            if (!isNaN(d.getTime())) {
-                const year = d.getUTCFullYear().toString();
-                const month = MONTH_NAMES[d.getUTCMonth()];
-                const yearMonth = `${month} ${year}`;
-                const y = await ensureTag(ctx, year, 'collection');
-                const m = await ensureTag(ctx, month, 'collection');
-                const ym = await ensureTag(ctx, yearMonth, 'collection');
-                if (y) tagIds.add(y);
-                if (m) tagIds.add(m);
-                if (ym) tagIds.add(ym);
-            }
-        }
+        for (const id of await dateTagIds(ctx, metadata, file)) tagIds.add(id);
 
         // GPS-only venue tagging is a fallback for photos whose folder didn't
         // resolve to a venue (e.g. a generic "uploads" or year-named folder).
@@ -979,4 +985,73 @@ export async function syncGalleryPhotos(
         deleted: deletedCount,
         timedOut: ctx.timedOut,
     };
+}
+
+/**
+ * Drive fields the live-event ingest reads back for a file. The same set the
+ * folder listing asks for, plus `parents` and `trashed` so the caller can
+ * check which folder the file really sits in.
+ */
+export const INGEST_FILE_FIELDS =
+    'id, name, mimeType, parents, trashed, thumbnailLink, webContentLink, createdTime, modifiedTime, imageMediaMetadata';
+
+/**
+ * Write one live-event photo into a gallery the moment the owner publishes it
+ * from the review inbox — the counterpart of a sync pass, for a single photo.
+ *
+ * It goes through the same upsertPhoto as the sync, so the row carries the
+ * sync fingerprint and the next scheduled pass skips it instead of rewriting
+ * it. Re-running it for the same file updates the row rather than inserting a
+ * second one.
+ *
+ * Only date tags are attached. Folder tags do not apply (published photos
+ * land at the gallery root), and venue tags need GPS that event cameras rarely
+ * record — the full sync still adds them later if Drive changes the file.
+ *
+ * The tag cache is seeded with just the three date slugs this photo needs.
+ * The sync loads the whole tag table, which is fine once a day and wasteful
+ * once per photo during an event.
+ */
+export async function ingestUploadedPhoto(
+    supabase: SupabaseClient,
+    libraryId: string,
+    file: DriveFile,
+): Promise<string | null> {
+    if (!file.id) return null;
+    const { metadata } = parsePhotoFields(file);
+    const names = dateTagNames(metadata, file);
+    const slugs = names.map(n => generateSlug(n, 'collection'));
+
+    const tagCache = new Map<string, { id: string; type: string; metadata: any }>();
+    if (slugs.length > 0) {
+        const { data } = await supabase
+            .from('tags')
+            .select('id, slug, type, metadata')
+            .in('slug', slugs);
+        for (const t of data ?? []) {
+            if (t.slug) tagCache.set(t.slug, { id: t.id, type: t.type, metadata: t.metadata });
+        }
+    }
+
+    const ctx: SyncCtx = {
+        // Ingest never lists a folder, so it never touches the Drive client.
+        drive: null as unknown as drive_v3.Drive,
+        supabase,
+        library: { id: libraryId },
+        tagCache,
+        venues: [],
+        neighborhoods: [],
+        stats: { synced: 0, skipped: 0, foldersVisited: 0, tagsCreated: 0 },
+        seenFileIds: new Set<string>(),
+        limit: 1,
+        deadline: Date.now() + 30_000,
+        timedOut: false,
+    };
+
+    const existing = await loadExistingPhotos(ctx, [file.id]);
+    const photoId = await upsertPhoto(ctx, file, existing.get(file.id));
+    if (!photoId) return null;
+
+    await writePhotoTags(ctx, photoId, new Set(await dateTagIds(ctx, metadata, file)));
+    return photoId;
 }
