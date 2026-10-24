@@ -212,6 +212,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleBatchDelete(req, res);
         }
 
+        if (route === 'ingest-start' || route === 'ingest-complete') {
+            return await handleIngest(req, res, route);
+        }
+
+        if (route === 'live-event') {
+            return await handleLiveEvent(req, res);
+        }
+
+        if (route === 'live-inbox') {
+            return await handleLiveInbox(req, res);
+        }
+
+        if (route === 'live-preview') {
+            return await handleLivePreview(req, res);
+        }
+
         return res.status(404).json({
             error: 'Gallery route not found',
             debug: {
@@ -1206,5 +1222,136 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         console.error('[batch-delete] Error:', err);
         return res.status(500).json({ error: err.message });
+    }
+}
+
+/**
+ * Live event uploads. Two steps, both POST:
+ *   ingest-start    { fileName, mimeType, size, slug? } → { uploadUrl }
+ *                   PUT the file's bytes to uploadUrl; Google returns { id }.
+ *   ingest-complete { fileId, slug? }                    → { pending: true }
+ * The photo then waits in the gallery's live inbox for review (live-inbox).
+ * Auth is an ingest key (Bearer tlu_live_…) or the admin session plus slug —
+ * see lib/api-handlers/_gallery-ingest.ts.
+ */
+async function handleIngest(req: VercelRequest, res: VercelResponse, route: string) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
+    try {
+        const supabase = ingest.createServiceClient();
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const caller = await ingest.resolveIngestCaller(req, supabase, body.slug);
+
+        if (route === 'ingest-start') {
+            const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+            const result = await ingest.startUpload(supabase, caller, body, origin);
+            return res.status(200).json({ success: true, gallery: caller.library.slug, ...result });
+        }
+
+        const result = await ingest.completeUpload(supabase, caller, body);
+        return res.status(200).json({ success: true, gallery: caller.library.slug, ...result });
+    } catch (err: any) {
+        const status = err instanceof ingest.HttpError ? err.status : 500;
+        if (status >= 500) console.error(`[${route}] Error:`, err);
+        return res.status(status).json({ error: err.message });
+    }
+}
+
+/**
+ * Admin control for a live event.
+ *   GET  ?slug=                                   → live_mode + keys (no secrets)
+ *   POST { slug, action: 'start' | 'stop' }       → toggles live_mode
+ *   POST { slug, action: 'mint-key', label? }     → { key } — shown once, never stored
+ *   POST { slug, action: 'revoke-key', keyId }
+ */
+async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
+    const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
+    const { verifyAdmin } = await import('../../lib/api-handlers/_admin-auth.js');
+    try {
+        if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
+        const supabase = ingest.createServiceClient();
+
+        if (req.method === 'GET') {
+            const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+            if (!slug) return res.status(400).json({ error: 'slug is required' });
+            return res.status(200).json({ success: true, ...(await ingest.getLiveEvent(supabase, slug)) });
+        }
+        if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+        const { slug, action, label, keyId } = (req.body && typeof req.body === 'object') ? req.body : {};
+        if (typeof slug !== 'string' || !slug) return res.status(400).json({ error: 'slug is required' });
+
+        switch (action) {
+            case 'start':
+            case 'stop':
+                return res.status(200).json({ success: true, ...(await ingest.setLiveMode(supabase, slug, action === 'start')) });
+            case 'mint-key':
+                return res.status(200).json({ success: true, ...(await ingest.mintIngestKey(supabase, slug, label)) });
+            case 'revoke-key':
+                if (typeof keyId !== 'string' || !keyId) return res.status(400).json({ error: 'keyId is required' });
+                return res.status(200).json({ success: true, ...(await ingest.revokeIngestKey(supabase, slug, keyId)) });
+            default:
+                return res.status(400).json({ error: 'action must be start, stop, mint-key or revoke-key' });
+        }
+    } catch (err: any) {
+        const status = err instanceof ingest.HttpError ? err.status : 500;
+        if (status >= 500) console.error('[live-event] Error:', err);
+        return res.status(status).json({ error: err.message });
+    }
+}
+
+/**
+ * The live review inbox. Admin only.
+ *   GET  ?slug=                                         → photos waiting for review
+ *   POST { slug, action: 'publish', fileIds: [...] }    → into the gallery, live
+ *   POST { slug, action: 'discard', fileIds: [...] }    → deleted from Drive for good
+ */
+async function handleLiveInbox(req: VercelRequest, res: VercelResponse) {
+    const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
+    const { verifyAdmin } = await import('../../lib/api-handlers/_admin-auth.js');
+    try {
+        if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
+        const supabase = ingest.createServiceClient();
+        res.setHeader('Cache-Control', 'no-store');
+
+        if (req.method === 'GET') {
+            const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+            if (!slug) return res.status(400).json({ error: 'slug is required' });
+            return res.status(200).json({ success: true, ...(await ingest.listInbox(supabase, slug)) });
+        }
+        if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+        const { slug, action, fileIds } = (req.body && typeof req.body === 'object') ? req.body : {};
+        if (typeof slug !== 'string' || !slug) return res.status(400).json({ error: 'slug is required' });
+        if (action === 'publish') {
+            return res.status(200).json({ success: true, ...(await ingest.publishPending(supabase, slug, fileIds)) });
+        }
+        if (action === 'discard') {
+            return res.status(200).json({ success: true, ...(await ingest.discardPending(supabase, slug, fileIds)) });
+        }
+        return res.status(400).json({ error: 'action must be publish or discard' });
+    } catch (err: any) {
+        const status = err instanceof ingest.HttpError ? err.status : 500;
+        if (status >= 500) console.error('[live-inbox] Error:', err);
+        return res.status(status).json({ error: err.message });
+    }
+}
+
+/** GET ?fileId=&size= — a resized pending photo for the review grid. Admin only, never cached. */
+async function handleLivePreview(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
+    const { verifyAdmin } = await import('../../lib/api-handlers/_admin-auth.js');
+    try {
+        if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
+        const fileId = typeof req.query.fileId === 'string' ? req.query.fileId : '';
+        const image = await ingest.previewPending(ingest.createServiceClient(), fileId, Number(req.query.size || 600));
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cache-Control', 'private, no-store');
+        return res.send(image);
+    } catch (err: any) {
+        const status = err instanceof ingest.HttpError ? err.status : 500;
+        if (status >= 500) console.error('[live-preview] Error:', err);
+        return res.status(status).json({ error: err.message });
     }
 }

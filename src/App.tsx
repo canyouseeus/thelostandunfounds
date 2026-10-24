@@ -61,6 +61,7 @@ import DownloadPortal from './pages/DownloadPortal'
 import ClientUpload from './pages/ClientUpload'
 import SignContract from './pages/SignContract'
 import AdminContracts from './pages/AdminContracts'
+import AdminLive from './pages/AdminLive'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import GearIntake from './pages/GearIntake'
@@ -271,6 +272,13 @@ function App() {
                   <ErrorBoundary>
                     <AdminAuthGate>
                       <AdminContracts />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
+                <Route path="live" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminLive />
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />

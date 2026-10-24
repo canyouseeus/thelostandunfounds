@@ -57,3 +57,26 @@ Delivery is dual-channel: **Instant Access** + **Email Backup**.
 *   **Proxying**: All images are served via `/api/gallery/stream`.
 *   **Privacy**: Images in Drive must be "Anyone with the link can view".
 *   **CORS**: The proxy bypasses standard Drive CORS issues by piping the stream server-side.
+
+## 5. Live Events (camera → review inbox → gallery)
+Photos sent from a camera during an event never go straight to the gallery. They wait in a
+**private review inbox** until the owner publishes them from **`/admin/live?slug=<gallery>`**.
+
+*   **Upload** (`POST /api/gallery/ingest-start` → PUT bytes to the returned Drive URL →
+    `POST /api/gallery/ingest-complete`). Auth is a per-gallery **ingest key** (`Bearer tlu_live_…`,
+    minted on the live page, only its SHA-256 stored) or the admin session. A key can only add to
+    its own gallery's inbox: it cannot publish, delete, read anything, or pass `verifyAdmin`.
+*   **Inbox** = a Drive folder **outside** the gallery folder (`gallery_live_inboxes`), so neither
+    guests nor the scheduled sync can see a pending photo. Pending rows live in
+    `gallery_ingest_pending`. Both tables are service-role only (RLS on, no policies).
+*   **Publish** moves the file into the gallery folder and writes the row through
+    `ingestUploadedPhoto` (same `upsertPhoto` + fingerprint as the sync, so the sync skips it).
+*   **Discard** permanently deletes the Drive file (no trash) and drops the row. Nothing is kept.
+*   **Previews** of pending photos go through admin-only `/api/gallery/live-preview`, never the
+    public `/api/gallery/stream`.
+*   **Live gallery**: `photo_libraries.live_mode` makes the gallery page poll for newly published
+    photos every 10s, keyed on `updated_at` (server time), not `created_at` (capture time).
+*   Drive writes use the owner's OAuth refresh token. If uploads fail with Google 403
+    `insufficientPermissions`, that token only has read-only Drive scope — re-consent it with full
+    Drive scope; it is not a code bug.
+*   Harness: `npx tsx scripts/verify-gallery-ingest.mts`.
