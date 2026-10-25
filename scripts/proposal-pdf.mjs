@@ -72,7 +72,7 @@ if (!chrome) {
 
 const filter = process.argv[2];
 const targets = readdirSync(publicDir)
-  .filter((f) => f.endsWith('-proposal.html'))
+  .filter((f) => /-(proposal|handover)\.html$/.test(f))
   .filter((f) => !filter || f.includes(filter));
 
 if (targets.length === 0) {
