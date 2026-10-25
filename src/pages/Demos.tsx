@@ -31,12 +31,13 @@ type Demo = {
 
 const DEMOS: Demo[] = [
   {
-    kind: 'Website',
+    kind: 'Website + owner dashboard',
     title: 'The Lost+Unfounds',
     blurb:
-      'Our own site, and the clearest example of the customer-facing build: a landing page that carries the work, with booking running inline on it — pick a service, pick a date, and the request lands without leaving the page or bouncing to a third-party scheduler.',
+      'Our own build, shown the same way a client’s is: a guided walkthrough of the customer side — landing page, inline booking, gallery, shop, archives and delivery — and the owner console that runs behind it. Both are sandboxes with invented data; the dashboard deals a new set of numbers, names and charts every time it loads.',
     links: [
-      { label: 'The site', href: '/' },
+      { label: 'The customer site', href: '/demo/tour', note: 'Guided tour, 8 stops' },
+      { label: 'The owner dashboard', href: '/demo/dashboard', note: 'Sample data — affiliate view inside' },
     ],
   },
   {
