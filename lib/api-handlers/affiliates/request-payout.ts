@@ -219,6 +219,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const stripe = getStripe();
 
+    // A transfer draws on the platform's available balance, not the
+    // affiliate's. Client payments sit in "pending" for ~2 business days, so a
+    // commission can be owed before the money behind it has settled. That is
+    // the platform waiting on Stripe — nothing the affiliate can fix — so it
+    // is not a failed payout: no rejected request row, no email to them.
+    const platformBalance = await stripe.balance.retrieve();
+    const availableCents = (platformBalance.available || [])
+      .filter(b => b.currency === 'usd')
+      .reduce((sum, b) => sum + b.amount, 0);
+    if (availableCents < Math.round(numericAmount * 100)) {
+      return res.status(409).json({
+        error: 'Platform funds have not settled yet. Commissions stay in your balance; try again shortly.',
+        code: 'PLATFORM_FUNDS_PENDING',
+        details: { requested: numericAmount },
+      });
+    }
+
     let transfer;
     try {
       transfer = await stripe.transfers.create(
@@ -244,6 +261,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const errMsg = stripeError?.message || 'Stripe transfer failed';
 
+      // Lost a race with the balance check above — still the platform's
+      // shortfall, still not the affiliate's to hear about.
+      if (stripeError?.code === 'balance_insufficient') {
+        return res.status(409).json({
+          error: 'Platform funds have not settled yet. Commissions stay in your balance; try again shortly.',
+          code: 'PLATFORM_FUNDS_PENDING',
+        });
+      }
+
       await supabase.from('payout_requests').insert({
         affiliate_id: affiliate.id,
         user_id: affiliate.user_id,
@@ -264,7 +290,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             type: 'payout_failed',
             affiliateId: affiliate.id,
             to: userRow.user.email,
-            data: { amount: numericAmount, reason: errMsg },
+            data: { amount: numericAmount },
           });
         }
       } catch (e) { /* non-fatal */ }
