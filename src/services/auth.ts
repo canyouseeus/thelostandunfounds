@@ -39,19 +39,28 @@ export class UnifiedAuthService {
    * gallery link is gated on photo_libraries.invited_emails, matched against
    * the signed-in user's email — so proving the address is the whole of what
    * access requires, and a password is a step that only loses them.
-   * shouldCreateUser is true because an invited client has no account yet.
+   * The account is created if there isn't one, because an invited client has
+   * none yet.
+   *
+   * This goes through our own /api/auth/magic-link rather than
+   * supabase.auth.signInWithOtp(), because signInWithOtp sends Supabase's stock
+   * template from "Supabase Auth" — a white, unbranded email that is the first
+   * thing an invited client sees of us. The endpoint mints the same Supabase
+   * link server-side and sends it in our own shell. Do not restore the direct
+   * call as a fallback: a fallback here is an unbranded email nobody asked for.
    */
   async signInWithMagicLink(email: string, redirectTo?: string): Promise<{ error: Error | null }> {
     try {
-      const { supabase } = await import('../lib/supabase');
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectTo || window.location.href,
-          shouldCreateUser: true,
-        },
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, redirectTo: redirectTo || window.location.href }),
       });
-      return { error: (error as Error) || null };
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { error: new Error(data.error || "We couldn't send that link. Try again in a moment.") };
+      }
+      return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
