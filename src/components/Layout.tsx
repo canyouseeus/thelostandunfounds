@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
 import { isAdminUser } from '../utils/admin'
 import { initAffiliateTracking } from '../utils/affiliate-tracking'
+import { getVisitorId } from '../utils/visitor-id'
 import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
@@ -150,12 +151,14 @@ export default function Layout({ children }: { children?: ReactNode }) {
   // Site-wide page view tracking for the admin Site Analytics dashboard.
   // Fires once per route change; visitor_id matches the pattern used by BlogPost.tsx
   // so unique-visitor counting is consistent across the whole site.
+  //
+  // The identifier now comes from utils/visitor-id, which caps its lifetime at
+  // 13 months. That cap is what keeps this inside the first-party
+  // audience-measurement exemption and out of consent-banner territory — the
+  // previous inline version minted a UUID that never expired. Do not reintroduce
+  // a permanent identifier here without also adding a consent gate.
   useEffect(() => {
-    let visitorId = localStorage.getItem('tlau_visitor_id')
-    if (!visitorId) {
-      visitorId = crypto.randomUUID()
-      localStorage.setItem('tlau_visitor_id', visitorId)
-    }
+    const visitorId = getVisitorId()
 
     fetch('/api/admin/analytics/record', {
       method: 'POST',

@@ -8,10 +8,42 @@
  * - Track customer-to-affiliate binding
  */
 
+import { mayStoreNonEssential, subscribeConsent } from './consent'
+
 const AFFILIATE_COOKIE_NAME = 'affiliate_ref'
 const AFFILIATE_COOKIE_EXPIRY_DAYS = 30
 
 const AFFILIATE_SUBID_COOKIE_NAME = 'affiliate_subid'
+
+/**
+ * Referral details seen on this page load but not yet allowed to be written to
+ * disk, because the consent gate has not resolved (or was declined).
+ *
+ * Attribution is marketing storage, so in the EU/UK it waits for a yes. Holding
+ * the value in memory means a visitor who consents a moment later still gets
+ * their referrer credited, instead of the code silently losing the ref because
+ * the URL parameter was stripped before the answer arrived.
+ */
+let pendingRef: string | null = null
+let pendingSubId: string | null = null
+
+/**
+ * Flush anything held in memory once consent lands. Registered once, at module
+ * load, so it is active before any component calls into this file.
+ */
+if (typeof window !== 'undefined') {
+  subscribeConsent(() => {
+    if (!mayStoreNonEssential()) return
+    if (pendingSubId) {
+      setAffiliateSubId(pendingSubId)
+      pendingSubId = null
+    }
+    if (pendingRef) {
+      setAffiliateRef(pendingRef)
+      pendingRef = null
+    }
+  })
+}
 
 /**
  * Get affiliate reference from URL query parameter, cookie, or localStorage
@@ -55,8 +87,16 @@ export function getAffiliateRef(): string | null {
     return cookieRef
   }
 
-  // 3. Fall back to localStorage
-  return localStorage.getItem(AFFILIATE_COOKIE_NAME)
+  // 3. A ref seen this page load but not yet writable (consent gate unresolved
+  //    or declined). Attribution for the visit in progress still works.
+  if (pendingRef) return pendingRef
+
+  // 4. Fall back to localStorage
+  try {
+    return localStorage.getItem(AFFILIATE_COOKIE_NAME)
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -64,15 +104,37 @@ export function getAffiliateRef(): string | null {
  */
 export function getAffiliateSubId(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(AFFILIATE_SUBID_COOKIE_NAME)
+  if (pendingSubId) return pendingSubId
+  try {
+    return localStorage.getItem(AFFILIATE_SUBID_COOKIE_NAME)
+  } catch {
+    return null
+  }
 }
 
 /**
- * Set affiliate sub-id
+ * Set affiliate sub-id. Held in memory until the consent gate allows a write.
  */
 export function setAffiliateSubId(subId: string): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(AFFILIATE_SUBID_COOKIE_NAME, subId)
+  if (!mayStoreNonEssential()) {
+    pendingSubId = subId
+    return
+  }
+  try {
+    localStorage.setItem(AFFILIATE_SUBID_COOKIE_NAME, subId)
+  } catch {
+    /* storage unavailable — attribution is best-effort, never fatal */
+  }
+}
+
+/**
+ * True when this page load saw a referral we are not yet allowed to persist.
+ * Drives whether the consent prompt is worth showing at all — no referral means
+ * nothing gated is pending, so there is nothing to ask about.
+ */
+export function hasPendingReferral(): boolean {
+  return pendingRef !== null || pendingSubId !== null
 }
 
 /**
@@ -98,14 +160,26 @@ export function getAffiliateCookie(): string | null {
 export function setAffiliateRef(affiliateCode: string): void {
   if (typeof window === 'undefined') return
 
+  // Marketing attribution is consent-gated. Until the gate says yes, keep the
+  // code in memory only: the current visit can still be attributed at checkout,
+  // but nothing is written to the device.
+  if (!mayStoreNonEssential()) {
+    pendingRef = affiliateCode
+    return
+  }
+
   // Set Cookie
   const expiryDate = new Date()
   expiryDate.setDate(expiryDate.getDate() + AFFILIATE_COOKIE_EXPIRY_DAYS)
   document.cookie = `${AFFILIATE_COOKIE_NAME}=${encodeURIComponent(affiliateCode)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`
 
   // Set LocalStorage (Redundancy)
-  localStorage.setItem(AFFILIATE_COOKIE_NAME, affiliateCode)
-  localStorage.setItem(`${AFFILIATE_COOKIE_NAME}_timestamp`, new Date().toISOString())
+  try {
+    localStorage.setItem(AFFILIATE_COOKIE_NAME, affiliateCode)
+    localStorage.setItem(`${AFFILIATE_COOKIE_NAME}_timestamp`, new Date().toISOString())
+  } catch {
+    /* cookie above is the primary; the mirror is best-effort */
+  }
 }
 
 /**
@@ -121,12 +195,21 @@ export function setAffiliateCookie(affiliateCode: string): void {
 export function clearAffiliateRef(): void {
   if (typeof window === 'undefined') return
 
+  // Drop the in-memory copy too, or a "clear" would leave the ref live for the
+  // rest of the page and re-persist it the moment consent lands.
+  pendingRef = null
+  pendingSubId = null
+
   // Clear Cookie
   document.cookie = `${AFFILIATE_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
 
   // Clear LocalStorage
-  localStorage.removeItem(AFFILIATE_COOKIE_NAME)
-  localStorage.removeItem(`${AFFILIATE_COOKIE_NAME}_timestamp`)
+  try {
+    localStorage.removeItem(AFFILIATE_COOKIE_NAME)
+    localStorage.removeItem(`${AFFILIATE_COOKIE_NAME}_timestamp`)
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
