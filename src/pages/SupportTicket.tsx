@@ -58,6 +58,7 @@ export default function SupportTicket() {
         <>
             <Helmet>
                 <title>THE LOST+UNFOUNDS | Support Ticket</title>
+                <meta name="description" content="Your THE LOST+UNFOUNDS support ticket: the full conversation with our team, and a place to reply." />
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left">
