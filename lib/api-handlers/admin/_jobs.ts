@@ -7,6 +7,7 @@ import { createDirectBooking, attachDirectBooking, sendReferrerInvite } from './
 import requestPayout from '../affiliates/request-payout.js'
 import { recordFieldSale } from './field-sales.js'
 import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referral-tie.js'
+import { getZohoAuthContext } from '../_zoho-email-utils.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -84,6 +85,28 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
   /** Read-only. { } */
   async stripe_balance() {
     return ok({ availableUsd: await availableUsd() })
+  },
+
+  /**
+   * Read-only. { } — every company address Zoho says the connected mailbox
+   * owns: each account's primary address, aliases and send-as addresses.
+   * Answers "is support@ real?" without the Zoho console.
+   */
+  async zoho_addresses() {
+    const auth = await getZohoAuthContext()
+    const res = await fetch('https://mail.zoho.com/api/accounts', {
+      headers: { Authorization: `Zoho-oauthtoken ${auth.accessToken}` },
+    })
+    const json: any = await res.json().catch(() => ({}))
+    if (!res.ok) return fail(`Zoho accounts lookup failed: ${res.status}`, res.status, json)
+    const accounts = (json?.data || json?.accounts || []).map((a: any) => ({
+      primary: a.primaryEmailAddress || a.mailboxAddress || null,
+      aliases: (a.emailAddress || [])
+        .map((e: any) => (typeof e === 'string' ? e : e.mailId))
+        .filter(Boolean),
+      sendAs: (a.sendMailDetails || []).map((d: any) => d.fromAddress).filter(Boolean),
+    }))
+    return ok({ connectedAs: auth.fromEmail, accounts })
   },
 
   /** { clientName, clientEmail, clientPhone?, description, eventDate?, lineItems[] } */
