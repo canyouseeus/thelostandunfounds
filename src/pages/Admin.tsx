@@ -119,6 +119,8 @@ import { useLongPress } from '../components/ui/use-long-press';
 import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
+import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
+import { ADMIN_PANEL_EVENT } from '../components/admin/tour/tours';
 import { installGlobalListeners } from '../lib/adminErrorLog';
 
 interface DashboardStats {
@@ -295,6 +297,14 @@ export default function Admin() {
     const panel = searchParams.get('panel');
     if (panel) setActivePanelSection(panel);
   }, [searchParams]);
+
+  // Walkthroughs open and close panels here (see components/admin/tour).
+  // Set, not toggled, so a step that re-opens the open panel is a no-op.
+  useEffect(() => {
+    const onPanel = (e: Event) => setActivePanelSection((e as CustomEvent<string | null>).detail ?? null);
+    window.addEventListener(ADMIN_PANEL_EVENT, onPanel);
+    return () => window.removeEventListener(ADMIN_PANEL_EVENT, onPanel);
+  }, []);
 
   // Long press on the dashboard calendar opens the master calendar panel —
   // the same one the header date links to.
@@ -1647,18 +1657,18 @@ export default function Admin() {
           dashboard a narrow column with dead space either side; 1600 gives
           ~171px cells and fills the screen without the tiles becoming
           furniture. */}
-      <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
+      <div ref={pageTopRef} data-tour-root="admin" className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
-          <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)] min-w-0">
+          <h1 data-tour="admin-title" className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)] min-w-0">
             ADMIN DASHBOARD
           </h1>
 
           {/* Three icon buttons beside a title that scales with the viewport
               collided on a phone — they sat on top of "ADMIN DASHBOARD". Above
               sm they stay inline; below it they collapse behind one button. */}
-          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+          <div data-tour="admin-actions" className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <CopyDebugReport />
             <AdminDeploymentNotifications />
             <Link
@@ -1670,7 +1680,7 @@ export default function Admin() {
             </Link>
           </div>
 
-          <div className="relative sm:hidden flex-shrink-0">
+          <div data-tour="admin-actions" className="relative sm:hidden flex-shrink-0">
             <button
               onClick={() => setAdminActionsOpen(o => !o)}
               aria-label="Dashboard actions"
@@ -1804,6 +1814,7 @@ export default function Admin() {
         <div style={{ containerType: 'inline-size' }}>
         <div
           id="dashboard-widgets"
+          data-tour="widget-grid"
           ref={gridRef}
           data-editing={layout.editing ? 'true' : 'false'}
           className="grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6 [grid-auto-flow:dense]"
@@ -1990,7 +2001,7 @@ export default function Admin() {
         <div className="flex flex-col items-center pt-8">
           <div className="relative group w-full max-w-full px-4 sm:px-0 flex flex-col items-center">
             <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
-            <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
+            <div data-tour="dock" className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
               {[
                 { id: 'gallery', icon: PhotoIcon, title: 'Gallery' },
                 { id: 'clientuploads', icon: CloudArrowUpIcon, title: 'Content Requests' },
@@ -2011,6 +2022,7 @@ export default function Admin() {
               ].map((app) => (
                 <button
                   key={app.id}
+                  data-tour={`dock-${app.id}`}
                   onClick={() => openPanel(app.id)}
                   className={cn(
                     "relative p-3 transition-all duration-300 rounded-full group/btn",
@@ -2035,6 +2047,7 @@ export default function Admin() {
               {/* Arranging the board is a console tool like any other, so it
                   docks here rather than floating above the grid. */}
               <button
+                data-tour="dock-edit-layout"
                 onClick={() => layout.setEditing(!layout.editing)}
                 className={cn(
                   "relative p-3 transition-all duration-300 rounded-full group/btn",
@@ -2071,7 +2084,7 @@ export default function Admin() {
               {/* Fixed header — back button + section title, pr-16 clears the X button */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
-                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
+                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" />, extra: <Link to="/admin/live" data-tour="gallery-live-link" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Live Event →</Link> },
                   clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
@@ -2092,7 +2105,7 @@ export default function Admin() {
                 const meta = sectionMeta[activePanelSection];
                 if (!meta) return null;
                 return (
-                  <div className="shrink-0 flex flex-col gap-3 pt-6 pb-4 pr-16">
+                  <div data-tour="panel-header" className="shrink-0 flex flex-col gap-3 pt-6 pb-4 pr-16">
                     <button
                       onClick={() => setActivePanelSection(null)}
                       className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group w-fit"
@@ -2110,7 +2123,7 @@ export default function Admin() {
               })()}
 
               {/* Content — fills remaining height, scrolls within itself */}
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
+              <div data-tour="panel-body" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
                 {activePanelSection === 'gallery' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
                     <AdminGalleryView onBack={() => setActivePanelSection(null)} />
@@ -2261,6 +2274,8 @@ export default function Admin() {
             </div>
           </ExpandableScreenContent>
         </ExpandableScreen>
+
+        <WhatsNewModal />
 
       </div>
     </div>

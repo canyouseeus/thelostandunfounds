@@ -260,7 +260,7 @@ export default function AdminLive() {
         <div className="flex items-center justify-between mb-10 gap-4 flex-wrap">
           <h1 className="text-3xl font-black uppercase tracking-[0.2em]">LIVE EVENT</h1>
           {slug && (
-            <div className="flex items-center gap-3">
+            <div data-tour="live-go" className="flex items-center gap-3">
               <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${liveMode ? 'text-green-400' : 'text-white/40'}`}>
                 {liveMode ? '● Live' : 'Not live'}
               </span>
@@ -272,7 +272,7 @@ export default function AdminLive() {
           )}
         </div>
 
-        <div className="mb-8">
+        <div data-tour="live-gallery-picker" className="mb-8">
           <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-white/50 mb-2">Gallery</label>
           <select className={field} style={{ borderRadius: 0 }} value={slug}
             onChange={e => setSearchParams(e.target.value ? { slug: e.target.value } : {})}>
@@ -314,13 +314,13 @@ export default function AdminLive() {
             </div>
 
             {pending.length === 0 ? (
-              <div className="bg-white/5 p-10 mb-12 text-left" style={{ borderRadius: 0 }}>
+              <div data-tour="live-inbox" className="bg-white/5 p-10 mb-12 text-left" style={{ borderRadius: 0 }}>
                 <p className="text-sm text-white/60">
                   Nothing waiting. Photos from the camera show up here within a few seconds of arriving.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-12">
+              <div data-tour="live-inbox" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-12">
                 {pending.map(p => {
                   const isSelected = selected.has(p.drive_file_id)
                   const src = previews[p.drive_file_id]
@@ -353,7 +353,7 @@ export default function AdminLive() {
             )}
 
             {/* Upload keys */}
-            <div className="bg-white/5 p-8" style={{ borderRadius: 0 }}>
+            <div data-tour="live-keys" className="bg-white/5 p-8" style={{ borderRadius: 0 }}>
               <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">CAMERA UPLOAD KEYS</h2>
               <p className="text-white/50 text-xs mb-6 text-left">
                 A key lets one uploader (the Canon FTP relay, the Fuji laptop) send photos into this gallery's inbox.

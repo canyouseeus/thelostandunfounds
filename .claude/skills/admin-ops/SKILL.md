@@ -76,6 +76,13 @@ logError(err.message);
 </button>
 ```
 
+## Tutorials (walkthroughs)
+
+Every new admin feature ships with a tour in `src/components/admin/tour/tours.ts`. Set `announce`
+to the ship date so the dashboard shows a NEW FEATURE pop-up with GO. See ADMIN TUTORIAL RULE in
+`CLAUDE.md`. The console tools each have a tour generated from the `consoleTools` list. When you
+add a dock icon, add its entry there; when you change a tool, update its copy.
+
 ## Verification Checklist
 - [ ] No "coming soon" or static "--%" placeholders.
 - [ ] No `rounded` or `rounded-*` classes. Two sanctioned exceptions only: the Platform Console

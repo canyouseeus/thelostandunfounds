@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useSageMode } from '../contexts/SageModeContext';
+import { TutorialList } from '../components/admin/tour/TutorialLibrary';
 import {
   SparklesIcon,
   CheckBadgeIcon,
@@ -119,6 +120,14 @@ export default function SageMode() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Every admin walkthrough. The same list opens from the TUTORIALS
+            tile that appears above the SAGE MODE triangle while it is on. */}
+        <div className="mb-8 bg-white/5 p-6" style={{ borderRadius: 0 }}>
+          <h2 className="text-xl font-black uppercase tracking-widest text-white mb-1">Tutorials</h2>
+          <p className="text-white/50 text-sm mb-6 text-left">Walkthroughs for everything in the admin dashboard.</p>
+          <TutorialList />
         </div>
 
         {/* Category Filter */}
