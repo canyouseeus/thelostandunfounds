@@ -18,6 +18,7 @@ import JobPayouts from '../components/JobPayouts';
 import CrewAvailabilityCalendar from '../components/crew/CrewAvailabilityCalendar';
 import CrewRequestBox from '../components/crew/CrewRequestBox';
 import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
+import MyTickets from '../components/support/MyTickets';
 import MyLiveGalleries from '../components/live/MyLiveGalleries';
 
 export default function PhotographerDashboard() {
@@ -177,6 +178,9 @@ export default function PhotographerDashboard() {
             </div>
 
             <CrewRequestBox />
+
+            {/* Technical support: open a ticket, follow the ones already open. */}
+            {user && <MyTickets role="photographer" className="mt-6" />}
         </div>
     );
 }

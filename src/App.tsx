@@ -22,6 +22,7 @@ import Docs from './pages/Docs'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Support from './pages/Support'
+import SupportTicket from './pages/SupportTicket'
 import Pay from './pages/Pay'
 import Shop from './pages/Shop'
 import ShopSuccess from './pages/ShopSuccess'
@@ -173,6 +174,7 @@ function App() {
               </Route>
               <Route path="/support" element={<Layout />}>
                 <Route index element={<Support />} />
+                <Route path="ticket/:key" element={<SupportTicket />} />
               </Route>
               <Route path="/pay" element={<Layout />}>
                 <Route index element={<Pay />} />

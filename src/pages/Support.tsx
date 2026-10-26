@@ -1,168 +1,98 @@
 /**
- * Support Page
+ * Support Page — open a technical support ticket, see your own, and find the
+ * guides. Tickets go to the company inbox and the admin Support console.
  */
 
 import { Link } from 'react-router-dom';
 import {
   QuestionMarkCircleIcon,
   BookOpenIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftEllipsisIcon,
+  CameraIcon,
   ArrowRightIcon,
   HeartIcon
 } from '@heroicons/react/24/outline';
 
 import { Helmet } from 'react-helmet-async';
+import { useAuth } from '../contexts/AuthContext';
+import SupportRequestForm from '../components/support/SupportRequestForm';
+import MyTickets from '../components/support/MyTickets';
+
+const surface = { borderRadius: 0 } as const;
+
+const guides = [
+  { to: '/docs#faq', icon: QuestionMarkCircleIcon, title: 'FAQ', text: 'Answers to the questions we get most' },
+  { to: '/docs', icon: BookOpenIcon, title: 'Documentation', text: 'Guides for affiliates, clients and the platform' },
+  { to: '/docs/photographer-guide', icon: CameraIcon, title: 'Photographer Guide', text: 'Galleries, uploads, availability and job pay' },
+];
 
 export default function Support() {
+  const { user } = useAuth();
+
   return (
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | Support Center</title>
-        <meta name="description" content="Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly." />
+        <meta name="description" content="Get technical support from THE LOST+UNFOUNDS. Open a ticket for help with your affiliate account, photographer dashboard, galleries, bookings or payouts." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/support" />
       </Helmet>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-white mb-4">SUPPORT CENTER</h1>
-          <p className="text-xl text-white/70">
-            We're here to help you get the most out of <strong className="font-bold text-white">THE LOST+UNFOUNDS</strong>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left">
+        <div className="mb-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">SUPPORT CENTER</h1>
+          <p className="text-lg text-white/70">
+            Something not working? Open a ticket. We reply by email, and the whole conversation stays on the ticket page.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <Link
-            to="/docs#faq"
-            className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-                <QuestionMarkCircleIcon className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col justify-center min-h-[40px]">
-                <h3 className="text-lg font-bold text-white leading-none text-left">FAQ</h3>
-                <p className="text-sm text-white/70 leading-tight mt-1.5 text-left">
-                  Find answers to commonly asked questions
-                </p>
-              </div>
-            </div>
-            <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
-          </Link>
+        {user && <MyTickets className="mb-8" />}
 
-          <Link
-            to="/docs"
-            className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-                <BookOpenIcon className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col justify-center min-h-[40px]">
-                <h3 className="text-lg font-bold text-white leading-none text-left">Documentation</h3>
-                <p className="text-sm text-white/70 leading-tight mt-1.5 text-left">
-                  Comprehensive guides and tutorials
-                </p>
-              </div>
-            </div>
-            <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
-          </Link>
-
-          <Link
-            to="/contact"
-            className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-                <EnvelopeIcon className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col justify-center min-h-[40px]">
-                <h3 className="text-lg font-bold text-white leading-none text-left">Contact Us</h3>
-                <p className="text-sm text-white/70 leading-tight mt-1.5 text-left">
-                  Send us a message and we'll get back to you
-                </p>
-              </div>
-            </div>
-            <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
-          </Link>
-
-          <div className="group relative bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white flex-shrink-0">
-                <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col justify-center min-h-[40px]">
-                <h3 className="text-lg font-bold text-white leading-none text-left">Community</h3>
-                <p className="text-sm text-white/70 leading-tight mt-1.5 text-left">
-                  Join our community for tips, updates, and discussions
-                </p>
-              </div>
-            </div>
-            <span className="text-xs text-white/60">Coming Soon</span>
+        {!user && (
+          <div className="mb-10">
+            <h2 className="text-xl font-black uppercase tracking-widest text-white mb-4">Open A Ticket</h2>
+            <SupportRequestForm />
+            <p className="text-sm text-white/50 mt-3">
+              Have an account? Sign in first (top right) and your tickets show up on your dashboard.
+            </p>
           </div>
+        )}
+
+        <h2 className="text-xl font-black uppercase tracking-widest text-white mb-4">Guides</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-10">
+          {guides.map(g => (
+            <Link
+              key={g.to}
+              to={g.to}
+              className="group bg-white/5 hover:bg-white/10 px-5 py-4 flex items-start justify-between gap-3 transition-colors"
+              style={surface}
+            >
+              <div className="flex items-start gap-3">
+                <g.icon className="w-5 h-5 text-white mt-0.5 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white">{g.title}</h3>
+                  <p className="text-sm text-white/60 mt-1">{g.text}</p>
+                </div>
+              </div>
+              <ArrowRightIcon className="w-4 h-4 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all mt-1 shrink-0" />
+            </Link>
+          ))}
         </div>
 
         {/* "Support" reads two ways, and people arriving here looking to back
-            the work had nowhere to go. Send them to checkout. Matches the
-            bordered card styling used throughout this page. */}
+            the work had nowhere to go. Send them to checkout. */}
         <Link
           to="/pay"
-          className="group relative bg-white text-black rounded-none px-6 py-5 mb-12 flex items-center justify-between cursor-pointer hover:bg-white/90 transition-all duration-300"
+          className="group bg-white text-black px-6 py-5 flex items-center justify-between hover:bg-white/90 transition-colors"
+          style={surface}
         >
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-black flex items-center justify-center text-black group-hover:scale-110 transition-all flex-shrink-0">
-              <HeartIcon className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col justify-center min-h-[40px]">
-              <h3 className="text-lg font-bold leading-none text-left">Support The Work</h3>
-              <p className="text-sm text-black/70 leading-tight mt-1.5 text-left">
-                Chip in any amount, or settle an invoice
-              </p>
+            <HeartIcon className="w-5 h-5 shrink-0" />
+            <div>
+              <h3 className="text-lg font-bold leading-none">Support The Work</h3>
+              <p className="text-sm text-black/70 mt-1.5">Chip in any amount, or settle an invoice</p>
             </div>
           </div>
           <ArrowRightIcon className="w-5 h-5 text-black/50 group-hover:text-black group-hover:translate-x-2 transition-all" />
         </Link>
-
-        <div className="bg-black/50 border border-white rounded-none p-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Common Issues</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-semibold mb-2">Can't download videos?</h3>
-              <p className="text-white/70 text-sm">
-                Make sure you're using a valid TikTok URL and haven't exceeded your daily download limit.
-                Check your account tier in your Profile page.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-2">Forgot your password?</h3>
-              <p className="text-white/70 text-sm">
-                Use the "Forgot Password" link on the login page, or contact support if you need additional help.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-2">Payment issues?</h3>
-              <p className="text-white/70 text-sm">
-                If you're experiencing payment problems, please contact us directly with your account email
-                and we'll help resolve the issue.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 p-6 bg-black/50 border border-white rounded-none text-center">
-          <h3 className="text-xl font-bold text-white mb-2">Still Need Help?</h3>
-          <p className="text-white/70 mb-4">
-            Our support team is available to assist you with any questions or issues.
-          </p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-          >
-            Get in Touch <ArrowRightIcon className="w-5 h-5" />
-          </Link>
-        </div>
       </div>
     </>
   );
 }
-
-

@@ -78,6 +78,7 @@ import { ExpandableBentoCard } from '../components/ui/expandable-bento-card';
 import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import AuthModal from '../components/auth/AuthModal';
 import AffiliateSignupWizard from '../components/affiliate/AffiliateSignupWizard';
+import MyTickets from '../components/support/MyTickets';
 
 interface BlogPost {
   id: string;
@@ -1045,6 +1046,11 @@ export default function Affiliate() {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Technical support: open a ticket, follow the ones already open. */}
+            <div className="col-span-12 pt-4">
+              <MyTickets role={affiliateData ? 'affiliate' : undefined} />
             </div>
 
             {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
