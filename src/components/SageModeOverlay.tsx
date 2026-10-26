@@ -26,6 +26,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { isAdminUser } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { TutorialList } from './admin/tour/TutorialLibrary';
 
 interface TargetInfo {
   source: string | null;
@@ -66,6 +67,7 @@ export default function SageModeOverlay() {
   const [target, setTarget] = useState<TargetInfo | null>(null);
   const [comment, setComment] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const targetRef = useRef<TargetInfo | null>(null);
   targetRef.current = target;
@@ -280,9 +282,55 @@ export default function SageModeOverlay() {
           there has to be one control that never gets swallowed and never
           scrolls away — otherwise turning SAGE MODE off means hunting for a
           menu that SAGE MODE has eaten. Admin-only; visitors never see it. */}
+      {/* TUTORIALS — every admin walkthrough, one tap above the triangle while
+          armed. Same glass as the triangle; it rides 3.75rem higher on each
+          of the triangle's three bottom offsets. */}
+      {enabled && !target && (
+        <button
+          data-sage-chrome
+          onClick={() => setLibraryOpen(true)}
+          className={`fixed right-4 z-[100000] h-10 px-4 rounded-full flex items-center bg-white/10 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700] hover:bg-white/20 transition-colors ${
+            location.pathname.startsWith('/admin')
+              ? 'bottom-[calc(8.75rem+env(safe-area-inset-bottom))]'
+              : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-[374px]:bottom-[calc(8.75rem+env(safe-area-inset-bottom))]'
+          }`}
+        >
+          Tutorials
+        </button>
+      )}
+
+      {libraryOpen && (
+        <div
+          data-sage-chrome
+          className="fixed inset-0 z-[100005] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm sm:p-4"
+          onClick={() => setLibraryOpen(false)}
+        >
+          <div
+            className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto bg-black p-6 text-left"
+            style={{ borderRadius: 0 }}
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Tutorials"
+          >
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-widest text-white">Tutorials</h2>
+                <p className="text-xs text-white/50 mt-1">Pick one. SAGE MODE turns off while it runs.</p>
+              </div>
+              <button onClick={() => setLibraryOpen(false)} className="p-1 text-white/50 hover:text-white" aria-label="Close tutorials">
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <TutorialList onStart={() => setLibraryOpen(false)} />
+          </div>
+        </div>
+      )}
+
       {isAdmin && !target && (
         <button
           data-sage-chrome
+          data-tour="sage-toggle"
           onClick={toggleSageMode}
           aria-pressed={enabled}
           aria-label={enabled ? 'SAGE MODE on — tap to turn off' : 'Turn SAGE MODE on'}
