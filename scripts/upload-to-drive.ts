@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { buildName, isClaptropName, getAvailableBytes, formatBytes, resetSeqs, claptropTail, dateFromName } from './claptrop-namer.js';
 import { run as runRetrograde } from './claptrop-retrograde.js';
+import { DRIVE_ROOTS, MANIFEST_SUFFIX, tidy } from './claptrop-drive-tidy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -82,17 +83,17 @@ function flushRenameLogs() {
 
 const FOLDER_CONFIG = {
     JPG: {
-        parent: '1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4',
+        parent: DRIVE_ROOTS.JPG,
         local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'jpg'),
         exts:   ['.jpg', '.jpeg'],
     },
     RAW: {
-        parent: '1BMLrQ6JhHOW7osSZSxl8-Ve4nBAzrPEV',
+        parent: DRIVE_ROOTS.RAW,
         local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'raf'),
         exts:   ['.raf'],
     },
     MOV: {
-        parent: '13yWZiOr6UpDhS1VDtKVonx441O137Lc-',
+        parent: DRIVE_ROOTS.MOV,
         local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'mov'),
         exts:   ['.mov', '.mp4'],
     },
@@ -219,6 +220,9 @@ async function buildDriveFileIndex(folderId: string): Promise<DriveFingerprintIn
                 for (const k of sub.ns)   idx.ns.add(k);
                 for (const k of sub.tail) idx.tail.add(k);
                 for (const k of sub.date) idx.date.add(k);
+            } else if (f.name?.endsWith(MANIFEST_SUFFIX)) {
+                // RAWs packed into a date folder's zip are listed here, not in the folder.
+                await addManifestToIndex(idx, f.id, f.name);
             } else if (f.name) {
                 addFileToIndex(idx, f.name, f.size ?? '0', f.md5Checksum ?? undefined);
             }
@@ -230,22 +234,14 @@ async function buildDriveFileIndex(folderId: string): Promise<DriveFingerprintIn
     return idx;
 }
 
-async function removeDuplicatesInFolder(parentId: string, label: string) {
-    const res = await retryApiCall(() => drive.files.list({
-        q: `'${parentId}' in parents and trashed = false`,
-        fields: 'files(id, name, createdTime)',
-        orderBy: 'createdTime',
-    }), `listForDedupe(${label})`);
-
-    const seen = new Map<string, string>();
-    for (const f of res.data.files || []) {
-        if (!f.name || !f.id) continue;
-        if (seen.has(f.name)) {
-            await retryApiCall(() => drive.files.delete({ fileId: f.id! }), `deleteDup(${f.name})`);
-            console.log(`  Removed duplicate: ${f.name}`);
-        } else {
-            seen.set(f.name, f.id);
-        }
+async function addManifestToIndex(idx: DriveFingerprintIndex, fileId: string, name: string) {
+    try {
+        const res = await retryApiCall(() => drive.files.get({ fileId, alt: 'media' }, { responseType: 'text' }),
+            `manifest(${name})`);
+        const entries = JSON.parse(res.data as string) as { name: string; size: number; md5?: string }[];
+        for (const e of entries) addFileToIndex(idx, e.name, String(e.size), e.md5);
+    } catch (err: any) {
+        console.warn(`  ⚠️  Could not read ${name}: ${err.message} — its RAWs may be uploaded again.`);
     }
 }
 
@@ -468,7 +464,6 @@ async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintInde
         if (!filePaths.length) { console.log(`\nNo files in ${type} staging.`); continue; }
 
         const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
-        await removeDuplicatesInFolder(targetId, type);
 
         console.log(`\nUploading ${filePaths.length} ${type} file(s)…`);
         for (const filePath of filePaths) {
@@ -554,6 +549,17 @@ async function startSync() {
         } catch (err: any) {
             console.warn(`⚠️  Retrograde rename failed: ${err.message}`);
             console.warn('   Run manually: node_modules/.bin/tsx scripts/claptrop-retrograde.ts');
+        }
+    }
+
+    // ── Phase 4: Clear byte-identical copies already in Drive, file RAWs by date
+    if (!SKIP_DRIVE) {
+        console.log('\n=== Phase 4: Drive tidy (dedupe + sort RAW by date) ===');
+        try {
+            await tidy(drive, { dedupe: true, sort: true, apply: true });
+        } catch (err: any) {
+            console.warn(`⚠️  Drive tidy failed: ${err.message}`);
+            console.warn('   Run manually: node_modules/.bin/tsx scripts/claptrop-drive-tidy.ts --dedupe --sort');
         }
     }
 
