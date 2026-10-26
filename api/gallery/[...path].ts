@@ -1288,9 +1288,11 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
  * Admin control for a live event.
  *   GET  ?slug=                                   → live_mode + keys (no secrets)
  *   POST { slug, action: 'start' | 'stop' }       → toggles live_mode
- *   POST { slug, action: 'mint-key', label?, photographerId?, guestHandle? }
+ *   POST { slug, action: 'mint-key', label?, photographerId?, guestHandle?, camera? }
  *                                                 → { key } — shown once, never stored;
- *                                                   photographerId credits that crew member in filenames
+ *                                                   photographerId credits that crew member in filenames;
+ *                                                   camera: true makes a short key typed as an FTP password
+ *                                                   (relay/ftp)
  *   POST { slug, action: 'revoke-key', keyId }
  */
 async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
@@ -1307,7 +1309,7 @@ async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
         }
         if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-        const { slug, action, label, keyId, photographerId, guestHandle } = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { slug, action, label, keyId, photographerId, guestHandle, camera } = (req.body && typeof req.body === 'object') ? req.body : {};
         if (typeof slug !== 'string' || !slug) return res.status(400).json({ error: 'slug is required' });
 
         switch (action) {
@@ -1321,6 +1323,7 @@ async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
                         supabase, slug, label,
                         typeof photographerId === 'string' ? photographerId : null,
                         typeof guestHandle === 'string' ? guestHandle : null,
+                        camera === true,
                     )),
                 });
             case 'revoke-key':
@@ -1399,7 +1402,14 @@ async function handleLivePreview(req: VercelRequest, res: VercelResponse) {
  *   GET                                           → their galleries
  *   POST { action: 'create', name }               → new live gallery + Drive folder
  *   POST { action: 'start' | 'stop', slug }       → live mode on their gallery
- * Uploading to it uses ingest-start / ingest-complete with the same session.
+ *   POST { action: 'camera', slug }               → camera logins + photos waiting for review
+ *   POST { action: 'camera-login', slug }         → { key } — a camera login crediting them, shown once
+ *   POST { action: 'revoke-key', slug, keyId }    → turn a login off
+ *   POST { action: 'publish' | 'discard', slug, fileIds }
+ *                                                 → their review inbox, as on /admin/live
+ *   GET  ?preview=<fileId>&slug=&size=            → a pending photo's thumbnail, from their gallery only
+ * Uploading to it uses ingest-start / ingest-complete with the same session;
+ * their camera sends through relay/ftp with a camera login and waits for review.
  */
 async function handleMyLive(req: VercelRequest, res: VercelResponse) {
     const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
@@ -1409,19 +1419,42 @@ async function handleMyLive(req: VercelRequest, res: VercelResponse) {
         if (!photographer) return res.status(401).json({ error: 'Photographers only.' });
         res.setHeader('Cache-Control', 'no-store');
 
+        if (req.method === 'GET' && typeof req.query.preview === 'string') {
+            const library = await ingest.loadMyLibrary(supabase, photographer, req.query.slug);
+            const image = await ingest.previewPending(supabase, req.query.preview, Number(req.query.size || 600), library.id);
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'private, no-store');
+            return res.send(image);
+        }
         if (req.method === 'GET') {
             return res.status(200).json({ success: true, ...(await ingest.listMyGalleries(supabase, photographer)) });
         }
         if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-        const { action, name, slug } = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { action, name, slug, keyId, fileIds } = (req.body && typeof req.body === 'object') ? req.body : {};
         if (action === 'create') {
             return res.status(200).json({ success: true, gallery: await ingest.createMyLiveGallery(supabase, photographer, name) });
         }
         if (action === 'start' || action === 'stop') {
             return res.status(200).json({ success: true, ...(await ingest.setMyLiveMode(supabase, photographer, slug, action === 'start')) });
         }
-        return res.status(400).json({ error: 'action must be create, start or stop' });
+        if (action === 'camera') {
+            return res.status(200).json({ success: true, ...(await ingest.getMyCameraEvent(supabase, photographer, slug)) });
+        }
+        if (action === 'camera-login') {
+            return res.status(200).json({ success: true, ...(await ingest.mintMyCameraLogin(supabase, photographer, slug)) });
+        }
+        if (action === 'revoke-key') {
+            return res.status(200).json({ success: true, ...(await ingest.revokeMyKey(supabase, photographer, slug, keyId)) });
+        }
+        if (action === 'publish' || action === 'discard') {
+            const library = await ingest.loadMyLibrary(supabase, photographer, slug);
+            const result = action === 'publish'
+                ? await ingest.publishPending(supabase, library.slug, fileIds)
+                : await ingest.discardPending(supabase, library.slug, fileIds);
+            return res.status(200).json({ success: true, ...result });
+        }
+        return res.status(400).json({ error: 'action must be create, start, stop, camera, camera-login, revoke-key, publish or discard' });
     } catch (err: any) {
         const status = err instanceof ingest.HttpError ? err.status : 500;
         if (status >= 500) console.error('[my-live] Error:', err);

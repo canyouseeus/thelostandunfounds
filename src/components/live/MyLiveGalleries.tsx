@@ -2,7 +2,8 @@
  * A photographer's own live galleries, on their dashboard.
  *
  * Create a gallery for tonight, go live, and send photos straight from the
- * phone's camera roll — they publish as they arrive. Everything goes through
+ * phone's camera roll — they publish as they arrive. Or give the camera its
+ * own login (MyCameraInbox) and review what it sends. Everything goes through
  * /api/gallery/my-live and the ingest routes with the photographer's own
  * session; the server only lets them touch galleries they own.
  *
@@ -11,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import LiveUploader from './LiveUploader'
+import MyCameraInbox from './MyCameraInbox'
 
 interface Gallery {
   id: string
@@ -156,6 +158,7 @@ export default function MyLiveGalleries() {
               {open === g.slug && (
                 <div className="mt-4">
                   <LiveUploader slug={g.slug} />
+                  <MyCameraInbox slug={g.slug} />
                   <a href={`/gallery/${g.slug}`} target="_blank" rel="noreferrer"
                     className="inline-block mt-4 text-[10px] uppercase tracking-[0.2em] text-white/60 hover:text-white underline underline-offset-4">
                     View gallery

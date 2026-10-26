@@ -92,6 +92,17 @@ radio icon on each gallery row under Active Galleries).
     price). "Photographer" = an **active** `photographers` row whose `user_id` is the session user;
     checked server-side only (`verifiedPhotographer`) since that table is admin-only under RLS. They
     can upload to, and go live / end live on, galleries they own — nothing else.
+*   **Cameras that send by FTP go through the relay** (`relay/ftp/`, owner request 2026-10-26: a
+    Canon uploading straight from the body, like Zno). Vercel can't host FTP, so a zero-dependency
+    Node server on a small VPS takes the camera's FTP and calls ingest-start → PUT → ingest-complete
+    (**no `publish`**, so every frame lands in the review inbox). **CAMERA LOGIN** on `/admin/live`
+    mints a key with `camera: true`: `tlu_live_` + 24 lowercase letters/digits, short enough to type
+    on a camera. The camera's FTP password is that suffix and the login name is ignored. The relay
+    stores nothing; it checks each login against `ingest-info`. It tells the camera 226 only after
+    ingest-complete succeeds, so a failure is retried by the camera, never lost. Passive mode only;
+    JPEG/HEIC/PNG forwarded, raws dropped. The page reads the server address from
+    `VITE_FTP_RELAY_HOST`. Tests: `node relay/ftp/verify-relay.mjs`. Deploy steps:
+    `relay/ftp/README.md`. Not on Fly/Railway/Render: their proxy breaks FTP's second connection.
 *   **Camera-roll uploads publish immediately — no review** (owner's call, 2026-10-26: they are
     hand-picked). LiveUploader sends `ingest-complete { publish: true }`. The review inbox is for
     automatic sends only (FTP relay, watcher), which omit `publish`.
