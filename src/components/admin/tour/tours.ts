@@ -63,7 +63,7 @@ const dashboardTour: Tour = {
     {
       target: 'dock',
       title: 'Platform Console',
-      body: 'Every admin tool lives in this dock: galleries, blog, newsletter, mail, users, crew, affiliates, bookings, calendar, CRM, invoices, products, print shop, settings. Hover an icon to see its name. A red badge means something needs you.',
+      body: 'Every admin tool lives in this dock: galleries, blog, newsletter, mail, users, crew, affiliates, bookings, calendar, CRM, invoices, products, print shop, support, settings. Hover an icon to see its name. A red badge means something needs you.',
     },
     {
       target: 'dock-edit-layout',
@@ -169,6 +169,12 @@ const consoleTools: { id: string; title: string; summary: string; inside: string
     title: 'Print Shop',
     summary: 'Prints for sale, their Prodigi SKU and cost, and print orders.',
     inside: 'Add a print with its artwork, title, category, price, Prodigi SKU and Prodigi cost, plus mat and mount options.\n\nPrint orders show below. A red badge on the dock icon means an order failed at Prodigi.',
+  },
+  {
+    id: 'support',
+    title: 'Support',
+    summary: 'Technical support tickets from affiliates, photographers, clients and the contact form.',
+    inside: 'Active shows open and in-progress tickets. NEEDS REPLY means the person spoke last.\n\nOpen a ticket to read the thread, reply (they get it by email) and set its status. Tick Internal note to write something only you will see.',
   },
   {
     id: 'settings',
@@ -292,7 +298,48 @@ const qrWallpaperTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+const supportTour: Tour = {
+  id: 'support-tickets',
+  title: 'Support Tickets',
+  summary: 'Affiliates, photographers and clients can open a support ticket. You answer from the console and they get your reply by email.',
+  group: 'new',
+  announce: '2026-10-26',
+  steps: [
+    {
+      route: '/admin',
+      panel: null,
+      target: 'dock-support',
+      title: 'Support Tickets',
+      body: 'Anyone can open a ticket now: from GET HELP on the affiliate and photographer dashboards, the Support page, or the Contact form.\n\nEach new ticket and each reply emails support@. The red badge on this icon counts tickets waiting on you.',
+    },
+    {
+      panel: 'support',
+      target: 'support-filters',
+      title: 'The Queue',
+      body: 'Active is everything open or in progress. NEEDS REPLY marks the ones where the person spoke last. Resolved, Closed and All are the history.',
+    },
+    {
+      target: 'support-list',
+      title: 'Open A Ticket',
+      body: 'Tap a ticket for the whole thread: who sent it, whether they are an affiliate or photographer, the page they were on and their browser.',
+      missingNote: 'No tickets yet. The list appears here once one arrives.',
+    },
+    {
+      target: 'support-reply',
+      title: 'Reply',
+      body: 'Your reply is emailed to them, with a link back to the ticket so they can answer. "Reply and resolve" sends and closes it out in one step.\n\nTick Internal note to keep something to yourself. Notes are never emailed or shown to them.',
+      missingNote: 'Open a ticket first. The reply box sits under the thread.',
+    },
+    {
+      target: 'support-status',
+      title: 'Status',
+      body: 'OPEN, IN PROGRESS, RESOLVED, CLOSED. A reply from them on a resolved ticket reopens it. A closed ticket takes no more replies.',
+      missingNote: 'Open a ticket first. The status buttons are at the top of it.',
+    },
+  ],
+};
+
+export const TOURS: Tour[] = [supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);

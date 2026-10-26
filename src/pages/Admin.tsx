@@ -59,6 +59,7 @@ import {
   ChevronDownIcon,
   BanknotesIcon,
   PrinterIcon,
+  LifebuoyIcon,
   EllipsisHorizontalIcon,
   CloudArrowUpIcon,
   Squares2X2Icon,
@@ -99,6 +100,7 @@ import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminRosterView from '../components/admin/AdminRosterView';
 import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
+import AdminSupportView from '../components/admin/AdminSupportView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -121,7 +123,7 @@ import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
 import { ADMIN_PANEL_EVENT } from '../components/admin/tour/tours';
-import { installGlobalListeners } from '../lib/adminErrorLog';
+import { installGlobalListeners, logApiCall } from '../lib/adminErrorLog';
 
 interface DashboardStats {
   totalUsers: number;
@@ -245,6 +247,8 @@ export default function Admin() {
   const [censusCounts, setCensusCounts] = useState<{ posts: number; products: number; users: number | null }>({ posts: 0, products: 0, users: null });
   const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
+  // Support tickets whose last word is the user's: someone is waiting on a reply.
+  const [supportWaiting, setSupportWaiting] = useState<number>(0);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
   const [newestSubscribers, setNewestSubscribers] = useState<Array<{ email: string; created_at: string }>>([]);
   const [affiliateStats, setAffiliateStats] = useState<{
@@ -1111,6 +1115,25 @@ export default function Admin() {
         setProdigiErrorCount(count || 0);
       } catch (err) {
         console.error('Error checking Prodigi order failures:', err);
+      }
+
+      try {
+        const res = await fetch('/api/support/admin-list?status=active');
+        const body = await res.json().catch(() => ({}));
+        logApiCall('GET', '/api/support/admin-list', res.status, res.ok ? `${body.tickets?.length || 0} active` : body?.error || 'failed');
+        const waiting = res.ok ? (body.tickets || []).filter((t: any) => t.last_message_by === 'user').length : 0;
+        if (waiting > 0) {
+          newAlerts.push({
+            id: 6,
+            type: 'warning',
+            message: `${waiting} support ticket${waiting > 1 ? 's' : ''} waiting on a reply`,
+            time: 'Just now',
+            read: false
+          });
+        }
+        setSupportWaiting(waiting);
+      } catch (err) {
+        console.error('Error checking support tickets:', err);
       }
 
       setAlerts(newAlerts);
@@ -2018,6 +2041,7 @@ export default function Admin() {
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
+                { id: 'support', icon: LifebuoyIcon, title: 'Support', badge: supportWaiting },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -2100,6 +2124,7 @@ export default function Admin() {
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('crm')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">← CRM</button> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
+                  support:     { title: 'Support Tickets',          icon: <LifebuoyIcon className="w-5 h-5 text-white/40" />, extra: supportWaiting > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{supportWaiting} WAITING</span> : null },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
                 const meta = sectionMeta[activePanelSection];
@@ -2211,6 +2236,11 @@ export default function Admin() {
                 {activePanelSection === 'printshop' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Print Shop</div>}>
                     <AdminPrintShopView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'support' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Support</div>}>
+                    <AdminSupportView onCountChange={setSupportWaiting} />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'settings' && (
