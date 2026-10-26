@@ -68,7 +68,7 @@ export default function PhotographerDashboard() {
                         </div>
                         <div>
                             <h3 className="font-semibold text-white">Your Revenue & Payments</h3>
-                            <p className="text-sm text-green-300/80">You keep 100% of your sales (minus Stripe fees)</p>
+                            <p className="text-sm text-green-300/80">You keep 97% of your sales (minus Stripe fees)</p>
                         </div>
                     </div>
                     {showRevenueInfo ? (
@@ -89,11 +89,11 @@ export default function PhotographerDashboard() {
                             <ul className="space-y-2 text-sm text-zinc-300">
                                 <li className="flex justify-between">
                                     <span>Your Share:</span>
-                                    <span className="text-green-400 font-semibold">100%</span>
+                                    <span className="text-green-400 font-semibold">97%</span>
                                 </li>
                                 <li className="flex justify-between">
                                     <span>Platform Fee:</span>
-                                    <span className="text-zinc-400">$0.00</span>
+                                    <span className="text-zinc-400">3%</span>
                                 </li>
                                 <li className="flex justify-between border-t border-white/10 pt-2 mt-2">
                                     <span>Stripe Fee:</span>
@@ -101,7 +101,7 @@ export default function PhotographerDashboard() {
                                 </li>
                             </ul>
                             <p className="text-xs text-zinc-500 mt-3">
-                                Example: $10 sale → $0.59 fee → <span className="text-green-400">$9.41 net</span>
+                                Example: $10 sale → $0.30 platform + $0.59 Stripe → <span className="text-green-400">$9.11 net</span>
                             </p>
                         </div>
 
@@ -141,11 +141,11 @@ export default function PhotographerDashboard() {
                             <ul className="space-y-2 text-sm">
                                 <li className="flex items-center gap-2 text-green-400">
                                     <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                                    You still receive 100%
+                                    You still receive 97%
                                 </li>
                                 <li className="flex items-center gap-2 text-purple-400">
                                     <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-                                    Affiliate commission paid by platform
+                                    Affiliate commission comes out of the platform's 3%
                                 </li>
                                 <li className="flex items-center gap-2 text-blue-400">
                                     <span className="w-2 h-2 bg-blue-400 rounded-full"></span>

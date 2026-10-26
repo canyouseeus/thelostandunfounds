@@ -8,7 +8,7 @@ import {
 } from './affiliates/_commission-trigger.js'
 import { createProdigiOrder } from './_prodigi-client.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
-import { accrueCrewPayout } from './crew/_shared.js'
+import { accrueCrewPayout, accruePhotoSalePayouts } from './crew/_shared.js'
 
 /**
  * Stripe Webhook Handler
@@ -144,7 +144,10 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
 
     if (session.metadata?.source === 'tlau-photos') {
         await finalizePhotoOrder(supabase, session)
-        await triggerPhotoOrderCommission(supabase, session)
+        // Photographers are paid before the affiliate split runs: their share
+        // is the sale's cost, so referral shares come out of the platform's 3%.
+        const photographerCost = await accruePhotographerShares(supabase, session)
+        await triggerPhotoOrderCommission(supabase, session, photographerCost)
     } else if (session.metadata?.source === 'tlau-shop-checkout') {
         await finalizeShopOrder(supabase, session)
     } else if (session.metadata?.source === 'tlau-prodigi-checkout') {
@@ -222,6 +225,16 @@ async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
             } else if (session?.metadata?.source === 'tlau-photos' && session.metadata?.photoOrderId) {
                 source = 'gallery'
                 sourceId = session.metadata.photoOrderId
+                // A photographer's share must not go out on money that went back
+                // to the buyer. Anything not yet transferred is cancelled; a
+                // payout already sent is left for the owner to settle by hand.
+                const { data: cancelled } = await supabase
+                    .from('crew_payouts')
+                    .update({ status: 'cancelled', notes: `Cancelled: refund ${charge.id}` })
+                    .eq('photo_order_id', sourceId)
+                    .in('status', ['pending', 'approved'])
+                    .select('id, amount')
+                if (cancelled?.length) console.log('Photographer payouts cancelled on refund:', cancelled)
             } else if (session?.metadata?.source === 'tlau-events' && session.metadata?.eventOrderId) {
                 source = 'event'
                 sourceId = session.metadata.eventOrderId
@@ -270,7 +283,7 @@ async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
  * This is a no-op when the customer wasn't referred or when a commission
  * already exists for this source+source_id.
  */
-async function triggerPhotoOrderCommission(supabase: any, session: Stripe.Checkout.Session) {
+async function triggerPhotoOrderCommission(supabase: any, session: Stripe.Checkout.Session, cost: number) {
     const photoOrderId = session.metadata?.photoOrderId
     if (!photoOrderId) return
 
@@ -290,6 +303,9 @@ async function triggerPhotoOrderCommission(supabase: any, session: Stripe.Checko
         source: 'photo_order',
         sourceId: order.id,
         grossAmount,
+        // A sale from a crew photographer's gallery costs us their share;
+        // for the house's own galleries this is 0 and nothing changes.
+        cost,
         fallbackAffiliateCode: order.affiliate_code || session.metadata?.affiliateRef || null,
     })
 
@@ -299,6 +315,40 @@ async function triggerPhotoOrderCommission(supabase: any, session: Stripe.Checko
             amount: result.amount,
             affiliate: result.affiliateId,
         })
+    }
+}
+
+/**
+ * Accrue the gallery owners' shares of a paid photo order (crew photographers
+ * keep 97% less their part of Stripe's fee; the house keeps 3%) and return
+ * their combined share for the affiliate split.
+ *
+ * Never throws: a failure here must not stop the buyer getting their photos
+ * or the commission being written. It is logged loudly instead — the payout
+ * can be added by hand from the order.
+ */
+async function accruePhotographerShares(supabase: any, session: Stripe.Checkout.Session): Promise<number> {
+    const photoOrderId = session.metadata?.photoOrderId
+    const photoIds = (session.metadata?.photoIds || '').split(',').filter(Boolean)
+    const grossAmount = (Number(session.amount_total) || 0) / 100
+    if (!photoOrderId || !photoIds.length || grossAmount <= 0) return 0
+
+    try {
+        const settlement = await stripeSettlement(session)
+        const result = await accruePhotoSalePayouts(supabase, {
+            photoOrderId,
+            photoIds,
+            grossAmount,
+            stripeFee: settlement.fee,
+            availableOn: settlement.availableOn,
+        })
+        if (result.accrued.length) {
+            console.log('✅ Photographer shares accrued:', { photoOrderId, accrued: result.accrued })
+        }
+        return result.cost
+    } catch (err: any) {
+        console.error('❌ Photographer share accrual FAILED — add it by hand:', { photoOrderId, error: err?.message })
+        return 0
     }
 }
 
@@ -934,23 +984,33 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
  * Best-effort: on any failure the caller falls back to the flat hold.
  */
 async function stripeAvailableOn(session: Stripe.Checkout.Session): Promise<string | null> {
+    return (await stripeSettlement(session)).availableOn
+}
+
+/**
+ * The charge's balance transaction: when Stripe frees the money, and the fee
+ * Stripe kept (in dollars). Both null/0 when it cannot be read — the fee then
+ * stays with the house rather than guessing at the photographer's.
+ */
+async function stripeSettlement(session: Stripe.Checkout.Session): Promise<{ availableOn: string | null; fee: number }> {
     try {
         const key = process.env.STRIPE_SECRET_KEY
-        if (!key) return null
+        if (!key) return { availableOn: null, fee: 0 }
         const stripe = new Stripe(key, { apiVersion: '2024-12-18.acacia' as any, typescript: true })
         const piId = typeof session.payment_intent === 'string'
             ? session.payment_intent
             : session.payment_intent?.id
-        if (!piId) return null
+        if (!piId) return { availableOn: null, fee: 0 }
 
         const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge.balance_transaction'] })
         const charge: any = (pi as any).latest_charge
         const txn = charge?.balance_transaction
         const availableOn = typeof txn === 'object' ? txn?.available_on : null
-        return availableOn ? new Date(availableOn * 1000).toISOString() : null
+        const fee = typeof txn === 'object' && Number.isFinite(txn?.fee) ? txn.fee / 100 : 0
+        return { availableOn: availableOn ? new Date(availableOn * 1000).toISOString() : null, fee }
     } catch (err: any) {
-        console.warn('⚠️ Could not read Stripe availability date:', err?.message)
-        return null
+        console.warn('⚠️ Could not read Stripe settlement:', err?.message)
+        return { availableOn: null, fee: 0 }
     }
 }
 

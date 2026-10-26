@@ -89,6 +89,17 @@ Balance $75 collected → payout row $60
 `crew_payouts` rows hold what is actually being moved now ($60). They are
 different numbers on purpose; do not "correct" one to match the other.
 
+## RULE 4b — Gallery sales: 97% to the photographer who owns the gallery
+
+Separate from shoot pay. When a photo sells from a gallery a crew photographer
+**owns** (`photo_libraries.owner_id` = their login), the Stripe webhook writes a
+`crew_payouts` row with `photo_order_id` set: **97% of their part of the sale,
+less their part of Stripe's fee**. The house keeps 3%; affiliates are paid from
+that 3%. An order mixing galleries is split by photo count. The owner's own
+login also has a photographers row — admin-email owners are skipped, so the
+house never "pays" itself. One row per (order, photographer), unique-indexed.
+Same hourly cron, same settlement hold. Harness: `scripts/verify-photo-sale-split.mts`.
+
 ## RULE 5 — A pending payout is usually Stripe settlement, not a bug
 
 `crew_payouts.available_at` is the settlement hold, roughly two days after the

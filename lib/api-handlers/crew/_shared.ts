@@ -220,6 +220,146 @@ export async function resolveConnectAccount(
 }
 
 /**
+ * The platform's cut of a sale from a gallery a photographer owns — 3%, to
+ * cover site upkeep and storage (owner's call, 2026-10-26). The photographer
+ * gets the rest, less their part of Stripe's processing fee.
+ */
+export const PHOTO_SALE_PLATFORM_RATE = 0.03;
+
+/**
+ * One photographer's slice of a photo order.
+ *
+ * An order can mix photos from several galleries, and bundle pricing means a
+ * photo has no price of its own, so the order is split by photo count.
+ * `share` is what the sale is worth to the photographer before Stripe's fee —
+ * the figure the affiliate split treats as cost, so referral shares come out
+ * of the platform's 3% and never out of the photographer's money. `payout` is
+ * what actually moves: `share` less their part of the fee.
+ */
+export function photoSaleSplit(args: {
+  gross: number;
+  photographerPhotos: number;
+  totalPhotos: number;
+  stripeFee: number;
+}): { portion: number; share: number; payout: number } {
+  if (args.totalPhotos <= 0 || args.photographerPhotos <= 0 || args.gross <= 0) {
+    return { portion: 0, share: 0, payout: 0 };
+  }
+  const fraction = Math.min(1, args.photographerPhotos / args.totalPhotos);
+  const portion = toMoney(args.gross * fraction);
+  const share = toMoney(portion * (1 - PHOTO_SALE_PLATFORM_RATE));
+  const payout = toMoney(share - Math.max(0, args.stripeFee) * fraction);
+  return { portion, share, payout: Math.max(0, payout) };
+}
+
+/**
+ * Accrue the photographers' shares of a paid photo order.
+ *
+ * Only galleries owned by a crew photographer pay out. The house's own
+ * galleries are owned by the owner's login, which also has a photographers
+ * row; those sales are the platform's, so an owner that is an admin account
+ * is skipped rather than paid 97% of their own revenue.
+ *
+ * Returns `cost`: the photographers' combined share, for the affiliate split.
+ * Idempotent per (photo_order_id, photographer_id): a replayed webhook finds
+ * the row and accrues nothing new, but still reports the same cost.
+ */
+export async function accruePhotoSalePayouts(
+  supabase: SupabaseClient,
+  args: {
+    photoOrderId: string;
+    photoIds: string[];
+    grossAmount: number;
+    /** Stripe's fee on the charge, in dollars. */
+    stripeFee: number;
+    paidAt?: string;
+    /** When Stripe frees the money — see accrueCrewPayout. */
+    availableOn?: string | null;
+  }
+): Promise<{ cost: number; accrued: Array<{ photographerId: string; amount: number }> }> {
+  const accrued: Array<{ photographerId: string; amount: number }> = [];
+  const ids = [...new Set(args.photoIds)].filter(Boolean);
+  if (!ids.length || toMoney(args.grossAmount) <= 0) return { cost: 0, accrued };
+
+  const { data: photos } = await supabase.from('photos').select('id, library_id').in('id', ids);
+  const libraryIds = [...new Set((photos || []).map((p: any) => p.library_id).filter(Boolean))];
+  if (!libraryIds.length) return { cost: 0, accrued };
+
+  const { data: libraries } = await supabase
+    .from('photo_libraries')
+    .select('id, name, owner_id')
+    .in('id', libraryIds);
+  const ownerIds = [...new Set((libraries || []).map((l: any) => l.owner_id).filter(Boolean))];
+  if (!ownerIds.length) return { cost: 0, accrued };
+
+  const { data: crew } = await supabase
+    .from('photographers')
+    .select(`${PHOTOGRAPHER_SELECT}, active`)
+    .in('user_id', ownerIds)
+    .eq('active', true);
+
+  const photographerByUser = new Map<string, PhotographerRow>();
+  for (const row of (crew || []) as Array<PhotographerRow & { active: boolean }>) {
+    if (!row.user_id) continue;
+    const { data: owner } = await supabase.auth.admin.getUserById(row.user_id);
+    const email = owner?.user?.email?.toLowerCase().trim() || '';
+    if (ADMIN_EMAILS.includes(email)) continue; // the house, not crew
+    photographerByUser.set(row.user_id, row);
+  }
+  if (!photographerByUser.size) return { cost: 0, accrued };
+
+  // Photos per photographer, and which of their galleries they came from.
+  const libraryById = new Map((libraries || []).map((l: any) => [l.id, l]));
+  const counts = new Map<string, { photographer: PhotographerRow; count: number; galleries: Set<string> }>();
+  for (const photo of photos || []) {
+    const library: any = libraryById.get((photo as any).library_id);
+    const photographer = library?.owner_id ? photographerByUser.get(library.owner_id) : undefined;
+    if (!photographer) continue;
+    const entry = counts.get(photographer.id) || { photographer, count: 0, galleries: new Set<string>() };
+    entry.count++;
+    entry.galleries.add(library.name);
+    counts.set(photographer.id, entry);
+  }
+
+  const paidAt = args.paidAt ? new Date(args.paidAt) : new Date();
+  const holdUntil = new Date(paidAt.getTime() + holdDays() * 24 * 60 * 60 * 1000);
+  const stripeAvailable = args.availableOn ? new Date(args.availableOn) : null;
+  const availableAt =
+    stripeAvailable && stripeAvailable.getTime() > holdUntil.getTime() ? stripeAvailable : holdUntil;
+
+  let cost = 0;
+  for (const { photographer, count, galleries } of counts.values()) {
+    const split = photoSaleSplit({
+      gross: args.grossAmount,
+      photographerPhotos: count,
+      totalPhotos: ids.length,
+      stripeFee: args.stripeFee,
+    });
+    cost = toMoney(cost + split.share);
+    if (split.payout <= 0) continue;
+
+    const { accountId } = await resolveConnectAccount(supabase, photographer);
+    const { error } = await supabase.from('crew_payouts').insert({
+      photographer_id: photographer.id,
+      user_id: photographer.user_id,
+      photo_order_id: args.photoOrderId,
+      description: `Photo sale — ${[...galleries].join(', ')} (${count} photo${count === 1 ? '' : 's'})`.slice(0, 300),
+      amount: split.payout,
+      status: 'pending',
+      available_at: availableAt.toISOString(),
+      stripe_account_id: accountId,
+    });
+    if (error) {
+      // 23505 = a replayed webhook; the row already exists.
+      if ((error as any).code === '23505') continue;
+      throw error;
+    }
+    accrued.push({ photographerId: photographer.id, amount: split.payout });
+  }
+  return { cost, accrued };
+}
+
+/**
  * Accrue a contractor's share of a client payment.
  *
  * Called when an invoice payment is recorded. The contractor's cut is
