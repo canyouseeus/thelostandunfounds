@@ -23,6 +23,8 @@ import {
     mintIngestKey,
     previewPending,
     publishPending,
+    relayChunk,
+    RELAY_CHUNK_BYTES,
     resolveIngestCaller,
     revokeIngestKey,
     startUpload,
@@ -282,6 +284,36 @@ delete driveFiles['good-0004-abc'];
 const gone = await discardPending(supabase, 'event-a', ['good-0004-abc']);
 check('a file already gone from Drive still discards cleanly', gone.discarded === 1 && db.gallery_ingest_pending.length === 0);
 await rejects('an empty batch is refused', () => discardPending(supabase, 'event-a', []), 400);
+
+// --- chunk relay --------------------------------------------------------------
+
+const SESSION = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=abc123';
+let relayed: any = null;
+ingestDeps.fetch = (async (url: any, init: any) => {
+    relayed = { url: String(url), ...init };
+    const range = init.headers['Content-Range'];
+    if (range === 'bytes 0-9/20') return new Response(null, { status: 308, headers: { range: 'bytes=0-9' } });
+    return new Response(JSON.stringify({ id: 'relayed-file-01' }), { status: 200 });
+}) as any;
+const chunk10 = Buffer.from('0123456789');
+for (const bad of ['https://evil.example/upload/drive/v3/files?upload_id=x', 'http://www.googleapis.com/upload/drive/v3/files?upload_id=x',
+    'https://www.googleapis.com/drive/v3/files?upload_id=x', 'https://www.googleapis.com/upload/drive/v3/files', 'not a url']) {
+    relayed = null;
+    await rejects(`relay refuses ${bad.slice(0, 48)}`, () => relayChunk(bad, 'bytes 0-9/20', chunk10), 400);
+    check(`…and sends nothing for it`, relayed === null);
+}
+await rejects('relay refuses a malformed Content-Range', () => relayChunk(SESSION, '0-9', chunk10), 400);
+await rejects('relay refuses an oversized chunk', () => relayChunk(SESSION, 'bytes 0-9/20', Buffer.alloc(RELAY_CHUNK_BYTES + 1)), 413);
+const part = await relayChunk(SESSION, 'bytes 0-9/20', chunk10);
+check('a partial chunk reports where to resume', part.done === false && part.nextOffset === 10, JSON.stringify(part));
+check('the chunk is PUT to the session with its range', relayed.method === 'PUT' && relayed.headers['Content-Range'] === 'bytes 0-9/20');
+check('the chunk\'s bytes arrive intact', Buffer.from(relayed.body).toString() === '0123456789', Buffer.from(relayed.body).toString());
+// A chunk that is a view into a larger buffer must send only its own bytes.
+const pool = Buffer.from('xxxx0123456789yyyy');
+await relayChunk(SESSION, 'bytes 0-9/20', pool.subarray(4, 14));
+check('a sliced buffer sends only its slice', Buffer.from(relayed.body).toString() === '0123456789', Buffer.from(relayed.body).toString());
+const last = await relayChunk(SESSION, 'bytes 10-19/20', chunk10);
+check('the final chunk returns the Drive file id', last.done === true && last.fileId === 'relayed-file-01', JSON.stringify(last));
 
 // --- revoke -------------------------------------------------------------------
 

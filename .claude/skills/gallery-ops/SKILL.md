@@ -60,7 +60,17 @@ Delivery is dual-channel: **Instant Access** + **Email Backup**.
 
 ## 5. Live Events (camera → review inbox → gallery)
 Photos sent from a camera during an event never go straight to the gallery. They wait in a
-**private review inbox** until the owner publishes them from **`/admin/live?slug=<gallery>`**.
+**private review inbox** until the owner publishes them from **`/admin/live?slug=<gallery>`**
+(reached from the admin dashboard: Gallery Management → the green **LIVE** header button, or the
+radio icon on each gallery row under Active Galleries).
+
+*   **Phone is the bridge — no laptop.** The camera's own app (Canon Camera Connect, Fujifilm XApp,
+    Nikon SnapBridge, Sony Creators' App) drops frames into the phone's camera roll; the owner sends
+    them with **SEND FROM CAMERA ROLL** on `/admin/live`, a photographer with their **upload link**
+    (`/live/upload#tlu_live_…`, minted under UPLOAD LINKS — key in the fragment, never in a server
+    log). Both use `src/components/live/LiveUploader.tsx`: direct PUT to the Drive session, and on a
+    CORS refusal it switches to `/api/gallery/ingest-chunk` (4MB chunks relayed by us; the relay only
+    ever targets `www.googleapis.com/upload/drive/v3/files?upload_id=…`).
 
 *   **Upload** (`POST /api/gallery/ingest-start` → PUT bytes to the returned Drive URL →
     `POST /api/gallery/ingest-complete`). Auth is a per-gallery **ingest key** (`Bearer tlu_live_…`,

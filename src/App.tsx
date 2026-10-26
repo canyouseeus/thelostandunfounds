@@ -62,6 +62,7 @@ import ClientUpload from './pages/ClientUpload'
 import SignContract from './pages/SignContract'
 import AdminContracts from './pages/AdminContracts'
 import AdminLive from './pages/AdminLive'
+import LiveUpload from './pages/LiveUpload'
 import GalleryAccess from './pages/GalleryAccess'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import GearIntake from './pages/GearIntake'
@@ -390,6 +391,9 @@ function App() {
               {/* Client asset intake — the token is the credential, so no
                   Layout chrome and no auth gate. */}
               <Route path="/upload/:token" element={<ClientUpload />} />
+              {/* Photographer live-event upload — the key in the URL fragment
+                  is the credential, same reasoning as /upload/:token. */}
+              <Route path="/live/upload" element={<LiveUpload />} />
               {/* Public contract signing — the token in the URL is the credential. */}
               <Route path="/sign/:token" element={<SignContract />} />
               <Route path="/download" element={<Layout />}>

@@ -294,6 +294,63 @@ export async function startUpload(
     return { uploadUrl, fileName };
 }
 
+/** What an upload link points at — enough for the upload page to say where photos are going. */
+export function describeCaller(caller: IngestCaller) {
+    return { gallery: caller.library.slug, name: caller.library.name, live: caller.library.live_mode };
+}
+
+// A Drive resumable chunk must be a multiple of 256 KiB; 16 of them stays under
+// Vercel's ~4.5MB request body limit with room for headers.
+export const RELAY_CHUNK_BYTES = 16 * 256 * 1024;
+
+/**
+ * Forward one chunk of an upload to its Drive session, for browsers that
+ * cannot PUT to Google directly (the session URL is cross-origin, and whether
+ * Google answers a phone browser's CORS preflight is not something we control).
+ *
+ * The target must be a Drive resumable session URL — anything else is refused,
+ * so this can never be used to make the server fetch an arbitrary address.
+ */
+export async function relayChunk(
+    sessionUrl: string,
+    contentRange: string,
+    body: Buffer,
+): Promise<{ done: boolean; fileId?: string; nextOffset?: number }> {
+    let url: URL;
+    try {
+        url = new URL(sessionUrl);
+    } catch {
+        throw new HttpError(400, 'Invalid upload session.');
+    }
+    if (url.protocol !== 'https:' || url.hostname !== 'www.googleapis.com'
+        || url.pathname !== '/upload/drive/v3/files' || !url.searchParams.get('upload_id')) {
+        throw new HttpError(400, 'Invalid upload session.');
+    }
+    if (!/^bytes (\d+-\d+|\*)\/\d+$/.test(contentRange)) throw new HttpError(400, 'Invalid Content-Range.');
+    if (body.length > RELAY_CHUNK_BYTES) throw new HttpError(413, 'Chunk too large.');
+
+    const res = await ingestDeps.fetch(url.toString(), {
+        method: 'PUT',
+        headers: { 'Content-Range': contentRange, 'Content-Length': String(body.length) },
+        // fetch's typings want a plain ArrayBuffer; a ≤4MB copy per chunk is nothing.
+        body: body.buffer.slice(body.byteOffset, body.byteOffset + body.length) as ArrayBuffer,
+        signal: AbortSignal.timeout(60000),
+    });
+    // 308 = "Resume Incomplete": Google has the bytes up to Range and wants more.
+    if (res.status === 308) {
+        const range = res.headers.get('range');
+        const end = range ? Number(range.split('-')[1]) : -1;
+        return { done: false, nextOffset: end + 1 };
+    }
+    if (res.ok) {
+        const json: any = await res.json().catch(() => ({}));
+        if (!json?.id) throw new HttpError(502, 'Google Drive finished the upload but returned no file id.');
+        return { done: true, fileId: json.id };
+    }
+    const detail = await res.text().catch(() => '');
+    throw new HttpError(502, `Google Drive refused the chunk (${res.status}): ${detail.slice(0, 200)}`);
+}
+
 /**
  * Record a finished upload as pending review.
  *

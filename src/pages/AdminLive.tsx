@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import LiveUploader from '../components/live/LiveUploader'
 
 interface Gallery {
   id: string
@@ -49,6 +50,9 @@ const primary = `${btn} bg-white text-black hover:bg-white/10 hover:text-white`
 const secondary = `${btn} bg-white/10 text-white hover:bg-white hover:text-black`
 const danger = `${btn} bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white`
 const field = 'w-full bg-white/5 text-white px-4 py-3 text-sm focus:outline-none focus:bg-white/10'
+
+/** The photographer's upload page. The key rides in the fragment so it never reaches a server log. */
+const uploadLink = (key: string) => `${window.location.origin}/live/upload#${key}`
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -296,6 +300,15 @@ export default function AdminLive() {
 
         {slug && (
           <>
+            {/* Your own uploads, straight from the phone's camera roll */}
+            <div className="bg-white/5 p-6 mb-8" style={{ borderRadius: 0 }}>
+              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-2">SEND FROM CAMERA ROLL</h2>
+              <p className="text-white/50 text-xs mb-4 text-left">
+                Pick photos your camera app has dropped into your phone. They land in the inbox below for review.
+              </p>
+              <LiveUploader slug={slug} onSent={loadInbox} />
+            </div>
+
             {/* Review inbox */}
             <div className="py-4 mb-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs uppercase tracking-[0.2em] text-white/60">
@@ -354,36 +367,44 @@ export default function AdminLive() {
 
             {/* Upload keys */}
             <div className="bg-white/5 p-8" style={{ borderRadius: 0 }}>
-              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">CAMERA UPLOAD KEYS</h2>
+              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">UPLOAD LINKS</h2>
               <p className="text-white/50 text-xs mb-6 text-left">
-                A key lets one uploader (the Canon FTP relay, the Fuji laptop) send photos into this gallery's inbox.
-                It cannot publish, delete or see anything. Revoke it when the event is over.
+                Give a photographer a link and they can send photos from their phone into this gallery's inbox —
+                no account needed. A link cannot publish, delete or see anything. Turn it off when the event is over.
               </p>
 
               {newKey && (
                 <div className="bg-black p-4 mb-6" style={{ borderRadius: 0 }}>
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400 mb-2">
-                    Copy it now — it is not shown again
+                    Send it now — it is not shown again
                   </p>
-                  <code className="block text-xs break-all text-white mb-3">{newKey}</code>
-                  <button className={secondary} style={{ borderRadius: 0 }}
-                    onClick={() => navigator.clipboard?.writeText(newKey)}>
-                    Copy key
-                  </button>
+                  <code className="block text-xs break-all text-white mb-3">{uploadLink(newKey)}</code>
+                  <div className="flex flex-wrap gap-2">
+                    {typeof navigator !== 'undefined' && 'share' in navigator && (
+                      <button className={primary} style={{ borderRadius: 0 }}
+                        onClick={() => navigator.share({ title: 'Send photos', url: uploadLink(newKey) }).catch(() => {})}>
+                        Share link
+                      </button>
+                    )}
+                    <button className={secondary} style={{ borderRadius: 0 }}
+                      onClick={() => navigator.clipboard?.writeText(uploadLink(newKey))}>
+                      Copy link
+                    </button>
+                  </div>
                 </div>
               )}
 
               <div className="flex flex-wrap gap-2 mb-6">
-                <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Label, e.g. Canon 5D FTP"
+                <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Who it's for, e.g. Eric"
                   value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
                 <button className={primary} style={{ borderRadius: 0 }} disabled={busy}
                   onClick={() => eventAction('mint-key', { label: keyLabel })}>
-                  New key
+                  New link
                 </button>
               </div>
 
               {activeKeys.length === 0 ? (
-                <p className="text-white/30 text-xs text-left">No active keys.</p>
+                <p className="text-white/30 text-xs text-left">No active links.</p>
               ) : (
                 <div className="space-y-2">
                   {activeKeys.map(k => (
@@ -396,8 +417,8 @@ export default function AdminLive() {
                         </p>
                       </div>
                       <button className={danger} style={{ borderRadius: 0 }} disabled={busy}
-                        onClick={() => window.confirm('Revoke this key? The uploader using it stops working.') && eventAction('revoke-key', { keyId: k.id })}>
-                        Revoke
+                        onClick={() => window.confirm('Turn off this link? Anyone using it can no longer send photos.') && eventAction('revoke-key', { keyId: k.id })}>
+                        Turn off
                       </button>
                     </div>
                   ))}

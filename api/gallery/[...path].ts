@@ -212,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleBatchDelete(req, res);
         }
 
-        if (route === 'ingest-start' || route === 'ingest-complete') {
+        if (route === 'ingest-start' || route === 'ingest-complete' || route === 'ingest-info' || route === 'ingest-chunk') {
             return await handleIngest(req, res, route);
         }
 
@@ -1226,9 +1226,13 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
 }
 
 /**
- * Live event uploads. Two steps, both POST:
+ * Live event uploads, all POST:
+ *   ingest-info     { slug? }                            → which gallery this caller uploads to
  *   ingest-start    { fileName, mimeType, size, slug? } → { uploadUrl }
  *                   PUT the file's bytes to uploadUrl; Google returns { id }.
+ *   ingest-chunk    ?session=<uploadUrl>&slug=, raw body, x-content-range
+ *                   — the same PUT relayed through us, 4MB at a time, for a
+ *                   browser that cannot reach Google directly.
  *   ingest-complete { fileId, slug? }                    → { pending: true }
  * The photo then waits in the gallery's live inbox for review (live-inbox).
  * Auth is an ingest key (Bearer tlu_live_…) or the admin session plus slug —
@@ -1239,8 +1243,26 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
     const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
     try {
         const supabase = ingest.createServiceClient();
-        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+
+        // A chunk's body is raw bytes, so its gallery and session ride in the query.
+        if (route === 'ingest-chunk') {
+            const caller = await ingest.resolveIngestCaller(req, supabase, req.query.slug);
+            const chunk = Buffer.isBuffer(req.body) ? req.body : null;
+            if (!chunk || chunk.length === 0) return res.status(400).json({ error: 'Chunk body is required (application/octet-stream).' });
+            const result = await ingest.relayChunk(
+                typeof req.query.session === 'string' ? req.query.session : '',
+                typeof req.headers['x-content-range'] === 'string' ? req.headers['x-content-range'] : '',
+                chunk,
+            );
+            return res.status(200).json({ success: true, gallery: caller.library.slug, ...result });
+        }
+
+        const body = (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) ? req.body : {};
         const caller = await ingest.resolveIngestCaller(req, supabase, body.slug);
+
+        if (route === 'ingest-info') {
+            return res.status(200).json({ success: true, ...ingest.describeCaller(caller) });
+        }
 
         if (route === 'ingest-start') {
             const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
