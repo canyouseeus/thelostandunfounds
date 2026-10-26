@@ -1,7 +1,8 @@
 import RetrogradeRenameTool from './RetrogradeRenameTool';
+import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { Eye, EyeOff, Radio } from 'lucide-react';
 import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
@@ -95,6 +96,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
     // Photographer Invite State
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [qrLibrary, setQrLibrary] = useState<{ slug: string; name: string } | null>(null);
     const [inviteData, setInviteData] = useState({ email: '', name: '' });
     const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -1493,6 +1495,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     <Radio className="w-4 h-4" />
                                                                 </a>
                                                             )}
+                                                            <button
+                                                                onClick={() => setQrLibrary({ slug: lib.slug, name: lib.name })}
+                                                                className="p-2 hover:bg-white/20 text-white/60 hover:text-white"
+                                                                title="QR code and wallpaper"
+                                                                aria-label={`QR code for ${lib.name}`}
+                                                                data-tour="gallery-qr-button"
+                                                            >
+                                                                <QrCodeIcon className="w-4 h-4" />
+                                                            </button>
                                                             <a
                                                                 href={`/gallery/${lib.slug}`}
                                                                 target="_blank"
@@ -1630,6 +1641,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )}
             </div>
 
+
+            {qrLibrary && (
+                <QrWallpaperModal slug={qrLibrary.slug} name={qrLibrary.name} onClose={() => setQrLibrary(null)} />
+            )}
 
             {/* Photographer Invite Modal */}
             {

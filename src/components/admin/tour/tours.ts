@@ -262,7 +262,37 @@ const liveEventTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [liveEventTour, dashboardTour, ...consoleTours];
+const qrWallpaperTour: Tour = {
+  id: 'gallery-qr-wallpaper',
+  title: 'Gallery QR Codes & Wallpapers',
+  summary: 'Download a QR code for any gallery, or put it on a photo to make a phone wallpaper people can scan.',
+  group: 'new',
+  announce: '2026-10-26',
+  steps: [
+    {
+      route: '/admin',
+      panel: 'gallery',
+      target: 'gallery-qr-button',
+      title: 'QR Code Button',
+      body: 'Every gallery in the list has a QR button. It opens a pop-up for that gallery\'s link.\n\nThe pop-up has three steps: choose the QR style, add a photo, then place the QR on it.',
+      missingNote: 'Open a gallery list under Gallery Management. Each row has a QR button.',
+    },
+    {
+      title: 'Step 1: Style',
+      body: 'Pick SQUARE or ROUNDED, and BLACK ON WHITE or WHITE ON BLACK. DOWNLOAD QR saves the plain code as a print-size PNG.\n\nMAKE WALLPAPER moves on to the photo.',
+    },
+    {
+      title: 'Step 2: Photo',
+      body: 'Choose a photo, then drag it to move it and pinch (or scroll, or use the slider) to zoom. The frame is a phone screen, so what you see is what the wallpaper keeps.',
+    },
+    {
+      title: 'Step 3: Place The QR',
+      body: 'Drag the QR code where you want it and pinch to resize it, separately from the photo. DOWNLOAD WALLPAPER saves a full-size phone wallpaper. On a phone, SAVE TO PHOTOS puts it straight in your camera roll.',
+    },
+  ],
+};
+
+export const TOURS: Tour[] = [qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);
