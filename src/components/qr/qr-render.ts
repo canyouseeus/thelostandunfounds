@@ -149,7 +149,7 @@ export function drawQrCard(
   // Rounded: dots for the data, soft-cornered eyes for the three finders.
   const inFinder = (r: number, c: number) =>
     (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7)
-  const dot = m * 0.47
+  const dot = m * 0.5
   ctx.beginPath()
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
@@ -166,11 +166,11 @@ export function drawQrCard(
     const fx = ox + fc * m
     const fy = oy + fr * m
     ctx.beginPath()
-    roundedRectPath(ctx, fx, fy, 7 * m, 7 * m, 2.1 * m)
-    roundedRectPath(ctx, fx + m, fy + m, 5 * m, 5 * m, 1.2 * m)
+    roundedRectPath(ctx, fx, fy, 7 * m, 7 * m, 1.2 * m)
+    roundedRectPath(ctx, fx + m, fy + m, 5 * m, 5 * m, 0.6 * m)
     ctx.fill('evenodd')
     ctx.beginPath()
-    roundedRectPath(ctx, fx + 2 * m, fy + 2 * m, 3 * m, 3 * m, 0.95 * m)
+    roundedRectPath(ctx, fx + 2 * m, fy + 2 * m, 3 * m, 3 * m, 0.5 * m)
     ctx.fill()
   }
   ctx.restore()
