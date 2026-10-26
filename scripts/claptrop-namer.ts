@@ -64,6 +64,16 @@ export function isClaptropName(name: string | null | undefined): boolean {
   return CLAPTROP_ANY_HANDLE.test(name) || /^@tlau_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
+/**
+ * A photographers.instagram value as a filename handle. Stored inconsistently
+ * ('@four5_culture', 'itzography'); the convention wants '@' + lowercase, and
+ * only characters CLAPTROP_ANY_HANDLE accepts. Null when there is no usable one.
+ */
+export function normalizeHandle(raw: string | null | undefined): string | null {
+  const bare = (raw || '').trim().toLowerCase().replace(/^@+/, '');
+  return /^[a-z0-9._-]+$/.test(bare) ? `@${bare}` : null;
+}
+
 /** `@<handle>_thelostandunfounds_YYYY-MM-DD_` for any handle. */
 export const CLAPTROP_ANY_HANDLE = /^@[a-z0-9._-]+_thelostandunfounds_\d{4}-\d{2}-\d{2}_/;
 
@@ -79,6 +89,17 @@ export function isCurrentName(name: string | null | undefined, handle?: string):
   // numbers climb forever.
   const h = (handle || '@tlau.media').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`^${h}_thelostandunfounds_\\d{4}-\\d{2}-\\d{2}_`).test(name);
+}
+
+// Already in the current format, credited to anyone. The overnight rename
+// leaves these alone: a live gallery mixes shooters (crew, guests, the house),
+// each credited in their own filenames, and rewriting one to the gallery's
+// handle would take the credit off whoever shot it. Only the retired prefixes
+// still count as work — v2 '@tlau.photos_' (handle retired) and v1 '@tlau_',
+// which CLAPTROP_ANY_HANDLE doesn't match in the first place.
+export function isCurrentAnyHandle(name: string | null | undefined): boolean {
+  if (!name) return false;
+  return CLAPTROP_ANY_HANDLE.test(name) && !name.startsWith('@tlau.photos_');
 }
 
 // Pull the claptrop tail (everything after whichever prefix variant is present).
@@ -374,7 +395,7 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
   if (existingNames) {
     while (existingNames.has(filename.toLowerCase())) {
       seq      = nextSeq(dateStr, location, subject);
-      stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
+      stem     = `${prefix}_${dateStr}_${location}_${subject}_${seq}`;
       filename = `${stem}${ext}`;
     }
     existingNames.add(filename.toLowerCase());

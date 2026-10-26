@@ -13,6 +13,10 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
     -   **Commission**: 42% lifetime commission on referred customer sales — **42% of PROFIT**
         (price − cost), never of gross. Cost for a service job is `invoices.job_cost`, else the
         photographer's `contractor_payout` (e.g. Eric's 80% on Airbnb shoots).
+    -   **Photo sales from a crew photographer's own gallery**: the photographer's 97% share is
+        passed as `cost`, so profit = the house's 3% and every share here (42%, MLM, King Midas,
+        Secret Santa) is a percentage of that 3%. Proven against the live RPC 2026-10-26: $100
+        sale, $97 cost → profit $3.00, commission $1.26. The house's own galleries pass cost 0.
     -   **MLM**: 2-tier bonus system (Level 1: 2%, Level 2: 1%), also of profit. Every new
         affiliate's upline defaults to the owner's code `THELOSTANDUNFOUNDS`.
         **Payable** since #296: each upline share writes an `affiliate_commissions` row

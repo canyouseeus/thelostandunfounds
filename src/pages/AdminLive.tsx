@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import LiveUploader from '../components/live/LiveUploader'
 
 interface Gallery {
   id: string
@@ -33,6 +34,15 @@ interface IngestKey {
   revoked_at: string | null
   last_used_at: string | null
   upload_count: number
+  photographer_id: string | null
+  credit_handle: string | null
+}
+
+/** A crew member a link can credit; `handle` is exactly what filenames will carry. */
+interface CrewMember {
+  id: string
+  name: string
+  handle: string | null
 }
 
 interface Pending {
@@ -49,6 +59,9 @@ const primary = `${btn} bg-white text-black hover:bg-white/10 hover:text-white`
 const secondary = `${btn} bg-white/10 text-white hover:bg-white hover:text-black`
 const danger = `${btn} bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white`
 const field = 'w-full bg-white/5 text-white px-4 py-3 text-sm focus:outline-none focus:bg-white/10'
+
+/** The photographer's upload page. The key rides in the fragment so it never reaches a server log. */
+const uploadLink = (key: string) => `${window.location.origin}/live/upload#${key}`
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -73,6 +86,12 @@ export default function AdminLive() {
   const [viewing, setViewing] = useState<{ fileId: string; url: string | null } | null>(null)
   const [newKey, setNewKey] = useState<string | null>(null)
   const [keyLabel, setKeyLabel] = useState('')
+  const [crew, setCrew] = useState<CrewMember[]>([])
+  // '' = someone not on the crew list: their photos keep their camera names.
+  const [shooter, setShooter] = useState('')
+  const [guestHandle, setGuestHandle] = useState('')
+  // The gallery's own credit: what photos are named for when the sender has none.
+  const [galleryHandle, setGalleryHandle] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -92,11 +111,13 @@ export default function AdminLive() {
   const loadEvent = useCallback(async () => {
     if (!slug) return
     try {
-      const data = await api<{ live_mode: boolean; keys: IngestKey[] }>(
+      const data = await api<{ live_mode: boolean; keys: IngestKey[]; crew?: CrewMember[]; handle?: string | null }>(
         `/api/gallery/live-event?slug=${encodeURIComponent(slug)}`
       )
       setLiveMode(data.live_mode)
       setKeys(data.keys)
+      setCrew(data.crew || [])
+      setGalleryHandle(data.handle ?? null)
     } catch (err: any) {
       setError(err.message)
     }
@@ -296,6 +317,15 @@ export default function AdminLive() {
 
         {slug && (
           <>
+            {/* Your own uploads, straight from the phone's camera roll */}
+            <div data-tour="live-camera-roll" className="bg-white/5 p-6 mb-8" style={{ borderRadius: 0 }}>
+              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-2">SEND FROM CAMERA ROLL</h2>
+              <p className="text-white/50 text-xs mb-4 text-left">
+                Pick photos your camera app has dropped into your phone. They go straight into the gallery — no review.
+              </p>
+              <LiveUploader slug={slug} onSent={loadInbox} />
+            </div>
+
             {/* Review inbox */}
             <div className="py-4 mb-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs uppercase tracking-[0.2em] text-white/60">
@@ -354,36 +384,76 @@ export default function AdminLive() {
 
             {/* Upload keys */}
             <div data-tour="live-keys" className="bg-white/5 p-8" style={{ borderRadius: 0 }}>
-              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">CAMERA UPLOAD KEYS</h2>
+              <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">UPLOAD LINKS</h2>
               <p className="text-white/50 text-xs mb-6 text-left">
-                A key lets one uploader (the Canon FTP relay, the Fuji laptop) send photos into this gallery's inbox.
-                It cannot publish, delete or see anything. Revoke it when the event is over.
+                Give a photographer a link and the photos they send from their phone go straight into this gallery —
+                no account needed. A link cannot delete or see anything. Turn it off when the event is over.
               </p>
 
               {newKey && (
                 <div className="bg-black p-4 mb-6" style={{ borderRadius: 0 }}>
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400 mb-2">
-                    Copy it now — it is not shown again
+                    Send it now — it is not shown again
                   </p>
-                  <code className="block text-xs break-all text-white mb-3">{newKey}</code>
-                  <button className={secondary} style={{ borderRadius: 0 }}
-                    onClick={() => navigator.clipboard?.writeText(newKey)}>
-                    Copy key
-                  </button>
+                  <code className="block text-xs break-all text-white mb-3">{uploadLink(newKey)}</code>
+                  <div className="flex flex-wrap gap-2">
+                    {typeof navigator !== 'undefined' && 'share' in navigator && (
+                      <button className={primary} style={{ borderRadius: 0 }}
+                        onClick={() => navigator.share({ title: 'Send photos', url: uploadLink(newKey) }).catch(() => {})}>
+                        Share link
+                      </button>
+                    )}
+                    <button className={secondary} style={{ borderRadius: 0 }}
+                      onClick={() => navigator.clipboard?.writeText(uploadLink(newKey))}>
+                      Copy link
+                    </button>
+                  </div>
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2 mb-6">
-                <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Label, e.g. Canon 5D FTP"
-                  value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+              <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-white/50 mb-2">Who's shooting?</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <select className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }}
+                  value={shooter} onChange={e => setShooter(e.target.value)}>
+                  {crew.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.handle ? ` — ${c.handle}` : ' — no handle on file'}</option>
+                  ))}
+                  <option value="">Someone else</option>
+                </select>
+                {shooter === '' && (
+                  <>
+                    <input className={`${field} flex-1 min-w-[10rem]`} style={{ borderRadius: 0 }} placeholder="Their name"
+                      value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+                    <input className={`${field} flex-1 min-w-[10rem]`} style={{ borderRadius: 0 }} placeholder="Their Instagram (optional)"
+                      autoCapitalize="none" autoCorrect="off"
+                      value={guestHandle} onChange={e => setGuestHandle(e.target.value)} />
+                  </>
+                )}
                 <button className={primary} style={{ borderRadius: 0 }} disabled={busy}
-                  onClick={() => eventAction('mint-key', { label: keyLabel })}>
-                  New key
+                  onClick={() => {
+                    const member = crew.find(c => c.id === shooter)
+                    eventAction('mint-key', member
+                      ? { label: member.name, photographerId: member.id }
+                      : { label: keyLabel, guestHandle })
+                    setGuestHandle('')
+                  }}>
+                  New link
                 </button>
               </div>
+              <p className="text-white/40 text-[10px] mb-6 text-left">
+                {(() => {
+                  const member = crew.find(c => c.id === shooter)
+                  const typed = shooter === '' ? guestHandle.trim().toLowerCase().replace(/^@+/, '') : ''
+                  const credit = member?.handle || (typed && /^[a-z0-9._-]+$/.test(typed) ? `@${typed}` : null)
+                  if (credit) return `Their photos are named ${credit}_thelostandunfounds_… so the credit is theirs.`
+                  return galleryHandle
+                    ? `No handle of their own — their photos are named for this gallery, ${galleryHandle}_thelostandunfounds_…`
+                    : 'No handle yet — go live and this gallery takes @tlau.media, which their photos are named for.'
+                })()}
+              </p>
 
               {activeKeys.length === 0 ? (
-                <p className="text-white/30 text-xs text-left">No active keys.</p>
+                <p className="text-white/30 text-xs text-left">No active links.</p>
               ) : (
                 <div className="space-y-2">
                   {activeKeys.map(k => (
@@ -391,13 +461,17 @@ export default function AdminLive() {
                       <div className="min-w-0 text-left">
                         <p className="text-xs font-black uppercase tracking-[0.15em]">{k.label || 'Unlabelled'}</p>
                         <p className="text-white/40 text-[10px] tracking-wide mt-1">
+                          {(() => {
+                            const handle = crew.find(c => c.id === k.photographer_id)?.handle || k.credit_handle
+                            return `${handle || galleryHandle || 'gallery credit'} · `
+                          })()}
                           {k.key_prefix}… · {k.upload_count} sent
                           {k.last_used_at && ` · last ${new Date(k.last_used_at).toLocaleTimeString()}`}
                         </p>
                       </div>
                       <button className={danger} style={{ borderRadius: 0 }} disabled={busy}
-                        onClick={() => window.confirm('Revoke this key? The uploader using it stops working.') && eventAction('revoke-key', { keyId: k.id })}>
-                        Revoke
+                        onClick={() => window.confirm('Turn off this link? Anyone using it can no longer send photos.') && eventAction('revoke-key', { keyId: k.id })}>
+                        Turn off
                       </button>
                     </div>
                   ))}

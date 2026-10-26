@@ -2,7 +2,7 @@ import RetrogradeRenameTool from './RetrogradeRenameTool';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Radio } from 'lucide-react';
 import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
@@ -42,6 +42,7 @@ interface PhotoLibrary {
     owner_id?: string;
     invited_emails?: string; // Comma-separated list of invited client emails
     user_id?: string;
+    live_mode?: boolean; // A live event is running — see /admin/live
 }
 
 interface PricingOption {
@@ -1283,6 +1284,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </div>
                 <div className="flex items-center gap-2">
                     {!isPhotographerView && (
+                        <a
+                            href="/admin/live"
+                            className="p-2 bg-white/5 hover:bg-white/10 text-green-400 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
+                            title="Live events — camera uploads and review inbox"
+                        >
+                            <Radio className="w-3 h-3" />
+                            <span className="hidden sm:inline">Live</span>
+                        </a>
+                    )}
+                    {!isPhotographerView && (
                         <button
                             onClick={() => setIsInviteModalOpen(true)}
                             className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
@@ -1461,6 +1472,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 {!(lib.published ?? true) && (
                                                                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Draft</span>
                                                                 )}
+                                                                {lib.live_mode && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-green-400">● Live</span>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
                                                                 <span>/{lib.slug}</span>
@@ -1469,6 +1483,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                             </div>
                                                         </div>
                                                         <div className="flex gap-1">
+                                                            {!isPhotographerView && (
+                                                                <a
+                                                                    href={`/admin/live?slug=${encodeURIComponent(lib.slug)}`}
+                                                                    className={`p-2 hover:bg-white/20 ${lib.live_mode ? 'text-green-400' : 'text-white/60 hover:text-white'}`}
+                                                                    title="Live event — camera uploads and review inbox"
+                                                                    aria-label={`Live event for ${lib.name}`}
+                                                                >
+                                                                    <Radio className="w-4 h-4" />
+                                                                </a>
+                                                            )}
                                                             <a
                                                                 href={`/gallery/${lib.slug}`}
                                                                 target="_blank"

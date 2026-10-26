@@ -217,7 +217,7 @@ const liveEventTour: Tour = {
       panel: null,
       target: 'dock-gallery',
       title: 'Live Event Galleries',
-      body: 'During an event, photos from the camera go into a private inbox that guests cannot see. You publish the keepers and they appear in the gallery live.\n\nIt lives under Gallery.',
+      body: 'During an event, send photos from your phone\'s camera roll and they appear in the gallery live, named and credited automatically. Photos a camera sends on its own wait in a private inbox for you to review first.\n\nIt lives under Gallery.',
     },
     {
       panel: 'gallery',
@@ -232,10 +232,16 @@ const liveEventTour: Tour = {
       body: 'Choose the event\'s gallery now. The outlined box still works while the tour runs, and the next steps point at what appears once a gallery is picked.\n\nA gallery that is already live has — LIVE after its name.',
     },
     {
+      target: 'live-camera-roll',
+      title: 'Send From Camera Roll',
+      body: 'Let your camera app drop the shots into your phone\'s photos, then tap CHOOSE PHOTOS and pick the keepers. They go straight into the gallery — no review — named @tlau.media_thelostandunfounds_….',
+      missingNote: 'Pick a gallery above first. This section appears once one is chosen.',
+    },
+    {
       target: 'live-keys',
-      title: 'Camera Upload Keys',
-      body: 'Mint a key for each uploader: the Canon FTP relay, the Fuji laptop. Copy it right away, because it is shown once.\n\nA key can only send photos into this gallery\'s inbox. It cannot publish, delete or see anything. Revoke it when the event ends.',
-      missingNote: 'Pick a gallery above first. The keys section appears once one is chosen.',
+      title: 'Upload Links',
+      body: 'Make a link for each extra shooter. Pick them from your crew list, or type a guest\'s Instagram, so their photos are named and credited to them. Send it right away, because it is shown once.\n\nA link can only add photos to this gallery. It cannot delete or see anything. Turn it off when the event ends.',
+      missingNote: 'Pick a gallery above first. The links section appears once one is chosen.',
     },
     {
       target: 'live-go',
@@ -246,7 +252,7 @@ const liveEventTour: Tour = {
     {
       target: 'live-inbox',
       title: 'The Review Inbox',
-      body: 'Photos arrive here within seconds of leaving the camera. Tap a photo to select it, or tap VIEW to see it full size.',
+      body: 'Photos a camera sends on its own wait here for review. Camera-roll uploads skip it and go live straight away.\n\nTap a photo to select it, or tap VIEW to see it full size.',
       missingNote: 'Pick a gallery above first. The inbox appears once one is chosen.',
     },
     {

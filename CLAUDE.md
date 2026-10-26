@@ -204,6 +204,11 @@ Owner-confirmed 2026-10-20. Full detail in `affiliate-program`.
 - Every share is a percentage of **profit** (price − cost), never gross: affiliate 42%, MLM L1 2%,
   L2 1%, King Midas pot 8%, Secret Santa 3%, the company keeps the rest. Cost =
   `invoices.job_cost`, else the photographer's `contractor_payout`.
+- **Photographer gallery sales** (owner-confirmed 2026-10-26): a sale from a gallery a crew
+  photographer owns pays them **97%** less their part of Stripe's fee; the house keeps **3%**, and
+  every affiliate share above comes out of that 3% (the photographer's share is the sale's cost).
+  The house's own galleries are excluded. `accruePhotoSalePayouts` → `crew_payouts`, paid by the
+  hourly crew-payouts cron. Card sales only — Strike (bitcoin) photo sales never reach Stripe.
 - **Hold:** physical products only (30 days). Services and digital goods pay once the client's
   payment settles. Never transfer before checking the platform's **available** balance.
 - **King Midas days are Central time** (`America/Chicago`), not UTC.

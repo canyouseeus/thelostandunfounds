@@ -11,7 +11,7 @@
 import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
-import { buildName, isCurrentName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
+import { buildName, isCurrentAnyHandle, isCurrentName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;
@@ -161,8 +161,13 @@ async function processLibrary(
     // A file Drive has already refused to let us write is not pending work. It
     // can never satisfy isCurrentName(), so without this it would be re-attempted
     // on every single run for the life of the cron.
+    //
+    // A file already in the current format is done whoever it credits: live
+    // galleries mix shooters, and renaming one to the gallery's handle would
+    // take the credit off the person who shot it. See isCurrentAnyHandle.
     const candidates = index.filter(p =>
         !isCurrentName(p.title, library.photographer_handle ?? undefined)
+        && !isCurrentAnyHandle(p.title)
         && !p.rename_blocked
     );
     stats.blocked += index.filter(p => p.rename_blocked === 'drive_no_write_access').length;

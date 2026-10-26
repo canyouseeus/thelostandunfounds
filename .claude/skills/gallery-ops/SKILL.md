@@ -60,7 +60,41 @@ Delivery is dual-channel: **Instant Access** + **Email Backup**.
 
 ## 5. Live Events (camera → review inbox → gallery)
 Photos sent from a camera during an event never go straight to the gallery. They wait in a
-**private review inbox** until the owner publishes them from **`/admin/live?slug=<gallery>`**.
+**private review inbox** until the owner publishes them from **`/admin/live?slug=<gallery>`**
+(reached from the admin dashboard: Gallery Management → the green **LIVE** header button, or the
+radio icon on each gallery row under Active Galleries).
+
+*   **Phone is the bridge — no laptop.** The camera's own app (Canon Camera Connect, Fujifilm XApp,
+    Nikon SnapBridge, Sony Creators' App) drops frames into the phone's camera roll; the owner sends
+    them with **SEND FROM CAMERA ROLL** on `/admin/live`, a photographer with their **upload link**
+    (`/live/upload#tlu_live_…`, minted under UPLOAD LINKS — key in the fragment, never in a server
+    log). Both use `src/components/live/LiveUploader.tsx`: direct PUT to the Drive session, and on a
+    CORS refusal it switches to `/api/gallery/ingest-chunk` (4MB chunks relayed by us; the relay only
+    ever targets `www.googleapis.com/upload/drive/v3/files?upload_id=…`).
+*   **Live uploads are named on publish** to the claptrop convention
+    (`@handle_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext`; subject = gallery name,
+    date = capture else upload, UTC; location = GPS city else `austin`). Credit: owner session →
+    `@tlau.media`; photographer session → their own handle; upload link → the crew member picked
+    when the link was made (`gallery_ingest_keys.photographer_id`), or the Instagram typed for a
+    guest (`credit_handle`). **Every photo entering a live gallery is named, from any source**: a
+    sender with no handle is named for the gallery's own `photographer_handle`, and going live
+    (`setLiveMode`) gives a house gallery with none `@tlau.media`. Files dropped straight into the
+    Drive folder are named by the overnight retrograde, which needs that handle to run at all. `###` comes from the atomic `next_photo_name_seq(prefix)` RPC (seeded past
+    the archive's highest number), not the namer's in-memory counter, so concurrent phones can't
+    collide. Handles are normalized (`normalizeHandle`: '@' + lowercase). The overnight retrograde
+    treats any file already in the current format as done, **whoever it credits**
+    (`isCurrentAnyHandle`), so a shooter's credit in a mixed gallery is never overwritten with the
+    gallery's handle. Only retired prefixes (`@tlau_`, `@tlau.photos_`) and camera names are work.
+*   **Photographers run their own live galleries** from `/photographer-dashboard` → LIVE GALLERIES
+    (`src/components/live/MyLiveGalleries.tsx`, route `/api/gallery/my-live`). Create makes a public,
+    live gallery they own (`owner_id` = their user id, own Drive folder under
+    `PHOTOGRAPHER_LIVE_DRIVE_FOLDER_ID` / `LIVE_INBOX_DRIVE_FOLDER_ID` / Drive root, $5 default
+    price). "Photographer" = an **active** `photographers` row whose `user_id` is the session user;
+    checked server-side only (`verifiedPhotographer`) since that table is admin-only under RLS. They
+    can upload to, and go live / end live on, galleries they own — nothing else.
+*   **Camera-roll uploads publish immediately — no review** (owner's call, 2026-10-26: they are
+    hand-picked). LiveUploader sends `ingest-complete { publish: true }`. The review inbox is for
+    automatic sends only (FTP relay, watcher), which omit `publish`.
 
 *   **Upload** (`POST /api/gallery/ingest-start` → PUT bytes to the returned Drive URL →
     `POST /api/gallery/ingest-complete`). Auth is a per-gallery **ingest key** (`Bearer tlu_live_…`,
