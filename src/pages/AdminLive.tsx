@@ -304,7 +304,7 @@ export default function AdminLive() {
             <div className="bg-white/5 p-6 mb-8" style={{ borderRadius: 0 }}>
               <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-2">SEND FROM CAMERA ROLL</h2>
               <p className="text-white/50 text-xs mb-4 text-left">
-                Pick photos your camera app has dropped into your phone. They land in the inbox below for review.
+                Pick photos your camera app has dropped into your phone. They go straight into the gallery — no review.
               </p>
               <LiveUploader slug={slug} onSent={loadInbox} />
             </div>
@@ -369,8 +369,8 @@ export default function AdminLive() {
             <div className="bg-white/5 p-8" style={{ borderRadius: 0 }}>
               <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">UPLOAD LINKS</h2>
               <p className="text-white/50 text-xs mb-6 text-left">
-                Give a photographer a link and they can send photos from their phone into this gallery's inbox —
-                no account needed. A link cannot publish, delete or see anything. Turn it off when the event is over.
+                Give a photographer a link and the photos they send from their phone go straight into this gallery —
+                no account needed. A link cannot delete or see anything. Turn it off when the event is over.
               </p>
 
               {newKey && (

@@ -285,6 +285,24 @@ const gone = await discardPending(supabase, 'event-a', ['good-0004-abc']);
 check('a file already gone from Drive still discards cleanly', gone.discarded === 1 && db.gallery_ingest_pending.length === 0);
 await rejects('an empty batch is refused', () => discardPending(supabase, 'event-a', []), 400);
 
+// --- camera roll: publish on arrival ------------------------------------------
+
+putFile('roll-0001-abc', [inboxA!]);
+putFile('roll-0002-abc', [inboxA!]);
+const photosBefore = db.photos.length;
+const pendingBefore = db.gallery_ingest_pending.length;
+const roll = await completeUpload(supabase, callerA, { fileId: 'roll-0001-abc', publish: true });
+check('a camera-roll upload goes live at once', roll.pending === false && !!roll.photoId
+    && db.photos.some(p => p.google_drive_file_id === 'roll-0001-abc' && p.library_id === 'lib-a'), JSON.stringify(roll));
+check('…moved out of the inbox into the gallery folder', JSON.stringify(driveFiles['roll-0001-abc'].parents) === '["folder-a"]');
+check('…and leaves nothing waiting in the inbox', db.gallery_ingest_pending.length === pendingBefore
+    && !db.gallery_ingest_pending.some(r => r.drive_file_id === 'roll-0001-abc'));
+check('…carrying the sync fingerprint', typeof db.photos.find(p => p.google_drive_file_id === 'roll-0001-abc')?.metadata?.sync_fingerprint === 'string');
+const notReally = await completeUpload(supabase, callerA, { fileId: 'roll-0002-abc', publish: 'true' });
+check('only publish: true publishes — anything else waits for review', notReally.pending === true
+    && db.photos.length === photosBefore + 1 && db.gallery_ingest_pending.some(r => r.drive_file_id === 'roll-0002-abc'));
+await discardPending(supabase, 'event-a', ['roll-0002-abc']);
+
 // --- chunk relay --------------------------------------------------------------
 
 const SESSION = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=abc123';

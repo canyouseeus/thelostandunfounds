@@ -71,6 +71,9 @@ radio icon on each gallery row under Active Galleries).
     log). Both use `src/components/live/LiveUploader.tsx`: direct PUT to the Drive session, and on a
     CORS refusal it switches to `/api/gallery/ingest-chunk` (4MB chunks relayed by us; the relay only
     ever targets `www.googleapis.com/upload/drive/v3/files?upload_id=…`).
+*   **Camera-roll uploads publish immediately — no review** (owner's call, 2026-10-26: they are
+    hand-picked). LiveUploader sends `ingest-complete { publish: true }`. The review inbox is for
+    automatic sends only (FTP relay, watcher), which omit `publish`.
 
 *   **Upload** (`POST /api/gallery/ingest-start` → PUT bytes to the returned Drive URL →
     `POST /api/gallery/ingest-complete`). Auth is a per-gallery **ingest key** (`Bearer tlu_live_…`,

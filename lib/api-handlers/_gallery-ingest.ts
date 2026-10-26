@@ -7,6 +7,8 @@
 //      bytes straight to Google Drive — into the gallery's private INBOX folder.
 //   2. It tells us the file is there. We check it really is in that inbox and
 //      record it as pending. Guests cannot see it.
+//      Camera-roll uploads (LiveUploader) skip step 3: they are hand-picked,
+//      so ingest-complete publishes them on the spot.
 //   3. The owner reviews the inbox on the live dashboard. Publish moves the
 //      file into the gallery's folder and writes the photo row through the same
 //      code the sync uses. Discard deletes the Drive file permanently — not to
@@ -352,7 +354,8 @@ export async function relayChunk(
 }
 
 /**
- * Record a finished upload as pending review.
+ * Record a finished upload: as pending review, or — with `publish: true`,
+ * which the camera-roll uploader sends — straight into the gallery.
  *
  * The file id comes from the uploader, so it is not trusted: Drive is asked
  * for the file and it must sit in this gallery's inbox. Without that check a
@@ -362,8 +365,8 @@ export async function relayChunk(
 export async function completeUpload(
     supabase: ServiceSupabaseClient,
     caller: IngestCaller,
-    body: { fileId?: unknown },
-): Promise<{ fileId: string; fileName: string; pending: true }> {
+    body: { fileId?: unknown; publish?: unknown },
+): Promise<{ fileId: string; fileName: string; pending: boolean; photoId?: string }> {
     const fileId = typeof body.fileId === 'string' ? body.fileId.trim() : '';
     if (!/^[\w-]{10,}$/.test(fileId)) throw new HttpError(400, 'fileId is required.');
 
@@ -413,6 +416,12 @@ export async function completeUpload(
             .eq('id', caller.keyId);
     }
 
+    // Camera-roll uploads are hand-picked, so they skip review and go live now.
+    // Only automatic sends (a camera pushing every frame) wait in the inbox.
+    if (body.publish === true) {
+        const photoId = await publishFile(supabase, caller.library, inboxId, fileId);
+        return { fileId, fileName: file.name || '', pending: false, photoId };
+    }
     return { fileId, fileName: file.name || '', pending: true };
 }
 
@@ -450,6 +459,23 @@ async function pendingIn(supabase: ServiceSupabaseClient, libraryId: string, ids
 type BatchResult = { fileId: string; ok: boolean; photoId?: string; error?: string };
 
 /**
+ * Move one received file from the inbox into the gallery's folder and write its
+ * photo row — at which point it is live — then drop it from the inbox.
+ */
+async function publishFile(
+    supabase: ServiceSupabaseClient,
+    library: IngestLibrary,
+    inboxId: string,
+    fileId: string,
+): Promise<string> {
+    const file = await ingestDeps.moveFile(fileId, library.folderId, inboxId);
+    const photoId = await ingestUploadedPhoto(supabase, library.id, file);
+    if (!photoId) throw new Error('The photo row could not be written.');
+    await supabase.from('gallery_ingest_pending').delete().eq('drive_file_id', fileId);
+    return photoId;
+}
+
+/**
  * Publish: move each file from the inbox into the gallery's folder, then write
  * its photo row — at which point it is live. Per-photo results, so one Drive
  * hiccup does not sink the batch.
@@ -467,11 +493,7 @@ export async function publishPending(supabase: ServiceSupabaseClient, slug: stri
             continue;
         }
         try {
-            const file = await ingestDeps.moveFile(fileId, library.folderId, inboxId);
-            const photoId = await ingestUploadedPhoto(supabase, library.id, file);
-            if (!photoId) throw new Error('The photo row could not be written.');
-            await supabase.from('gallery_ingest_pending').delete().eq('drive_file_id', fileId);
-            results.push({ fileId, ok: true, photoId });
+            results.push({ fileId, ok: true, photoId: await publishFile(supabase, library, inboxId, fileId) });
         } catch (err: any) {
             console.error('[live-inbox] publish failed:', fileId, err?.message);
             results.push({ fileId, ok: false, error: err?.message || 'Publish failed.' });

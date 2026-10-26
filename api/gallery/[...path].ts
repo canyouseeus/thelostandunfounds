@@ -1233,8 +1233,9 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
  *   ingest-chunk    ?session=<uploadUrl>&slug=, raw body, x-content-range
  *                   — the same PUT relayed through us, 4MB at a time, for a
  *                   browser that cannot reach Google directly.
- *   ingest-complete { fileId, slug? }                    → { pending: true }
- * The photo then waits in the gallery's live inbox for review (live-inbox).
+ *   ingest-complete { fileId, publish?, slug? }          → { pending } or { photoId }
+ * Without publish the photo waits in the gallery's live inbox for review
+ * (live-inbox); camera-roll uploads send publish: true and go live at once.
  * Auth is an ingest key (Bearer tlu_live_…) or the admin session plus slug —
  * see lib/api-handlers/_gallery-ingest.ts.
  */

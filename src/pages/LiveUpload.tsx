@@ -2,9 +2,9 @@
  * Photographer upload page — /live/upload#<tlu_live_ key>
  *
  * The link the owner hands a photographer for an event. It needs no account:
- * the key in the URL is the credential, and all it can do is drop photos into
- * one gallery's review inbox. Nothing sent here is public until the owner
- * publishes it from /admin/live.
+ * the key in the URL is the credential, and all it can do is add photos to
+ * one gallery. They go live as they arrive — camera-roll photos are already
+ * hand-picked, so there is no review step.
  *
  * The key rides in the fragment, not the path or query, so it never reaches a
  * server log or a Referer header.
@@ -57,7 +57,7 @@ export default function LiveUpload() {
           <>
             <p className="text-sm text-white/60 mb-8">
               To <span className="text-white font-bold uppercase tracking-wider">{gallery.name}</span>.
-              Photos go to the review inbox first; nothing is public until it's approved.
+              Photos appear in the gallery as soon as they're sent — pick your keepers first.
             </p>
 
             <div className="bg-white/5 p-6 mb-8" style={{ borderRadius: 0 }}>

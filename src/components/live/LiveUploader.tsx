@@ -1,5 +1,9 @@
 /**
- * Send photos from a phone's camera roll into a gallery's live review inbox.
+ * Send photos from a phone's camera roll straight into a live gallery.
+ *
+ * No review step: these are hand-picked, so ingest-complete is told to
+ * publish them on arrival. (Automatic camera sends, where every frame
+ * arrives unseen, are what the review inbox is for.)
  *
  * Works from the camera roll on purpose: Canon Camera Connect, Fujifilm XApp,
  * Nikon SnapBridge, Sony Creators' App and the like all drop the camera's
@@ -8,7 +12,7 @@
  * it sends them.
  *
  * Each photo: ingest-start opens a Drive upload session, the bytes go to it,
- * ingest-complete records the photo as pending. The bytes try Google directly
+ * ingest-complete publishes it. The bytes try Google directly
  * first; if the browser is not allowed to (the session URL is cross-origin),
  * they go through /api/gallery/ingest-chunk 4MB at a time instead, and the
  * rest of the batch skips straight to that.
@@ -134,7 +138,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
         }
       }
       if (!fileId) fileId = await putRelayed(uploadUrl, item.file, onProgress)
-      await post('ingest-complete', { fileId })
+      await post('ingest-complete', { fileId, publish: true })
       patch(item.id, { state: 'done', progress: 1 })
     } catch (err: any) {
       patch(item.id, { state: 'failed', error: err?.message || 'Upload failed.' })
@@ -188,7 +192,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
         )}
         {items.length > 0 && (
           <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">
-            {done} sent{active ? ` · ${active} sending` : ''}{failed ? ` · ${failed} failed` : ''}
+            {done} live{active ? ` · ${active} sending` : ''}{failed ? ` · ${failed} failed` : ''}
           </p>
         )}
       </div>
@@ -202,7 +206,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
                 <span className={
                   it.state === 'done' ? 'text-green-400' : it.state === 'failed' ? 'text-red-400' : 'text-white/50'
                 }>
-                  {it.state === 'done' ? 'Sent' : it.state === 'failed' ? 'Failed'
+                  {it.state === 'done' ? 'Live' : it.state === 'failed' ? 'Failed'
                     : it.state === 'queued' ? 'Waiting' : `${Math.round(it.progress * 100)}%`}
                 </span>
               </div>
