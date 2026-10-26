@@ -127,6 +127,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | Google service account, photographer | `gallery-agent-management` |
 | deployment verification, Vercel status | `dev-parity-guard` (see Deployment Verification Rule below) |
 | page titles, h1, heading case | Page Title Style Rule below |
+| new admin feature, tutorial, walkthrough, tour, onboarding | ADMIN TUTORIAL RULE below, `admin-ops` |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 
@@ -281,6 +282,20 @@ removed — do not recreate them.
 2. Inject Getting Started CTA before footer if not present
 3. Send via POST `https://www.thelostandunfounds.com/api/newsletter/send` with `testEmail` for testing
 4. Omit `testEmail` for full send
+
+## ADMIN TUTORIAL RULE
+
+Owner request, 2026-10-26: **every new admin-dashboard feature ships with a walkthrough.**
+
+1. Add a tour to `src/components/admin/tour/tours.ts` with `group: 'new'` and `announce` set to
+   the ship date. The dashboard then shows a NEW FEATURE pop-up once; **GO** starts the walkthrough
+   (dimmed screen, white outline on each step's target).
+2. Put `data-tour="<id>"` on each element a step points at. A step can first `route` to a page or
+   open a console `panel`.
+3. If the feature has no way in from the dashboard, add one. A tour cannot point at a page you can
+   only reach by typing its URL.
+4. Changing an existing tool? Update its tour so the steps still match what is on screen. All tours
+   are listed under TUTORIALS (SAGE MODE on → TUTORIALS, or the `/sagemode` page).
 
 ## DASHBOARD CLOCK RULE
 Clock face click → cycles formats (Analog → Digital 12h → 24h). Top label click → cycles modes (Clock → Stopwatch → Timer). Use `e.stopPropagation()` on clock face clicks.

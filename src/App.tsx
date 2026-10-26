@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigat
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
+import { TourProvider } from './components/admin/tour/TourContext'
 import { GalleryProvider } from './contexts/GalleryContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
@@ -141,6 +142,7 @@ function App() {
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
+        <TourProvider>
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Layout />}>
@@ -451,6 +453,7 @@ function App() {
             </Routes>
             <Analytics />
           </ErrorBoundary>
+        </TourProvider>
         </SageModeProvider>
         </GalleryProvider>
       </AuthProvider>
