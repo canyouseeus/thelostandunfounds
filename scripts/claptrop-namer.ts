@@ -234,13 +234,31 @@ export function parseExifFromBuffer(buf: Buffer): ExifData {
   return result;
 }
 
+// A Fuji RAF carries its EXIF inside an embedded preview JPEG. The header is
+// "FUJIFILMCCD-RAW" with the JPEG's offset as a big-endian uint32 at byte 84
+// (dcraw reads it from the same place). Returns null for anything else.
+export const RAF_HEADER_BYTES = 92;
+
+export function rafJpegOffset(header: Buffer): number | null {
+  if (header.length < RAF_HEADER_BYTES) return null;
+  if (header.slice(0, 15).toString('ascii') !== 'FUJIFILMCCD-RAW') return null;
+  const off = header.readUInt32BE(84);
+  return off > 0 ? off : null;
+}
+
 export function parseExifFromFile(filePath: string): ExifData {
   try {
     const fd  = fs.openSync(filePath, 'r');
-    const buf = Buffer.alloc(65536);
-    const n   = fs.readSync(fd, buf, 0, 65536, 0);
-    fs.closeSync(fd);
-    return parseExifFromBuffer(buf.slice(0, n));
+    try {
+      const head = Buffer.alloc(RAF_HEADER_BYTES);
+      fs.readSync(fd, head, 0, RAF_HEADER_BYTES, 0);
+      const start = rafJpegOffset(head) ?? 0;
+      const buf = Buffer.alloc(65536);
+      const n   = fs.readSync(fd, buf, 0, 65536, start);
+      return parseExifFromBuffer(buf.slice(0, n));
+    } finally {
+      fs.closeSync(fd);
+    }
   } catch {
     return { dateTaken: null, latitude: null, longitude: null };
   }
@@ -324,8 +342,8 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
     ? normalizeText(rawSubject)
     : 'photo';
 
-  // EXIF from local file (JPEG only; RAW/MOV fall through)
-  const exif = (opts.filePath && ['.jpg', '.jpeg'].includes(ext))
+  // EXIF from local file (JPEG, and RAF via its embedded preview; MOV falls through)
+  const exif = (opts.filePath && ['.jpg', '.jpeg', '.raf'].includes(ext))
     ? parseExifFromFile(opts.filePath)
     : { dateTaken: null, latitude: null, longitude: null };
 
