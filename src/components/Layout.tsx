@@ -172,8 +172,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
   useEffect(() => {
     const isNavigatingFromHome = previousPathRef.current === '/' && location.pathname !== '/'
     const isNavigatingToNonHome = previousPathRef.current !== location.pathname && location.pathname !== '/'
+    // A walkthrough moving between pages asks to skip the animation: it is
+    // already drawing over the page, and the cat would cover the target.
+    const skipAnimation = (location.state as { skipRouteLoading?: boolean } | null)?.skipRouteLoading === true
 
-    if (isNavigatingFromHome || isNavigatingToNonHome) {
+    if (!skipAnimation && (isNavigatingFromHome || isNavigatingToNonHome)) {
       setIsRouteLoading(true)
       const timer = setTimeout(() => {
         setIsRouteLoading(false)

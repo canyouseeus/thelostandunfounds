@@ -137,7 +137,10 @@ function TourOverlay({
 
   // Move the page into position, then wait for the target to exist.
   useEffect(() => {
-    if (step.route && window.location.pathname !== step.route) navigate(step.route);
+    // The tour is already covering the page with its own outline and card, so
+    // the site's 1.2s route-change loading screen would only hide the very
+    // thing the step is pointing at. Layout reads this flag and skips it.
+    if (step.route && window.location.pathname !== step.route) navigate(step.route, { state: { skipRouteLoading: true } });
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
