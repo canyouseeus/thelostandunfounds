@@ -62,6 +62,8 @@ interface IngestLibrary {
     folderId: string;
     live_mode: boolean;
     owner_id: string | null;
+    /** The gallery's own credit — who its photos are named for when the uploader has none. */
+    handle: string | null;
 }
 
 interface IngestCaller {
@@ -92,7 +94,7 @@ function bearer(req: VercelRequest): string {
 async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string; slug?: string }): Promise<IngestLibrary> {
     let query = supabase
         .from('photo_libraries')
-        .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode, owner_id');
+        .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode, owner_id, photographer_handle');
     query = match.id ? query.eq('id', match.id) : query.eq('slug', match.slug || '');
     const { data, error } = await query.maybeSingle();
     if (error) throw new HttpError(500, error.message);
@@ -103,6 +105,7 @@ async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string
     return {
         id: data.id, slug: data.slug, name: data.name, folderId,
         live_mode: Boolean(data.live_mode), owner_id: data.owner_id ?? null,
+        handle: normalizeHandle(data.photographer_handle),
     };
 }
 
@@ -122,12 +125,12 @@ export async function resolveIngestCaller(
     if (token.startsWith(INGEST_KEY_PREFIX)) {
         const { data: key, error } = await supabase
             .from('gallery_ingest_keys')
-            .select('id, library_id, revoked_at, photographer_id')
+            .select('id, library_id, revoked_at, photographer_id, credit_handle')
             .eq('key_hash', hashIngestKey(token))
             .maybeSingle();
         if (error) throw new HttpError(500, error.message);
         if (!key || key.revoked_at) throw new HttpError(401, 'This upload key is not valid.');
-        let handle: string | null = null;
+        let handle: string | null = normalizeHandle(key.credit_handle);
         if (key.photographer_id) {
             const { data: shooter } = await supabase
                 .from('photographers')
@@ -568,7 +571,7 @@ export async function completeUpload(
             file_name: file.name || null,
             mime_type: file.mimeType || null,
             key_id: caller.keyId,
-            credit_handle: caller.handle,
+            credit_handle: caller.handle ?? caller.library.handle,
         });
         // A unique violation is the same file arriving twice at once — fine.
         if (error && !/duplicate|unique/i.test(error.message)) throw new HttpError(500, error.message);
@@ -590,7 +593,7 @@ export async function completeUpload(
     // Camera-roll uploads are hand-picked, so they skip review and go live now.
     // Only automatic sends (a camera pushing every frame) wait in the inbox.
     if (body.publish === true) {
-        const photoId = await publishFile(supabase, caller.library, inboxId, fileId, caller.handle);
+        const photoId = await publishFile(supabase, caller.library, inboxId, fileId, caller.handle ?? caller.library.handle);
         return { fileId, fileName: file.name || '', pending: false, photoId };
     }
     return { fileId, fileName: file.name || '', pending: true };
@@ -670,8 +673,9 @@ export async function liveFileName(
  * the claptrop convention for whoever it is credited to — and write its photo
  * row, at which point it is live; then drop it from the inbox.
  *
- * With no handle the file keeps its camera name: an unattributed photo is
- * never credited to someone who didn't shoot it. A naming failure (geocoder,
+ * The credit is the uploader's handle, else the gallery's own (every live
+ * gallery has one — see setLiveMode). Only when neither exists does the file
+ * keep its camera name. A naming failure (geocoder,
  * counter) publishes under the camera name rather than holding the photo back.
  */
 async function publishFile(
@@ -723,7 +727,7 @@ export async function publishPending(supabase: ServiceSupabaseClient, slug: stri
             continue;
         }
         try {
-            const photoId = await publishFile(supabase, library, inboxId, fileId, creditFor.get(fileId) ?? null);
+            const photoId = await publishFile(supabase, library, inboxId, fileId, creditFor.get(fileId) ?? library.handle);
             results.push({ fileId, ok: true, photoId });
         } catch (err: any) {
             console.error('[live-inbox] publish failed:', fileId, err?.message);
@@ -801,7 +805,7 @@ export async function getLiveEvent(supabase: ServiceSupabaseClient, slug: string
     const library = await loadLibrary(supabase, { slug });
     const { data: keys, error } = await supabase
         .from('gallery_ingest_keys')
-        .select('id, key_prefix, label, created_at, revoked_at, last_used_at, upload_count, photographer_id')
+        .select('id, key_prefix, label, created_at, revoked_at, last_used_at, upload_count, photographer_id, credit_handle')
         .eq('library_id', library.id)
         .order('created_at', { ascending: false });
     if (error) throw new HttpError(500, error.message);
@@ -814,15 +818,22 @@ export async function getLiveEvent(supabase: ServiceSupabaseClient, slug: string
         .order('name');
     return {
         slug: library.slug, name: library.name, live_mode: library.live_mode, keys: keys || [],
+        handle: library.handle,
         crew: (crew || []).map((c: any) => ({ id: c.id, name: c.name, handle: normalizeHandle(c.instagram) })),
     };
 }
 
 export async function setLiveMode(supabase: ServiceSupabaseClient, slug: string, live: boolean) {
     const library = await loadLibrary(supabase, { slug });
+    // A live gallery is named for someone, whatever adds to it: uploads with no
+    // credit of their own, and files dropped straight into its Drive folder
+    // (named by the overnight rename, which skips galleries with no handle).
+    // This route is the owner's, so a gallery with no handle is the house's.
+    const update: Record<string, unknown> = { live_mode: live };
+    if (live && !library.handle) update.photographer_handle = HOUSE_HANDLE;
     const { error } = await supabase
         .from('photo_libraries')
-        .update({ live_mode: live })
+        .update(update)
         .eq('id', library.id);
     if (error) throw new HttpError(500, error.message);
     return getLiveEvent(supabase, slug);
@@ -834,7 +845,12 @@ export async function mintIngestKey(
     slug: string,
     label?: string,
     photographerId?: string | null,
+    guestHandle?: string | null,
 ) {
+    const guest = photographerId ? null : normalizeHandle(guestHandle);
+    if (!photographerId && guestHandle && guestHandle.trim() && !guest) {
+        throw new HttpError(400, 'That Instagram handle has characters a handle can\'t contain.');
+    }
     const library = await loadLibrary(supabase, { slug });
     if (photographerId) {
         const { data: shooter } = await supabase.from('photographers').select('id').eq('id', photographerId).maybeSingle();
@@ -849,8 +865,9 @@ export async function mintIngestKey(
             key_prefix: key.slice(0, INGEST_KEY_PREFIX.length + 6),
             label: (label || '').trim().slice(0, 80) || null,
             photographer_id: photographerId || null,
+            credit_handle: guest,
         })
-        .select('id, key_prefix, label, created_at, photographer_id')
+        .select('id, key_prefix, label, created_at, photographer_id, credit_handle')
         .single();
     if (error) throw new HttpError(500, error.message);
     return { key, ...data };

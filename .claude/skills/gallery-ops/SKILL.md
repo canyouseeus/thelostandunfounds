@@ -75,12 +75,16 @@ radio icon on each gallery row under Active Galleries).
     (`@handle_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext`; subject = gallery name,
     date = capture else upload, UTC; location = GPS city else `austin`). Credit: owner session →
     `@tlau.media`; photographer session → their own handle; upload link → the crew member picked
-    when the link was made (`gallery_ingest_keys.photographer_id`). No handle → the camera name is
-    kept, never guessed. `###` comes from the atomic `next_photo_name_seq(prefix)` RPC (seeded past
+    when the link was made (`gallery_ingest_keys.photographer_id`), or the Instagram typed for a
+    guest (`credit_handle`). **Every photo entering a live gallery is named, from any source**: a
+    sender with no handle is named for the gallery's own `photographer_handle`, and going live
+    (`setLiveMode`) gives a house gallery with none `@tlau.media`. Files dropped straight into the
+    Drive folder are named by the overnight retrograde, which needs that handle to run at all. `###` comes from the atomic `next_photo_name_seq(prefix)` RPC (seeded past
     the archive's highest number), not the namer's in-memory counter, so concurrent phones can't
     collide. Handles are normalized (`normalizeHandle`: '@' + lowercase). The overnight retrograde
-    treats a file named for **any active crew handle** as done, so a shooter's credit in a mixed
-    gallery is never overwritten with the gallery's handle.
+    treats any file already in the current format as done, **whoever it credits**
+    (`isCurrentAnyHandle`), so a shooter's credit in a mixed gallery is never overwritten with the
+    gallery's handle. Only retired prefixes (`@tlau_`, `@tlau.photos_`) and camera names are work.
 *   **Photographers run their own live galleries** from `/photographer-dashboard` → LIVE GALLERIES
     (`src/components/live/MyLiveGalleries.tsx`, route `/api/gallery/my-live`). Create makes a public,
     live gallery they own (`owner_id` = their user id, own Drive folder under

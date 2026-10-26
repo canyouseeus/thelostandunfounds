@@ -27,6 +27,7 @@ import {
     mintIngestKey,
     previewPending,
     publishPending,
+    setLiveMode,
     normalizeHandle,
     liveFileName,
     HOUSE_HANDLE,
@@ -417,6 +418,31 @@ await publishPending(supabase, 'event-a', ['name-0006-abc']);
 check('…and is named for that person when published later',
     renames['name-0006-abc'] === '@four5_culture_thelostandunfounds_2026-10-25_austin_event_a_001.jpg', renames['name-0006-abc']);
 ingestDeps.moveFile = realMove;
+
+// Any source is named: going live gives a house gallery the house credit, and
+// a sender with no handle of their own is named for the gallery.
+await setLiveMode(supabase, 'event-a', true);
+check('going live gives a gallery with no credit the house handle', db.photo_libraries.find(l => l.slug === 'event-a')?.photographer_handle === '@tlau.media');
+const ericGalleryHandle = db.photo_libraries.find(l => l.slug === 'event-b')!;
+ericGalleryHandle.photographer_handle = '@four5_culture';
+await setLiveMode(supabase, 'event-b', true);
+check('…but never overwrites a gallery\'s existing credit', ericGalleryHandle.photographer_handle === '@four5_culture');
+ericGalleryHandle.photographer_handle = null;
+const anonAfter = await resolveIngestCaller(req(`Bearer ${(await mintIngestKey(supabase, 'event-a', 'Walk-in')).key}`), supabase, undefined);
+putFile('name-0007-abc', [inboxA!], { name: 'IMG_77.JPG', imageMediaMetadata: { time: '2026:10:25 23:59:00' } });
+ingestDeps.moveFile = async (id: string, to: string, from: string, newName?: string) => {
+    renames[id] = newName;
+    const f = await realMove(id, to, from);
+    if (newName) f.name = newName;
+    return f;
+};
+await completeUpload(supabase, anonAfter, { fileId: 'name-0007-abc', publish: true });
+check('a sender with no handle is named for the gallery', renames['name-0007-abc'] === '@tlau.media_thelostandunfounds_2026-10-25_austin_event_a_003.jpg', renames['name-0007-abc']);
+ingestDeps.moveFile = realMove;
+
+const guestLink = await mintIngestKey(supabase, 'event-a', 'Guest', null, ' @Guest.Shooter ');
+check('a guest link credits the handle typed for them', (await resolveIngestCaller(req(`Bearer ${guestLink.key}`), supabase, undefined)).handle === '@guest.shooter');
+await rejects('a typed handle that can\'t be a handle is refused', () => mintIngestKey(supabase, 'event-a', 'Guest', null, 'not a handle!'), 400);
 
 // Upload-link credit comes from the crew member chosen when the link was made.
 const itzLink = await mintIngestKey(supabase, 'event-a', 'Itz', 'ph-itz');

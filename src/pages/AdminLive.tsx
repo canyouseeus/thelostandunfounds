@@ -35,6 +35,7 @@ interface IngestKey {
   last_used_at: string | null
   upload_count: number
   photographer_id: string | null
+  credit_handle: string | null
 }
 
 /** A crew member a link can credit; `handle` is exactly what filenames will carry. */
@@ -88,6 +89,9 @@ export default function AdminLive() {
   const [crew, setCrew] = useState<CrewMember[]>([])
   // '' = someone not on the crew list: their photos keep their camera names.
   const [shooter, setShooter] = useState('')
+  const [guestHandle, setGuestHandle] = useState('')
+  // The gallery's own credit: what photos are named for when the sender has none.
+  const [galleryHandle, setGalleryHandle] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -107,12 +111,13 @@ export default function AdminLive() {
   const loadEvent = useCallback(async () => {
     if (!slug) return
     try {
-      const data = await api<{ live_mode: boolean; keys: IngestKey[]; crew?: CrewMember[] }>(
+      const data = await api<{ live_mode: boolean; keys: IngestKey[]; crew?: CrewMember[]; handle?: string | null }>(
         `/api/gallery/live-event?slug=${encodeURIComponent(slug)}`
       )
       setLiveMode(data.live_mode)
       setKeys(data.keys)
       setCrew(data.crew || [])
+      setGalleryHandle(data.handle ?? null)
     } catch (err: any) {
       setError(err.message)
     }
@@ -416,13 +421,21 @@ export default function AdminLive() {
                   <option value="">Someone else</option>
                 </select>
                 {shooter === '' && (
-                  <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Their name"
-                    value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+                  <>
+                    <input className={`${field} flex-1 min-w-[10rem]`} style={{ borderRadius: 0 }} placeholder="Their name"
+                      value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+                    <input className={`${field} flex-1 min-w-[10rem]`} style={{ borderRadius: 0 }} placeholder="Their Instagram (optional)"
+                      autoCapitalize="none" autoCorrect="off"
+                      value={guestHandle} onChange={e => setGuestHandle(e.target.value)} />
+                  </>
                 )}
                 <button className={primary} style={{ borderRadius: 0 }} disabled={busy}
                   onClick={() => {
                     const member = crew.find(c => c.id === shooter)
-                    eventAction('mint-key', member ? { label: member.name, photographerId: member.id } : { label: keyLabel })
+                    eventAction('mint-key', member
+                      ? { label: member.name, photographerId: member.id }
+                      : { label: keyLabel, guestHandle })
+                    setGuestHandle('')
                   }}>
                   New link
                 </button>
@@ -430,9 +443,12 @@ export default function AdminLive() {
               <p className="text-white/40 text-[10px] mb-6 text-left">
                 {(() => {
                   const member = crew.find(c => c.id === shooter)
-                  return member?.handle
-                    ? `Their photos are named ${member.handle}_thelostandunfounds_… so the credit is theirs.`
-                    : 'No handle to credit — their photos keep their camera file names.'
+                  const typed = shooter === '' ? guestHandle.trim().toLowerCase().replace(/^@+/, '') : ''
+                  const credit = member?.handle || (typed && /^[a-z0-9._-]+$/.test(typed) ? `@${typed}` : null)
+                  if (credit) return `Their photos are named ${credit}_thelostandunfounds_… so the credit is theirs.`
+                  return galleryHandle
+                    ? `No handle of their own — their photos are named for this gallery, ${galleryHandle}_thelostandunfounds_…`
+                    : 'No handle yet — go live and this gallery takes @tlau.media, which their photos are named for.'
                 })()}
               </p>
 
@@ -446,8 +462,8 @@ export default function AdminLive() {
                         <p className="text-xs font-black uppercase tracking-[0.15em]">{k.label || 'Unlabelled'}</p>
                         <p className="text-white/40 text-[10px] tracking-wide mt-1">
                           {(() => {
-                            const handle = crew.find(c => c.id === k.photographer_id)?.handle
-                            return handle ? `${handle} · ` : 'no credit · '
+                            const handle = crew.find(c => c.id === k.photographer_id)?.handle || k.credit_handle
+                            return `${handle || galleryHandle || 'gallery credit'} · `
                           })()}
                           {k.key_prefix}… · {k.upload_count} sent
                           {k.last_used_at && ` · last ${new Date(k.last_used_at).toLocaleTimeString()}`}

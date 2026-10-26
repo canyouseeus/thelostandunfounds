@@ -91,6 +91,17 @@ export function isCurrentName(name: string | null | undefined, handle?: string):
   return new RegExp(`^${h}_thelostandunfounds_\\d{4}-\\d{2}-\\d{2}_`).test(name);
 }
 
+// Already in the current format, credited to anyone. The overnight rename
+// leaves these alone: a live gallery mixes shooters (crew, guests, the house),
+// each credited in their own filenames, and rewriting one to the gallery's
+// handle would take the credit off whoever shot it. Only the retired prefixes
+// still count as work — v2 '@tlau.photos_' (handle retired) and v1 '@tlau_',
+// which CLAPTROP_ANY_HANDLE doesn't match in the first place.
+export function isCurrentAnyHandle(name: string | null | undefined): boolean {
+  if (!name) return false;
+  return CLAPTROP_ANY_HANDLE.test(name) && !name.startsWith('@tlau.photos_');
+}
+
 // Pull the claptrop tail (everything after whichever prefix variant is present).
 // Returns null if not a claptrop name. Used by upload dedup to detect that two
 // files are versions of the same photo across prefix variants.
