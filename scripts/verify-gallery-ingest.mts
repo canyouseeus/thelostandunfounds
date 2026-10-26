@@ -27,6 +27,9 @@ import {
     mintIngestKey,
     previewPending,
     publishPending,
+    normalizeHandle,
+    liveFileName,
+    HOUSE_HANDLE,
     relayChunk,
     RELAY_CHUNK_BYTES,
     resolveIngestCaller,
@@ -54,6 +57,7 @@ const db: Record<string, Row[]> = {
     photographers: [
         { id: 'ph-eric', user_id: 'user-eric', name: 'Eric Alvarado', instagram: '@four5_culture', active: true },
         { id: 'ph-old', user_id: 'user-old', name: 'Former Crew', instagram: null, active: false },
+        { id: 'ph-itz', user_id: 'user-itz', name: 'Itzamara Villareal', instagram: 'itzography', active: true },
     ],
     photos: [],
     tags: [],
@@ -313,7 +317,7 @@ await discardPending(supabase, 'event-a', ['roll-0002-abc']);
 
 // --- photographers: their own live galleries ---------------------------------
 
-const TOKENS: Record<string, string> = { 'eric-session': 'user-eric', 'old-session': 'user-old', 'fan-session': 'user-fan' };
+const TOKENS: Record<string, string> = { 'eric-session': 'user-eric', 'old-session': 'user-old', 'fan-session': 'user-fan', 'itz-session': 'user-itz' };
 ingestDeps.sessionUserId = async (t: string) => TOKENS[t] ?? null;
 const createdFolders: string[] = [];
 ingestDeps.createFolder = async (name: string) => { createdFolders.push(name); return `folder-ph-${createdFolders.length}`; };
@@ -333,6 +337,9 @@ check('creating makes a live, public gallery owned by the photographer',
 check('…with its own new Drive folder', mineRow.google_drive_folder_id === `folder-ph-${createdFolders.length}`
     && createdFolders.at(-1) === 'Halloween at Primos — Eric Alvarado', createdFolders.at(-1));
 check('…a unique slug and their Instagram handle', /^halloween-at-primos-[0-9a-f]{6}$/.test(mine.slug) && mineRow.photographer_handle === '@four5_culture', mine.slug);
+const itz = await verifiedPhotographer(req('Bearer itz-session'), supabase);
+const itzGallery = await createMyLiveGallery(supabase, itz!, 'Day of the Dead');
+check('a handle stored without @ is saved normalized on the gallery', db.photo_libraries.find(l => l.slug === itzGallery.slug)?.photographer_handle === '@itzography');
 const again2 = await createMyLiveGallery(supabase, eric!, 'Halloween at Primos');
 check('two galleries with the same name get different slugs', again2.slug !== mine.slug);
 
@@ -346,9 +353,79 @@ check('…which stays live', db.photo_libraries.find(l => l.slug === 'event-a')!
 
 const ericCaller = await resolveIngestCaller(req('Bearer eric-session'), supabase, mine.slug);
 check('they can upload to their own gallery', ericCaller.library.slug === mine.slug && ericCaller.keyId === null);
+check('…credited to their own handle', ericCaller.handle === '@four5_culture', String(ericCaller.handle));
 await rejects('…but not to someone else\'s', () => resolveIngestCaller(req('Bearer eric-session'), supabase, 'event-a'), 403);
 await rejects('an inactive photographer cannot upload', () => resolveIngestCaller(req('Bearer old-session'), supabase, mine.slug), 401);
 await rejects('a signed-in fan cannot upload', () => resolveIngestCaller(req('Bearer fan-session'), supabase, mine.slug), 401);
+
+// --- naming: @handle_thelostandunfounds_DATE_location_subject_### -------------
+
+check('handles normalize to @lowercase', normalizeHandle('itzography') === '@itzography' && normalizeHandle('@Four5_Culture') === '@four5_culture'
+    && normalizeHandle(null) === null && normalizeHandle('bad handle!') === null && normalizeHandle('  ') === null);
+
+const seqs = new Map<string, number>();
+ingestDeps.nextNameSeq = async (_sb: any, prefix: string) => { const n = (seqs.get(prefix) ?? 0) + 1; seqs.set(prefix, n); return n; };
+const located: string[] = [];
+ingestDeps.locate = async (lat: number, lon: number) => { located.push(`${lat},${lon}`); return 'austin'; };
+const realMove = ingestDeps.moveFile;
+const renames: Record<string, string | undefined> = {};
+ingestDeps.moveFile = async (id: string, to: string, from: string, newName?: string) => {
+    renames[id] = newName;
+    const f = await realMove(id, to, from);
+    if (newName) f.name = newName;
+    return f;
+};
+
+const adminCaller = { library: callerA.library, keyId: null, handle: HOUSE_HANDLE } as any;
+putFile('name-0001-abc', [inboxA!], { name: 'IMG_4412.HEIC', imageMediaMetadata: { time: '2026:10:25 23:41:07', location: { latitude: 30.26, longitude: -97.74 } } });
+putFile('name-0002-abc', [inboxA!], { name: 'IMG_4413.JPG', imageMediaMetadata: { time: '2026:10:25 23:41:09' } });
+putFile('name-0003-abc', [inboxA!], { name: 'DSCF0042.JPG', createdTime: '2026-10-26T02:00:00Z' });
+
+await completeUpload(supabase, adminCaller, { fileId: 'name-0001-abc', publish: true });
+await completeUpload(supabase, adminCaller, { fileId: 'name-0002-abc', publish: true });
+check('your upload is named for @tlau.media, capture date, place, gallery, ###',
+    renames['name-0001-abc'] === '@tlau.media_thelostandunfounds_2026-10-25_austin_event_a_001.heic', renames['name-0001-abc']);
+check('…the next one takes the next number', renames['name-0002-abc'] === '@tlau.media_thelostandunfounds_2026-10-25_austin_event_a_002.jpg', renames['name-0002-abc']);
+check('…GPS is looked up for the place; no GPS falls back to austin', located.length === 1 && located[0] === '30.26,-97.74', located.join(' | '));
+const named = db.photos.find(p => p.google_drive_file_id === 'name-0001-abc');
+check('…the gallery title follows the file name', named?.title === '@tlau.media_thelostandunfounds_2026-10-25_austin_event_a_001', named?.title);
+check('…and the place is recorded', named?.location_name === 'austin', named?.location_name);
+
+const ericInA = { library: callerA.library, keyId: 'k', handle: '@four5_culture' } as any;
+await completeUpload(supabase, ericInA, { fileId: 'name-0003-abc', publish: true });
+check('a crew member\'s upload credits their own handle (no EXIF → upload date)',
+    renames['name-0003-abc'] === '@four5_culture_thelostandunfounds_2026-10-26_austin_event_a_001.jpg', renames['name-0003-abc']);
+
+putFile('name-0004-abc', [inboxA!], { name: 'IMG_9.JPG' });
+const anon = { library: callerA.library, keyId: 'k2', handle: null } as any;
+await completeUpload(supabase, anon, { fileId: 'name-0004-abc', publish: true });
+check('nobody credited → keeps its camera name (never guessed)', renames['name-0004-abc'] === undefined
+    && db.photos.find(p => p.google_drive_file_id === 'name-0004-abc')?.title === 'IMG_9', String(renames['name-0004-abc']));
+
+putFile('name-0005-abc', [inboxA!], { name: 'IMG_10.JPG' });
+const seqFn = ingestDeps.nextNameSeq;
+ingestDeps.nextNameSeq = async () => { throw new Error('counter down'); };
+await completeUpload(supabase, adminCaller, { fileId: 'name-0005-abc', publish: true });
+ingestDeps.nextNameSeq = seqFn;
+check('a naming failure still publishes, under the camera name', db.photos.some(p => p.google_drive_file_id === 'name-0005-abc' && p.title === 'IMG_10')
+    && renames['name-0005-abc'] === undefined);
+
+putFile('name-0006-abc', [inboxA!], { name: 'AUTO_1.JPG', imageMediaMetadata: { time: '2026:10:25 23:50:00' } });
+await completeUpload(supabase, ericInA, { fileId: 'name-0006-abc' });
+check('a reviewed photo carries its credit in the inbox', db.gallery_ingest_pending.find(r => r.drive_file_id === 'name-0006-abc')?.credit_handle === '@four5_culture');
+await publishPending(supabase, 'event-a', ['name-0006-abc']);
+check('…and is named for that person when published later',
+    renames['name-0006-abc'] === '@four5_culture_thelostandunfounds_2026-10-25_austin_event_a_001.jpg', renames['name-0006-abc']);
+ingestDeps.moveFile = realMove;
+
+// Upload-link credit comes from the crew member chosen when the link was made.
+const itzLink = await mintIngestKey(supabase, 'event-a', 'Itz', 'ph-itz');
+const itzCaller = await resolveIngestCaller(req(`Bearer ${itzLink.key}`), supabase, undefined);
+check('a link made for a crew member credits them (stored without @, used with it)', itzCaller.handle === '@itzography', String(itzCaller.handle));
+const noOne = await mintIngestKey(supabase, 'event-a', 'Someone');
+check('a link made for nobody credits nobody', (await resolveIngestCaller(req(`Bearer ${noOne.key}`), supabase, undefined)).handle === null);
+await rejects('a link can\'t credit someone off the crew list', () => mintIngestKey(supabase, 'event-a', 'x', 'ph-nobody'), 400);
+check('your own session credits @tlau.media', HOUSE_HANDLE === '@tlau.media');
 
 // --- chunk relay --------------------------------------------------------------
 

@@ -11,7 +11,7 @@
 import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
-import { buildName, isCurrentName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
+import { buildName, isCurrentName, normalizeHandle, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;
@@ -122,6 +122,7 @@ async function processLibrary(
     dryRun: boolean,
     hardPhotoCap: number | null,
     preview: Array<{ from: string; to: string }>,
+    crewHandles: string[] = [],
 ): Promise<void> {
     resetSeqs();
 
@@ -161,8 +162,14 @@ async function processLibrary(
     // A file Drive has already refused to let us write is not pending work. It
     // can never satisfy isCurrentName(), so without this it would be re-attempted
     // on every single run for the life of the cron.
+    //
+    // A file already named for another active crew member is done, not
+    // pending: live events put several shooters in one gallery, each credited
+    // in their own filenames, and renaming those to the gallery's handle would
+    // take the credit off the person who shot them.
     const candidates = index.filter(p =>
         !isCurrentName(p.title, library.photographer_handle ?? undefined)
+        && !crewHandles.some(h => isCurrentName(p.title, h))
         && !p.rename_blocked
     );
     stats.blocked += index.filter(p => p.rename_blocked === 'drive_no_write_access').length;
@@ -324,6 +331,9 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     const { data: libraries, error } = await q;
     if (error || !libraries) throw new Error(`Failed to load libraries: ${error?.message}`);
 
+    const { data: crew } = await supabase.from('photographers').select('instagram').eq('active', true);
+    const crewHandles = [...new Set((crew || []).map((c: any) => normalizeHandle(c.instagram)).filter((h): h is string => !!h))];
+
     const deadline = Date.now() + ((opts.timeBudgetSeconds ?? 270) * 1000);
     const stats = { renamed: 0, skipped: 0, blocked: 0, missing: 0, failed: 0, remaining: 0 };
     const librariesProcessed: string[] = [];
@@ -354,6 +364,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
             opts.dryRun ?? false,
                 opts.maxPhotos ?? null,
                 preview,
+                crewHandles,
             );
         } catch (err) {
             // One bad credential set is the whole run's problem, not this

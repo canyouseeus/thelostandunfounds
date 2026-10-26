@@ -39,6 +39,9 @@ import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supa
 import { verifyAdmin } from './_admin-auth.js';
 import { createClient } from '@supabase/supabase-js';
 import { ingestUploadedPhoto, INGEST_FILE_FIELDS } from './_photo-sync-utils.js';
+import { normalizeHandle, normalizeText, reverseGeocode } from '../../scripts/claptrop-namer.js';
+
+export { normalizeHandle };
 
 export const INGEST_KEY_PREFIX = 'tlu_live_';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
@@ -65,7 +68,17 @@ interface IngestCaller {
     library: IngestLibrary;
     /** Null when the caller is the admin session. */
     keyId: string | null;
+    /**
+     * Who the photos are credited to in their filenames — an Instagram handle
+     * like '@four5_culture'. Null when nobody is known to have shot them; the
+     * file then keeps its camera name rather than crediting the wrong person.
+     */
+    handle: string | null;
 }
+
+/** The house's own handle — what the owner's uploads are credited to. */
+export const HOUSE_HANDLE = '@tlau.media';
+
 
 export function hashIngestKey(key: string): string {
     return createHash('sha256').update(key).digest('hex');
@@ -109,26 +122,35 @@ export async function resolveIngestCaller(
     if (token.startsWith(INGEST_KEY_PREFIX)) {
         const { data: key, error } = await supabase
             .from('gallery_ingest_keys')
-            .select('id, library_id, revoked_at')
+            .select('id, library_id, revoked_at, photographer_id')
             .eq('key_hash', hashIngestKey(token))
             .maybeSingle();
         if (error) throw new HttpError(500, error.message);
         if (!key || key.revoked_at) throw new HttpError(401, 'This upload key is not valid.');
-        return { library: await loadLibrary(supabase, { id: key.library_id }), keyId: key.id };
+        let handle: string | null = null;
+        if (key.photographer_id) {
+            const { data: shooter } = await supabase
+                .from('photographers')
+                .select('instagram')
+                .eq('id', key.photographer_id)
+                .maybeSingle();
+            handle = normalizeHandle(shooter?.instagram);
+        }
+        return { library: await loadLibrary(supabase, { id: key.library_id }), keyId: key.id, handle };
     }
 
     if (typeof slug !== 'string' || !slug) {
         if (!(await verifyAdmin(req)) && !(await verifiedPhotographer(req, supabase))) throw new HttpError(401, 'Unauthorized');
         throw new HttpError(400, 'slug is required.');
     }
-    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null };
+    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null, handle: HOUSE_HANDLE };
 
     // A photographer may upload to galleries they own, and no others.
     const photographer = await verifiedPhotographer(req, supabase);
     if (!photographer) throw new HttpError(401, 'Unauthorized');
     const library = await loadLibrary(supabase, { slug });
     if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
-    return { library, keyId: null };
+    return { library, keyId: null, handle: normalizeHandle(photographer.instagram) };
 }
 
 // --- Photographers: their own live galleries ---
@@ -212,7 +234,9 @@ export async function createMyLiveGallery(
             google_drive_folder_id: folderId,
             owner_id: photographer.userId,
             user_id: photographer.userId,
-            photographer_handle: photographer.instagram,
+            // Normalized: the overnight rename matches files against this exact
+            // handle, and 'itzography' would never match '@itzography_…'.
+            photographer_handle: normalizeHandle(photographer.instagram),
             is_private: false,
             published: true,
             live_mode: true,
@@ -299,16 +323,28 @@ export const ingestDeps = {
         if (!res.data.id) throw new Error('Drive returned no folder id');
         return res.data.id;
     },
-    /** Move a file between folders and return it with the fields ingest reads. */
-    async moveFile(fileId: string, toFolderId: string, fromFolderId: string): Promise<drive_v3.Schema$File> {
+    /**
+     * Move a file between folders — renaming it in the same call when a name
+     * is given — and return it with the fields ingest reads.
+     */
+    async moveFile(fileId: string, toFolderId: string, fromFolderId: string, newName?: string): Promise<drive_v3.Schema$File> {
         const res = await (await getDrive()).files.update({
             fileId,
             addParents: toFolderId,
             removeParents: fromFolderId,
+            ...(newName ? { requestBody: { name: newName } } : {}),
             fields: INGEST_FILE_FIELDS,
         });
         return res.data;
     },
+    /** The next free ### for a claptrop prefix — atomic in the database. */
+    async nextNameSeq(supabase: ServiceSupabaseClient, prefix: string): Promise<number> {
+        const { data, error } = await supabase.rpc('next_photo_name_seq', { p_prefix: prefix });
+        if (error || typeof data !== 'number') throw new Error(error?.message || 'No sequence number returned');
+        return data;
+    },
+    /** City for a GPS point, via the claptrop namer (Nominatim, falls back to 'austin'). */
+    locate: (lat: number, lon: number) => reverseGeocode(lat, lon),
     /** Permanent delete. Skips the trash on purpose — a discarded frame is gone. */
     async deleteFile(fileId: string): Promise<void> {
         await (await getDrive()).files.delete({ fileId });
@@ -532,6 +568,7 @@ export async function completeUpload(
             file_name: file.name || null,
             mime_type: file.mimeType || null,
             key_id: caller.keyId,
+            credit_handle: caller.handle,
         });
         // A unique violation is the same file arriving twice at once — fine.
         if (error && !/duplicate|unique/i.test(error.message)) throw new HttpError(500, error.message);
@@ -553,7 +590,7 @@ export async function completeUpload(
     // Camera-roll uploads are hand-picked, so they skip review and go live now.
     // Only automatic sends (a camera pushing every frame) wait in the inbox.
     if (body.publish === true) {
-        const photoId = await publishFile(supabase, caller.library, inboxId, fileId);
+        const photoId = await publishFile(supabase, caller.library, inboxId, fileId, caller.handle);
         return { fileId, fileName: file.name || '', pending: false, photoId };
     }
     return { fileId, fileName: file.name || '', pending: true };
@@ -593,18 +630,72 @@ async function pendingIn(supabase: ServiceSupabaseClient, libraryId: string, ids
 type BatchResult = { fileId: string; ok: boolean; photoId?: string; error?: string };
 
 /**
- * Move one received file from the inbox into the gallery's folder and write its
- * photo row — at which point it is live — then drop it from the inbox.
+ * The claptrop name a published photo gets:
+ *   @handle_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext
+ * Date is the capture date (else upload date), UTC like the rest of the
+ * archive; location is the GPS city, else 'austin' as the namer does; subject
+ * is the gallery's name. ### comes from the database so two phones publishing
+ * at once can never draw the same number.
+ */
+export async function liveFileName(
+    supabase: ServiceSupabaseClient,
+    library: IngestLibrary,
+    file: drive_v3.Schema$File,
+    handle: string,
+): Promise<{ filename: string; location: string }> {
+    const meta: any = file.imageMediaMetadata || {};
+    let date: Date | null = null;
+    const exif = typeof meta.time === 'string'
+        ? meta.time.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/)
+        : null;
+    if (exif) date = new Date(Date.UTC(+exif[1], +exif[2] - 1, +exif[3], +exif[4], +exif[5], +exif[6]));
+    if (!date || isNaN(date.getTime())) date = new Date(file.createdTime || Date.now());
+    const dateStr = date.toISOString().slice(0, 10);
+
+    const lat = meta.location?.latitude;
+    const lon = meta.location?.longitude;
+    const location = typeof lat === 'number' && typeof lon === 'number'
+        ? await ingestDeps.locate(lat, lon)
+        : 'austin';
+    const subject = normalizeText(library.name) || 'photo';
+
+    const prefix = `${handle}_thelostandunfounds_${dateStr}_${location}_${subject}_`;
+    const seq = await ingestDeps.nextNameSeq(supabase, prefix);
+    const ext = ((file.name || '').match(/\.[a-z0-9]{2,5}$/i)?.[0] || '.jpg').toLowerCase();
+    return { filename: `${prefix}${String(seq).padStart(3, '0')}${ext}`, location };
+}
+
+/**
+ * Move one received file from the inbox into the gallery's folder — named to
+ * the claptrop convention for whoever it is credited to — and write its photo
+ * row, at which point it is live; then drop it from the inbox.
+ *
+ * With no handle the file keeps its camera name: an unattributed photo is
+ * never credited to someone who didn't shoot it. A naming failure (geocoder,
+ * counter) publishes under the camera name rather than holding the photo back.
  */
 async function publishFile(
     supabase: ServiceSupabaseClient,
     library: IngestLibrary,
     inboxId: string,
     fileId: string,
+    handle: string | null,
 ): Promise<string> {
-    const file = await ingestDeps.moveFile(fileId, library.folderId, inboxId);
+    let newName: string | undefined;
+    let location: string | undefined;
+    if (handle) {
+        try {
+            const named = await liveFileName(supabase, library, await ingestDeps.getFile(fileId), handle);
+            newName = named.filename;
+            location = named.location;
+        } catch (err: any) {
+            console.warn('[ingest] naming failed, publishing under the camera name:', fileId, err?.message);
+        }
+    }
+    const file = await ingestDeps.moveFile(fileId, library.folderId, inboxId, newName);
     const photoId = await ingestUploadedPhoto(supabase, library.id, file);
     if (!photoId) throw new Error('The photo row could not be written.');
+    if (location) await supabase.from('photos').update({ location_name: location }).eq('id', photoId);
     await supabase.from('gallery_ingest_pending').delete().eq('drive_file_id', fileId);
     return photoId;
 }
@@ -619,6 +710,11 @@ export async function publishPending(supabase: ServiceSupabaseClient, slug: stri
     const ids = batchIds(fileIds);
     const inboxId = await ensureInbox(supabase, library);
     const known = await pendingIn(supabase, library.id, ids);
+    const { data: credits } = await supabase
+        .from('gallery_ingest_pending')
+        .select('drive_file_id, credit_handle')
+        .in('drive_file_id', [...known]);
+    const creditFor = new Map((credits || []).map((r: any) => [r.drive_file_id, r.credit_handle ?? null]));
 
     const results: BatchResult[] = [];
     for (const fileId of ids) {
@@ -627,7 +723,8 @@ export async function publishPending(supabase: ServiceSupabaseClient, slug: stri
             continue;
         }
         try {
-            results.push({ fileId, ok: true, photoId: await publishFile(supabase, library, inboxId, fileId) });
+            const photoId = await publishFile(supabase, library, inboxId, fileId, creditFor.get(fileId) ?? null);
+            results.push({ fileId, ok: true, photoId });
         } catch (err: any) {
             console.error('[live-inbox] publish failed:', fileId, err?.message);
             results.push({ fileId, ok: false, error: err?.message || 'Publish failed.' });
@@ -704,11 +801,21 @@ export async function getLiveEvent(supabase: ServiceSupabaseClient, slug: string
     const library = await loadLibrary(supabase, { slug });
     const { data: keys, error } = await supabase
         .from('gallery_ingest_keys')
-        .select('id, key_prefix, label, created_at, revoked_at, last_used_at, upload_count')
+        .select('id, key_prefix, label, created_at, revoked_at, last_used_at, upload_count, photographer_id')
         .eq('library_id', library.id)
         .order('created_at', { ascending: false });
     if (error) throw new HttpError(500, error.message);
-    return { slug: library.slug, name: library.name, live_mode: library.live_mode, keys: keys || [] };
+    // The crew list feeds the "who's shooting" picker; handles come back
+    // normalized so the page shows exactly what filenames will carry.
+    const { data: crew } = await supabase
+        .from('photographers')
+        .select('id, name, instagram')
+        .eq('active', true)
+        .order('name');
+    return {
+        slug: library.slug, name: library.name, live_mode: library.live_mode, keys: keys || [],
+        crew: (crew || []).map((c: any) => ({ id: c.id, name: c.name, handle: normalizeHandle(c.instagram) })),
+    };
 }
 
 export async function setLiveMode(supabase: ServiceSupabaseClient, slug: string, live: boolean) {
@@ -722,8 +829,17 @@ export async function setLiveMode(supabase: ServiceSupabaseClient, slug: string,
 }
 
 /** The plaintext key is returned here once and never stored. */
-export async function mintIngestKey(supabase: ServiceSupabaseClient, slug: string, label?: string) {
+export async function mintIngestKey(
+    supabase: ServiceSupabaseClient,
+    slug: string,
+    label?: string,
+    photographerId?: string | null,
+) {
     const library = await loadLibrary(supabase, { slug });
+    if (photographerId) {
+        const { data: shooter } = await supabase.from('photographers').select('id').eq('id', photographerId).maybeSingle();
+        if (!shooter) throw new HttpError(400, 'That photographer is not on the crew list.');
+    }
     const key = INGEST_KEY_PREFIX + randomBytes(32).toString('base64url');
     const { data, error } = await supabase
         .from('gallery_ingest_keys')
@@ -732,8 +848,9 @@ export async function mintIngestKey(supabase: ServiceSupabaseClient, slug: strin
             key_hash: hashIngestKey(key),
             key_prefix: key.slice(0, INGEST_KEY_PREFIX.length + 6),
             label: (label || '').trim().slice(0, 80) || null,
+            photographer_id: photographerId || null,
         })
-        .select('id, key_prefix, label, created_at')
+        .select('id, key_prefix, label, created_at, photographer_id')
         .single();
     if (error) throw new HttpError(500, error.message);
     return { key, ...data };

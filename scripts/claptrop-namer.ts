@@ -64,6 +64,16 @@ export function isClaptropName(name: string | null | undefined): boolean {
   return CLAPTROP_ANY_HANDLE.test(name) || /^@tlau_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
+/**
+ * A photographers.instagram value as a filename handle. Stored inconsistently
+ * ('@four5_culture', 'itzography'); the convention wants '@' + lowercase, and
+ * only characters CLAPTROP_ANY_HANDLE accepts. Null when there is no usable one.
+ */
+export function normalizeHandle(raw: string | null | undefined): string | null {
+  const bare = (raw || '').trim().toLowerCase().replace(/^@+/, '');
+  return /^[a-z0-9._-]+$/.test(bare) ? `@${bare}` : null;
+}
+
 /** `@<handle>_thelostandunfounds_YYYY-MM-DD_` for any handle. */
 export const CLAPTROP_ANY_HANDLE = /^@[a-z0-9._-]+_thelostandunfounds_\d{4}-\d{2}-\d{2}_/;
 
@@ -374,7 +384,7 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
   if (existingNames) {
     while (existingNames.has(filename.toLowerCase())) {
       seq      = nextSeq(dateStr, location, subject);
-      stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
+      stem     = `${prefix}_${dateStr}_${location}_${subject}_${seq}`;
       filename = `${stem}${ext}`;
     }
     existingNames.add(filename.toLowerCase());

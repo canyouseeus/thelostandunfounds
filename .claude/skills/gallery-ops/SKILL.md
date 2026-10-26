@@ -71,6 +71,16 @@ radio icon on each gallery row under Active Galleries).
     log). Both use `src/components/live/LiveUploader.tsx`: direct PUT to the Drive session, and on a
     CORS refusal it switches to `/api/gallery/ingest-chunk` (4MB chunks relayed by us; the relay only
     ever targets `www.googleapis.com/upload/drive/v3/files?upload_id=…`).
+*   **Live uploads are named on publish** to the claptrop convention
+    (`@handle_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext`; subject = gallery name,
+    date = capture else upload, UTC; location = GPS city else `austin`). Credit: owner session →
+    `@tlau.media`; photographer session → their own handle; upload link → the crew member picked
+    when the link was made (`gallery_ingest_keys.photographer_id`). No handle → the camera name is
+    kept, never guessed. `###` comes from the atomic `next_photo_name_seq(prefix)` RPC (seeded past
+    the archive's highest number), not the namer's in-memory counter, so concurrent phones can't
+    collide. Handles are normalized (`normalizeHandle`: '@' + lowercase). The overnight retrograde
+    treats a file named for **any active crew handle** as done, so a shooter's credit in a mixed
+    gallery is never overwritten with the gallery's handle.
 *   **Photographers run their own live galleries** from `/photographer-dashboard` → LIVE GALLERIES
     (`src/components/live/MyLiveGalleries.tsx`, route `/api/gallery/my-live`). Create makes a public,
     live gallery they own (`owner_id` = their user id, own Drive folder under

@@ -1288,7 +1288,9 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
  * Admin control for a live event.
  *   GET  ?slug=                                   → live_mode + keys (no secrets)
  *   POST { slug, action: 'start' | 'stop' }       → toggles live_mode
- *   POST { slug, action: 'mint-key', label? }     → { key } — shown once, never stored
+ *   POST { slug, action: 'mint-key', label?, photographerId? }
+ *                                                 → { key } — shown once, never stored;
+ *                                                   photographerId credits that crew member in filenames
  *   POST { slug, action: 'revoke-key', keyId }
  */
 async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
@@ -1305,7 +1307,7 @@ async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
         }
         if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-        const { slug, action, label, keyId } = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { slug, action, label, keyId, photographerId } = (req.body && typeof req.body === 'object') ? req.body : {};
         if (typeof slug !== 'string' || !slug) return res.status(400).json({ error: 'slug is required' });
 
         switch (action) {
@@ -1313,7 +1315,10 @@ async function handleLiveEvent(req: VercelRequest, res: VercelResponse) {
             case 'stop':
                 return res.status(200).json({ success: true, ...(await ingest.setLiveMode(supabase, slug, action === 'start')) });
             case 'mint-key':
-                return res.status(200).json({ success: true, ...(await ingest.mintIngestKey(supabase, slug, label)) });
+                return res.status(200).json({
+                    success: true,
+                    ...(await ingest.mintIngestKey(supabase, slug, label, typeof photographerId === 'string' ? photographerId : null)),
+                });
             case 'revoke-key':
                 if (typeof keyId !== 'string' || !keyId) return res.status(400).json({ error: 'keyId is required' });
                 return res.status(200).json({ success: true, ...(await ingest.revokeIngestKey(supabase, slug, keyId)) });

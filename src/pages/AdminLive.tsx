@@ -34,6 +34,14 @@ interface IngestKey {
   revoked_at: string | null
   last_used_at: string | null
   upload_count: number
+  photographer_id: string | null
+}
+
+/** A crew member a link can credit; `handle` is exactly what filenames will carry. */
+interface CrewMember {
+  id: string
+  name: string
+  handle: string | null
 }
 
 interface Pending {
@@ -77,6 +85,9 @@ export default function AdminLive() {
   const [viewing, setViewing] = useState<{ fileId: string; url: string | null } | null>(null)
   const [newKey, setNewKey] = useState<string | null>(null)
   const [keyLabel, setKeyLabel] = useState('')
+  const [crew, setCrew] = useState<CrewMember[]>([])
+  // '' = someone not on the crew list: their photos keep their camera names.
+  const [shooter, setShooter] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -96,11 +107,12 @@ export default function AdminLive() {
   const loadEvent = useCallback(async () => {
     if (!slug) return
     try {
-      const data = await api<{ live_mode: boolean; keys: IngestKey[] }>(
+      const data = await api<{ live_mode: boolean; keys: IngestKey[]; crew?: CrewMember[] }>(
         `/api/gallery/live-event?slug=${encodeURIComponent(slug)}`
       )
       setLiveMode(data.live_mode)
       setKeys(data.keys)
+      setCrew(data.crew || [])
     } catch (err: any) {
       setError(err.message)
     }
@@ -394,14 +406,35 @@ export default function AdminLive() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2 mb-6">
-                <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Who it's for, e.g. Eric"
-                  value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+              <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-white/50 mb-2">Who's shooting?</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <select className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }}
+                  value={shooter} onChange={e => setShooter(e.target.value)}>
+                  {crew.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.handle ? ` — ${c.handle}` : ' — no handle on file'}</option>
+                  ))}
+                  <option value="">Someone else</option>
+                </select>
+                {shooter === '' && (
+                  <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }} placeholder="Their name"
+                    value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+                )}
                 <button className={primary} style={{ borderRadius: 0 }} disabled={busy}
-                  onClick={() => eventAction('mint-key', { label: keyLabel })}>
+                  onClick={() => {
+                    const member = crew.find(c => c.id === shooter)
+                    eventAction('mint-key', member ? { label: member.name, photographerId: member.id } : { label: keyLabel })
+                  }}>
                   New link
                 </button>
               </div>
+              <p className="text-white/40 text-[10px] mb-6 text-left">
+                {(() => {
+                  const member = crew.find(c => c.id === shooter)
+                  return member?.handle
+                    ? `Their photos are named ${member.handle}_thelostandunfounds_… so the credit is theirs.`
+                    : 'No handle to credit — their photos keep their camera file names.'
+                })()}
+              </p>
 
               {activeKeys.length === 0 ? (
                 <p className="text-white/30 text-xs text-left">No active links.</p>
@@ -412,6 +445,10 @@ export default function AdminLive() {
                       <div className="min-w-0 text-left">
                         <p className="text-xs font-black uppercase tracking-[0.15em]">{k.label || 'Unlabelled'}</p>
                         <p className="text-white/40 text-[10px] tracking-wide mt-1">
+                          {(() => {
+                            const handle = crew.find(c => c.id === k.photographer_id)?.handle
+                            return handle ? `${handle} · ` : 'no credit · '
+                          })()}
                           {k.key_prefix}… · {k.upload_count} sent
                           {k.last_used_at && ` · last ${new Date(k.last_used_at).toLocaleTimeString()}`}
                         </p>
