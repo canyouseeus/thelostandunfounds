@@ -18,6 +18,7 @@ import JobPayouts from '../components/JobPayouts';
 import CrewAvailabilityCalendar from '../components/crew/CrewAvailabilityCalendar';
 import CrewRequestBox from '../components/crew/CrewRequestBox';
 import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
+import MyLiveGalleries from '../components/live/MyLiveGalleries';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -42,6 +43,9 @@ export default function PhotographerDashboard() {
                 <h1 className="text-3xl font-bold uppercase tracking-tighter">PHOTOGRAPHER DASHBOARD</h1>
                 <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
             </div>
+
+            {/* Tonight's event first: create a live gallery and send from the camera roll. */}
+            <MyLiveGalleries />
 
             {/* Job pay for shoots covered — separate from gallery sales below. */}
             {user && <JobPayouts userId={user.id} />}

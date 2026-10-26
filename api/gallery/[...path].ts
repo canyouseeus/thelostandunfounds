@@ -220,6 +220,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleLiveEvent(req, res);
         }
 
+        if (route === 'my-live') {
+            return await handleMyLive(req, res);
+        }
+
         if (route === 'live-inbox') {
             return await handleLiveInbox(req, res);
         }
@@ -1375,6 +1379,43 @@ async function handleLivePreview(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         const status = err instanceof ingest.HttpError ? err.status : 500;
         if (status >= 500) console.error('[live-preview] Error:', err);
+        return res.status(status).json({ error: err.message });
+    }
+}
+
+/**
+ * A photographer's own live galleries, from their dashboard. Photographer
+ * session only (photographers.user_id) — they see and change their own
+ * galleries and nothing else.
+ *   GET                                           → their galleries
+ *   POST { action: 'create', name }               → new live gallery + Drive folder
+ *   POST { action: 'start' | 'stop', slug }       → live mode on their gallery
+ * Uploading to it uses ingest-start / ingest-complete with the same session.
+ */
+async function handleMyLive(req: VercelRequest, res: VercelResponse) {
+    const ingest = await import('../../lib/api-handlers/_gallery-ingest.js');
+    try {
+        const supabase = ingest.createServiceClient();
+        const photographer = await ingest.verifiedPhotographer(req, supabase);
+        if (!photographer) return res.status(401).json({ error: 'Photographers only.' });
+        res.setHeader('Cache-Control', 'no-store');
+
+        if (req.method === 'GET') {
+            return res.status(200).json({ success: true, ...(await ingest.listMyGalleries(supabase, photographer)) });
+        }
+        if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+        const { action, name, slug } = (req.body && typeof req.body === 'object') ? req.body : {};
+        if (action === 'create') {
+            return res.status(200).json({ success: true, gallery: await ingest.createMyLiveGallery(supabase, photographer, name) });
+        }
+        if (action === 'start' || action === 'stop') {
+            return res.status(200).json({ success: true, ...(await ingest.setMyLiveMode(supabase, photographer, slug, action === 'start')) });
+        }
+        return res.status(400).json({ error: 'action must be create, start or stop' });
+    } catch (err: any) {
+        const status = err instanceof ingest.HttpError ? err.status : 500;
+        if (status >= 500) console.error('[my-live] Error:', err);
         return res.status(status).json({ error: err.message });
     }
 }

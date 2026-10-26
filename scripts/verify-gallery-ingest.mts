@@ -15,6 +15,10 @@
 import { verifyAdmin } from '../lib/api-handlers/_admin-auth.js';
 import {
     completeUpload,
+    createMyLiveGallery,
+    listMyGalleries,
+    setMyLiveMode,
+    verifiedPhotographer,
     discardPending,
     hashIngestKey,
     HttpError,
@@ -47,6 +51,10 @@ const db: Record<string, Row[]> = {
     gallery_ingest_keys: [],
     gallery_live_inboxes: [],
     gallery_ingest_pending: [],
+    photographers: [
+        { id: 'ph-eric', user_id: 'user-eric', name: 'Eric Alvarado', instagram: '@four5_culture', active: true },
+        { id: 'ph-old', user_id: 'user-old', name: 'Former Crew', instagram: null, active: false },
+    ],
     photos: [],
     tags: [],
     photo_tags: [],
@@ -302,6 +310,45 @@ const notReally = await completeUpload(supabase, callerA, { fileId: 'roll-0002-a
 check('only publish: true publishes — anything else waits for review', notReally.pending === true
     && db.photos.length === photosBefore + 1 && db.gallery_ingest_pending.some(r => r.drive_file_id === 'roll-0002-abc'));
 await discardPending(supabase, 'event-a', ['roll-0002-abc']);
+
+// --- photographers: their own live galleries ---------------------------------
+
+const TOKENS: Record<string, string> = { 'eric-session': 'user-eric', 'old-session': 'user-old', 'fan-session': 'user-fan' };
+ingestDeps.sessionUserId = async (t: string) => TOKENS[t] ?? null;
+const createdFolders: string[] = [];
+ingestDeps.createFolder = async (name: string) => { createdFolders.push(name); return `folder-ph-${createdFolders.length}`; };
+
+const eric = await verifiedPhotographer(req('Bearer eric-session'), supabase);
+check('a signed-in crew photographer is recognised', eric?.id === 'ph-eric' && eric.userId === 'user-eric');
+check('an inactive photographer is not', (await verifiedPhotographer(req('Bearer old-session'), supabase)) === null);
+check('a signed-in non-photographer is not', (await verifiedPhotographer(req('Bearer fan-session'), supabase)) === null);
+check('an upload key is not a photographer', (await verifiedPhotographer(req(`Bearer ${minted.key}`), supabase)) === null);
+
+await rejects('a gallery needs a name', () => createMyLiveGallery(supabase, eric!, ' x '), 400);
+const mine = await createMyLiveGallery(supabase, eric!, 'Halloween   at Primos');
+const mineRow = db.photo_libraries.find(l => l.slug === mine.slug)!;
+check('creating makes a live, public gallery owned by the photographer',
+    mineRow.owner_id === 'user-eric' && mineRow.live_mode === true && mineRow.is_private === false && mineRow.published === true,
+    JSON.stringify({ owner: mineRow.owner_id, live: mineRow.live_mode, private: mineRow.is_private }));
+check('…with its own new Drive folder', mineRow.google_drive_folder_id === `folder-ph-${createdFolders.length}`
+    && createdFolders.at(-1) === 'Halloween at Primos — Eric Alvarado', createdFolders.at(-1));
+check('…a unique slug and their Instagram handle', /^halloween-at-primos-[0-9a-f]{6}$/.test(mine.slug) && mineRow.photographer_handle === '@four5_culture', mine.slug);
+const again2 = await createMyLiveGallery(supabase, eric!, 'Halloween at Primos');
+check('two galleries with the same name get different slugs', again2.slug !== mine.slug);
+
+const listed = await listMyGalleries(supabase, eric!);
+check('a photographer lists only their own galleries', listed.galleries.length === 2 && listed.galleries.every((g: any) => db.photo_libraries.find(l => l.id === g.id)?.owner_id === 'user-eric'));
+
+await setMyLiveMode(supabase, eric!, mine.slug, false);
+check('they can end live on their own gallery', mineRow.live_mode === false);
+await rejects('…but not on someone else\'s', () => setMyLiveMode(supabase, eric!, 'event-a', false), 403);
+check('…which stays live', db.photo_libraries.find(l => l.slug === 'event-a')!.live_mode === true);
+
+const ericCaller = await resolveIngestCaller(req('Bearer eric-session'), supabase, mine.slug);
+check('they can upload to their own gallery', ericCaller.library.slug === mine.slug && ericCaller.keyId === null);
+await rejects('…but not to someone else\'s', () => resolveIngestCaller(req('Bearer eric-session'), supabase, 'event-a'), 403);
+await rejects('an inactive photographer cannot upload', () => resolveIngestCaller(req('Bearer old-session'), supabase, mine.slug), 401);
+await rejects('a signed-in fan cannot upload', () => resolveIngestCaller(req('Bearer fan-session'), supabase, mine.slug), 401);
 
 // --- chunk relay --------------------------------------------------------------
 

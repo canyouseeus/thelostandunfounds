@@ -71,6 +71,13 @@ radio icon on each gallery row under Active Galleries).
     log). Both use `src/components/live/LiveUploader.tsx`: direct PUT to the Drive session, and on a
     CORS refusal it switches to `/api/gallery/ingest-chunk` (4MB chunks relayed by us; the relay only
     ever targets `www.googleapis.com/upload/drive/v3/files?upload_id=…`).
+*   **Photographers run their own live galleries** from `/photographer-dashboard` → LIVE GALLERIES
+    (`src/components/live/MyLiveGalleries.tsx`, route `/api/gallery/my-live`). Create makes a public,
+    live gallery they own (`owner_id` = their user id, own Drive folder under
+    `PHOTOGRAPHER_LIVE_DRIVE_FOLDER_ID` / `LIVE_INBOX_DRIVE_FOLDER_ID` / Drive root, $5 default
+    price). "Photographer" = an **active** `photographers` row whose `user_id` is the session user;
+    checked server-side only (`verifiedPhotographer`) since that table is admin-only under RLS. They
+    can upload to, and go live / end live on, galleries they own — nothing else.
 *   **Camera-roll uploads publish immediately — no review** (owner's call, 2026-10-26: they are
     hand-picked). LiveUploader sends `ingest-complete { publish: true }`. The review inbox is for
     automatic sends only (FTP relay, watcher), which omit `publish`.

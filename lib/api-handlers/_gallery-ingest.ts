@@ -37,6 +37,7 @@ import { createHash, randomBytes } from 'crypto';
 import type { drive_v3 } from 'googleapis';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { verifyAdmin } from './_admin-auth.js';
+import { createClient } from '@supabase/supabase-js';
 import { ingestUploadedPhoto, INGEST_FILE_FIELDS } from './_photo-sync-utils.js';
 
 export const INGEST_KEY_PREFIX = 'tlu_live_';
@@ -57,6 +58,7 @@ interface IngestLibrary {
     name: string;
     folderId: string;
     live_mode: boolean;
+    owner_id: string | null;
 }
 
 interface IngestCaller {
@@ -77,7 +79,7 @@ function bearer(req: VercelRequest): string {
 async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string; slug?: string }): Promise<IngestLibrary> {
     let query = supabase
         .from('photo_libraries')
-        .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode');
+        .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode, owner_id');
     query = match.id ? query.eq('id', match.id) : query.eq('slug', match.slug || '');
     const { data, error } = await query.maybeSingle();
     if (error) throw new HttpError(500, error.message);
@@ -85,7 +87,10 @@ async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string
 
     const folderId = data.google_drive_folder_id || data.gdrive_folder_id;
     if (!folderId) throw new HttpError(409, `Gallery ${data.slug} has no Google Drive folder to publish into.`);
-    return { id: data.id, slug: data.slug, name: data.name, folderId, live_mode: Boolean(data.live_mode) };
+    return {
+        id: data.id, slug: data.slug, name: data.name, folderId,
+        live_mode: Boolean(data.live_mode), owner_id: data.owner_id ?? null,
+    };
 }
 
 /**
@@ -112,9 +117,127 @@ export async function resolveIngestCaller(
         return { library: await loadLibrary(supabase, { id: key.library_id }), keyId: key.id };
     }
 
-    if (!(await verifyAdmin(req))) throw new HttpError(401, 'Unauthorized');
+    if (typeof slug !== 'string' || !slug) {
+        if (!(await verifyAdmin(req)) && !(await verifiedPhotographer(req, supabase))) throw new HttpError(401, 'Unauthorized');
+        throw new HttpError(400, 'slug is required.');
+    }
+    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null };
+
+    // A photographer may upload to galleries they own, and no others.
+    const photographer = await verifiedPhotographer(req, supabase);
+    if (!photographer) throw new HttpError(401, 'Unauthorized');
+    const library = await loadLibrary(supabase, { slug });
+    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    return { library, keyId: null };
+}
+
+// --- Photographers: their own live galleries ---
+
+export interface Photographer {
+    id: string;
+    userId: string;
+    name: string;
+    instagram: string | null;
+}
+
+/**
+ * The active photographer behind a Supabase session, or null.
+ *
+ * photographers.user_id ties a crew member to their login. The table is
+ * admin-only under RLS, so this check can only happen here, server-side.
+ */
+export async function verifiedPhotographer(
+    req: VercelRequest,
+    supabase: ServiceSupabaseClient,
+): Promise<Photographer | null> {
+    const token = bearer(req);
+    if (!token || token.startsWith(INGEST_KEY_PREFIX)) return null;
+    const userId = await ingestDeps.sessionUserId(token);
+    if (!userId) return null;
+    const { data: row } = await supabase
+        .from('photographers')
+        .select('id, name, instagram, active')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (!row || !row.active) return null;
+    return { id: row.id, userId, name: row.name, instagram: row.instagram ?? null };
+}
+
+function slugify(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'live';
+}
+
+/** The photographer's own galleries, newest first. */
+export async function listMyGalleries(supabase: ServiceSupabaseClient, photographer: Photographer) {
+    const { data, error } = await supabase
+        .from('photo_libraries')
+        .select('id, slug, name, live_mode, is_private, created_at')
+        .eq('owner_id', photographer.userId)
+        .order('created_at', { ascending: false });
+    if (error) throw new HttpError(500, error.message);
+    return { photographer: { name: photographer.name }, galleries: data || [] };
+}
+
+/**
+ * Create a live gallery owned by the photographer: its own Drive folder, a
+ * public gallery page, live mode on. Same shape as the invite onboarding in
+ * api/admin/onboard-gallery.ts (owner_id, $5 default price), minus the invite.
+ */
+export async function createMyLiveGallery(
+    supabase: ServiceSupabaseClient,
+    photographer: Photographer,
+    rawName: unknown,
+) {
+    const name = typeof rawName === 'string' ? rawName.trim().replace(/\s+/g, ' ') : '';
+    if (name.length < 2 || name.length > 80) throw new HttpError(400, 'Give the gallery a name (2–80 characters).');
+
+    let folderId: string;
+    try {
+        folderId = await ingestDeps.createFolder(
+            `${name} — ${photographer.name}`,
+            process.env.PHOTOGRAPHER_LIVE_DRIVE_FOLDER_ID || process.env.LIVE_INBOX_DRIVE_FOLDER_ID || undefined,
+        );
+    } catch (err: any) {
+        throw new HttpError(502, `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`);
+    }
+
+    // A short random suffix keeps two "Halloween" galleries from colliding.
+    const slug = `${slugify(name)}-${randomBytes(3).toString('hex')}`;
+    const { data, error } = await supabase
+        .from('photo_libraries')
+        .insert({
+            name,
+            slug,
+            description: `Live from ${name}`,
+            google_drive_folder_id: folderId,
+            owner_id: photographer.userId,
+            user_id: photographer.userId,
+            photographer_handle: photographer.instagram,
+            is_private: false,
+            published: true,
+            live_mode: true,
+            status: 'active',
+            price: 5.0,
+        })
+        .select('id, slug, name, live_mode, is_private, created_at')
+        .single();
+    if (error) throw new HttpError(500, error.message);
+    return data;
+}
+
+/** Go live / end live on a gallery the photographer owns. */
+export async function setMyLiveMode(
+    supabase: ServiceSupabaseClient,
+    photographer: Photographer,
+    slug: unknown,
+    live: boolean,
+) {
     if (typeof slug !== 'string' || !slug) throw new HttpError(400, 'slug is required.');
-    return { library: await loadLibrary(supabase, { slug }), keyId: null };
+    const library = await loadLibrary(supabase, { slug });
+    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const { error } = await supabase.from('photo_libraries').update({ live_mode: live }).eq('id', library.id);
+    if (error) throw new HttpError(500, error.message);
+    return { slug: library.slug, live_mode: live };
 }
 
 // --- Google Drive (the owner's OAuth credentials, as client-uploads uses) ---
@@ -139,11 +262,22 @@ async function getDrive() {
 }
 
 /**
- * Every call that leaves for Google. Kept on one object so the harness in
+ * Every call that leaves the function — to Google, and to Supabase Auth to
+ * resolve a session. Kept on one object so the harness in
  * scripts/verify-gallery-ingest.mts can swap them for stubs and exercise the
  * checks around them without live credentials.
  */
 export const ingestDeps = {
+    /** The user id behind a Supabase access token, or null. */
+    async sessionUserId(token: string): Promise<string | null> {
+        const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!url || !key) return null;
+        const { data, error } = await createClient(url, key, {
+            auth: { persistSession: false, autoRefreshToken: false },
+        }).auth.getUser(token);
+        return error || !data.user ? null : data.user.id;
+    },
     async getAccessToken(): Promise<string | null> {
         const { auth } = await getOAuthClient();
         const { token } = await auth.getAccessToken();
