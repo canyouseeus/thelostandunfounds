@@ -18,6 +18,11 @@ import {
     createMyLiveGallery,
     listMyGalleries,
     setMyLiveMode,
+    generateIngestKey,
+    getMyCameraEvent,
+    mintMyCameraLogin,
+    revokeMyKey,
+    loadMyLibrary,
     verifiedPhotographer,
     discardPending,
     hashIngestKey,
@@ -482,6 +487,64 @@ await relayChunk(SESSION, 'bytes 0-9/20', pool.subarray(4, 14));
 check('a sliced buffer sends only its slice', Buffer.from(relayed.body).toString() === '0123456789', Buffer.from(relayed.body).toString());
 const last = await relayChunk(SESSION, 'bytes 10-19/20', chunk10);
 check('the final chunk returns the Drive file id', last.done === true && last.fileId === 'relayed-file-01', JSON.stringify(last));
+
+// --- photographers: camera logins and their own review inbox ------------------
+
+check('a camera key is tlu_live_ + 24 typeable characters', /^tlu_live_[a-z0-9]{24}$/.test(generateIngestKey(true)));
+check('an upload-link key is still the long one', /^tlu_live_[A-Za-z0-9_-]{43}$/.test(generateIngestKey()));
+
+const cam = await mintMyCameraLogin(supabase, eric!, mine.slug);
+check('a photographer mints a short camera login on their own gallery', /^tlu_live_[a-z0-9]{24}$/.test(cam.key), cam.key);
+const camCaller = await resolveIngestCaller(req(`Bearer ${cam.key}`), supabase, 'event-a');
+check('…that writes only to their gallery, whatever the body names', camCaller.library.slug === mine.slug, camCaller.library.slug);
+check('…credited to them', camCaller.handle === '@four5_culture', String(camCaller.handle));
+const keysBefore = db.gallery_ingest_keys.length;
+await rejects('they cannot mint a camera login on someone else\'s gallery', () => mintMyCameraLogin(supabase, eric!, 'event-a'), 403);
+await rejects('…or another photographer\'s', () => mintMyCameraLogin(supabase, itz!, mine.slug), 403);
+check('…and those refusals minted nothing', db.gallery_ingest_keys.length === keysBefore);
+
+// A frame from the camera: it waits in their inbox, not the gallery.
+await completeUpload(supabase, camCaller, { fileId: 'nothing-there-1' }).catch(() => {});
+const ericInbox = db.gallery_live_inboxes.find(r => r.library_id === mineRow.id)?.drive_folder_id;
+putFile('cam-0001-abcd', [ericInbox!]);
+putFile('cam-0002-abcd', [ericInbox!]);
+await completeUpload(supabase, camCaller, { fileId: 'cam-0001-abcd' });
+await completeUpload(supabase, camCaller, { fileId: 'cam-0002-abcd' });
+const ericEvent = await getMyCameraEvent(supabase, eric!, mine.slug);
+check('camera frames wait for their review', ericEvent.pending.length === 2
+    && !db.photos.some(p => p.google_drive_file_id === 'cam-0001-abcd'), `${ericEvent.pending.length} pending`);
+check('their camera login is listed, without its secret', ericEvent.keys.some((k: any) => k.id === cam.id)
+    && !JSON.stringify(ericEvent).includes(cam.key));
+await rejects('another photographer cannot see their inbox', () => getMyCameraEvent(supabase, itz!, mine.slug), 403);
+await rejects('nor can they see the house\'s', () => getMyCameraEvent(supabase, eric!, 'event-a'), 403);
+
+// Previews: only from their own gallery.
+const { default: sharp } = await import('sharp');
+ingestDeps.downloadFile = async () => sharp({ create: { width: 20, height: 20, channels: 3, background: '#000' } }).jpeg().toBuffer();
+const thumb = await previewPending(supabase, 'cam-0001-abcd', 200, mineRow.id);
+check('they can preview a frame waiting in their gallery', thumb.length > 0 && thumb[0] === 0xff && thumb[1] === 0xd8);
+db.gallery_ingest_pending.push({ id: 'pend-house', library_id: 'lib-a', drive_file_id: 'house-0001-ab', credit_handle: null });
+await rejects('…but not one waiting in another gallery', () => previewPending(supabase, 'house-0001-ab', 200, mineRow.id), 404);
+db.gallery_ingest_pending = db.gallery_ingest_pending.filter(r => r.id !== 'pend-house');
+await rejects('my-live refuses a gallery they do not own before any preview', () => loadMyLibrary(supabase, itz!, mine.slug), 403);
+
+// Publish / discard go through publishPending/discardPending scoped to their slug.
+// The naming checks above restore the plain move; record renames again here.
+ingestDeps.moveFile = async (id: string, to: string, from: string, newName?: string) => {
+    renames[id] = newName;
+    return realMove(id, to, from);
+};
+const ericPub = await publishPending(supabase, (await loadMyLibrary(supabase, eric!, mine.slug)).slug, ['cam-0001-abcd']);
+const ericPhoto = db.photos.find(p => p.google_drive_file_id === 'cam-0001-abcd');
+check('publishing their frame puts it in their gallery', ericPub.published === 1 && ericPhoto?.library_id === mineRow.id);
+check('…named for them', String(renames['cam-0001-abcd'] || '').startsWith('@four5_culture_thelostandunfounds_'), renames['cam-0001-abcd']);
+const ericDis = await discardPending(supabase, mine.slug, ['cam-0002-abcd']);
+ingestDeps.moveFile = realMove;
+check('discarding their frame deletes it', ericDis.discarded === 1 && !driveFiles['cam-0002-abcd']);
+
+await rejects('they cannot turn off a login on someone else\'s gallery', () => revokeMyKey(supabase, itz!, mine.slug, cam.id), 403);
+await revokeMyKey(supabase, eric!, mine.slug, cam.id);
+await rejects('a camera login they turned off is refused', () => resolveIngestCaller(req(`Bearer ${cam.key}`), supabase, mine.slug), 401);
 
 // --- revoke -------------------------------------------------------------------
 

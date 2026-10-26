@@ -246,7 +246,7 @@ const liveEventTour: Tour = {
     {
       target: 'live-keys',
       title: 'Upload Links',
-      body: 'Make a link for each extra shooter. Pick them from your crew list, or type a guest\'s Instagram, so their photos are named and credited to them. Send it right away, because it is shown once.\n\nA link can only add photos to this gallery. It cannot delete or see anything. Turn it off when the event ends.',
+      body: 'Make a link for each extra shooter. Pick them from your crew list, or type a guest\'s Instagram, so their photos are named and credited to them. Send it right away, because it is shown once. CAMERA LOGIN does the same for a camera that sends by FTP.\n\nA link can only add photos to this gallery. It cannot delete or see anything. Turn it off when the event ends.',
       missingNote: 'Pick a gallery above first. The links section appears once one is chosen.',
     },
     {
@@ -264,6 +264,40 @@ const liveEventTour: Tour = {
     {
       title: 'Publish Or Discard',
       body: 'Selecting photos brings up a bar at the bottom.\n\nPUBLISH moves them into the gallery, live for guests. DISCARD deletes them from Google Drive for good, with no undo.\n\nThere is no "discard everything unselected" on purpose: photos keep arriving while you review, and a new one would be deleted unseen.',
+    },
+  ],
+};
+
+const cameraLoginTour: Tour = {
+  id: 'live-camera-login',
+  title: 'Camera Direct Upload',
+  summary: 'Give a Canon (or any camera that sends by FTP) its own login, and every frame it shoots lands in the live review inbox. No phone in between.',
+  group: 'new',
+  announce: '2026-10-26',
+  steps: [
+    {
+      route: '/admin/live',
+      target: 'live-gallery-picker',
+      title: 'Camera Direct Upload',
+      body: 'A camera that sends by FTP can upload to a live gallery on its own, frame by frame, with no phone.\n\nPick the event\'s gallery first.',
+    },
+    {
+      target: 'live-camera-button',
+      title: 'Camera Login',
+      body: 'Choose who is shooting, then tap CAMERA LOGIN. Their photos are named and credited to them, the same as an upload link.',
+      missingNote: 'Pick a gallery above first. CAMERA LOGIN appears once one is chosen.',
+    },
+    {
+      target: 'live-camera-login',
+      title: 'Type It Into The Camera',
+      body: 'The server, password and settings to enter in the camera\'s FTP menu. Turn passive mode on and send JPEG only.\n\nThe password is shown once, so enter it now or COPY SETTINGS and send them to the photographer.',
+      missingNote: 'This appears after you tap CAMERA LOGIN.',
+    },
+    {
+      target: 'live-inbox',
+      title: 'Frames Wait For Review',
+      body: 'A camera sends every frame, misfires too, so these land in the review inbox, not the gallery. Publish the keepers. Turn the login off under UPLOAD LINKS when the event ends.',
+      missingNote: 'Pick a gallery above first. The inbox appears once one is chosen.',
     },
   ],
 };
@@ -339,7 +373,7 @@ const supportTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+export const TOURS: Tour[] = [cameraLoginTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);

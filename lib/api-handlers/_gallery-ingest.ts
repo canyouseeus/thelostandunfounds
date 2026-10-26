@@ -33,7 +33,7 @@
 //   - the owner's admin session, which can upload to any gallery by slug.
 // Reviewing (list, preview, publish, discard) is admin only.
 import type { VercelRequest } from '@vercel/node';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import type { drive_v3 } from 'googleapis';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { verifyAdmin } from './_admin-auth.js';
@@ -252,6 +252,14 @@ export async function createMyLiveGallery(
     return data;
 }
 
+/** A gallery the photographer owns, or a 403. Every my-live action goes through this. */
+export async function loadMyLibrary(supabase: ServiceSupabaseClient, photographer: Photographer, slug: unknown) {
+    if (typeof slug !== 'string' || !slug) throw new HttpError(400, 'slug is required.');
+    const library = await loadLibrary(supabase, { slug });
+    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    return library;
+}
+
 /** Go live / end live on a gallery the photographer owns. */
 export async function setMyLiveMode(
     supabase: ServiceSupabaseClient,
@@ -259,9 +267,7 @@ export async function setMyLiveMode(
     slug: unknown,
     live: boolean,
 ) {
-    if (typeof slug !== 'string' || !slug) throw new HttpError(400, 'slug is required.');
-    const library = await loadLibrary(supabase, { slug });
-    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const library = await loadMyLibrary(supabase, photographer, slug);
     const { error } = await supabase.from('photo_libraries').update({ live_mode: live }).eq('id', library.id);
     if (error) throw new HttpError(500, error.message);
     return { slug: library.slug, live_mode: live };
@@ -775,14 +781,20 @@ export async function discardPending(supabase: ServiceSupabaseClient, slug: stri
  * and a pending photo must not be reachable by anyone but the owner. Only ids
  * actually in the inbox are served.
  */
-export async function previewPending(supabase: ServiceSupabaseClient, fileId: string, size: number): Promise<Buffer> {
+export async function previewPending(
+    supabase: ServiceSupabaseClient,
+    fileId: string,
+    size: number,
+    /** Set for a photographer: the photo must be pending in this gallery (one they own). */
+    libraryId?: string,
+): Promise<Buffer> {
     if (!/^[\w-]{10,}$/.test(fileId)) throw new HttpError(400, 'fileId is required.');
     const { data } = await supabase
         .from('gallery_ingest_pending')
-        .select('id')
+        .select('id, library_id')
         .eq('drive_file_id', fileId)
         .maybeSingle();
-    if (!data) throw new HttpError(404, 'Not in the live inbox.');
+    if (!data || (libraryId && data.library_id !== libraryId)) throw new HttpError(404, 'Not in the live inbox.');
 
     let original: Buffer;
     try {
@@ -839,6 +851,23 @@ export async function setLiveMode(supabase: ServiceSupabaseClient, slug: string,
     return getLiveEvent(supabase, slug);
 }
 
+// A camera login's password is typed on the camera's own keyboard, so it is
+// lowercase letters and digits only. 24 of them is ~124 bits.
+const CAMERA_KEY_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+const CAMERA_KEY_LENGTH = 24;
+
+/**
+ * A new ingest key. An upload link's key rides in a URL and is never typed, so
+ * it is long. A camera login's key is short and typeable: the camera relay
+ * (relay/ftp) takes the part after tlu_live_ as the FTP password.
+ */
+export function generateIngestKey(camera = false): string {
+    if (!camera) return INGEST_KEY_PREFIX + randomBytes(32).toString('base64url');
+    let suffix = '';
+    for (let i = 0; i < CAMERA_KEY_LENGTH; i++) suffix += CAMERA_KEY_ALPHABET[randomInt(CAMERA_KEY_ALPHABET.length)];
+    return INGEST_KEY_PREFIX + suffix;
+}
+
 /** The plaintext key is returned here once and never stored. */
 export async function mintIngestKey(
     supabase: ServiceSupabaseClient,
@@ -846,6 +875,7 @@ export async function mintIngestKey(
     label?: string,
     photographerId?: string | null,
     guestHandle?: string | null,
+    camera = false,
 ) {
     const guest = photographerId ? null : normalizeHandle(guestHandle);
     if (!photographerId && guestHandle && guestHandle.trim() && !guest) {
@@ -856,7 +886,7 @@ export async function mintIngestKey(
         const { data: shooter } = await supabase.from('photographers').select('id').eq('id', photographerId).maybeSingle();
         if (!shooter) throw new HttpError(400, 'That photographer is not on the crew list.');
     }
-    const key = INGEST_KEY_PREFIX + randomBytes(32).toString('base64url');
+    const key = generateIngestKey(camera);
     const { data, error } = await supabase
         .from('gallery_ingest_keys')
         .insert({
@@ -886,6 +916,37 @@ export async function revokeIngestKey(supabase: ServiceSupabaseClient, slug: str
     if (error) throw new HttpError(500, error.message);
     if (!data) throw new HttpError(404, 'No active key with that id on this gallery.');
     return data;
+}
+
+// --- Photographers: camera logins and review on their own galleries ---
+//
+// The same keys, inbox, publish and discard the owner uses on /admin/live,
+// scoped to a gallery the photographer owns (loadMyLibrary). Their camera
+// logins always credit them; they cannot mint a link crediting someone else.
+
+/** Their gallery's active camera logins and what is waiting for review. */
+export async function getMyCameraEvent(supabase: ServiceSupabaseClient, photographer: Photographer, slug: unknown) {
+    const library = await loadMyLibrary(supabase, photographer, slug);
+    const { data: keys, error } = await supabase
+        .from('gallery_ingest_keys')
+        .select('id, key_prefix, label, created_at, last_used_at, upload_count')
+        .eq('library_id', library.id)
+        .is('revoked_at', null)
+        .order('created_at', { ascending: false });
+    if (error) throw new HttpError(500, error.message);
+    const inbox = await listInbox(supabase, library.slug);
+    return { slug: library.slug, keys: keys || [], pending: inbox.pending };
+}
+
+export async function mintMyCameraLogin(supabase: ServiceSupabaseClient, photographer: Photographer, slug: unknown) {
+    const library = await loadMyLibrary(supabase, photographer, slug);
+    return mintIngestKey(supabase, library.slug, `${photographer.name} (camera)`, photographer.id, null, true);
+}
+
+export async function revokeMyKey(supabase: ServiceSupabaseClient, photographer: Photographer, slug: unknown, keyId: unknown) {
+    const library = await loadMyLibrary(supabase, photographer, slug);
+    if (typeof keyId !== 'string' || !keyId) throw new HttpError(400, 'keyId is required.');
+    return revokeIngestKey(supabase, library.slug, keyId);
 }
 
 export function createServiceClient() {

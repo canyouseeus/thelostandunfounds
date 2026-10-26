@@ -1,0 +1,24 @@
+# systemd unit for the camera FTP relay. See README.md for the install steps.
+[Unit]
+Description=THE LOST+UNFOUNDS camera FTP relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/node /opt/tlu-camera-relay/server.mjs
+EnvironmentFile=/etc/tlu-camera-relay.env
+Restart=always
+RestartSec=2
+# Port 21 without running as root.
+DynamicUser=yes
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+StateDirectory=tlu-camera-relay
+Environment=SPOOL_DIR=/var/lib/tlu-camera-relay/spool
+
+[Install]
+WantedBy=multi-user.target

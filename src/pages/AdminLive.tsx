@@ -63,6 +63,13 @@ const field = 'w-full bg-white/5 text-white px-4 py-3 text-sm focus:outline-none
 /** The photographer's upload page. The key rides in the fragment so it never reaches a server log. */
 const uploadLink = (key: string) => `${window.location.origin}/live/upload#${key}`
 
+/**
+ * Where cameras send FTP: the camera relay (relay/ftp), which hands each photo
+ * to the ingest routes. Unset until the relay is deployed.
+ */
+const FTP_RELAY_HOST = (import.meta.env.VITE_FTP_RELAY_HOST as string | undefined) || ''
+const KEY_PREFIX = 'tlu_live_'
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -85,6 +92,8 @@ export default function AdminLive() {
   const [previews, setPreviews] = useState<Record<string, string>>({})
   const [viewing, setViewing] = useState<{ fileId: string; url: string | null } | null>(null)
   const [newKey, setNewKey] = useState<string | null>(null)
+  // A camera login is shown as FTP settings to type into the camera, not a link.
+  const [newKeyIsCamera, setNewKeyIsCamera] = useState(false)
   const [keyLabel, setKeyLabel] = useState('')
   const [crew, setCrew] = useState<CrewMember[]>([])
   // '' = someone not on the crew list: their photos keep their camera names.
@@ -235,7 +244,7 @@ export default function AdminLive() {
     }
   }
 
-  async function eventAction(action: 'start' | 'stop' | 'mint-key' | 'revoke-key', extra: Record<string, string> = {}) {
+  async function eventAction(action: 'start' | 'stop' | 'mint-key' | 'revoke-key', extra: Record<string, string | boolean> = {}) {
     setBusy(true)
     setError(null)
     try {
@@ -245,6 +254,7 @@ export default function AdminLive() {
       })
       if (data.key) {
         setNewKey(data.key)
+        setNewKeyIsCamera(extra.camera === true)
         setKeyLabel('')
       }
       await loadEvent()
@@ -387,10 +397,47 @@ export default function AdminLive() {
               <h2 className="text-sm font-black uppercase tracking-[0.25em] mb-4">UPLOAD LINKS</h2>
               <p className="text-white/50 text-xs mb-6 text-left">
                 Give a photographer a link and the photos they send from their phone go straight into this gallery —
-                no account needed. A link cannot delete or see anything. Turn it off when the event is over.
+                no account needed. CAMERA LOGIN gives a Canon (or any camera that sends by FTP) its own login instead;
+                those frames wait in the review inbox. Neither can delete or see anything. Turn them off when the event is over.
               </p>
 
-              {newKey && (
+              {newKey && newKeyIsCamera && (
+                <div data-tour="live-camera-login" className="bg-black p-4 mb-6" style={{ borderRadius: 0 }}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400 mb-3">
+                    Camera login — type it into the camera now, it is not shown again
+                  </p>
+                  {!FTP_RELAY_HOST && (
+                    <p className="text-red-400 text-xs mb-3 text-left">
+                      The camera relay is not deployed yet, so there is no server to enter. See relay/ftp/README.md.
+                    </p>
+                  )}
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs text-left">
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Server</dt>
+                    <dd className="text-white break-all">{FTP_RELAY_HOST || '—'}</dd>
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Port</dt>
+                    <dd className="text-white">21</dd>
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Login name</dt>
+                    <dd className="text-white">camera <span className="text-white/40">(anything works)</span></dd>
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Password</dt>
+                    <dd><code className="text-white text-sm tracking-wider break-all">{newKey.replace(KEY_PREFIX, '')}</code></dd>
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Passive mode</dt>
+                    <dd className="text-white">On</dd>
+                    <dt className="text-white/40 uppercase tracking-[0.15em]">Send</dt>
+                    <dd className="text-white">JPEG only <span className="text-white/40">(raw files are dropped)</span></dd>
+                  </dl>
+                  <p className="text-white/40 text-[10px] mt-3 text-left">
+                    Every frame the camera sends lands in the review inbox below, not the gallery. Turn the login off when the event ends.
+                  </p>
+                  <button className={`${secondary} mt-3`} style={{ borderRadius: 0 }}
+                    onClick={() => navigator.clipboard?.writeText(
+                      `Server: ${FTP_RELAY_HOST}\nPort: 21\nLogin name: camera\nPassword: ${newKey.replace(KEY_PREFIX, '')}\nPassive mode: On`,
+                    )}>
+                    Copy settings
+                  </button>
+                </div>
+              )}
+
+              {newKey && !newKeyIsCamera && (
                 <div className="bg-black p-4 mb-6" style={{ borderRadius: 0 }}>
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400 mb-2">
                     Send it now — it is not shown again
@@ -438,6 +485,16 @@ export default function AdminLive() {
                     setGuestHandle('')
                   }}>
                   New link
+                </button>
+                <button data-tour="live-camera-button" className={secondary} style={{ borderRadius: 0 }} disabled={busy}
+                  onClick={() => {
+                    const member = crew.find(c => c.id === shooter)
+                    eventAction('mint-key', member
+                      ? { label: `${member.name} (camera)`, photographerId: member.id, camera: true }
+                      : { label: `${keyLabel || 'Guest'} (camera)`, guestHandle, camera: true })
+                    setGuestHandle('')
+                  }}>
+                  Camera login
                 </button>
               </div>
               <p className="text-white/40 text-[10px] mb-6 text-left">
