@@ -33,28 +33,15 @@ export default defineConfig({
       }),
     },
   },
+  // maplibre-gl v6 starts its worker as an ES module (`type: 'module'`).
+  worker: {
+    format: 'es',
+  },
   server: {
     port: 3000,
     strictPort: true,
     open: false,
     proxy: {
-      '/api/tiktok': {
-        target: 'https://tiktok-downloader-production-ab40.up.railway.app',
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => '/api' + path.replace(/^\/api\/tiktok/, ''),
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, res: any) => {
-            console.error('Proxy error:', err);
-            if (res && !res.headersSent) {
-              res.writeHead(500, {
-                'Content-Type': 'application/json',
-              });
-              res.end(JSON.stringify({ error: 'Proxy error', message: err.message }));
-            }
-          });
-        },
-      },
       // Proxy newsletter API calls to production Vercel in local dev
       '/api/newsletter': {
         target: 'https://www.thelostandunfounds.com',

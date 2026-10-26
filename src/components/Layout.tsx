@@ -81,7 +81,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
       window.removeEventListener('resize', onScroll)
     }
   }, [isAdminRoute])
-  const isTikTokDownloader = location.pathname === '/tools/tiktok-downloader'
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
