@@ -229,7 +229,7 @@ const liveEventTour: Tour = {
       panel: 'gallery',
       target: 'gallery-live-link',
       title: 'Open Live Event',
-      body: 'LIVE EVENT, next to the Gallery Management title, opens the live console.',
+      body: 'LIVE, the green button at the top of Gallery Management, opens the live console.',
     },
     {
       route: '/admin/live',
@@ -339,7 +339,43 @@ const supportTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+const halftoneTour: Tour = {
+  id: 'gallery-screen-generator',
+  title: 'Screen Generator',
+  summary: 'Turn a photo into a halftone film positive for screen printing, with triangle or 3 dots and your own text.',
+  group: 'new',
+  announce: '2026-10-27',
+  steps: [
+    {
+      route: '/admin',
+      panel: 'gallery',
+      target: 'gallery-screens-button',
+      title: 'Screens Button',
+      body: 'SCREENS, at the top of Gallery Management, opens the screen generator. It turns a photo into a black and white halftone film for burning a screen.\n\nIt has three steps: PHOTO, TEXT, SCREEN.',
+      missingNote: 'Open Gallery Management from the console. SCREENS sits in the row of buttons at the top, next to LIVE.',
+    },
+    {
+      title: 'Step 1: Photo',
+      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, portrait or landscape. Choose a photo, drag it to move and pinch (or scroll) to zoom.\n\nBRIGHTNESS and CONTRAST set the tones. WHITE INK inverts the photo for printing light ink on a dark shirt.',
+    },
+    {
+      title: 'Step 2: Text',
+      body: 'Optional. Type a name, a date or a place. It is set in Inter, the site typeface, in REGULAR, BOLD or BLACK. Drag the preview to move it and pinch to resize it.\n\nSOLID INK prints the letters solid. KNOCKOUT cuts them out of the photo.',
+    },
+    {
+      target: 'halftone-dot-shape',
+      title: 'Step 3: Screen',
+      body: 'Choose TRIANGLES or 3s for the dots. The DOT DETAIL box shows the real film pixels. Drag the preview to look at a different part.\n\nThe settings start at 250 mesh, 55 LPI and 22.5°. Dots below 5% are dropped and tones above 95% print solid, so every dot holds on press.',
+      missingNote: 'Open the generator and go to 3 · SCREEN to see these settings.',
+    },
+    {
+      title: 'Download The Film',
+      body: 'DOWNLOAD FILM saves a 1-bit PNG at 360 DPI, black where ink prints, with the DPI set in the file so it prints at true size. Choose MIRRORED if your film goes emulsion side down.',
+    },
+  ],
+};
+
+export const TOURS: Tour[] = [halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);
