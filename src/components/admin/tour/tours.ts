@@ -355,8 +355,10 @@ const halftoneTour: Tour = {
       missingNote: 'Open Gallery Management from the console. SCREENS sits in the row of buttons at the top, next to LIVE.',
     },
     {
+      target: 'halftone-from-gallery',
+      missingNote: 'Open the generator (SCREENS) to see step 1.',
       title: 'Step 1: Photo',
-      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, and choose a photo. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. AUTO LEVELS stretches the photo from its darkest to its lightest point (good for night shots). BRIGHTNESS and CONTRAST fine-tune it, and WHITE INK inverts it for light ink on a dark shirt.',
+      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, then choose a photo: FROM A GALLERY picks one already in your galleries (filter by gallery or search by title), UPLOAD takes one from your device. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. AUTO LEVELS stretches the photo from its darkest to its lightest point (good for night shots). BRIGHTNESS and CONTRAST fine-tune it, and WHITE INK inverts it for light ink on a dark shirt.',
     },
     {
       title: 'Step 2: Text',
