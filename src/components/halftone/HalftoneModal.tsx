@@ -86,6 +86,8 @@ export default function HalftoneModal({ onClose }: Props) {
   const [photo, setPhoto] = useState<(PhotoSource & { label: string }) | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
+  const pickingRef = useRef(false)
+  pickingRef.current = picking
   const [frame, setFrame] = useState<PhotoFrame>(DEFAULT_FRAME)
   const [tone, setTone] = useState<ToneSettings>(DEFAULT_TONE)
   const [textAbove, setTextAbove] = useState('')
@@ -140,7 +142,8 @@ export default function HalftoneModal({ onClose }: Props) {
   const closeRef = useRef(onClose)
   closeRef.current = onClose
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current() }
+    // While the photo browser is open, Escape is its to handle.
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !pickingRef.current) closeRef.current() }
     window.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -357,8 +360,8 @@ export default function HalftoneModal({ onClose }: Props) {
             <p className={label}>{photo ? 'CHANGE THE PHOTO' : 'CHOOSE A PHOTO'}</p>
             <div className="flex gap-1 mb-3">
               <button
-                onClick={() => setPicking(v => !v)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 text-xs font-bold uppercase tracking-wider ${picking ? 'bg-white text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                onClick={() => setPicking(true)}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider"
                 data-tour="halftone-from-gallery"
                 data-testid="halftone-from-gallery"
               >
@@ -371,12 +374,11 @@ export default function HalftoneModal({ onClose }: Props) {
                 <ArrowUpTrayIcon className="w-4 h-4" /> UPLOAD
               </button>
             </div>
-            {picking && (
-              <GalleryPhotoPicker
-                onCancel={() => setPicking(false)}
-                onPick={({ blob, label: name }) => { setPicking(false); void loadPhoto(blob, name) }}
-              />
-            )}
+            <GalleryPhotoPicker
+              isOpen={picking}
+              onOpenChange={setPicking}
+              onPick={({ blob, label: name }) => { void loadPhoto(blob, name) }}
+            />
             {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
             {photo && (
               <p className="text-white/40 text-xs font-mono mb-3">

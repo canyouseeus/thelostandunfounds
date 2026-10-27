@@ -1,89 +1,154 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { supabase } from '@/lib/supabase'
 import { logApiCall, logError } from '@/lib/adminErrorLog'
+import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen'
 
 /**
- * Pick a photo that is already in a gallery. Lists the same `photos` /
- * `photo_libraries` rows as Gallery Management → ALL PHOTOS, and hands back
- * the photo's large original from /api/gallery/stream (same origin, so the
- * generator's canvas can read it).
+ * Full-screen browser for picking a photo that is already on the site.
+ *
+ * Two kinds of source:
+ *  - GALLERIES: rows in `photo_libraries` (published or not).
+ *  - FOLDERS / DATES: the sub-folders of the Drive JPG folder. The gallery sync
+ *    tags every photo with the name of the folder it sits in (a `collection`
+ *    tag), so each folder is browsable here without being published. Folders
+ *    named for a year, month or day are listed separately under DATES.
+ *
+ * Picking a photo hands back its large original from /api/gallery/stream
+ * (same origin, so the generator's canvas can read it).
  */
 
-interface Library {
-  id: string
-  name: string
-}
+type Source = { kind: 'library' | 'tag'; id: string; name: string; count: number }
 
 interface GalleryPhoto {
   id: string
   title: string | null
   google_drive_file_id: string
-  library_id: string
   mime_type: string | null
 }
 
-const PAGE = 30
+const PAGE = 48
 /** Long edge requested for the screen: ~170 px/in on an 18 × 24 print, well past the ~110 a 55 LPI screen needs. */
 const ORIGINAL_SIZE = 4096
 
+const MONTH = '(january|february|march|april|may|june|july|august|september|october|november|december)'
+const DATE_NAME = new RegExp(`^(\\d{4}|\\d{4}-\\d{2}(-\\d{2})?|${MONTH}( \\d{4})?)$`, 'i')
+
 interface Props {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
   onPick: (photo: { blob: Blob; label: string }) => void
-  onCancel: () => void
 }
 
-export default function GalleryPhotoPicker({ onPick, onCancel }: Props) {
-  const [libraries, setLibraries] = useState<Library[]>([])
-  const [libraryId, setLibraryId] = useState('')
-  const [search, setSearch] = useState('')
+const row = 'w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-left'
+
+export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Props) {
+  const [sources, setSources] = useState<Source[] | null>(null)
+  const [sourceError, setSourceError] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
+  const [open, setOpen] = useState<Source | null>(null)
   const [photos, setPhotos] = useState<GalleryPhoto[]>([])
-  const [hasMore, setHasMore] = useState(false)
-  /** Rows fetched so far (clips included), so LOAD MORE pages on the table, not on what is shown. */
   const [nextFrom, setNextFrom] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [opening, setOpening] = useState<string | null>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  const sentinel = useRef<HTMLDivElement>(null)
 
+  // Galleries and folders, with photo counts, once per open.
   useEffect(() => {
-    supabase
-      .from('photo_libraries')
-      .select('id, name')
-      .order('name')
-      .then(({ data, error: err }) => {
-        if (err) logError(`photo_libraries: ${err.message}`)
-        setLibraries(data || [])
-      })
-  }, [])
+    if (!isOpen || sources) return
+    void (async () => {
+      const [libs, tags] = await Promise.all([
+        supabase.from('photo_libraries').select('id, name, photos(count)').order('name'),
+        supabase.from('tags').select('id, name, photo_tags(count)').eq('type', 'collection').order('name'),
+      ])
+      if (libs.error || tags.error) {
+        logError(`picker sources: ${libs.error?.message || tags.error?.message}`)
+        setSourceError('Could not load your galleries and folders.')
+        return
+      }
+      const count = (r: { photos?: { count: number }[]; photo_tags?: { count: number }[] }) =>
+        (r.photos ?? r.photo_tags ?? [])[0]?.count ?? 0
+      setSources([
+        ...(libs.data || []).map(r => ({ kind: 'library' as const, id: r.id, name: r.name, count: count(r) })),
+        ...(tags.data || []).map(r => ({ kind: 'tag' as const, id: r.id, name: r.name, count: count(r) })),
+      ].filter(s => s.count > 0))
+    })()
+  }, [isOpen, sources])
 
-  const load = useCallback(async (from: number) => {
+  const sections = useMemo(() => {
+    const f = filter.trim().toLowerCase()
+    const match = (s: Source) => !f || s.name.toLowerCase().includes(f)
+    const all = (sources || []).filter(match)
+    return [
+      { title: 'GALLERIES', items: all.filter(s => s.kind === 'library') },
+      { title: 'FOLDERS', items: all.filter(s => s.kind === 'tag' && !DATE_NAME.test(s.name.trim())) },
+      { title: 'DATES', items: all.filter(s => s.kind === 'tag' && DATE_NAME.test(s.name.trim())) },
+    ].filter(s => s.items.length)
+  }, [sources, filter])
+
+  const load = useCallback(async (source: Source, from: number) => {
     setLoading(true)
     setError(null)
-    let query = supabase
-      .from('photos')
-      .select('id, title, google_drive_file_id, library_id, mime_type')
-      .not('google_drive_file_id', 'is', null)
-      .order('created_at', { ascending: false })
-      .range(from, from + PAGE - 1)
-    if (libraryId) query = query.eq('library_id', libraryId)
-    if (search.trim()) query = query.ilike('title', `%${search.trim()}%`)
-    const { data, error: err } = await query
-    setLoading(false)
-    if (err) {
-      logError(`photos: ${err.message}`)
-      setError('Could not load the gallery photos.')
-      return
+    // created_at then id: a stable order, so pages never repeat or skip a photo.
+    let rows: GalleryPhoto[] = []
+    let fetched = 0
+    if (source.kind === 'library') {
+      const { data, error: err } = await supabase
+        .from('photos')
+        .select('id, title, google_drive_file_id, mime_type')
+        .eq('library_id', source.id)
+        .not('google_drive_file_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, from + PAGE - 1)
+      if (err) { logError(`picker photos: ${err.message}`); setError('Could not load these photos.'); setLoading(false); return }
+      rows = (data || []) as GalleryPhoto[]
+      fetched = rows.length
+    } else {
+      const { data, error: err } = await supabase
+        .from('photo_tags')
+        .select('id, photos!inner(id, title, google_drive_file_id, mime_type)')
+        .eq('tag_id', source.id)
+        .not('photos.google_drive_file_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, from + PAGE - 1)
+      if (err) { logError(`picker folder: ${err.message}`); setError('Could not load these photos.'); setLoading(false); return }
+      fetched = (data || []).length
+      rows = (data || []).map(r => (r as unknown as { photos: GalleryPhoto }).photos)
     }
-    // Clips live in the same table; only stills can be screened.
-    const stills = ((data || []) as GalleryPhoto[]).filter(p => !p.mime_type?.startsWith('video/'))
-    setPhotos(prev => (from === 0 ? stills : [...prev, ...stills]))
-    setHasMore((data || []).length === PAGE)
-    setNextFrom(from + (data || []).length)
-  }, [libraryId, search])
+    // Clips live in the same tables; only stills can be screened.
+    const stills = rows.filter(p => !p.mime_type?.startsWith('video/'))
+    setPhotos(prev => {
+      const seen = new Set(from === 0 ? [] : prev.map(p => p.id))
+      return [...(from === 0 ? [] : prev), ...stills.filter(p => !seen.has(p.id))]
+    })
+    setNextFrom(from + fetched)
+    setHasMore(fetched === PAGE)
+    setLoading(false)
+  }, [])
 
-  // Reload from the top when the gallery or search changes (search debounced).
+  const openSource = (s: Source) => {
+    setOpen(s)
+    setPhotos([])
+    setHasMore(false)
+    scroller.current?.scrollTo({ top: 0 })
+    void load(s, 0)
+  }
+
+  // Load the next page as the end of the grid scrolls into view.
   useEffect(() => {
-    const t = setTimeout(() => { void load(0) }, search ? 300 : 0)
-    return () => clearTimeout(t)
-  }, [load, search])
+    const el = sentinel.current
+    if (!el || !open || !hasMore || loading) return
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) void load(open, nextFrom)
+    }, { root: scroller.current, rootMargin: '600px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [open, hasMore, loading, nextFrom, load])
 
   const pick = async (p: GalleryPhoto) => {
     setOpening(p.id)
@@ -96,6 +161,7 @@ export default function GalleryPhotoPicker({ onPick, onCancel }: Props) {
       const blob = await res.blob()
       if (!blob.type.startsWith('image/')) throw new Error(`not an image (${blob.type || 'unknown'})`)
       onPick({ blob, label: p.title || 'gallery-photo' })
+      onOpenChange(false)
     } catch (e) {
       logError(`gallery photo ${p.id}: ${e instanceof Error ? e.message : String(e)}`)
       setError('That photo could not be opened. Try another, or upload it instead.')
@@ -105,72 +171,88 @@ export default function GalleryPhotoPicker({ onPick, onCancel }: Props) {
   }
 
   return (
-    <div className="bg-white/5 p-3 mb-3" data-testid="halftone-gallery-picker">
-      <div className="flex gap-2 mb-2">
-        <select
-          value={libraryId}
-          onChange={e => setLibraryId(e.target.value)}
-          aria-label="Gallery"
-          className="flex-1 min-w-0 bg-white/10 text-white text-xs uppercase tracking-wider p-2 focus:outline-none"
-          style={{ borderRadius: 0 }}
-          data-testid="halftone-gallery-select"
-        >
-          <option value="">ALL GALLERIES</option>
-          {libraries.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-        </select>
-        <button
-          onClick={onCancel}
-          className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider"
-        >
-          CLOSE
-        </button>
-      </div>
-      <input
-        type="search"
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Search by title"
-        aria-label="Search photos"
-        className="w-full bg-white/10 text-white text-xs p-2 mb-2 focus:outline-none"
-        style={{ borderRadius: 0 }}
-      />
-      {error && <p className="text-red-400 text-xs mb-2">{error}</p>}
-      <div className="grid grid-cols-3 gap-1 max-h-72 overflow-y-auto">
-        {photos.map(p => (
-          <button
-            key={p.id}
-            onClick={() => pick(p)}
-            disabled={opening !== null}
-            className="relative aspect-square bg-white/5 overflow-hidden disabled:opacity-60"
-            title={p.title || ''}
-            data-testid="halftone-gallery-photo"
-          >
-            <img
-              src={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=400`}
-              alt={p.title || ''}
-              loading="lazy"
-              className="w-full h-full object-cover"
-            />
-            {opening === p.id && (
-              <span className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider">
-                OPENING…
-              </span>
+    <ExpandableScreen isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ExpandableScreenContent>
+        <div ref={scroller} className="flex-1 overflow-y-auto" data-testid="halftone-gallery-picker">
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 pt-6 pb-24 text-left">
+            {!open ? (
+              <>
+                <h2 className="text-lg font-black text-white uppercase tracking-widest pr-12 mb-1">CHOOSE A PHOTO</h2>
+                <p className="text-white/40 text-xs mb-4">From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.</p>
+                <input
+                  type="search"
+                  value={filter}
+                  onChange={e => setFilter(e.target.value)}
+                  placeholder="Find a gallery or folder"
+                  aria-label="Find a gallery or folder"
+                  className="w-full bg-white/5 text-white text-sm p-3 mb-6 focus:outline-none focus:bg-white/10"
+                  style={{ borderRadius: 0 }}
+                />
+                {sourceError && <p className="text-red-400 text-xs mb-4">{sourceError}</p>}
+                {!sources && !sourceError && <p className="text-white/40 text-xs">Loading…</p>}
+                {sections.map(section => (
+                  <div key={section.title} className="mb-8">
+                    <p className="text-white/60 text-xs uppercase tracking-wider mb-2">{section.title} · {section.items.length}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                      {section.items.map(s => (
+                        <button key={`${s.kind}-${s.id}`} className={row} onClick={() => openSource(s)} data-testid="halftone-source">
+                          <span className="text-white text-xs font-bold uppercase tracking-wider truncate">{s.name}</span>
+                          <span className="text-white/40 text-xs font-mono shrink-0">{s.count.toLocaleString()}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {sources && sections.length === 0 && <p className="text-white/40 text-xs">Nothing matches “{filter}”.</p>}
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setOpen(null)}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white mb-3"
+                  data-testid="halftone-picker-back"
+                >
+                  <ArrowLeftIcon className="w-3 h-3" /> ALL GALLERIES & FOLDERS
+                </button>
+                <h2 className="text-lg font-black text-white uppercase tracking-widest pr-12 mb-1 truncate">{open.name}</h2>
+                <p className="text-white/40 text-xs font-mono mb-4">{open.count.toLocaleString()} PHOTOS · TAP ONE TO USE IT</p>
+                {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1">
+                  {photos.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => pick(p)}
+                      disabled={opening !== null}
+                      className="relative aspect-square bg-white/5 overflow-hidden disabled:opacity-60"
+                      title={p.title || ''}
+                      data-testid="halftone-gallery-photo"
+                    >
+                      <img
+                        src={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=400`}
+                        alt={p.title || ''}
+                        loading="lazy"
+                        decoding="async"
+                        className="block w-full h-full object-cover"
+                      />
+                      {opening === p.id && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider">
+                          OPENING…
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div ref={sentinel} className="h-1" />
+                {loading && <p className="text-white/40 text-xs mt-3">Loading…</p>}
+                {!loading && photos.length === 0 && !error && <p className="text-white/40 text-xs">No photos here.</p>}
+                {!loading && !hasMore && photos.length > 0 && (
+                  <p className="text-white/30 text-[10px] uppercase tracking-wider mt-4">END OF {open.name}</p>
+                )}
+              </>
             )}
-          </button>
-        ))}
-      </div>
-      {!loading && photos.length === 0 && !error && (
-        <p className="text-white/40 text-xs mt-2">No photos{search ? ' match that search' : ' in this gallery'}.</p>
-      )}
-      {loading && <p className="text-white/40 text-xs mt-2">Loading…</p>}
-      {hasMore && !loading && (
-        <button
-          onClick={() => load(nextFrom)}
-          className="w-full mt-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider"
-        >
-          LOAD MORE
-        </button>
-      )}
-    </div>
+          </div>
+        </div>
+      </ExpandableScreenContent>
+    </ExpandableScreen>
   )
 }
