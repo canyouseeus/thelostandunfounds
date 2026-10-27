@@ -186,7 +186,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
 
     return (
         <>
-        <button
+        <button data-tour="book-row"
             type="button"
             onClick={() => setExpanded(true)}
             className="w-full bg-zinc-950 hover:bg-zinc-900 transition-colors text-left p-4"
@@ -379,14 +379,14 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                     {b.status !== 'declined' && b.status !== 'cancelled' && (
                                         <div className="flex gap-2 flex-wrap">
                                             {/* ── New: full invoice panel ── */}
-                                            <button
+                                            <button data-tour="book-invoice"
                                                 onClick={() => setInvoicePanelOpen(true)}
                                                 className="flex items-center gap-1.5 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors"
                                             >
                                                 <DocumentTextIcon className="w-3.5 h-3.5" />
                                                 Generate Invoice
                                             </button>
-                                            <button
+                                            <button data-tour="book-quote"
                                                 onClick={() => { setQuoteOpen(o => !o); setFeedback(null); }}
                                                 disabled={billing}
                                                 className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-50"
@@ -408,7 +408,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                     )}
 
                                     <div className="flex gap-2 flex-wrap">
-                                        <button
+                                        <button data-tour="book-confirm"
                                             onClick={() => updateStatus('confirmed')}
                                             disabled={saving}
                                             className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-green-500 transition-colors disabled:opacity-50"
@@ -543,7 +543,7 @@ const AdminBookingView: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Tab switcher */}
-            <div className="flex gap-8 border-b border-white/10 pb-0">
+            <div data-tour="book-tabs" className="flex gap-8 border-b border-white/10 pb-0">
                 {(['bookings', 'calendar'] as const).map(tab => (
                     <button
                         key={tab}
@@ -563,7 +563,7 @@ const AdminBookingView: React.FC = () => {
             {/* ── Bookings Tab ── */}
             {activeTab === 'bookings' && (
                 <div className="space-y-4">
-                    <div className="flex gap-2 flex-wrap">
+                    <div data-tour="book-filters" className="flex gap-2 flex-wrap">
                         {['all', 'pending', 'confirmed', 'declined', 'cancelled'].map(s => (
                             <button
                                 key={s}

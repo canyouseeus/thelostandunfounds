@@ -295,7 +295,7 @@ export default function AdminLive() {
 
         <div data-tour="live-gallery-picker" className="mb-8">
           <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-white/50 mb-2">Gallery</label>
-          <select className={field} style={{ borderRadius: 0 }} value={slug}
+          <select data-tour="live-gallery-select" className={field} style={{ borderRadius: 0 }} value={slug}
             onChange={e => setSearchParams(e.target.value ? { slug: e.target.value } : {})}>
             <option value="">Choose a gallery…</option>
             {galleries.map(g => (

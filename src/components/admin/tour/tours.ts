@@ -1,15 +1,23 @@
 /**
  * Every admin walkthrough, in one place.
  *
- * A tour is a list of steps. Each step outlines one element — found by its
- * `data-tour="<target>"` attribute — dims everything else, and explains it.
- * A step can first move the page: `route` navigates there, `panel` opens a
- * console panel on /admin (null closes whichever is open).
+ * A tour is a list of steps. Each step outlines ONE real control — found by
+ * its `data-tour="<target>"` attribute — dims everything else, and says what
+ * to do with it. A step can first move the page: `route` navigates there,
+ * `panel` opens a console panel on /admin (null closes whichever is open).
+ * A step with `action: 'click'` waits for the reader to tap the control (NEXT
+ * taps it for them), so the tour walks INTO whatever opens: a panel, a tab, a
+ * form, a pop-up. That is the difference between walking someone through a
+ * tool and describing it to them.
+ *
+ * Copy: name the thing, say what to do, stop. One control per step.
  *
  * SHIPPING A NEW ADMIN FEATURE? Add a tour here with `announce` set to the
  * date it shipped, and put `data-tour` attributes on what it points at. The
  * dashboard then shows a NEW FEATURE pop-up once, with GO to start the
  * walkthrough, and the tour stays in the SAGE MODE tutorial library after.
+ * A step whose target is missing is skipped, so a step pointing at something
+ * that only exists with data (a ticket, a booking) is safe.
  */
 
 export interface TourStep {
@@ -22,8 +30,17 @@ export interface TourStep {
   route?: string;
   /** Console panel to open on /admin first; null closes the open one. */
   panel?: string | null;
-  /** Shown instead of the outline when the target is not on screen. */
+  /**
+   * Shown when the target never turns up. Without one, a step whose target is
+   * missing is skipped.
+   */
   missingNote?: string;
+  /**
+   * 'click': the step asks you to tap the target; doing it (or NEXT, which
+   * taps it for you) moves the tour on into whatever it opens.
+   * 'choose': the target is a select or input; picking something moves on.
+   */
+  action?: 'click' | 'choose';
 }
 
 export interface Tour {
@@ -36,6 +53,19 @@ export interface Tour {
   steps: TourStep[];
 }
 
+/** Step 1 of any tour that starts in a console panel: tap its dock icon. */
+const openFromDock = (panel: string, title: string, body: string): TourStep => ({
+  route: '/admin',
+  panel: null,
+  target: `dock-${panel}`,
+  action: 'click',
+  title,
+  body,
+});
+
+/** A step inside a console panel; reopens it if the reader closed it. */
+const inPanel = (panel: string, step: TourStep): TourStep => ({ panel, ...step });
+
 const dashboardTour: Tour = {
   id: 'dashboard-basics',
   title: 'The Dashboard',
@@ -47,223 +77,362 @@ const dashboardTour: Tour = {
       panel: null,
       target: 'admin-title',
       title: 'Admin Dashboard',
-      body: 'Everything that runs the platform starts here. This tour shows where things are; every tool in the console has its own tutorial in SAGE MODE.',
+      body: 'Everything that runs the site starts here.',
     },
     {
       target: 'admin-actions',
       title: 'Header Buttons',
-      body: 'DEBUG REPORT copies a report of recent errors, API calls and server logs. Paste it into an agent session when something breaks.\n\nThe bell shows deployments. The white square is your profile.',
-      missingNote: 'On a phone these sit behind the ••• button at the top right.',
+      body: 'DEBUG REPORT copies recent errors and logs. Paste it to an agent when something breaks.\n\nThe bell is deployments. The white square is your profile.',
     },
     {
       target: 'widget-grid',
       title: 'The Board',
-      body: 'Each tile is live: revenue, analytics, registry, CRM, notifications, clock, calendar, weather.\n\nTap or hold a tile to open its full view. Long-press the calendar for the master calendar. Hold the clock for the stopwatch and timer.',
+      body: 'Live tiles. Tap or hold a tile to open it. Hold the calendar for the master calendar, and the clock for the stopwatch and timer.',
     },
     {
       target: 'dock',
       title: 'Platform Console',
-      body: 'Every admin tool lives in this dock: galleries, blog, newsletter, mail, users, crew, affiliates, bookings, calendar, CRM, invoices, products, print shop, support, settings. Hover an icon to see its name. A red badge means something needs you.',
+      body: 'Every tool lives in this dock. A red number on an icon means something is waiting on you.',
     },
     {
       target: 'dock-edit-layout',
       title: 'Edit Layout',
-      body: 'Rearrange and resize the tiles on the board. The layout is saved in this browser.',
+      body: 'Move and resize the tiles. Saved in this browser.',
     },
     {
       target: 'sage-toggle',
-      title: 'Tutorials Live In SAGE MODE',
-      body: 'Tap the triangle to turn SAGE MODE on, then tap TUTORIALS above it. Every tool in the console has a walkthrough there, and new features show up first.',
+      title: 'Tutorials',
+      body: 'Turn SAGE MODE on here, then tap TUTORIALS. Every tool has a walkthrough.',
     },
   ],
 };
 
-/** One tutorial per console tool: the dock icon, then the open panel. */
-const consoleTools: { id: string; title: string; summary: string; inside: string }[] = [
-  {
-    id: 'gallery',
-    title: 'Gallery',
-    summary: 'Create galleries, manage photos, pricing, client access and live events.',
-    inside: 'Tabs across the top: Active Galleries, All Photos, Applications, Downloads and Tags.\n\nA new gallery needs a name, a URL slug and its Google Drive folder. Set pricing and bundles, mark it private, and invite clients by email. LIVE EVENT opens the camera-to-gallery console.',
-  },
-  {
-    id: 'clientuploads',
-    title: 'Content Requests',
-    summary: 'Ask someone for photos or files with a link, then review what comes back.',
-    inside: 'Mint a link per person you need content from: a client, a contributor, a photographer. Copy it into an email or have the platform send it.\n\nWhen files arrive, review them here. COPY BRIEF gives a plain-text list of every file and where it lives, ready to hand to an agent.',
-  },
-  {
-    id: 'blog',
-    title: 'Blog',
-    summary: 'The Lost Archives: posts, analytics, search and social settings.',
-    inside: 'Write, edit, organise and unpublish posts in The Lost Archives. Blog Analytics shows how posts are read, and Search & Social sets how a post appears on Google and when shared.',
-  },
-  {
-    id: 'newsletter',
-    title: 'Newsletter',
-    summary: 'Compose a campaign, pick recipients, send a test, then send.',
-    inside: 'Compose the newsletter, choose who gets it under Recipient Selection, and look anyone up in the Subscriber Index.\n\nSend a test to yourself first. The branded template is applied for you.',
-  },
-  {
-    id: 'mail',
-    title: 'Webmail',
-    summary: 'The business inbox: read, reply, compose and search, with attachments.',
-    inside: 'The full Zoho inbox inside the dashboard: Inbox, Sent, Drafts, Compose and Search, with attachments. Media correspondence should CC media@thelostandunfounds.com.',
-  },
-  {
-    id: 'users',
-    title: 'Users',
-    summary: 'Everyone with an account, their tier and their admin status.',
-    inside: 'Every account on the platform. Filter by tier (Free or Premium), see who is an admin, when they joined and whether they are active. Tap a user for their details.',
-  },
-  {
-    id: 'roster',
-    title: 'Photographer Roster',
-    summary: 'Who can you send tonight? Crew searchable by name and by gear.',
-    inside: 'The crew, read as a deployment tool. Search matches gear as well as names, so typing "gimbal" shows who owns one.\n\nEach card shows kit by category and when it was last confirmed. If a kit is a year old, text before you book.',
-  },
-  {
-    id: 'affiliates',
-    title: 'Affiliates',
-    summary: 'The affiliate program: affiliates, earnings, payouts and flags.',
-    inside: 'Every affiliate, what they have earned and what has been paid out. Flagged, suspicious and rate-limited activity shows here too.\n\nShares are a percentage of profit (price minus cost), never of the gross.',
-  },
-  {
-    id: 'submissions',
-    title: 'Submissions',
-    summary: 'Blog posts writers have sent in, waiting for your review.',
-    inside: 'Posts submitted by writers wait here until you approve or reject them. The badge on the dock icon counts how many are pending. When nothing is waiting, the panel says so.',
-  },
-  {
-    id: 'bookings',
-    title: 'Bookings',
-    summary: 'Booking requests, quotes, deposits and payment status.',
-    inside: 'Each booking shows the date, time, location, type, quoted total and where the money stands: deposit paid or paid in full.\n\nNEW QUOTE builds a quote, VIEW PDF opens the invoice, and admin notes stay private. MANAGE INVOICES at the top jumps to Invoices.',
-  },
-  {
-    id: 'calendar',
-    title: 'Calendar',
-    summary: 'The master calendar: bookings, events, blocked days and crew time off.',
-    inside: 'Bookings, events, blocked days and crew out, all on one calendar, with notes per day.\n\nShortcuts: long-press the calendar tile on the board, or tap the date in the site header.',
-  },
-  {
-    id: 'crm',
-    title: 'CRM',
-    summary: 'Every client and lead, searchable by name, business, email and phone.',
-    inside: 'The contact directory: name, business, email and phone. MANAGE INVOICES at the top jumps to Invoices.',
-  },
-  {
-    id: 'invoices',
-    title: 'Invoices',
-    summary: 'Every invoice and its status: draft, sent, paid, overdue.',
-    inside: 'All invoices with their status (DRAFT, SENT, PAID, OVERDUE) and totals collected. Invoices are generated from their data, never written by hand. ← CRM goes back to contacts.',
-  },
-  {
-    id: 'pricing',
-    title: 'Products',
-    summary: 'Shop products and what each one costs you.',
-    inside: 'Set the cost of each shop product. A product with no cost set shows it. Cost matters: every affiliate share is a percentage of profit, and profit is price minus this cost.',
-  },
-  {
-    id: 'printshop',
-    title: 'Print Shop',
-    summary: 'Prints for sale, their Prodigi SKU and cost, and print orders.',
-    inside: 'Add a print with its artwork, title, category, price, Prodigi SKU and Prodigi cost, plus mat and mount options.\n\nPrint orders show below. A red badge on the dock icon means an order failed at Prodigi.',
-  },
-  {
-    id: 'support',
-    title: 'Support',
-    summary: 'Technical support tickets from affiliates, photographers, clients and the contact form.',
-    inside: 'Active shows open and in-progress tickets. NEEDS REPLY means the person spoke last.\n\nOpen a ticket to read the thread, reply (they get it by email) and set its status. Tick Internal note to write something only you will see.',
-  },
-  {
-    id: 'settings',
-    title: 'Settings',
-    summary: 'Platform health, tool status, SAGE MODE, design system and QR codes.',
-    inside: 'Platform status and health (database, API, auth, storage), tool usage, and links to SAGE MODE, the Design System and the QR code tools.',
-  },
-];
+/* ── One walkthrough per console tool ─────────────────────────────────── */
 
-const consoleTours: Tour[] = consoleTools.map(tool => ({
-  id: `console-${tool.id}`,
-  title: tool.title,
-  summary: tool.summary,
+const galleryTour: Tour = {
+  id: 'console-gallery',
+  title: 'Gallery',
+  summary: 'Create galleries, manage photos, pricing, client access and live events.',
   group: 'console',
   steps: [
-    {
-      route: '/admin',
-      panel: null,
-      target: `dock-${tool.id}`,
-      title: tool.title,
-      body: `${tool.summary}\n\nThis is its icon in the Platform Console. NEXT opens it.`,
-    },
-    {
-      panel: tool.id,
-      target: 'panel-header',
-      title: tool.title,
-      body: 'The panel opens over the dashboard. DASHBOARD at the top, or the X, takes you back.',
-    },
-    {
-      target: 'panel-body',
-      title: 'What You Do Here',
-      body: tool.inside,
-    },
+    openFromDock('gallery', 'Gallery', 'Tap the Gallery icon to open it.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES to see every gallery you have made.' }),
+    inPanel('gallery', { target: 'gallery-row', title: 'A Gallery', body: 'One row per gallery: its link and photo count, then LIVE, QR, VIEW, RENAME and DELETE.' }),
+    inPanel('gallery', { target: 'gallery-tab-photos', action: 'click', title: 'All Photos', body: 'Tap ALL PHOTOS for every photo across every gallery.' }),
+    inPanel('gallery', { target: 'gallery-tab-applications', title: 'Applications', body: 'Photographers asking to join. A red number means some are waiting.' }),
+    inPanel('gallery', { target: 'gallery-health', title: 'Health', body: 'Checks that every photo still loads from Google Drive.' }),
+    inPanel('gallery', { target: 'gallery-live-link', title: 'Live', body: 'The live event console, for publishing photos during an event.' }),
+    inPanel('gallery', { target: 'gallery-screens-button', title: 'Screens', body: 'The screen generator, for halftone films.' }),
+    inPanel('gallery', { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' }),
+    inPanel('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
+    inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' }),
+    inPanel('gallery', { target: 'gallery-form-private', title: 'Private', body: 'Tick it to keep the gallery off the public list. Only clients you invite get in.' }),
+    inPanel('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
+    inPanel('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
   ],
-}));
+};
+
+const contentRequestsTour: Tour = {
+  id: 'console-clientuploads',
+  title: 'Content Requests',
+  summary: 'Ask someone for photos or files with a link, then review what comes back.',
+  group: 'console',
+  steps: [
+    openFromDock('clientuploads', 'Content Requests', 'Tap the Content Requests icon to open it.'),
+    inPanel('clientuploads', { target: 'cr-new', action: 'click', title: 'New Request', body: 'Tap NEW REQUEST.' }),
+    inPanel('clientuploads', { target: 'cr-form', title: 'Who And What', body: 'Who you are asking, what it is for, their email and how long the link lasts. The note shows on their upload page.' }),
+    inPanel('clientuploads', { target: 'cr-create', title: 'Create The Link', body: 'Makes their upload link and its Drive folder.' }),
+    inPanel('clientuploads', { target: 'cr-copy', title: 'Copy Link', body: 'Copy it into a text or email.' }),
+    inPanel('clientuploads', { target: 'cr-email', title: 'Email It', body: 'Or have the site email it to them.' }),
+    inPanel('clientuploads', { target: 'cr-files', title: 'What They Sent', body: 'Opens their files. COPY BRIEF lists every file and where it lives, ready for an agent.' }),
+    inPanel('clientuploads', { target: 'cr-revoke', title: 'Revoke', body: 'Turns the link off. ENABLE turns it back on.' }),
+  ],
+};
+
+const blogTour: Tour = {
+  id: 'console-blog',
+  title: 'Blog',
+  summary: 'The Lost Archives: find, write, edit and publish posts.',
+  group: 'console',
+  steps: [
+    openFromDock('blog', 'Blog', 'Tap the Blog icon to open it.'),
+    inPanel('blog', { target: 'blog-analytics', title: 'Blog Analytics', body: 'Views, readers, where they come from and which posts they finish. Tap it any time.' }),
+    inPanel('blog', { target: 'blog-archives', action: 'click', title: 'The Lost Archives', body: 'Tap THE LOST ARCHIVES to see every post.' }),
+    inPanel('blog', { target: 'blog-stats', title: 'At A Glance', body: 'Totals, drafts, and posts still missing their SEO.' }),
+    inPanel('blog', { target: 'blog-search', title: 'Search', body: 'Find a post by title, slug, tag or byline.' }),
+    inPanel('blog', { target: 'blog-filters', title: 'Filter', body: 'All, published or drafts, then by column and sort order.' }),
+    inPanel('blog', { target: 'blog-edit', title: 'Edit', body: 'Opens that post in the editor.' }),
+    inPanel('blog', { target: 'blog-duplicate', title: 'Duplicate', body: 'Copies a post as a new draft.' }),
+    inPanel('blog', { target: 'blog-new', action: 'click', title: 'New Post', body: 'Tap NEW POST.' }),
+    inPanel('blog', { target: 'blog-form-title', title: 'Title', body: 'The headline. Its slug becomes the address.' }),
+    inPanel('blog', { target: 'blog-form-content', title: 'Write', body: 'The post itself.' }),
+    inPanel('blog', { target: 'blog-form-seo', title: 'Search & Social', body: 'How it shows on Google and when shared: description, image, keywords. The preview shows it.' }),
+    inPanel('blog', { target: 'blog-save-draft', title: 'Save Draft', body: 'Saves it without publishing.' }),
+    inPanel('blog', { target: 'blog-publish', title: 'Publish', body: 'Puts it live in The Lost Archives. CANCEL leaves the editor.' }),
+  ],
+};
+
+const newsletterTour: Tour = {
+  id: 'console-newsletter',
+  title: 'Newsletter',
+  summary: 'Write a campaign, pick who gets it, test it, then send.',
+  group: 'console',
+  steps: [
+    openFromDock('newsletter', 'Newsletter', 'Tap the Newsletter icon to open it.'),
+    inPanel('newsletter', { target: 'nl-stats', title: 'Subscribers', body: 'Tap TOTAL SUBSCRIBERS for the full list.' }),
+    inPanel('newsletter', { target: 'nl-compose', action: 'click', title: 'Compose', body: 'Tap COMPOSE NEWSLETTER to open the editor.' }),
+    inPanel('newsletter', { target: 'nl-subject', title: 'Subject', body: 'The subject line.' }),
+    inPanel('newsletter', { target: 'nl-content', title: 'Write It', body: 'A blank line starts a new paragraph. The branded template is added for you.' }),
+    inPanel('newsletter', { target: 'nl-preview', title: 'Preview', body: 'See it the way subscribers will.' }),
+    inPanel('newsletter', { target: 'nl-recipients', title: 'Recipients', body: 'Everyone gets it unless you pick specific people here.' }),
+    inPanel('newsletter', { target: 'nl-schedule', title: 'Schedule', body: 'Tick it to send later, then pick a date and time.' }),
+    inPanel('newsletter', { target: 'nl-test', title: 'Send A Test', body: 'Send it to yourself first.' }),
+    inPanel('newsletter', { target: 'nl-send', title: 'Send', body: 'Sends it to everyone selected.' }),
+  ],
+};
+
+const mailTour: Tour = {
+  id: 'console-mail',
+  title: 'Webmail',
+  summary: 'The business inbox: read, reply, compose and search.',
+  group: 'console',
+  steps: [
+    openFromDock('mail', 'Webmail', 'Tap the Webmail icon to open it.'),
+    inPanel('mail', { target: 'mail-folder', title: 'Folders', body: 'Inbox, Sent, Drafts and the rest.' }),
+    inPanel('mail', { target: 'mail-folder-toggle', title: 'Folders', body: 'Tap here to switch folders.' }),
+    inPanel('mail', { target: 'mail-search', title: 'Search', body: 'Type and press Enter.' }),
+    inPanel('mail', { target: 'mail-message', action: 'click', title: 'Open A Message', body: 'Tap a message to read it.' }),
+    inPanel('mail', { target: 'mail-reply', title: 'Reply', body: 'Reply, or FORWARD next to it. CC media@thelostandunfounds.com on client mail.' }),
+    inPanel('mail', { target: 'mail-compose', action: 'click', title: 'Compose', body: 'Tap COMPOSE for a new message.' }),
+    inPanel('mail', { target: 'mail-draft', title: 'Save Draft', body: 'Keeps it in Drafts.' }),
+    inPanel('mail', { target: 'mail-send', title: 'Send', body: 'Sends it.' }),
+  ],
+};
+
+const usersTour: Tour = {
+  id: 'console-users',
+  title: 'Users',
+  summary: 'Everyone with an account, their tier and their admin status.',
+  group: 'console',
+  steps: [
+    openFromDock('users', 'Users', 'Tap the Users icon to open it.'),
+    inPanel('users', { target: 'users-stats', title: 'At A Glance', body: 'Contributors, active users and premium users.' }),
+    inPanel('users', { target: 'users-search', title: 'Search', body: 'By email, username, or what they own.' }),
+    inPanel('users', { target: 'users-filters', title: 'Filter', body: 'By tier and by status.' }),
+    inPanel('users', { target: 'users-row', title: 'A User', body: 'Tick to select. Tap for their blog, galleries and details.' }),
+  ],
+};
+
+const rosterTour: Tour = {
+  id: 'console-roster',
+  title: 'Photographer Roster',
+  summary: 'Who can you send tonight? Crew searchable by name and by gear.',
+  group: 'console',
+  steps: [
+    openFromDock('roster', 'Photographer Roster', 'Tap the Roster icon to open it.'),
+    inPanel('roster', { target: 'roster-tabs', title: 'Roster And Requests', body: 'ROSTER is your crew. REQUESTS are people asking to join.' }),
+    inPanel('roster', { target: 'roster-search', title: 'Search By Gear', body: 'Type gear, like gimbal or drone, to see who owns it.' }),
+    inPanel('roster', { target: 'roster-card', title: 'A Crew Member', body: 'Their kit by category and when they last confirmed it. Old kit is worth a text before a booking.' }),
+    inPanel('roster', { target: 'roster-copy', title: 'Kit Link', body: 'Copies their kit-list page so they can update it.' }),
+  ],
+};
+
+const affiliatesTour: Tour = {
+  id: 'console-affiliates',
+  title: 'Affiliates',
+  summary: 'The affiliate program: affiliates, earnings, payouts and flags.',
+  group: 'console',
+  steps: [
+    openFromDock('affiliates', 'Affiliates', 'Tap the Affiliates icon to open it.'),
+    inPanel('affiliates', { target: 'aff-message', title: 'Message Affiliates', body: 'Email all your affiliates, or some of them.' }),
+    inPanel('affiliates', { target: 'aff-card-summary', title: 'Overview', body: 'Clicks, conversions and money paid out. Every card opens to the detail.' }),
+    inPanel('affiliates', { target: 'aff-card-payouts', title: 'Payout Requests', body: 'Transfers affiliates have asked for.' }),
+    inPanel('affiliates', { target: 'aff-card-affiliates', action: 'click', title: 'Affiliates', body: 'Tap to see every affiliate.' }),
+    inPanel('affiliates', { target: 'aff-affiliate', title: 'An Affiliate', body: 'Their status, Stripe account, earnings, clicks and rate.' }),
+    inPanel('affiliates', { target: 'aff-actions', title: 'Change Their Deal', body: 'EDIT RATE, EDIT THRESHOLD, or add a commission by hand. Shares are a percentage of profit, never gross.' }),
+  ],
+};
+
+const submissionsTour: Tour = {
+  id: 'console-submissions',
+  title: 'Submissions',
+  summary: 'Blog posts writers have sent in, waiting for your review.',
+  group: 'console',
+  steps: [
+    openFromDock('submissions', 'Submissions', 'Tap the Submissions icon to open it.'),
+    inPanel('submissions', { target: 'panel-body', title: 'Submissions', body: 'Posts writers send in wait here for you. The number on the icon counts them.' }),
+    inPanel('submissions', { target: 'sub-filters', title: 'Filter', body: 'Pending, approved, rejected, published.' }),
+    inPanel('submissions', { target: 'sub-review', action: 'click', title: 'Review', body: 'Tap REVIEW on a submission.' }),
+    inPanel('submissions', { target: 'sub-column', title: 'Column', body: 'Which blog column it goes in.' }),
+    inPanel('submissions', { target: 'sub-save', title: 'Save Revisions', body: 'Keeps your edits.' }),
+    inPanel('submissions', { target: 'sub-approve', title: 'Approve', body: 'Accepts it.' }),
+    inPanel('submissions', { target: 'sub-reject', title: 'Reject', body: 'Say why. The writer sees your reason.' }),
+  ],
+};
+
+const bookingsTour: Tour = {
+  id: 'console-bookings',
+  title: 'Bookings',
+  summary: 'Booking requests, quotes, invoices and status.',
+  group: 'console',
+  steps: [
+    openFromDock('bookings', 'Bookings', 'Tap the Bookings icon to open it.'),
+    inPanel('bookings', { target: 'book-tabs', title: 'Bookings And Calendar', body: 'BOOKINGS is the list. CALENDAR is where you block days off.' }),
+    inPanel('bookings', { target: 'book-filters', title: 'Filter', body: 'By status: pending, confirmed, declined, cancelled.' }),
+    inPanel('bookings', { target: 'book-row', action: 'click', title: 'Open A Booking', body: 'Tap a booking for its details.' }),
+    inPanel('bookings', { target: 'book-confirm', title: 'Status', body: 'CONFIRM, DECLINE or CANCEL it.' }),
+    inPanel('bookings', { target: 'book-quote', title: 'Quick Quote', body: 'A quote with line items.' }),
+    inPanel('bookings', { target: 'book-invoice', title: 'Generate Invoice', body: 'Builds the full invoice for this booking.' }),
+  ],
+};
+
+const calendarTour: Tour = {
+  id: 'console-calendar',
+  title: 'Calendar',
+  summary: 'The master calendar: bookings, events, blocked days and crew time off.',
+  group: 'console',
+  steps: [
+    openFromDock('calendar', 'Calendar', 'Tap the Calendar icon to open it. Holding the calendar tile, or tapping the date in the header, opens it too.'),
+    inPanel('calendar', { target: 'cal-modes', title: 'Month, Week, Day', body: 'Switch how much you see.' }),
+    inPanel('calendar', { target: 'cal-month', title: 'Pick A Day', body: 'Tap a date. Tap a second one to select a range.' }),
+    inPanel('calendar', { target: 'cal-open-day', action: 'click', title: 'Open The Day', body: 'Opens the day you picked: its bookings, events and uploads.' }),
+    inPanel('calendar', { target: 'cal-day', action: 'click', title: 'A Day', body: 'Tap a day to open it.' }),
+    inPanel('calendar', { target: 'cal-add-booking', title: 'Add Booking', body: 'Put a booking on this day.' }),
+    inPanel('calendar', { target: 'cal-notes', title: 'Notes', body: 'Your notes, kept with the calendar.' }),
+  ],
+};
+
+const crmTour: Tour = {
+  id: 'console-crm',
+  title: 'CRM',
+  summary: 'Every client: their details, what they were billed and what they paid.',
+  group: 'console',
+  steps: [
+    openFromDock('crm', 'CRM', 'Tap the CRM icon to open it.'),
+    inPanel('crm', { target: 'crm-totals', title: 'Totals', body: 'Clients, billed, collected and outstanding.' }),
+    inPanel('crm', { target: 'crm-client', action: 'click', title: 'A Client', body: 'Tap a client to open them.' }),
+    inPanel('crm', { target: 'crm-field', title: 'Their Details', body: 'Name, business, email, phone and notes. Edit any of them.' }),
+    inPanel('crm', { target: 'crm-save', title: 'Save', body: 'SAVE CHANGES keeps your edits.' }),
+  ],
+};
+
+const invoicesTour: Tour = {
+  id: 'console-invoices',
+  title: 'Invoices',
+  summary: 'Every invoice and its status, plus direct bookings and street nights.',
+  group: 'console',
+  steps: [
+    openFromDock('invoices', 'Invoices', 'Tap the Invoices icon to open it.'),
+    inPanel('invoices', { target: 'inv-new', title: 'New Invoice', body: 'Start an invoice for a client.' }),
+    inPanel('invoices', { target: 'inv-direct', title: 'Direct Booking', body: 'A job booked by phone or email. It splits with affiliates exactly like a website booking.' }),
+    inPanel('invoices', { target: 'inv-street', title: 'Street Night', body: 'Log a night of street sales.' }),
+    inPanel('invoices', { target: 'inv-row', action: 'click', title: 'An Invoice', body: 'Tap an invoice to open it.' }),
+    inPanel('invoices', { target: 'inv-pdf', title: 'View PDF', body: 'The invoice as the client sees it.' }),
+    inPanel('invoices', { target: 'inv-send', title: 'Send', body: 'Emails it to the client.' }),
+  ],
+};
+
+const productsTour: Tour = {
+  id: 'console-pricing',
+  title: 'Products',
+  summary: 'Services and shop products, and what each one costs you.',
+  group: 'console',
+  steps: [
+    openFromDock('pricing', 'Products', 'Tap the Products icon to open it.'),
+    inPanel('pricing', { target: 'prod-tabs', title: 'Services And Shop', body: 'Your services, and the shop products.' }),
+    inPanel('pricing', { target: 'prod-card', action: 'click', title: 'A Product', body: 'Tap a product to open it.' }),
+    inPanel('pricing', { target: 'prod-cost', title: 'Cost', body: 'What it costs you. Profit is price minus cost, and affiliate shares come out of profit.' }),
+    inPanel('pricing', { target: 'prod-save', title: 'Save', body: 'Saves the product.' }),
+  ],
+};
+
+const printShopTour: Tour = {
+  id: 'console-printshop',
+  title: 'Print Shop',
+  summary: 'Prints for sale, their Prodigi SKU and cost, and print orders.',
+  group: 'console',
+  steps: [
+    openFromDock('printshop', 'Print Shop', 'Tap the Print Shop icon to open it.'),
+    inPanel('printshop', { target: 'print-tabs', title: 'Catalog, Sizes, Frames, Orders', body: 'CATALOG is what you sell. ORDERS shows every print order. A red number on the icon means one failed at Prodigi.' }),
+    inPanel('printshop', { target: 'print-new', title: 'New Print', body: 'Add a print: artwork, title, price, Prodigi SKU and cost.' }),
+    inPanel('printshop', { target: 'print-verify', title: 'Verify Catalog', body: 'Checks every SKU with Prodigi and pulls the real costs.' }),
+    inPanel('printshop', { target: 'print-sync', title: 'Sync To Stripe', body: 'Sends the catalog to Stripe so it can be bought.' }),
+  ],
+};
+
+const supportConsoleTour: Tour = {
+  id: 'console-support',
+  title: 'Support',
+  summary: 'Support tickets from affiliates, photographers, clients and the contact form.',
+  group: 'console',
+  steps: [
+    openFromDock('support', 'Support', 'Tap the Support icon to open it.'),
+    inPanel('support', { target: 'support-filters', title: 'The Queue', body: 'ACTIVE is everything open. NEEDS REPLY means they spoke last.' }),
+    inPanel('support', { target: 'support-list', action: 'click', title: 'Open A Ticket', body: 'Tap a ticket to read the thread.' }),
+    inPanel('support', { target: 'support-reply', title: 'Reply', body: 'They get your reply by email. Tick Internal note to write something only you see.' }),
+    inPanel('support', { target: 'support-status', title: 'Status', body: 'OPEN, IN PROGRESS, RESOLVED, CLOSED.' }),
+  ],
+};
+
+const settingsTour: Tour = {
+  id: 'console-settings',
+  title: 'Settings',
+  summary: 'Platform health and shortcuts to SAGE MODE, the design system and QR codes.',
+  group: 'console',
+  steps: [
+    openFromDock('settings', 'Settings', 'Tap the Settings icon to open it.'),
+    inPanel('settings', { target: 'settings-status', title: 'Platform Status', body: 'Whether the site, database and services are up.' }),
+    inPanel('settings', { target: 'settings-links', title: 'Shortcuts', body: 'SAGE MODE, the Design System and the QR code tools.' }),
+  ],
+};
+
+const consoleTours: Tour[] = [
+  galleryTour, contentRequestsTour, blogTour, newsletterTour, mailTour, usersTour,
+  rosterTour, affiliatesTour, submissionsTour, bookingsTour, calendarTour, crmTour,
+  invoicesTour, productsTour, printShopTour, supportConsoleTour, settingsTour,
+];
+
+/* ── New features ─────────────────────────────────────────────────────── */
 
 const liveEventTour: Tour = {
   id: 'live-event-galleries',
   title: 'Live Event Galleries',
-  summary: 'Photos from the camera land in a private inbox during an event. You pick the keepers and publish them to the gallery while guests watch it fill.',
+  summary: 'Send photos from your camera roll during an event and they appear in the gallery live. Photos a camera sends on its own wait for you to review.',
   group: 'new',
   announce: '2026-10-23',
   steps: [
-    {
-      route: '/admin',
-      panel: null,
-      target: 'dock-gallery',
-      title: 'Live Event Galleries',
-      body: 'During an event, send photos from your phone\'s camera roll and they appear in the gallery live, named and credited automatically. Photos a camera sends on its own wait in a private inbox for you to review first.\n\nIt lives under Gallery.',
-    },
-    {
-      panel: 'gallery',
-      target: 'gallery-live-link',
-      title: 'Open Live Event',
-      body: 'LIVE, the green button at the top of Gallery Management, opens the live console.',
-    },
+    openFromDock('gallery', 'Live Event Galleries', 'Live events start in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-live-link', action: 'click', title: 'Open Live', body: 'Tap LIVE.' }),
     {
       route: '/admin/live',
-      target: 'live-gallery-picker',
+      target: 'live-gallery-select',
+      action: 'choose',
       title: 'Pick The Gallery',
-      body: 'Choose the event\'s gallery now. The outlined box still works while the tour runs, and the next steps point at what appears once a gallery is picked.\n\nA gallery that is already live has — LIVE after its name.',
-    },
-    {
-      target: 'live-camera-roll',
-      title: 'Send From Camera Roll',
-      body: 'Let your camera app drop the shots into your phone\'s photos, then tap CHOOSE PHOTOS and pick the keepers. They go straight into the gallery — no review — named @tlau.media_thelostandunfounds_….',
-      missingNote: 'Pick a gallery above first. This section appears once one is chosen.',
-    },
-    {
-      target: 'live-keys',
-      title: 'Upload Links',
-      body: 'Make a link for each extra shooter. Pick them from your crew list, or type a guest\'s Instagram, so their photos are named and credited to them. Send it right away, because it is shown once.\n\nA link can only add photos to this gallery. It cannot delete or see anything. Turn it off when the event ends.',
-      missingNote: 'Pick a gallery above first. The links section appears once one is chosen.',
+      body: 'Choose the event\'s gallery. One already live has — LIVE after its name.',
     },
     {
       target: 'live-go',
       title: 'Go Live',
-      body: 'GO LIVE tells the guests\' gallery page to keep checking for new photos. END LIVE when the event is over.',
-      missingNote: 'Pick a gallery above first. GO LIVE appears at the top right once one is chosen.',
+      body: 'GO LIVE makes the guests\' gallery page keep checking for new photos. END LIVE when the event is over.',
+      missingNote: 'Pick a gallery first. GO LIVE appears once one is chosen.',
+    },
+    {
+      target: 'live-camera-roll',
+      title: 'Send From Camera Roll',
+      body: 'Let the camera app drop the shots into your phone\'s photos, then tap CHOOSE PHOTOS and pick the keepers. They go straight into the gallery, named and credited.',
+      missingNote: 'Pick a gallery first. This appears once one is chosen.',
+    },
+    {
+      target: 'live-keys',
+      title: 'Upload Links',
+      body: 'A link for each extra shooter. Pick them from your crew, or type a guest\'s Instagram, so their photos are credited to them. Send it right away: it is shown once. Turn it off when the event ends.',
+      missingNote: 'Pick a gallery first. This appears once one is chosen.',
     },
     {
       target: 'live-inbox',
-      title: 'The Review Inbox',
-      body: 'Photos a camera sends on its own wait here for review. Camera-roll uploads skip it and go live straight away.\n\nTap a photo to select it, or tap VIEW to see it full size.',
-      missingNote: 'Pick a gallery above first. The inbox appears once one is chosen.',
-    },
-    {
-      title: 'Publish Or Discard',
-      body: 'Selecting photos brings up a bar at the bottom.\n\nPUBLISH moves them into the gallery, live for guests. DISCARD deletes them from Google Drive for good, with no undo.\n\nThere is no "discard everything unselected" on purpose: photos keep arriving while you review, and a new one would be deleted unseen.',
+      title: 'Review Inbox',
+      body: 'Photos a camera sends on its own wait here. Tap one to select it, VIEW to see it full size.\n\nSelecting brings up PUBLISH (into the gallery) and DISCARD (deleted from Drive for good).',
+      missingNote: 'Pick a gallery first. The inbox appears once one is chosen.',
     },
   ],
 };
@@ -275,26 +444,36 @@ const qrWallpaperTour: Tour = {
   group: 'new',
   announce: '2026-10-26',
   steps: [
-    {
-      route: '/admin',
-      panel: 'gallery',
+    openFromDock('gallery', 'Gallery QR Codes', 'QR codes live in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+    inPanel('gallery', {
       target: 'gallery-qr-button',
-      title: 'QR Code Button',
-      body: 'Every gallery in the list has a QR button. It opens a pop-up for that gallery\'s link.\n\nThe pop-up has three steps: choose the QR style, add a photo, then place the QR on it.',
-      missingNote: 'Open a gallery list under Gallery Management. Each row has a QR button.',
+      action: 'click',
+      title: 'QR Button',
+      body: 'Tap QR on the gallery you want a code for.',
+      missingNote: 'No galleries yet. Make one with NEW first.',
+    }),
+    { target: 'qr-shape', title: 'Shape', body: 'SQUARE or ROUNDED dots.' },
+    { target: 'qr-scheme', title: 'Colours', body: 'BLACK ON WHITE or WHITE ON BLACK.' },
+    { target: 'qr-download', title: 'Download QR', body: 'Saves the plain code as a print-size PNG. Or keep going to make a wallpaper.' },
+    { target: 'qr-make-wallpaper', action: 'click', title: 'Make A Wallpaper', body: 'Tap MAKE WALLPAPER.' },
+    { target: 'qr-choose-photo', title: 'Choose A Photo', body: 'Pick a photo. Then drag it to move it.' },
+    { target: 'qr-zoom', title: 'Zoom', body: 'Zoom the photo here, or pinch it. The frame is a phone screen.' },
+    {
+      target: 'qr-to-place',
+      action: 'click',
+      title: 'Place The QR',
+      body: 'Tap NEXT on the pop-up to put the code on the photo.',
+      missingNote: 'Choose a photo first.',
     },
     {
-      title: 'Step 1: Style',
-      body: 'Pick SQUARE or ROUNDED, and BLACK ON WHITE or WHITE ON BLACK. DOWNLOAD QR saves the plain code as a print-size PNG.\n\nMAKE WALLPAPER moves on to the photo.',
+      target: 'qr-size',
+      title: 'QR Size',
+      body: 'Drag the code where you want it. This sets its size.',
+      missingNote: 'Choose a photo, then tap NEXT on the pop-up to place the code.',
     },
-    {
-      title: 'Step 2: Photo',
-      body: 'Choose a photo, then drag it to move it and pinch (or scroll, or use the slider) to zoom. The frame is a phone screen, so what you see is what the wallpaper keeps.',
-    },
-    {
-      title: 'Step 3: Place The QR',
-      body: 'Drag the QR code where you want it and pinch to resize it, separately from the photo. DOWNLOAD WALLPAPER saves a full-size phone wallpaper. On a phone, SAVE TO PHOTOS puts it straight in your camera roll.',
-    },
+    { target: 'qr-download-wallpaper', title: 'Download Wallpaper', body: 'Saves a full-size phone wallpaper.' },
+    { target: 'qr-share', title: 'Save To Photos', body: 'On a phone, puts it straight in your camera roll.' },
   ],
 };
 
@@ -305,75 +484,42 @@ const supportTour: Tour = {
   group: 'new',
   announce: '2026-10-26',
   steps: [
-    {
-      route: '/admin',
-      panel: null,
-      target: 'dock-support',
-      title: 'Support Tickets',
-      body: 'Anyone can open a ticket now: from GET HELP on the affiliate and photographer dashboards, the Support page, or the Contact form.\n\nEach new ticket and each reply emails support@. The red badge on this icon counts tickets waiting on you.',
-    },
-    {
-      panel: 'support',
-      target: 'support-filters',
-      title: 'The Queue',
-      body: 'Active is everything open or in progress. NEEDS REPLY marks the ones where the person spoke last. Resolved, Closed and All are the history.',
-    },
-    {
+    openFromDock('support', 'Support Tickets', 'Anyone can open a ticket now, from GET HELP, the Support page or the Contact form. Tap the Support icon.'),
+    inPanel('support', { target: 'support-filters', title: 'The Queue', body: 'ACTIVE is everything open. NEEDS REPLY means they spoke last.' }),
+    inPanel('support', {
       target: 'support-list',
+      action: 'click',
       title: 'Open A Ticket',
-      body: 'Tap a ticket for the whole thread: who sent it, whether they are an affiliate or photographer, the page they were on and their browser.',
-      missingNote: 'No tickets yet. The list appears here once one arrives.',
-    },
-    {
-      target: 'support-reply',
-      title: 'Reply',
-      body: 'Your reply is emailed to them, with a link back to the ticket so they can answer. "Reply and resolve" sends and closes it out in one step.\n\nTick Internal note to keep something to yourself. Notes are never emailed or shown to them.',
-      missingNote: 'Open a ticket first. The reply box sits under the thread.',
-    },
-    {
-      target: 'support-status',
-      title: 'Status',
-      body: 'OPEN, IN PROGRESS, RESOLVED, CLOSED. A reply from them on a resolved ticket reopens it. A closed ticket takes no more replies.',
-      missingNote: 'Open a ticket first. The status buttons are at the top of it.',
-    },
+      body: 'Tap a ticket for the whole thread: who sent it, what they are, the page they were on.',
+      missingNote: 'No tickets yet. They appear here when one arrives.',
+    }),
+    inPanel('support', { target: 'support-reply', title: 'Reply', body: 'They get your reply by email. REPLY AND RESOLVE sends and closes it. Tick Internal note to write something only you see.' }),
+    inPanel('support', { target: 'support-status', title: 'Status', body: 'OPEN, IN PROGRESS, RESOLVED, CLOSED. A reply on a resolved ticket reopens it.' }),
   ],
 };
 
 const halftoneTour: Tour = {
   id: 'gallery-screen-generator',
   title: 'Screen Generator',
-  summary: 'Turn a photo into a halftone film positive for screen printing, with triangle or 3 dots and your own text.',
+  summary: 'Turn a photo into a halftone film positive for screen printing, with circles, triangles or 3s and your own text.',
   group: 'new',
   announce: '2026-10-27',
   steps: [
-    {
-      route: '/admin',
-      panel: 'gallery',
-      target: 'gallery-screens-button',
-      title: 'Screens Button',
-      body: 'SCREENS, at the top of Gallery Management, opens the screen generator. It turns a photo into a black and white halftone film for burning a screen.\n\nIt has three steps: PHOTO, TEXT, SCREEN.',
-      missingNote: 'Open Gallery Management from the console. SCREENS sits in the row of buttons at the top, next to LIVE.',
-    },
-    {
-      target: 'halftone-from-gallery',
-      missingNote: 'Open the generator (SCREENS) to see step 1.',
-      title: 'Step 1: Photo',
-      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, then choose a photo: FROM A GALLERY picks one already in your galleries (filter by gallery or search by title), UPLOAD takes one from your device. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. AUTO LEVELS stretches the photo from its darkest to its lightest point (good for night shots). BRIGHTNESS and CONTRAST fine-tune it, and WHITE INK inverts it for light ink on a dark shirt.',
-    },
-    {
-      title: 'Step 2: Text',
-      body: 'Optional. Type text ABOVE and BELOW the photo — a name, a date, a place. It is set in Inter, the site typeface, in REGULAR, BOLD or BLACK, and prints in solid ink.\n\nThe text stays centred on the photo and moves with it. A line too wide for the page shrinks to fit, and a warning shows if the text runs off the page.',
-    },
-    {
-      target: 'halftone-dot-shape',
-      title: 'Step 3: Screen',
-      body: 'Choose the dot: a CIRCLE (the classic halftone), a perfect equilateral TRIANGLE, or a BOLD 3 from Inter. Every dot is a copy of that one shape, always whole and upright.\n\nSIZE FOLLOWS TONE grows each dot with the darkness, like a normal halftone; ONE SIZE keeps every dot identical and prints darker areas with more of them. LARGEST DOT sets how big a dot gets in pure black. Spacing starts at 250 mesh → 55 LPI, at 22.5°. DOT DETAIL shows the real dots; drag the preview to look around.',
-      missingNote: 'Open the generator and go to 3 · SCREEN to see these settings.',
-    },
-    {
-      title: 'Download The Film',
-      body: 'DOWNLOAD FILM saves a vector PDF at true size: the dot is one object stamped everywhere and the text is converted to outlines, so every edge prints sharp at your film printer\'s resolution. PNG INSTEAD saves a 360 DPI raster if your printer needs one. Choose MIRRORED if your film goes emulsion side down.',
-    },
+    openFromDock('gallery', 'Screen Generator', 'The screen generator lives in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
+    { target: 'halftone-canvas-size', title: 'Canvas', body: '18 × 24 or 8.5 × 11. The page turns to match the photo.' },
+    { target: 'halftone-from-gallery', title: 'Choose A Photo', body: 'FROM A GALLERY picks one you already have. UPLOAD takes one from your device.' },
+    { target: 'halftone-preview', title: 'Position It', body: 'Drag to move. Pinch or scroll to resize. The whole photo prints, never cropped.' },
+    { target: 'halftone-levels', title: 'Auto Levels', body: 'Stretches the photo from darkest to lightest. Good for night shots.' },
+    { target: 'halftone-ink', title: 'Ink', body: 'WHITE INK inverts it, for light ink on a dark shirt.' },
+    { target: 'halftone-step-text', action: 'click', title: 'Text', body: 'Tap 2 · TEXT.' },
+    { target: 'halftone-text-above', title: 'Text Above And Below', body: 'Optional: a name, a date, a place. It prints in solid ink, centred on the photo.' },
+    { target: 'halftone-step-screen', action: 'click', title: 'Screen', body: 'Tap 3 · SCREEN.' },
+    { target: 'halftone-dot-shape', title: 'Dot', body: 'CIRCLE, TRIANGLE, or a BOLD 3.' },
+    { target: 'halftone-mode', title: 'Dot Size', body: 'SIZE FOLLOWS TONE grows dots in the dark areas. ONE SIZE keeps them equal and adds more instead.' },
+    { target: 'halftone-mirror', title: 'Film', body: 'MIRRORED if your film goes emulsion side down.' },
+    { target: 'halftone-download', title: 'Download Film', body: 'A true-size vector PDF, sharp at any printer resolution.' },
+    { target: 'halftone-png', title: 'PNG Instead', body: 'A 360 DPI image, if your printer needs one.' },
   ],
 };
 

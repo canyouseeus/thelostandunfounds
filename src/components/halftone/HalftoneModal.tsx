@@ -306,7 +306,7 @@ export default function HalftoneModal({ onClose }: Props) {
         </p>
         <div className="flex gap-1 mb-4" role="tablist">
           {STEPS.map((s, i) => (
-            <button
+            <button data-tour={`halftone-step-${s.id}`}
               key={s.id}
               role="tab"
               aria-selected={step === s.id}
@@ -341,7 +341,7 @@ export default function HalftoneModal({ onClose }: Props) {
         {step === 'photo' && (
           <div>
             <p className={label}>CANVAS · TURNS WITH THE PHOTO</p>
-            <div className="flex gap-1 mb-4">
+            <div data-tour="halftone-canvas-size" className="flex gap-1 mb-4">
               {(Object.keys(PRINT_SIZES) as PrintSize[]).map(s => (
                 <button key={s} className={seg(size === s)} onClick={() => changeSize(s)}>{PRINT_SIZES[s].label}</button>
               ))}
@@ -399,11 +399,11 @@ export default function HalftoneModal({ onClose }: Props) {
               display={`${Math.round(tone.contrast * 100)}`} disabled={!photo}
               onChange={v => setTone(t => ({ ...t, contrast: v / 100 }))}
             />
-            <div className="flex gap-1 mb-2">
+            <div data-tour="halftone-ink" className="flex gap-1 mb-2">
               <button className={seg(!tone.invert)} onClick={() => setTone(t => ({ ...t, invert: false }))}>BLACK INK</button>
               <button className={seg(tone.invert)} onClick={() => setTone(t => ({ ...t, invert: true }))}>WHITE INK (INVERT)</button>
             </div>
-            <div className="flex gap-1 mb-2">
+            <div data-tour="halftone-levels" className="flex gap-1 mb-2">
               <button className={seg(autoLevels)} onClick={() => setAutoLevels(true)} data-testid="halftone-auto-levels">AUTO LEVELS</button>
               <button className={seg(!autoLevels)} onClick={() => setAutoLevels(false)}>AS SHOT</button>
             </div>
@@ -421,7 +421,7 @@ export default function HalftoneModal({ onClose }: Props) {
         {step === 'text' && (
           <div>
             <label className={label} htmlFor="halftone-text-above">TEXT ABOVE THE PHOTO</label>
-            <textarea
+            <textarea data-tour="halftone-text-above"
               id="halftone-text-above"
               rows={2}
               value={textAbove}
@@ -494,7 +494,7 @@ export default function HalftoneModal({ onClose }: Props) {
               <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!outlines}>3 · BOLD 3</button>
             </div>
 
-            <div className="flex gap-1 mb-3">
+            <div data-tour="halftone-mode" className="flex gap-1 mb-3">
               <button className={seg(mode === 'scale')} onClick={() => setMode('scale')} data-testid="halftone-mode-scale">SIZE FOLLOWS TONE</button>
               <button className={seg(mode === 'count')} onClick={() => setMode('count')} data-testid="halftone-mode-count">ONE SIZE</button>
             </div>
@@ -568,7 +568,7 @@ export default function HalftoneModal({ onClose }: Props) {
               Tones lighter than this print as bare paper, so near-white areas stay clean.
             </p>
             <p className={label}>FILM</p>
-            <div className="flex gap-1 mb-4">
+            <div data-tour="halftone-mirror" className="flex gap-1 mb-4">
               <button className={seg(!mirror)} onClick={() => setMirror(false)}>RIGHT READING</button>
               <button className={seg(mirror)} onClick={() => setMirror(true)}>MIRRORED</button>
             </div>
@@ -586,7 +586,7 @@ export default function HalftoneModal({ onClose }: Props) {
                 {progress !== null ? `RENDERING ${Math.round(progress * 100)}%` : 'DOWNLOAD FILM (VECTOR PDF)'}
               </button>
             </div>
-            <button
+            <button data-tour="halftone-png"
               onClick={() => exportFilm('png')}
               disabled={!job || progress !== null || !photo}
               className="w-full px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40 mb-2"

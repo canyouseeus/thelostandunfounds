@@ -47,7 +47,7 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
               Platform Configuration
             </h3>
             <p className="text-white/60 text-sm mb-4">Manage platform-wide settings and policies</p>
-            <div className="space-y-2">
+            <div data-tour="settings-status" className="space-y-2">
               <div className="flex items-center justify-between p-3 bg-white/5">
                 <span className="text-white/80 text-sm uppercase tracking-wide">Platform Status</span>
                 <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] uppercase tracking-wider font-bold">Operational</span>
@@ -112,8 +112,8 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
               Quick Navigation
             </h3>
             <p className="text-white/60 text-sm mb-4">Access admin tools and resources</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link
+            <div data-tour="settings-links" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link data-tour="settings-sage"
                 to="/sagemode"
                 className="px-4 py-4 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2"
               >

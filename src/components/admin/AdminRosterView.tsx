@@ -175,7 +175,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
 
   return (
     <div className="text-white">
-      <div className="flex gap-8 mb-6">
+      <div data-tour="roster-tabs" className="flex gap-8 mb-6">
         {(['roster', 'requests'] as const).map((option) => (
           <button
             key={option}
@@ -194,7 +194,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
       ) : (
       <>
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-2 flex-1 min-w-[220px]">
+        <div data-tour="roster-search" className="flex items-center gap-2 bg-white/5 px-3 py-2 flex-1 min-w-[220px]">
           <MagnifyingGlassIcon className="w-4 h-4 text-white/40" />
           <input
             className="bg-transparent text-sm text-white placeholder-white/30 focus:outline-none w-full"
@@ -240,7 +240,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
           })).filter((group) => group.items.length);
 
           return (
-            <div key={person.id} className="bg-white/5 p-5" style={{ borderRadius: 0 }}>
+            <div data-tour="roster-card" key={person.id} className="bg-white/5 p-5" style={{ borderRadius: 0 }}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="text-left">
                   <h3 className="text-lg font-black uppercase tracking-tight">
@@ -266,7 +266,7 @@ export default function AdminRosterView({ adminEmail }: { adminEmail?: string })
                   >
                     {stamp.label}
                   </span>
-                  <button
+                  <button data-tour="roster-copy"
                     onClick={() => copyGearLink(person.email)}
                     className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
                     style={{ borderRadius: 0 }}

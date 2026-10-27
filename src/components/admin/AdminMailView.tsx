@@ -655,7 +655,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const renderFolderList = () => (
     <>
       {folders.map(folder => (
-        <button
+        <button data-tour="mail-folder"
           key={folder.folderId}
           onClick={() => setSelectedFolder(folder)}
           className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
@@ -699,14 +699,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     <div className="flex flex-col h-full">
       {/* Top bar — folder menu (mobile), search, compose */}
       <div className="shrink-0 flex items-center gap-2 pb-3">
-        <button
+        <button data-tour="mail-folder-toggle"
           onClick={() => setShowFolderDrawer(true)}
           className="md:hidden p-2 text-white/60 hover:text-white hover:bg-white/10 transition shrink-0"
           aria-label="Folders"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="relative flex-1 min-w-0">
+        <div data-tour="mail-search" className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <input
             type="text"
@@ -717,7 +717,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             className="w-full bg-white/5 border-none pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none"
           />
         </div>
-        <button
+        <button data-tour="mail-compose"
           onClick={() => {
             setComposeData({ to: '', cc: '', bcc: '', subject: '', content: '' });
             setShowCompose(true);
@@ -766,7 +766,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             ) : (
               <>
                 {messages.map(msg => (
-                  <div
+                  <div data-tour="mail-message"
                     key={msg.messageId}
                     onClick={() => { loadMessage(msg.messageId, msg.folderId); setMobileView('detail'); }}
                     role="button"
@@ -891,14 +891,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    <button
+                    <button data-tour="mail-reply"
                       onClick={handleReply}
                       className="p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
                       title="Reply"
                     >
                       <Reply className="w-4 h-4" />
                     </button>
-                    <button
+                    <button data-tour="mail-forward"
                       onClick={handleForward}
                       className="p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
                       title="Forward"
@@ -1114,7 +1114,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
               {/* Footer */}
               <div className="flex items-center justify-between mt-6 pt-6 bg-white/[0.02] px-4 py-3">
-                <button
+                <button data-tour="mail-draft"
                   onClick={handleSaveDraft}
                   className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
                 >
@@ -1127,7 +1127,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   >
                     Cancel
                   </button>
-                  <button
+                  <button data-tour="mail-send"
                     onClick={handleSend}
                     disabled={sending}
                     className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
