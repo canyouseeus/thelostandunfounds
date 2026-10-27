@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import { useCanvasGestures } from '@/hooks/useCanvasGestures'
+import GalleryPhotoPicker from './GalleryPhotoPicker'
 import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
 import {
   PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_FRAME, FRAME_SCALE_MIN, FRAME_SCALE_MAX, TEXT_FAMILY,
   pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap, toneResolution,
-  makeClone, measureLevels, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng, applyTone,
+  makeClone, measureLevels, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng,
   type OutlineFont,
   type DotShape, type DotMode, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
   type TextStyle, type ToneSettings,
@@ -84,6 +85,7 @@ export default function HalftoneModal({ onClose }: Props) {
   const [size, setSize] = useState<PrintSize>('18x24')
   const [photo, setPhoto] = useState<(PhotoSource & { label: string }) | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
   const [frame, setFrame] = useState<PhotoFrame>(DEFAULT_FRAME)
   const [tone, setTone] = useState<ToneSettings>(DEFAULT_TONE)
   const [textAbove, setTextAbove] = useState('')
@@ -236,11 +238,12 @@ export default function HalftoneModal({ onClose }: Props) {
     },
   })
 
-  const loadPhoto = useCallback(async (file: File) => {
+  // From an upload (a File) or a gallery photo (a Blob from /api/gallery/stream).
+  const loadPhoto = useCallback(async (file: Blob, label: string) => {
     setPhotoError(null)
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-      setPhoto({ source: bitmap, width: bitmap.width, height: bitmap.height, label: file.name })
+      setPhoto({ source: bitmap, width: bitmap.width, height: bitmap.height, label })
       setFrame(DEFAULT_FRAME)
     } catch {
       setPhotoError('That file could not be read as a photo. Try a JPG or PNG.')
@@ -283,7 +286,6 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }
 
-  const midGrey = Math.round(applyTone(0.5, screenTone) * 100)
 
   return (
     <div
@@ -350,14 +352,31 @@ export default function HalftoneModal({ onClose }: Props) {
               accept="image/*"
               className="hidden"
               data-testid="halftone-file"
-              onChange={e => { const f = e.target.files?.[0]; if (f) void loadPhoto(f); e.target.value = '' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) void loadPhoto(f, f.name); e.target.value = '' }}
             />
-            <button
-              onClick={() => fileInput.current?.click()}
-              className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-3"
-            >
-              <ArrowUpTrayIcon className="w-4 h-4" /> {photo ? 'CHOOSE A DIFFERENT PHOTO' : 'CHOOSE A PHOTO'}
-            </button>
+            <p className={label}>{photo ? 'CHANGE THE PHOTO' : 'CHOOSE A PHOTO'}</p>
+            <div className="flex gap-1 mb-3">
+              <button
+                onClick={() => setPicking(v => !v)}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 text-xs font-bold uppercase tracking-wider ${picking ? 'bg-white text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                data-tour="halftone-from-gallery"
+                data-testid="halftone-from-gallery"
+              >
+                <PhotoIcon className="w-4 h-4" /> FROM A GALLERY
+              </button>
+              <button
+                onClick={() => fileInput.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider"
+              >
+                <ArrowUpTrayIcon className="w-4 h-4" /> UPLOAD
+              </button>
+            </div>
+            {picking && (
+              <GalleryPhotoPicker
+                onCancel={() => setPicking(false)}
+                onPick={({ blob, label: name }) => { setPicking(false); void loadPhoto(blob, name) }}
+              />
+            )}
             {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
             {photo && (
               <p className="text-white/40 text-xs font-mono mb-3">
@@ -390,8 +409,8 @@ export default function HalftoneModal({ onClose }: Props) {
             </div>
             <p className="text-white/40 text-xs mb-4">
               {photo
-                ? `The whole photo prints, never cropped. Drag to move it, pinch or scroll to resize it. Mid-grey prints at ${midGrey}% ink.`
-                : 'Pick the photo to turn into a screen. A horizontal photo gets a landscape page, a vertical one a portrait page.'}
+                ? 'The whole photo prints, never cropped. Drag to move it, pinch or scroll to resize it.'
+                : 'Pick one from your galleries or upload one. A horizontal photo gets a landscape page, a vertical one a portrait page.'}
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('text')} disabled={!photo} className={primary}>ADD TEXT →</button>
