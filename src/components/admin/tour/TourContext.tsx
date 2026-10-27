@@ -145,6 +145,7 @@ function TourOverlay({
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     let panelSentAt = step.panel === undefined ? 0 : -1;
+    let eventSent = !step.event;
     const startedAt = Date.now();
 
     const tick = () => {
@@ -155,6 +156,11 @@ function TourOverlay({
         panelSentAt = Date.now();
       }
       const settled = panelSentAt === 0 || (panelSentAt > 0 && Date.now() - panelSentAt >= PANEL_SETTLE_MS);
+      // A step's event (e.g. opening a pop-up) goes out once the panel is in place.
+      if (!eventSent && settled) {
+        window.dispatchEvent(new CustomEvent(step.event!));
+        eventSent = true;
+      }
       const found = step.target && settled ? findTarget(step.target) : null;
       if (found) {
         const tall = found.getBoundingClientRect().height > window.innerHeight * 0.6;

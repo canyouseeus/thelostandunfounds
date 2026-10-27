@@ -22,6 +22,12 @@ export interface TourStep {
   route?: string;
   /** Console panel to open on /admin first; null closes the open one. */
   panel?: string | null;
+  /**
+   * Window event to dispatch once the page (and panel) is in place — for
+   * opening something a route or panel cannot, like a pop-up. The view that
+   * owns it listens for the event; see SCREENS_OPEN_EVENT.
+   */
+  event?: string;
   /** Shown instead of the outline when the target is not on screen. */
   missingNote?: string;
 }
@@ -35,6 +41,9 @@ export interface Tour {
   announce?: string;
   steps: TourStep[];
 }
+
+/** Window event that opens the screen generator from Gallery Management (AdminGalleryView listens). */
+export const SCREENS_OPEN_EVENT = 'tlu:open-screens';
 
 const dashboardTour: Tour = {
   id: 'dashboard-basics',
@@ -356,6 +365,7 @@ const halftoneTour: Tour = {
     },
     {
       target: 'halftone-from-gallery',
+      event: SCREENS_OPEN_EVENT,
       missingNote: 'Open the generator (SCREENS) to see step 1.',
       title: 'Step 1: Photo',
       body: 'Pick the canvas, 18 × 24 or 8.5 × 11, then choose a photo: FROM A GALLERY picks one already in your galleries (filter by gallery or search by title), UPLOAD takes one from your device. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. AUTO LEVELS stretches the photo from its darkest to its lightest point (good for night shots). BRIGHTNESS and CONTRAST fine-tune it, and WHITE INK inverts it for light ink on a dark shirt.',
@@ -377,7 +387,32 @@ const halftoneTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+const screensFromGalleryTour: Tour = {
+  id: 'screens-from-gallery',
+  title: 'Screens From Your Galleries',
+  summary: 'The screen generator can now use a photo that is already in a gallery, not just an upload.',
+  group: 'new',
+  announce: '2026-10-27',
+  steps: [
+    {
+      route: '/admin',
+      panel: 'gallery',
+      target: 'gallery-screens-button',
+      title: 'Open SCREENS',
+      body: 'The screen generator lives here, at the top of Gallery Management.',
+      missingNote: 'Open Gallery Management from the console. SCREENS sits in the row of buttons at the top, next to LIVE.',
+    },
+    {
+      event: SCREENS_OPEN_EVENT,
+      target: 'halftone-from-gallery',
+      title: 'From A Gallery',
+      body: 'New: FROM A GALLERY, next to UPLOAD. It opens your galleries right here: choose one from the dropdown (or ALL GALLERIES), search by title, and tap a photo.\n\nThe photo loads at full size, and the page turns to match it, landscape or portrait.',
+      missingNote: 'Tap SCREENS at the top of Gallery Management; FROM A GALLERY is in step 1.',
+    },
+  ],
+};
+
+export const TOURS: Tour[] = [screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);

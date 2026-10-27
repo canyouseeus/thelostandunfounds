@@ -1,5 +1,6 @@
 import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
+import { SCREENS_OPEN_EVENT } from './tour/tours';
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
@@ -103,6 +104,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [qrLibrary, setQrLibrary] = useState<{ slug: string; name: string } | null>(null);
     const [isHalftoneOpen, setIsHalftoneOpen] = useState(false);
+    // A walkthrough step can open the screen generator (see SCREENS_OPEN_EVENT).
+    useEffect(() => {
+        if (isPhotographerView) return;
+        const open = () => setIsHalftoneOpen(true);
+        window.addEventListener(SCREENS_OPEN_EVENT, open);
+        return () => window.removeEventListener(SCREENS_OPEN_EVENT, open);
+    }, [isPhotographerView]);
     const [inviteData, setInviteData] = useState({ email: '', name: '' });
     const [inviteLoading, setInviteLoading] = useState(false);
 
