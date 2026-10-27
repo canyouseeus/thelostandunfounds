@@ -4,7 +4,7 @@ import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 import { loadSiteFont } from './fonts'
 import {
   PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_PHOTO_VIEW, PHOTO_SCALE_MIN, PHOTO_SCALE_MAX, TEXT_FAMILY,
-  pageInches, recommendedLpi, clampPhotoView, zoomPhotoAbout, buildToneMap, toneResolution,
+  pageInches, recommendedLpi, clampPhotoView, zoomPhotoAbout, buildToneMap,
   triangleMask, glyphMask, buildDotTable, buildScreenJob, renderRegion, drawText, textBounds, textRegion,
   renderFilmPng, applyTone,
   type DotShape, type Orientation, type PhotoSource, type PhotoView, type PrintSize, type ScreenJob,
@@ -90,7 +90,6 @@ export default function HalftoneModal({ onClose }: Props) {
   const [loupe, setLoupe] = useState({ x: 0.5, y: 0.5 })
   const [fontReady, setFontReady] = useState(false)
   const [fontError, setFontError] = useState<string | null>(null)
-  const [job, setJob] = useState<ScreenJob | null>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
@@ -157,20 +156,16 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }, [page, previewPpi, photo, view, tone, textLayer, fontReady, step, loupe])
 
-  // The full-resolution screen, rebuilt (debounced) whenever an input changes on the SCREEN step.
-  useEffect(() => {
-    if (step !== 'screen' || !dotTable) return
-    const t = setTimeout(() => {
-      const tm = buildToneMap(page, toneResolution(page, lpi), photo, view, tone)
-      setJob(buildScreenJob(tm, page, { lpi, angle, shape, minDot, maxDot, mirror }, dotTable))
-    }, 200)
-    return () => clearTimeout(t)
-  }, [step, dotTable, page, photo, view, tone, lpi, angle, shape, minDot, maxDot, mirror])
+  // The screen settings. Cheap: the photo is resampled per region as it is screened.
+  const job: ScreenJob | null = useMemo(
+    () => (dotTable ? buildScreenJob(page, { lpi, angle, shape, minDot, maxDot, mirror }, dotTable, photo, view, tone) : null),
+    [dotTable, page, lpi, angle, shape, minDot, maxDot, mirror, photo, view, tone],
+  )
 
   // Loupe: real film pixels, through the same renderer as the download.
   useEffect(() => {
     const c = loupeCanvas.current
-    if (step !== 'screen' || !c || !job || job.page !== page) return
+    if (step !== 'screen' || !c || !job) return
     const ldpi = DPI
     const Wpx = page.w * ldpi
     const cxRight = loupe.x * Wpx
@@ -183,7 +178,9 @@ export default function HalftoneModal({ onClose }: Props) {
     const bounds = textLayer && fontReady ? textBounds(measure, textLayer, page, ldpi) : null
     const rgba = textRegion(scratch, fontReady ? textLayer : null, bounds, page, ldpi, mirror, x0, y0, LOUPE_SIZE, LOUPE_SIZE)
     const ink = new Uint8Array(LOUPE_SIZE * LOUPE_SIZE)
-    renderRegion(job, x0, y0, LOUPE_SIZE, LOUPE_SIZE, ldpi, ink, rgba && textLayer ? { rgba, ink: textLayer.ink } : null)
+    const photoCanvas = document.createElement('canvas')
+    renderRegion(job, x0, y0, LOUPE_SIZE, LOUPE_SIZE, ldpi, ink, rgba && textLayer ? { rgba, ink: textLayer.ink } : null, photoCanvas)
+    photoCanvas.width = photoCanvas.height = 0
     const ctx = c.getContext('2d')!
     const img = ctx.createImageData(LOUPE_SIZE, LOUPE_SIZE)
     const Hpx = page.h * ldpi

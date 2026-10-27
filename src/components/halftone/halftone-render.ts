@@ -4,9 +4,10 @@
  * `renderRegion`, so the dots you inspect are the dots that print.
  *
  * Units: the page is measured in inches. The screen is a grid of cells
- * `1 / lpi` inches square, turned by `angle`. Each cell holds one dot — a
- * triangle or a "3" — sized so the cell's ink coverage matches the photo's
- * darkness there. Coverage is exact: it comes from a measured lookup table,
+ * `1 / lpi` inches square, turned by `angle`. Each cell holds a dot — a
+ * triangle or a "3" — and, as in Photoshop's Halftone Screen, every output
+ * pixel is decided by the photo's tone at that pixel, so the dot is sized by
+ * the tone and cut by any edge running through the cell. Coverage is exact: it comes from a measured lookup table,
  * not from the shape's nominal area, so a 40% grey prints as 40% ink.
  *
  * Output is a 1-bit PNG (black = ink) tagged with its DPI, the format a
@@ -124,19 +125,28 @@ export function applyTone(lum: number, t: ToneSettings): number {
   return t.invert ? l : 1 - l
 }
 
-/** Draw the photo onto a white page of `w` × `h` px. The preview and the tone map share this. */
+/**
+ * Draw the photo onto a white page `w` × `h` px. The canvas's pixel (0,0) is
+ * page pixel (originX, originY), so a strip or a loupe can be painted at full
+ * output resolution; `mirror` flips it with the film. The preview, the loupe
+ * and the film all go through here.
+ */
 export function drawPhoto(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   photo: PhotoSource | null,
   view: PhotoView,
+  originX = 0,
+  originY = 0,
+  mirror = false,
 ) {
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.fillStyle = '#fff'
-  ctx.fillRect(0, 0, w, h)
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   if (photo) {
+    ctx.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? w - originX : -originX, -originY)
     const cover = Math.max(w / photo.width, h / photo.height) * view.scale
     const dw = photo.width * cover
     const dh = photo.height * cover
@@ -172,27 +182,6 @@ export function buildToneMap(
   // Release the canvas backing store now; iOS counts it against a small budget.
   c.width = c.height = 0
   return { w, h, pxPerIn: w / page.w, dark }
-}
-
-/** Tone-map resolution: two samples per screen line, capped at ~6 MP. */
-export function toneResolution(page: { w: number; h: number }, lpi: number): number {
-  return Math.min(lpi * 2, Math.sqrt(6e6 / (page.w * page.h)))
-}
-
-function sampleTone(t: ToneMap, xIn: number, yIn: number): number {
-  const x = xIn * t.pxPerIn - 0.5
-  const y = yIn * t.pxPerIn - 0.5
-  if (x < -0.5 || y < -0.5 || x > t.w - 0.5 || y > t.h - 0.5) return 0
-  const x0 = Math.max(0, Math.min(t.w - 1, Math.floor(x)))
-  const y0 = Math.max(0, Math.min(t.h - 1, Math.floor(y)))
-  const x1 = Math.min(t.w - 1, x0 + 1)
-  const y1 = Math.min(t.h - 1, y0 + 1)
-  const fx = Math.max(0, Math.min(1, x - x0))
-  const fy = Math.max(0, Math.min(1, y - y0))
-  const d = t.dark
-  const a = d[y0 * t.w + x0] * (1 - fx) + d[y0 * t.w + x1] * fx
-  const b = d[y1 * t.w + x0] * (1 - fx) + d[y1 * t.w + x1] * fx
-  return a * (1 - fy) + b * fy
 }
 
 // --- Dot shapes ---------------------------------------------------------------
@@ -326,57 +315,51 @@ export function buildDotTable(shape: DotShape, mask: ShapeMask): DotTable {
 
 // --- The screen -----------------------------------------------------------------
 
-/** Everything needed to render any region of the film at any DPI. */
+/**
+ * Everything needed to screen any region of the film at any DPI.
+ *
+ * Screening works the way Photoshop's Bitmap → Halftone Screen does: the
+ * photo is first resampled to the output resolution, then every output pixel
+ * is decided by the photo's own tone *at that pixel* against the dot shape of
+ * the cell it falls in. A dot that straddles an edge is cut by the edge, so
+ * detail finer than a cell survives instead of being averaged away.
+ */
 export interface ScreenJob {
   page: { w: number; h: number }
   lpi: number
   cos: number
   sin: number
   mirror: boolean
-  iMin: number
-  jMin: number
-  cols: number
-  rows: number
-  cells: Float32Array
-  mask: ShapeMask
+  minDot: number
+  maxDot: number
+  photo: PhotoSource | null
+  view: PhotoView
+  tone: ToneSettings
+  table: DotTable
 }
 
-export function buildScreenJob(tone: ToneMap, page: { w: number; h: number }, s: ScreenSettings, table: DotTable): ScreenJob {
+export function buildScreenJob(
+  page: { w: number; h: number },
+  s: ScreenSettings,
+  table: DotTable,
+  photo: PhotoSource | null,
+  view: PhotoView,
+  tone: ToneSettings,
+): ScreenJob {
   const a = (s.angle * Math.PI) / 180
-  const cos = Math.cos(a)
-  const sin = Math.sin(a)
-  const us: number[] = []
-  const vs: number[] = []
-  for (const [x, y] of [[0, 0], [page.w, 0], [0, page.h], [page.w, page.h]]) {
-    us.push((x * cos + y * sin) * s.lpi)
-    vs.push((-x * sin + y * cos) * s.lpi)
+  const minDot = Math.max(0, Math.min(1, s.minDot))
+  return {
+    page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror,
+    minDot, maxDot: Math.max(minDot, Math.min(1, s.maxDot)),
+    photo, view, tone, table,
   }
-  const iMin = Math.floor(Math.min(...us)) - 1
-  const jMin = Math.floor(Math.min(...vs)) - 1
-  const cols = Math.ceil(Math.max(...us)) + 1 - iMin
-  const rows = Math.ceil(Math.max(...vs)) + 1 - jMin
-  const cells = new Float32Array(cols * rows)
-  const lo = Math.max(0, Math.min(1, s.minDot))
-  const hi = Math.max(lo, Math.min(1, s.maxDot))
-  for (let j = 0; j < rows; j++) {
-    const v = j + jMin + 0.5
-    for (let i = 0; i < cols; i++) {
-      const u = i + iMin + 0.5
-      const x = (u * cos - v * sin) / s.lpi
-      const y = (u * sin + v * cos) / s.lpi
-      let d = sampleTone(tone, x, y)
-      if (d < lo) d = 0
-      else if (d > hi) d = 1
-      cells[j * cols + i] = table.codes[Math.round(d * LUT_N)]
-    }
-  }
-  return { page, lpi: s.lpi, cos, sin, mirror: s.mirror, iMin, jMin, cols, rows, cells, mask: table.mask }
 }
 
 /**
- * Rasterise a region of the film. (x0, y0, w, h) are output pixels at `dpi`.
- * `out[i]` = 1 where ink prints. `text` is the RGBA of the text layer drawn
- * over the same region (see drawText), or null.
+ * Screen a region of the film. (x0, y0, w, h) are output pixels at `dpi`.
+ * `out[i]` = 1 where ink prints. `photoCanvas` is scratch space for the
+ * resampled photo; `text` is the RGBA of the text layer over the same region
+ * (see textRegion), or null.
  */
 export function renderRegion(
   job: ScreenJob,
@@ -387,10 +370,29 @@ export function renderRegion(
   dpi: number,
   out: Uint8Array,
   text: { rgba: Uint8ClampedArray; ink: TextInk } | null,
+  photoCanvas: HTMLCanvasElement,
 ) {
-  const { cos, sin, lpi, iMin, jMin, cols, rows, cells } = job
-  const { n, data } = job.mask
-  const pageWpx = job.page.w * dpi
+  if (photoCanvas.width !== w || photoCanvas.height !== h) {
+    photoCanvas.width = w
+    photoCanvas.height = h
+  }
+  const pctx = photoCanvas.getContext('2d', { willReadFrequently: true })!
+  const Wpx = job.page.w * dpi
+  const Hpx = job.page.h * dpi
+  drawPhoto(pctx, Wpx, Hpx, job.photo, job.view, x0, y0, job.mirror)
+  const px = pctx.getImageData(0, 0, w, h).data
+
+  // Tone → cell code, once per grey level rather than once per pixel.
+  const codeFor = new Float32Array(256)
+  for (let g = 0; g < 256; g++) {
+    let d = applyTone(g / 255, job.tone)
+    if (d < job.minDot) d = 0
+    else if (d > job.maxDot) d = 1
+    codeFor[g] = job.table.codes[Math.round(d * LUT_N)]
+  }
+
+  const { cos, sin, lpi } = job
+  const { n, data } = job.table.mask
   // Moving one output pixel right moves `sx` page inches (negative when mirrored).
   const sx = (job.mirror ? -1 : 1) / dpi
   const du = sx * cos * lpi
@@ -398,28 +400,33 @@ export function renderRegion(
   for (let r = 0; r < h; r++) {
     const yIn = (y0 + r + 0.5) / dpi
     const pxStart = x0 + 0.5
-    const xIn = job.mirror ? (pageWpx - pxStart) / dpi : pxStart / dpi
+    const xIn = job.mirror ? (Wpx - pxStart) / dpi : pxStart / dpi
     let u = (xIn * cos + yIn * sin) * lpi
     let v = (-xIn * sin + yIn * cos) * lpi
     const row = r * w
+    const offPageRow = y0 + r < 0 || y0 + r >= Hpx
     for (let c = 0; c < w; c++, u += du, v += dv) {
-      const fi = Math.floor(u)
-      const fj = Math.floor(v)
-      const ci = fi - iMin
-      const cj = fj - jMin
-      let ink = 0
-      if (ci >= 0 && cj >= 0 && ci < cols && cj < rows) {
-        const code = cells[cj * cols + ci]
-        if (code >= SOLID) ink = 1
-        else if (code !== 0) {
-          const k = code > 0 ? code : -code
-          const mx = Math.floor(((u - fi - 0.5) / k + 0.5) * n)
-          const my = Math.floor(((v - fj - 0.5) / k + 0.5) * n)
-          const inShape = mx >= 0 && my >= 0 && mx < n && my < n && data[my * n + mx] === 1
-          ink = code > 0 ? (inShape ? 1 : 0) : inShape ? 0 : 1
-        }
+      const i = row + c
+      const p = i * 4
+      const xPage = x0 + c
+      if (offPageRow || xPage < 0 || xPage >= Wpx) {
+        out[i] = 0
+        continue
       }
-      out[row + c] = ink
+      const grey = Math.round(0.2126 * px[p] + 0.7152 * px[p + 1] + 0.0722 * px[p + 2])
+      const code = codeFor[grey]
+      let ink = 0
+      if (code >= SOLID) ink = 1
+      else if (code !== 0) {
+        const fi = Math.floor(u)
+        const fj = Math.floor(v)
+        const k = code > 0 ? code : -code
+        const mx = Math.floor(((u - fi - 0.5) / k + 0.5) * n)
+        const my = Math.floor(((v - fj - 0.5) / k + 0.5) * n)
+        const inShape = mx >= 0 && my >= 0 && mx < n && my < n && data[my * n + mx] === 1
+        ink = code > 0 ? (inShape ? 1 : 0) : inShape ? 0 : 1
+      }
+      out[i] = ink
     }
   }
   if (text) {
@@ -596,6 +603,7 @@ export async function renderFilmPng(
   const strip = 256
   const rowBytes = 1 + ((W + 7) >> 3)
   const scratch = document.createElement('canvas')
+  const photoCanvas = document.createElement('canvas')
   const measure = document.createElement('canvas').getContext('2d')!
   const bounds = text ? textBounds(measure, text, job.page, dpi) : null
 
@@ -607,7 +615,7 @@ export async function renderFilmPng(
     for (let y = 0; y < H; y += strip) {
       const h = Math.min(strip, H - y)
       const rgba = textRegion(scratch, text, bounds, job.page, dpi, job.mirror, 0, y, W, h)
-      renderRegion(job, 0, y, W, h, dpi, ink, rgba && text ? { rgba, ink: text.ink } : null)
+      renderRegion(job, 0, y, W, h, dpi, ink, rgba && text ? { rgba, ink: text.ink } : null, photoCanvas)
       const packed = new Uint8Array(rowBytes * h)
       for (let r = 0; r < h; r++) packRow(ink, r * W, W, packed, r * rowBytes)
       await writer.write(packed)
@@ -617,6 +625,7 @@ export async function renderFilmPng(
     await writer.close()
   } finally {
     scratch.width = scratch.height = 0
+    photoCanvas.width = photoCanvas.height = 0
   }
   const idat = new Uint8Array(await compressed)
 
