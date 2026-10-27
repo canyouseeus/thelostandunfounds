@@ -5,9 +5,9 @@ import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
 import {
   PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_FRAME, FRAME_SCALE_MIN, FRAME_SCALE_MAX, TEXT_FAMILY,
   pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap, toneResolution,
-  makeClone, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng, applyTone,
+  makeClone, measureLevels, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng, applyTone,
   type OutlineFont,
-  type DotShape, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
+  type DotShape, type DotMode, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
   type TextStyle, type ToneSettings,
 } from './halftone-render'
 
@@ -93,7 +93,9 @@ export default function HalftoneModal({ onClose }: Props) {
   const [mesh, setMesh] = useState(DEFAULT_MESH)
   const [lpi, setLpi] = useState(recommendedLpi(DEFAULT_MESH))
   const [angle, setAngle] = useState(DEFAULT_ANGLE)
-  const [dotSize, setDotSize] = useState(0.9)
+  const [dotSize, setDotSize] = useState(1.3)
+  const [mode, setMode] = useState<DotMode>('scale')
+  const [autoLevels, setAutoLevels] = useState(true)
   const [cutoff, setCutoff] = useState(0.04)
   const [mirror, setMirror] = useState(false)
   const [loupe, setLoupe] = useState({ x: 0.5, y: 0.5 })
@@ -102,6 +104,13 @@ export default function HalftoneModal({ onClose }: Props) {
   const [job, setJob] = useState<ScreenJob | null>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+
+  // Auto levels stretch the photo's own darkest and lightest points to solid and paper.
+  const levels = useMemo(() => (photo ? measureLevels(photo) : null), [photo])
+  const screenTone: ToneSettings = useMemo(
+    () => ({ ...tone, levels: autoLevels && levels ? levels : undefined }),
+    [tone, autoLevels, levels],
+  )
 
   // The page turns with the photo: horizontal photo, landscape page.
   const orientation = orientationFor(photo)
@@ -148,7 +157,7 @@ export default function HalftoneModal({ onClose }: Props) {
 
   // The one shape every dot is a clone of: an equilateral triangle, or Inter Bold's 3 as an outline.
   const clone = useMemo(() => {
-    if (shape === 'triangle') return makeClone('triangle', dotSize)
+    if (shape !== 'three') return makeClone(shape, dotSize)
     if (!outlines) return null
     return makeClone('three', dotSize, (outlines[700][0] as unknown as OutlineFont).charToGlyph('3'))
   }, [shape, dotSize, outlines])
@@ -158,7 +167,7 @@ export default function HalftoneModal({ onClose }: Props) {
     const c = previewCanvas.current
     if (!c) return
     const ctx = c.getContext('2d')!
-    const tm = buildToneMap(page, previewPpi, photo, frame, tone)
+    const tm = buildToneMap(page, previewPpi, photo, frame, screenTone)
     const img = ctx.createImageData(tm.w, tm.h)
     for (let i = 0, p = 0; i < tm.dark.length; i++, p += 4) {
       const v = Math.round(255 * (1 - tm.dark[i]))
@@ -186,17 +195,17 @@ export default function HalftoneModal({ onClose }: Props) {
       ctx.strokeRect(loupe.x * tm.w - span / 2, loupe.y * tm.h - span / 2, span, span)
       ctx.restore()
     }
-  }, [page, previewPpi, photo, frame, rect, tone, blocks, step, loupe, lpi])
+  }, [page, previewPpi, photo, frame, rect, screenTone, blocks, step, loupe, lpi])
 
   // The screen: where every clone goes. Rebuilt (debounced) as settings change on the SCREEN step.
   useEffect(() => {
     if (step !== 'screen' || !clone) return
     const t = setTimeout(() => {
-      const tm = buildToneMap(page, toneResolution(page, lpi), photo, frame, tone)
-      setJob(buildScreenJob(page, { lpi, angle, shape, dotSize, cutoff, mirror }, clone, tm))
+      const tm = buildToneMap(page, toneResolution(page, lpi), photo, frame, screenTone)
+      setJob(buildScreenJob(page, { lpi, angle, shape, dotSize, mode, cutoff, mirror }, clone, tm))
     }, 150)
     return () => clearTimeout(t)
-  }, [step, clone, page, photo, frame, tone, lpi, angle, shape, dotSize, cutoff, mirror])
+  }, [step, clone, page, photo, frame, screenTone, lpi, angle, shape, dotSize, mode, cutoff, mirror])
 
   // Loupe: the real clones, drawn by the same code as the film, enlarged.
   useEffect(() => {
@@ -254,7 +263,7 @@ export default function HalftoneModal({ onClose }: Props) {
   const outH = Math.round(page.h * DPI)
   const clones = clone ? Math.round(clone.coverage * 100) : 0
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
-  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : 'triangles'}-${lpi}lpi-${angle}deg${mirror ? '-mirror' : ''}`
+  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : shape === 'circle' ? 'circles' : 'triangles'}-${lpi}lpi-${angle}deg${mirror ? '-mirror' : ''}`
 
   const exportFilm = async (format: 'pdf' | 'png') => {
     if (!job) return
@@ -274,7 +283,7 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }
 
-  const midGrey = Math.round(applyTone(0.5, tone) * 100)
+  const midGrey = Math.round(applyTone(0.5, screenTone) * 100)
 
   return (
     <div
@@ -291,7 +300,7 @@ export default function HalftoneModal({ onClose }: Props) {
         </button>
         <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">SCREEN GENERATOR</h2>
         <p className="text-white/40 text-xs font-mono mt-1 mb-4">
-          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · {shape === 'three' ? '3s' : 'TRIANGLES'}
+          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · {shape === 'three' ? '3s' : shape === 'circle' ? 'CIRCLES' : 'TRIANGLES'}
         </p>
         <div className="flex gap-1 mb-4" role="tablist">
           {STEPS.map((s, i) => (
@@ -375,6 +384,10 @@ export default function HalftoneModal({ onClose }: Props) {
               <button className={seg(!tone.invert)} onClick={() => setTone(t => ({ ...t, invert: false }))}>BLACK INK</button>
               <button className={seg(tone.invert)} onClick={() => setTone(t => ({ ...t, invert: true }))}>WHITE INK (INVERT)</button>
             </div>
+            <div className="flex gap-1 mb-2">
+              <button className={seg(autoLevels)} onClick={() => setAutoLevels(true)} data-testid="halftone-auto-levels">AUTO LEVELS</button>
+              <button className={seg(!autoLevels)} onClick={() => setAutoLevels(false)}>AS SHOT</button>
+            </div>
             <p className="text-white/40 text-xs mb-4">
               {photo
                 ? `The whole photo prints, never cropped. Drag to move it, pinch or scroll to resize it. Mid-grey prints at ${midGrey}% ink.`
@@ -455,10 +468,16 @@ export default function HalftoneModal({ onClose }: Props) {
 
         {step === 'screen' && (
           <div>
-            <p className={label}>DOT · ONE SHAPE, ONE SIZE, CLONED</p>
+            <p className={label}>DOT · ONE SHAPE, CLONED</p>
             <div className="flex gap-1 mb-3" data-tour="halftone-dot-shape">
+              <button className={seg(shape === 'circle')} onClick={() => setShape('circle')} data-testid="halftone-shape-circle">● CIRCLE</button>
               <button className={seg(shape === 'triangle')} onClick={() => setShape('triangle')}>▲ TRIANGLE</button>
-              <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!outlines}>3 · BOLD THREE</button>
+              <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!outlines}>3 · BOLD 3</button>
+            </div>
+
+            <div className="flex gap-1 mb-3">
+              <button className={seg(mode === 'scale')} onClick={() => setMode('scale')} data-testid="halftone-mode-scale">SIZE FOLLOWS TONE</button>
+              <button className={seg(mode === 'count')} onClick={() => setMode('count')} data-testid="halftone-mode-count">ONE SIZE</button>
             </div>
 
             <p className={label}>DOT DETAIL · DRAG THE PREVIEW TO MOVE THE BOX</p>
@@ -474,17 +493,21 @@ export default function HalftoneModal({ onClose }: Props) {
             </div>
             <p className="text-white/40 text-xs mb-4">
               {job
-                ? `Every dot is the same ${shape === 'three' ? 'Bold 3' : 'equilateral triangle'}, ${((dotSize / lpi) * 25.4).toFixed(2)} mm ${shape === 'three' ? 'tall' : 'wide'}. Darker tones get more of them, not bigger ones. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
+                ? mode === 'scale'
+                  ? `Every dot is the same ${shape === 'three' ? 'Bold 3' : shape === 'circle' ? 'circle' : 'equilateral triangle'}, whole and upright, scaled by the tone up to ${((dotSize / lpi) * 25.4).toFixed(2)} mm in the blacks. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
+                  : `Every dot is the same ${shape === 'three' ? 'Bold 3' : shape === 'circle' ? 'circle' : 'equilateral triangle'}, ${((dotSize / lpi) * 25.4).toFixed(2)} mm ${shape === 'three' ? 'tall' : 'wide'}. Darker tones get more of them, not bigger ones. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
                 : 'Building the screen…'}
             </p>
 
             <Slider
-              name="DOT SIZE" min={40} max={100} step={1} value={Math.round(dotSize * 100)}
+              name={mode === 'scale' ? 'LARGEST DOT' : 'DOT SIZE'} min={40} max={160} step={1} value={Math.round(dotSize * 100)}
               display={`${Math.round(dotSize * 100)}% OF SPACING`}
               onChange={v => setDotSize(v / 100)}
             />
             <p className="text-white/40 text-xs -mt-2 mb-3">
-              Black in the photo fills every spot, mid-grey half of them, white none. With every spot filled the ink is {clones}% at this size; a bigger dot prints heavier shadows, and at 100% neighbouring dots touch.
+              {mode === 'scale'
+                ? `The size a dot reaches in pure black. Past 100% neighbouring dots overlap, so the shadows close up toward solid.`
+                : `Black in the photo fills every spot, mid-grey half of them, white none. With every spot filled the ink is ${clones}% at this size; past 100% neighbouring dots overlap.`}
             </p>
 
             <div className="flex items-end gap-3 mb-3">

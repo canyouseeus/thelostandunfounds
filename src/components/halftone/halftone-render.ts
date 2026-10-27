@@ -13,7 +13,8 @@
  * same drawing is available for printers that want a raster file.
  */
 
-export type DotShape = 'triangle' | 'three'
+export type DotShape = 'circle' | 'triangle' | 'three'
+export type DotMode = 'scale' | 'count'
 export type PrintSize = '18x24' | '8.5x11'
 export type Orientation = 'portrait' | 'landscape'
 
@@ -44,8 +45,13 @@ export interface ScreenSettings {
   lpi: number
   angle: number // degrees
   shape: DotShape
-  /** The clone's size as a fraction of the cell spacing (triangle side, or the 3's height). */
+  /** The clone's size as a fraction of the cell spacing (triangle side, or the 3's height) — its largest size when scaling. */
   dotSize: number
+  /**
+   * 'scale': every dot is the same shape, scaled by the tone (area ∝ darkness).
+   * 'count': every dot is the same shape at the same size; tone is how many spots get one.
+   */
+  mode: DotMode
   /** Tones lighter than this print as bare paper. */
   cutoff: number
   /** Wrong-reading film, for printing emulsion-side down. */
@@ -57,6 +63,8 @@ export interface ToneSettings {
   contrast: number // -1..1
   /** Photo negative — for white ink on a dark garment. */
   invert: boolean
+  /** Black and white points (0..1) the photo is stretched between before anything else; see measureLevels. */
+  levels?: { lo: number; hi: number }
 }
 
 /**
@@ -155,11 +163,43 @@ export interface ToneMap {
 }
 
 export function applyTone(lum: number, t: ToneSettings): number {
+  if (t.levels && t.levels.hi - t.levels.lo > 0.02) lum = (lum - t.levels.lo) / (t.levels.hi - t.levels.lo)
   const c = Math.max(-0.99, Math.min(0.99, t.contrast))
   const k = c >= 0 ? 1 / (1 - c) : 1 + c
   let l = (lum - 0.5) * k + 0.5 + t.brightness * 0.5
   l = l < 0 ? 0 : l > 1 ? 1 : l
   return t.invert ? l : 1 - l
+}
+
+/**
+ * Auto levels: the photo's 0.5% and 99.5% luminance points, so a dark night
+ * shot (or a flat grey one) is stretched to use the full range from paper to
+ * solid before it is screened — what a Levels adjustment does in Photoshop.
+ */
+export function measureLevels(photo: PhotoSource): { lo: number; hi: number } {
+  const n = 256
+  const k = Math.min(1, n / Math.max(photo.width, photo.height))
+  const w = Math.max(1, Math.round(photo.width * k))
+  const h = Math.max(1, Math.round(photo.height * k))
+  const c = document.createElement('canvas')
+  c.width = w
+  c.height = h
+  const ctx = c.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(photo.source, 0, 0, w, h)
+  const px = ctx.getImageData(0, 0, w, h).data
+  const hist = new Uint32Array(256)
+  for (let p = 0; p < px.length; p += 4) hist[Math.round(0.2126 * px[p] + 0.7152 * px[p + 1] + 0.0722 * px[p + 2])]++
+  c.width = c.height = 0
+  const total = w * h
+  const at = (q: number) => {
+    let acc = 0
+    for (let g = 0; g < 256; g++) {
+      acc += hist[g]
+      if (acc >= q * total) return g / 255
+    }
+    return 1
+  }
+  return { lo: at(0.005), hi: at(0.995) }
 }
 
 /**
@@ -275,7 +315,7 @@ function measureCoverage(cmds: Cmd[]): number {
 }
 
 /**
- * The clone. `size` is in cells: the triangle's side, or the 3's height.
+ * The clone. `size` is in cells: the circle's diameter, the triangle's side, or the 3's height.
  * `three` is the Bold "3" glyph from Inter (an opentype.js glyph), whose
  * outline becomes the shape.
  */
@@ -285,6 +325,20 @@ export function makeClone(
   three?: { getPath(x: number, y: number, fontSize: number): { commands: Cmd[] } },
 ): Clone {
   let cmds: Cmd[]
+  if (shape === 'circle') {
+    // A true circle: four cubic arcs (the standard 0.5523 handle length). `size` is the diameter.
+    const r = size / 2
+    const c = r * 0.5522847498
+    cmds = [
+      { type: 'M', x: r, y: 0 },
+      { type: 'C', x1: r, y1: c, x2: c, y2: r, x: 0, y: r },
+      { type: 'C', x1: -c, y1: r, x2: -r, y2: c, x: -r, y: 0 },
+      { type: 'C', x1: -r, y1: -c, x2: -c, y2: -r, x: 0, y: -r },
+      { type: 'C', x1: c, y1: -r, x2: r, y2: -c, x: r, y: 0 },
+      { type: 'Z' },
+    ]
+    return { shape, cmds, coverage: Math.PI * r * r }
+  }
   if (shape === 'triangle') {
     // A perfect equilateral triangle, point up, centred on its bounding box.
     const h = (size * Math.sqrt(3)) / 2
@@ -345,13 +399,14 @@ export interface ScreenJob {
   sin: number
   mirror: boolean
   cutoff: number
+  mode: DotMode
   tone: ToneMap
   clone: Clone
 }
 
 export function buildScreenJob(page: { w: number; h: number }, s: ScreenSettings, clone: Clone, tone: ToneMap): ScreenJob {
   const a = (s.angle * Math.PI) / 180
-  return { page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror, cutoff: s.cutoff, tone, clone }
+  return { page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror, cutoff: s.cutoff, mode: s.mode, tone, clone }
 }
 
 /** Tone-map resolution for screening: two samples per cell, capped at ~6 MP. */
@@ -376,9 +431,15 @@ function sampleTone(t: ToneMap, xIn: number, yIn: number): number {
 }
 
 /**
- * Call `dot(x, y)` (page inches, right-reading) for every clone whose centre
- * lies in the page rectangle [x0, x1] × [y0, y1], row by row.
+ * Call `dot(x, y, scale)` (page inches, right-reading; scale 0..1 of the
+ * clone's full size) for every clone whose centre lies in the page rectangle
+ * [x0, x1] × [y0, y1], row by row.
  *
+ * 'scale' mode: one clone per cell, scaled so its area follows the darkness
+ * (black = full size, white = none). The shape is always whole — never
+ * clipped to its cell, never flipped.
+ *
+ * 'count' mode:
  * A cell gets a clone when its darkness beats the cell's Bayer threshold, so
  * the photo's darkness is the share of cells filled: black fills every cell,
  * 50% grey half of them, white none. The full tonal range of the photo maps
@@ -390,7 +451,7 @@ export function forEachDot(
   y0: number,
   x1: number,
   y1: number,
-  dot: (x: number, y: number) => void,
+  dot: (x: number, y: number, scale: number) => void,
   onRow?: (fraction: number) => void,
 ) {
   const { cos, sin, lpi, page } = job
@@ -414,7 +475,8 @@ export function forEachDot(
       if (x < x0 || x > x1 || y < y0 || y > y1 || x < 0 || y < 0 || x > page.w || y > page.h) continue
       const d = sampleTone(job.tone, x, y)
       if (d < job.cutoff) continue
-      if (d > (row[((i % 8) + 8) % 8] + 0.5) / 64) dot(x, y)
+      if (job.mode === 'scale') dot(x, y, Math.sqrt(Math.min(1, d)))
+      else if (d > (row[((i % 8) + 8) % 8] + 0.5) / 64) dot(x, y, 1)
     }
     if (onRow && (j - jMin) % 64 === 0) onRow((j - jMin) / (jMax - jMin + 1))
   }
@@ -453,9 +515,9 @@ export function drawFilm(
   const k = dpi / job.lpi // canvas px per cell
   const clone = new Path2D()
   tracePath(clone, job.clone.cmds)
-  forEachDot(job, xa - pad, ya - pad, xa + w / dpi + pad, ya + h / dpi + pad, (x, y) => {
+  forEachDot(job, xa - pad, ya - pad, xa + w / dpi + pad, ya + h / dpi + pad, (x, y, scale) => {
     const X = (job.mirror ? job.page.w - x : x) * dpi - originX
-    ctx.setTransform(sx * k, 0, 0, k, X, y * dpi - originY)
+    ctx.setTransform(sx * k * scale, 0, 0, k * scale, X, y * dpi - originY)
     ctx.fill(clone, 'nonzero')
   })
   if (text.length) {
@@ -610,7 +672,10 @@ export async function renderFilmPdf(
     const dots: string[] = []
     forEachDot(
       job, 0, 0, job.page.w, job.page.h,
-      (x, y) => { dots.push(`q 1 0 0 1 ${n4(x)} ${n4(y)} cm /D Do Q`) },
+      (x, y, scale) => {
+        const s = n4(scale)
+        dots.push(`q ${s} 0 0 ${s} ${n4(x)} ${n4(y)} cm /D Do Q`)
+      },
       f => onProgress(f * 0.9),
     )
     for (let i = 0; i < dots.length; i += 20000) yield dots.slice(i, i + 20000).join('\n') + '\n'
