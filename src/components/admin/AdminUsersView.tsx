@@ -84,7 +84,7 @@ export default function AdminUsersView({ users: allUsers, stats, onNavigateToSec
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+      <div data-tour="users-stats" className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
         <div className="bg-white/5 rounded-none p-2.5 sm:p-4">
           <div className="text-white/60 text-[10px] sm:text-sm mb-1 truncate">Total Contributors</div>
           <div className="text-lg sm:text-2xl font-bold text-white">
@@ -110,7 +110,7 @@ export default function AdminUsersView({ users: allUsers, stats, onNavigateToSec
       {/* Search and Filters */}
       <div className="space-y-3 mb-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-          <div className="flex-1 relative">
+          <div data-tour="users-search" className="flex-1 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
@@ -120,7 +120,7 @@ export default function AdminUsersView({ users: allUsers, stats, onNavigateToSec
               className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
             />
           </div>
-          <div className="flex gap-2">
+          <div data-tour="users-filters" className="flex gap-2">
             <select
               value={filterTier}
               onChange={(e) => setFilterTier(e.target.value as any)}
@@ -190,7 +190,7 @@ export default function AdminUsersView({ users: allUsers, stats, onNavigateToSec
                 const hasResources = user.resources?.hasBlog || (user.resources?.galleries && user.resources.galleries.length > 0);
 
                 return (
-                  <div
+                  <div data-tour="users-row"
                     key={user.id}
                     className="flex items-stretch gap-1 bg-black/30"
                   >

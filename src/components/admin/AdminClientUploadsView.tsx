@@ -247,7 +247,7 @@ export default function AdminClientUploadsView() {
                     >
                         <ArrowPathIcon className="w-4 h-4" />
                     </button>
-                    <button
+                    <button data-tour="cr-new"
                         onClick={() => setShowForm(v => !v)}
                         className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
                         style={surface}
@@ -258,7 +258,7 @@ export default function AdminClientUploadsView() {
             </div>
 
             {showForm && (
-                <div className="bg-white/5 p-4 space-y-3" style={surface}>
+                <div data-tour="cr-form" className="bg-white/5 p-4 space-y-3" style={surface}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input
                             value={form.client_name}
@@ -298,7 +298,7 @@ export default function AdminClientUploadsView() {
                         className="w-full bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none resize-none"
                         style={surface}
                     />
-                    <button
+                    <button data-tour="cr-create"
                         onClick={handleCreate}
                         disabled={creating || !form.client_name.trim()}
                         title="Creates the link and its Drive folder"
@@ -335,28 +335,28 @@ export default function AdminClientUploadsView() {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <button
+                                    <button data-tour="cr-copy"
                                         onClick={() => copy(link.upload_url, 'Link')}
                                         className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-colors"
                                         style={surface}
                                     >
                                         <LinkIcon className="w-3.5 h-3.5" /> Copy link
                                     </button>
-                                    <button
+                                    <button data-tour="cr-email"
                                         onClick={() => invite(link)}
                                         className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-colors"
                                         style={surface}
                                     >
                                         <PaperAirplaneIcon className="w-3.5 h-3.5" /> Email it
                                     </button>
-                                    <button
+                                    <button data-tour="cr-files"
                                         onClick={() => openUploads(link.id)}
                                         className="px-3 py-2 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-colors tabular-nums"
                                         style={surface}
                                     >
                                         {link.upload_count} file{link.upload_count === 1 ? '' : 's'}
                                     </button>
-                                    <button
+                                    <button data-tour="cr-revoke"
                                         onClick={() => toggle(link)}
                                         className="px-3 py-2 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors"
                                         style={surface}

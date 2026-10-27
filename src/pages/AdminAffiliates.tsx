@@ -214,7 +214,7 @@ function CategoryCard({
       isOpen={expandedSection === id}
       onOpenChange={(open) => setExpandedSection(open ? id : null)}
     >
-      <ExpandableScreenTrigger className="w-full h-full text-left bg-white/[0.05] hover:bg-white/[0.08] transition-colors duration-300 p-6 flex flex-col gap-3 overflow-hidden">
+      <ExpandableScreenTrigger data-tour={`aff-card-${id}`} className="w-full h-full text-left bg-white/[0.05] hover:bg-white/[0.08] transition-colors duration-300 p-6 flex flex-col gap-3 overflow-hidden">
         <div className="flex items-center gap-3 min-w-0">
           <Icon className="w-5 h-5 text-white/40 shrink-0" />
           <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white truncate">{title}</h2>
@@ -386,7 +386,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight truncate">The Affiliate Program Dashboard</h1>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button
+          <button data-tour="aff-message"
             onClick={() => setShowComposer(true)}
             className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none bg-white text-black hover:bg-white/90 transition-colors font-bold uppercase text-xs tracking-wider"
           >
@@ -597,7 +597,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             <div className="flex flex-col gap-3">
               {data?.affiliates?.length ? (
                 data.affiliates.map((affiliate) => (
-                  <div key={affiliate.id} className="bg-white/[0.04] p-5 flex flex-col gap-4 min-w-0">
+                  <div data-tour="aff-affiliate" key={affiliate.id} className="bg-white/[0.04] p-5 flex flex-col gap-4 min-w-0">
                     {/* Header row */}
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -649,7 +649,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       <span className="text-[10px] text-white/25 uppercase tracking-wide">
                         Joined {new Date(affiliate.created_at).toLocaleDateString()} · Threshold ${affiliate.payment_threshold?.toFixed(2) || '—'}
                       </span>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div data-tour="aff-actions" className="flex flex-wrap gap-1.5">
                         <button onClick={() => handleEditAffiliate(affiliate, 'commission_rate')} className="px-3 py-1.5 text-[10px] bg-white/10 text-white uppercase tracking-wide hover:bg-white/20">
                           Edit Rate
                         </button>

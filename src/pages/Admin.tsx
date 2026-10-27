@@ -1680,7 +1680,7 @@ export default function Admin() {
           dashboard a narrow column with dead space either side; 1600 gives
           ~171px cells and fills the screen without the tiles becoming
           furniture. */}
-      <div ref={pageTopRef} data-tour-root="admin" className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
+      <div ref={pageTopRef} data-tour-root="admin" data-active-panel={activePanelSection ?? ''} className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">

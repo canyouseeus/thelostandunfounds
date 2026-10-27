@@ -218,7 +218,7 @@ function ClientEditor({
 
       <div className="space-y-4">
         {EDITABLE_FIELDS.map(({ key, label, type }) => (
-          <label key={key} className="block">
+          <label data-tour="crm-field" key={key} className="block">
             <span className="block text-[9px] text-white/40 uppercase tracking-widest mb-1.5">{label}</span>
             <input
               type={type}
@@ -247,7 +247,7 @@ function ClientEditor({
       )}
 
       <div className="mt-6 flex items-center gap-3">
-        <button
+        <button data-tour="crm-save"
           onClick={save}
           disabled={saving || !dirty}
           className="px-5 py-2.5 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -296,7 +296,7 @@ export function CrmDirectory() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div data-tour="crm-totals" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white/5 p-4">
           <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Clients</div>
           <div className="text-2xl font-black font-mono text-white">{totals.clients}</div>
@@ -321,7 +321,7 @@ export function CrmDirectory() {
 
       <div className="space-y-2">
         {clients.map((c) => (
-          <div
+          <div data-tour="crm-client"
             key={c.id}
             role="button"
             tabIndex={0}

@@ -312,7 +312,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
                     </p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                    <button
+                    <button data-tour="cal-notes"
                         onClick={() => setNotesOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
                         style={{ borderRadius: 0 }}
@@ -340,7 +340,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
             )}
 
             {/* View mode toggle */}
-            <div className="flex border border-white/10">
+            <div data-tour="cal-modes" className="flex border border-white/10">
                 {(['month', 'week', 'day'] as ViewMode[]).map(m => (
                     <button
                         key={m}
@@ -366,7 +366,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
             {/* MONTH VIEW */}
             {viewMode === 'month' && (
                 <div className="space-y-4">
-                    <div className="bg-white/[0.02] p-4 sm:p-6">
+                    <div data-tour="cal-month" className="bg-white/[0.02] p-4 sm:p-6">
                         <CalendarWidget
                             size="large"
                             startDate={startDate}
@@ -387,7 +387,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
                                 </p>
                                 <div className="flex items-center gap-3">
                                     {selectedRange.start === selectedRange.end && (
-                                        <button
+                                        <button data-tour="cal-open-day"
                                             onClick={() => { setFocusDate(startDate!); setViewMode('day'); }}
                                             className="text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
                                         >
@@ -578,7 +578,7 @@ function WeekView({
                         const isFocus = ymd === focusYmd;
 
                         return (
-                            <button
+                            <button data-tour="cal-day"
                                 key={ymd}
                                 onClick={() => onDayClick(d)}
                                 className={`bg-black flex flex-col min-h-[120px] sm:min-h-[160px] p-1.5 sm:p-2 text-left hover:bg-white/[0.04] transition-colors ${isFocus ? 'ring-1 ring-inset ring-white/20' : ''}`}
@@ -696,7 +696,7 @@ function DayView({
                     <Section
                         title={`Bookings (${bookings.length})`}
                         action={
-                            <button
+                            <button data-tour="cal-add-booking"
                                 onClick={() => setAddingBooking(v => !v)}
                                 className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                             >
