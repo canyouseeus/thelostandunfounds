@@ -186,12 +186,13 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Pro
                   placeholder="Find a gallery or folder"
                   aria-label="Find a gallery or folder"
                   className="w-full bg-white/5 text-white text-sm p-3 mb-6 focus:outline-none focus:bg-white/10"
+                  data-tour="halftone-picker-filter"
                   style={{ borderRadius: 0 }}
                 />
                 {sourceError && <p className="text-red-400 text-xs mb-4">{sourceError}</p>}
                 {!sources && !sourceError && <p className="text-white/40 text-xs">Loading…</p>}
                 {sections.map(section => (
-                  <div key={section.title} className="mb-8">
+                  <div key={section.title} className="mb-8" data-tour={`halftone-picker-${section.title.toLowerCase()}`}>
                     <p className="text-white/60 text-xs uppercase tracking-wider mb-2">{section.title} · {section.items.length}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
                       {section.items.map(s => (

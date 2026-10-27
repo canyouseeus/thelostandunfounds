@@ -670,7 +670,7 @@ export default function BlogManagement() {
           <DocumentTextIcon className="w-5 h-5" />
           Blog Management
         </h2>
-        <button
+        <button data-tour="blog-new-top"
           onClick={() => openEditor(null)}
           className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition"
         >
@@ -706,7 +706,7 @@ export default function BlogManagement() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
+                <div data-tour="blog-form-title">
                   <label className="block text-white/80 text-xs uppercase tracking-wider mb-2 font-medium">Title</label>
                   <input
                     type="text"
@@ -736,7 +736,7 @@ export default function BlogManagement() {
                   )}
                 </div>
 
-                <div>
+                <div data-tour="blog-form-content">
                   <label className="block text-white/80 text-xs uppercase tracking-wider mb-2 font-medium">Content</label>
                   <div className="bg-white/5">
                     <RichTextEditor
@@ -817,7 +817,7 @@ export default function BlogManagement() {
                 </div>
 
                 {/* SEO block */}
-                <div className="bg-white/5 p-4 space-y-4">
+                <div data-tour="blog-form-seo" className="bg-white/5 p-4 space-y-4">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Search & Social</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -902,7 +902,7 @@ export default function BlogManagement() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 pt-4">
-                  <button
+                  <button data-tour="blog-save-draft"
                     type="button"
                     disabled={isSaving}
                     onClick={() => savePost(false)}
@@ -910,7 +910,7 @@ export default function BlogManagement() {
                   >
                     Save Draft
                   </button>
-                  <button
+                  <button data-tour="blog-publish"
                     type="button"
                     disabled={isSaving}
                     onClick={() => savePost(true)}
@@ -936,7 +936,7 @@ export default function BlogManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* ------------------------------------------------------------ Library */}
         <ExpandableScreen isOpen={libraryOpen} onOpenChange={setLibraryOpen}>
-          <ExpandableScreenTrigger className="block w-full h-full text-left cursor-pointer">
+          <ExpandableScreenTrigger data-tour="blog-archives" className="block w-full h-full text-left cursor-pointer">
             <ConsoleTile
               icon={<DocumentTextIcon className="w-4 h-4" />}
               label="The Lost Archives"
@@ -955,7 +955,7 @@ export default function BlogManagement() {
               <DocumentTextIcon className="w-5 h-5 text-white/40" />
               <h2 className="text-xl font-black uppercase tracking-wide text-white">The Lost Archives</h2>
             </div>
-            <button
+            <button data-tour="blog-new"
               onClick={() => openEditor(null)}
               className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition"
             >
@@ -965,7 +965,7 @@ export default function BlogManagement() {
           </div>
 
           {/* Post counts */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5">
+          <div data-tour="blog-stats" className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5">
             {[
               { label: 'Total', value: stats.total },
               { label: 'Published', value: stats.published },
@@ -982,7 +982,7 @@ export default function BlogManagement() {
 
           {/* Toolbar */}
           <div className="flex flex-col lg:flex-row gap-3">
-            <div className="relative flex-1">
+            <div data-tour="blog-search" className="relative flex-1">
               <MagnifyingGlassIcon className="w-4 h-4 text-white/30 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -993,7 +993,7 @@ export default function BlogManagement() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div data-tour="blog-filters" className="flex flex-wrap gap-2">
               {(['all', 'published', 'draft'] as StatusFilter[]).map((value) => (
                 <button
                   key={value}
@@ -1178,14 +1178,14 @@ export default function BlogManagement() {
                         <ArrowUpTrayIcon className="w-4 h-4" />
                       </button>
                     )}
-                    <button
+                    <button data-tour="blog-duplicate"
                       onClick={() => handleDuplicate(post)}
                       className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                       title="Duplicate as draft"
                     >
                       <DocumentDuplicateIcon className="w-4 h-4" />
                     </button>
-                    <button
+                    <button data-tour="blog-edit"
                       onClick={() => openEditor(post)}
                       className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                       title="Edit post"
@@ -1211,7 +1211,7 @@ export default function BlogManagement() {
 
         {/* ---------------------------------------------------------- Analytics */}
         <ExpandableScreen isOpen={analyticsOpen} onOpenChange={setAnalyticsOpen}>
-          <ExpandableScreenTrigger className="block w-full h-full text-left cursor-pointer">
+          <ExpandableScreenTrigger data-tour="blog-analytics" className="block w-full h-full text-left cursor-pointer">
             <ConsoleTile
               icon={<ChartBarIcon className="w-4 h-4" />}
               label="Blog Analytics"

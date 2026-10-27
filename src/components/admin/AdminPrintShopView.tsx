@@ -306,14 +306,14 @@ export default function AdminPrintShopView() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <div className="flex gap-12 pb-2">
+        <div data-tour="print-tabs" className="flex gap-12 pb-2">
           <Tab label="Catalog" active={activeTab === 'catalog'} onClick={() => setActiveTab('catalog')} />
           <Tab label="Sizes" active={activeTab === 'sizes'} onClick={() => setActiveTab('sizes')} />
           <Tab label="Frames" active={activeTab === 'frames'} onClick={() => setActiveTab('frames')} />
           <Tab label="Orders" active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button
+          <button data-tour="print-verify"
             onClick={handleVerifyCatalog}
             disabled={verifying}
             title="Check every catalog SKU against Prodigi's live API and get real costs"
@@ -326,7 +326,7 @@ export default function AdminPrintShopView() {
           {activeTab === 'catalog' && (
             <>
               {syncMessage && <span className="text-[10px] font-mono text-white/50">{syncMessage}</span>}
-              <button
+              <button data-tour="print-sync"
                 onClick={handleSyncStripe}
                 disabled={syncing}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
@@ -335,7 +335,7 @@ export default function AdminPrintShopView() {
                 {syncing ? <ArrowPathIcon className="w-3 h-3 animate-spin" /> : <CloudArrowUpIcon className="w-3 h-3" />}
                 Sync to Stripe
               </button>
-              <button
+              <button data-tour="print-new"
                 onClick={handleCreate}
                 disabled={creating}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white text-black border border-white hover:bg-black hover:text-white transition-colors disabled:opacity-50"

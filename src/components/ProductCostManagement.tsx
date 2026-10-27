@@ -194,7 +194,7 @@ export function ProductCostManagement() {
 
   return (
     <div>
-      <div className="flex justify-center gap-12 mb-6 pb-2">
+      <div data-tour="prod-tabs" className="flex justify-center gap-12 mb-6 pb-2">
         <GalleryTab label="Services" active={activeTab === 'services'} onClick={() => setActiveTab('services')} />
         <GalleryTab label="Shop" active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} />
       </div>
@@ -215,7 +215,7 @@ export function ProductCostManagement() {
                 isOpen={expandedId === product.id}
                 onOpenChange={(open) => setExpandedId(open ? product.id : null)}
               >
-                <ExpandableScreenTrigger
+                <ExpandableScreenTrigger data-tour="prod-card"
                   className={`w-full text-left transition-colors duration-300 p-5 flex flex-col gap-4 ${isDraft ? 'bg-white/[0.02] hover:bg-white/5' : 'bg-white/5 hover:bg-white/10'}`}
                 >
                   <div className="flex items-start gap-3">
@@ -652,7 +652,7 @@ function ProductDetail({
           </label>
           <div className="flex items-center">
             <span className="text-white/40 font-mono text-xs mr-1">$</span>
-            <input
+            <input data-tour="prod-cost"
               type="number"
               min="0"
               step="0.01"
@@ -666,7 +666,7 @@ function ProductDetail({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button
+        <button data-tour="prod-save"
           onClick={handleSave}
           disabled={saving || uploading}
           className="flex items-center gap-2 bg-white text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors duration-300 disabled:opacity-50"
@@ -791,7 +791,7 @@ function ShopProductDetail({
           </label>
           <div className="flex items-center">
             <span className="text-white/40 font-mono text-xs mr-1">$</span>
-            <input
+            <input data-tour="prod-cost"
               type="number"
               min="0"
               step="0.01"
@@ -805,7 +805,7 @@ function ShopProductDetail({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button
+        <button data-tour="prod-save"
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-2 bg-white text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors duration-300 disabled:opacity-50"

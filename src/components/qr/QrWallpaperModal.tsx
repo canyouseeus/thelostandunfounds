@@ -213,24 +213,24 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
               <canvas ref={qrCanvas} width={512} height={512} className="w-56 h-56" data-testid="qr-preview" />
             </div>
             <p className="text-white/60 text-xs uppercase tracking-wider mb-2">SHAPE</p>
-            <div className="flex gap-1 mb-4">
+            <div data-tour="qr-shape" className="flex gap-1 mb-4">
               <button className={seg(shape === 'square')} onClick={() => setShape('square')}>SQUARE</button>
               <button className={seg(shape === 'rounded')} onClick={() => setShape('rounded')}>ROUNDED</button>
             </div>
             <p className="text-white/60 text-xs uppercase tracking-wider mb-2">COLOR</p>
-            <div className="flex gap-1 mb-5">
+            <div data-tour="qr-scheme" className="flex gap-1 mb-5">
               <button className={seg(scheme === 'light')} onClick={() => setScheme('light')}>BLACK ON WHITE</button>
               <button className={seg(scheme === 'dark')} onClick={() => setScheme('dark')}>WHITE ON BLACK</button>
             </div>
             <div className="flex gap-2">
-              <button
+              <button data-tour="qr-download"
                 onClick={downloadQr}
                 disabled={!matrix}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" /> DOWNLOAD QR
               </button>
-              <button
+              <button data-tour="qr-make-wallpaper"
                 onClick={() => setStep('photo')}
                 disabled={!matrix}
                 className="flex-1 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -264,7 +264,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                   data-testid="wallpaper-file"
                   onChange={e => { const f = e.target.files?.[0]; if (f) void loadPhoto(f); e.target.value = '' }}
                 />
-                <button
+                <button data-tour="qr-choose-photo"
                   onClick={() => fileInput.current?.click()}
                   className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-3"
                 >
@@ -272,7 +272,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 </button>
                 {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
                 <label className="block text-white/60 text-xs uppercase tracking-wider mb-1">ZOOM PHOTO</label>
-                <input
+                <input data-tour="qr-zoom"
                   type="range" min={0} max={100} step={0.5} disabled={!photo}
                   aria-label="Zoom photo"
                   className="w-full mb-1 accent-white"
@@ -287,7 +287,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setStep('qr')} className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider">← BACK</button>
-                  <button
+                  <button data-tour="qr-to-place"
                     onClick={() => setStep('place')}
                     disabled={!photo}
                     className="flex-1 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -301,7 +301,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
             {step === 'place' && (
               <div>
                 <label className="block text-white/60 text-xs uppercase tracking-wider mb-1">QR SIZE</label>
-                <input
+                <input data-tour="qr-size"
                   type="range" min={QR_SIZE_MIN * 100} max={QR_SIZE_MAX * 100} step={0.5}
                   aria-label="QR size"
                   className="w-full mb-1 accent-white"
@@ -311,7 +311,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 <p className="text-white/40 text-xs mb-4">Drag the preview to move the QR code. Pinch or scroll to resize it.</p>
                 <div className="flex gap-2 mb-2">
                   <button onClick={() => setStep('photo')} className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider">← BACK</button>
-                  <button
+                  <button data-tour="qr-download-wallpaper"
                     onClick={downloadWallpaper}
                     disabled={busy || !matrix}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -320,7 +320,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                   </button>
                 </div>
                 {canShareFiles && (
-                  <button
+                  <button data-tour="qr-share"
                     onClick={shareWallpaper}
                     disabled={busy}
                     className="w-full px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"

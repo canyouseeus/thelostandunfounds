@@ -1,6 +1,6 @@
+import { Link } from 'react-router-dom';
 import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
-import { SCREENS_OPEN_EVENT } from './tour/tours';
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
@@ -104,13 +104,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [qrLibrary, setQrLibrary] = useState<{ slug: string; name: string } | null>(null);
     const [isHalftoneOpen, setIsHalftoneOpen] = useState(false);
-    // A walkthrough step can open the screen generator (see SCREENS_OPEN_EVENT).
-    useEffect(() => {
-        if (isPhotographerView) return;
-        const open = () => setIsHalftoneOpen(true);
-        window.addEventListener(SCREENS_OPEN_EVENT, open);
-        return () => window.removeEventListener(SCREENS_OPEN_EVENT, open);
-    }, [isPhotographerView]);
     const [inviteData, setInviteData] = useState({ email: '', name: '' });
     const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -835,9 +828,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                 })()}
                             </div>
 
-                            <form onSubmit={handleSaveGallery} className="space-y-6">
+                            <form data-tour="gallery-form" onSubmit={handleSaveGallery} className="space-y-6">
                                 {/* Gallery Name & Slug */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div data-tour="gallery-form-name" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Gallery Name</label>
                                         <input
@@ -875,7 +868,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                 </div>
 
                                 {/* Pricing Options - Full Width */}
-                                <div>
+                                <div data-tour="gallery-form-pricing">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Pricing Options & Bundles</label>
                                     <div className="space-y-2 mb-3">
                                         {pricingOptions.map((option, idx) => {
@@ -1119,7 +1112,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     placeholder="https://... (or upload below)"
                                                 />
                                             </div>
-                                            <div className="flex items-center gap-2 mb-2">
+                                            <div data-tour="gallery-form-private" className="flex items-center gap-2 mb-2">
                                                 <input
                                                     type="checkbox"
                                                     checked={modalData.is_private}
@@ -1157,7 +1150,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
                                 <hr className="border-none" />
 
-                                <div>
+                                <div data-tour="gallery-form-source">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
                                     <div className="flex gap-2 mb-4">
                                         <button
@@ -1271,7 +1264,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     >
                                         Cancel
                                     </button>
-                                    <button
+                                    <button data-tour="gallery-form-save"
                                         type="submit"
                                         className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold"
                                     >
@@ -1300,15 +1293,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 </div>}
                 <div className="flex flex-wrap items-center gap-2">
                     {!isPhotographerView && (
-                        <a
-                            href="/admin/live"
+                        // A router Link, not <a href>: a full page load would end a
+                        // walkthrough that is stepping through to the live console.
+                        <Link
+                            to="/admin/live"
                             className="p-2 bg-white/5 hover:bg-white/10 text-green-400 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
                             title="Live events — camera uploads and review inbox"
                             data-tour="gallery-live-link"
                         >
                             <Radio className="w-3 h-3" />
                             <span>Live</span>
-                        </a>
+                        </Link>
                     )}
                     {!isPhotographerView && (
                         <button
@@ -1323,7 +1318,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         </button>
                     )}
                     {!isPhotographerView && (
-                        <button
+                        <button data-tour="gallery-invite"
                             onClick={() => setIsInviteModalOpen(true)}
                             className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
                         >
@@ -1331,7 +1326,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                             <span className="hidden sm:inline">Invite</span>
                         </button>
                     )}
-                    <button
+                    <button data-tour="gallery-health"
                         onClick={checkAssetHealth}
                         disabled={verifying}
                         className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
@@ -1339,7 +1334,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         {verifying ? <LoadingSpinner size="sm" /> : <ChartBarIcon className="w-3 h-3" />}
                         <span className="hidden sm:inline">{verifying ? 'Checking' : 'Health'}</span>
                     </button>
-                    <button
+                    <button data-tour="gallery-new"
                         onClick={openCreateModal}
                         className="px-3 py-2 bg-white text-black text-[10px] uppercase tracking-wider font-bold flex items-center gap-1 hover:bg-white/90"
                     >
@@ -1393,7 +1388,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         { id: 'tags' as const, label: 'Tags', icon: <TagIcon className="w-3 h-3" />, badge: 0 },
                         { id: 'downloads' as const, label: 'Downloads', icon: <ArrowDownTrayIcon className="w-3 h-3" />, badge: 0 },
                     ].map(tab => (
-                        <button
+                        <button data-tour={`gallery-tab-${tab.id}`}
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as typeof activeTab)}
                             className={`px-3 py-2.5 text-[10px] sm:text-[11px] uppercase font-bold tracking-widest transition-colors relative flex items-center gap-1.5 whitespace-nowrap ${activeTab === tab.id ? 'text-white' : 'text-white/40 hover:text-white'}`}
@@ -1472,7 +1467,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             };
 
                                             return (
-                                                <div key={lib.id} className="relative group">
+                                                <div data-tour="gallery-row" key={lib.id} className="relative group">
                                                     {showCountdown && (
                                                         <GalleryCountdownOverlay
                                                             coverImageUrl={lib.cover_image_url}
@@ -1670,7 +1665,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
 
             {isHalftoneOpen && (
-                <Suspense fallback={null}>
+                <Suspense fallback={<span data-tour-loading hidden />}>
                     <HalftoneModal onClose={() => setIsHalftoneOpen(false)} />
                 </Suspense>
             )}

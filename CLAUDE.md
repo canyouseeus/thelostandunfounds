@@ -295,8 +295,11 @@ Owner request, 2026-10-26: **every new admin-dashboard feature ships with a walk
 1. Add a tour to `src/components/admin/tour/tours.ts` with `group: 'new'` and `announce` set to
    the ship date. The dashboard then shows a NEW FEATURE pop-up once; **GO** starts the walkthrough
    (dimmed screen, white outline on each step's target).
-2. Put `data-tour="<id>"` on each element a step points at. A step can first `route` to a page or
-   open a console `panel`.
+2. **One step per control**, and walk into the feature: a step with `action: 'click'` waits for the
+   owner to tap the outlined button (NEXT taps it for them), so the tour follows into the panel,
+   tab, form or pop-up it opens. Never describe a screen the tour has not opened. Put
+   `data-tour="<id>"` on each element a step points at. A step can first `route` to a page or open
+   a console `panel`. Copy: name the thing, say what to do, stop.
 3. If the feature has no way in from the dashboard, add one. A tour cannot point at a page you can
    only reach by typing its URL.
 4. Changing an existing tool? Update its tour so the steps still match what is on screen. All tours

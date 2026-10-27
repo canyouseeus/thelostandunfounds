@@ -367,21 +367,21 @@ export default function AdminInvoices() {
         <div className="flex items-center justify-between mb-4">
           <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Revenue Summary</p>
           <div className="flex items-center gap-2">
-          <button
+          <button data-tour="inv-new"
             className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
             onClick={() => setCreatingInvoice(true)}
           >
             <PlusCircleIcon className="w-3.5 h-3.5" />
             New Invoice
           </button>
-          <button
+          <button data-tour="inv-direct"
             className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
             onClick={() => setDirectBooking(true)}
           >
             <PlusCircleIcon className="w-3.5 h-3.5" />
             Direct Booking
           </button>
-          <button
+          <button data-tour="inv-street"
             className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
             onClick={() => setStreetNight(true)}
           >
@@ -416,7 +416,7 @@ export default function AdminInvoices() {
           ) : (
             <div className="space-y-2">
               {invoices.map(inv => (
-                <div
+                <div data-tour="inv-row"
                   key={inv.id}
                   className={cn(
                     'flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] transition-colors',
@@ -468,7 +468,7 @@ export default function AdminInvoices() {
                         PDF
                       </a>
                     )}
-                    <button
+                    <button data-tour="inv-send"
                       onClick={(e) => { e.stopPropagation(); sendInvoice(inv); }}
                       disabled={sendingId === inv.id}
                       title="Send invoice email to client"
@@ -511,7 +511,7 @@ export default function AdminInvoices() {
                       </div>
                       {selectedInvoice.pdf_token && (
                         <div className="flex items-center gap-3 shrink-0">
-                          <button
+                          <button data-tour="inv-pdf"
                             onClick={() => setShowPdf(true)}
                             className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 transition-colors"
                           >

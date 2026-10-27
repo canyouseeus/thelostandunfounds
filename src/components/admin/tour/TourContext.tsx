@@ -5,26 +5,55 @@
  * navigations it makes (/admin → /admin/live) instead of unmounting with the
  * page that started it.
  *
- * The spotlight is four dim panes around the target plus a white outline on
- * the gap. The gap is a real hole, so the outlined control stays tappable;
- * everything else is dimmed and blocked. Which tours have been finished is a
- * per-browser convenience in localStorage — losing it only means the NEW
- * FEATURE pop-up shows once more.
+ * WALK, DON'T DESCRIBE. A step outlines one real control and says what to do
+ * with it. A step with `action: 'click'` waits for you to tap the outlined
+ * control — or NEXT taps it for you — and the tour follows into whatever that
+ * opens. `action: 'choose'` waits for a pick in a select or input.
+ *
+ * NO WAITING YOU CAN SEE. Moving between steps used to remount the card,
+ * show "Finding it…", sit out a fixed 300ms after every panel change and up
+ * to 5s on a target that was not there. Now one overlay lives for the whole
+ * tour: the card fades out, the page moves, the target is measured every
+ * frame until it holds still for four frames (a scroll in flight or a panel
+ * still filling both move it), then the spotlight glides there and the card
+ * fades back in. A target that never turns up is skipped, the way the
+ * Kattitude dashboard tour does it, unless the step carries a `missingNote`
+ * that is worth reading anyway.
+ *
+ * The spotlight is one element: the white outline the owner asked for plus a
+ * page-sized box-shadow that dims everything else. It is overlay chrome, not a
+ * component surface, so no-border-design does not apply. Four transparent
+ * panes around it block stray taps; the hole itself stays live, which is what
+ * lets an action step be done for real.
+ *
+ * Which tours have been finished is a per-browser convenience in localStorage
+ * — losing it only means the NEW FEATURE pop-up shows once more.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, CSSProperties, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ADMIN_PANEL_EVENT, getTour, Tour } from './tours';
+import { ADMIN_PANEL_EVENT, getTour, Tour, TourStep } from './tours';
 
 const SEEN_KEY = 'tlu_tours_seen';
-// A panel's content can take a moment to mount after the route or panel
-// changes; past this the step falls back to a centred card.
-const TARGET_WAIT_MS = 5000;
-// After a panel is opened, give React a beat before looking, or the header
-// of the panel that was already open gets outlined instead.
-const PANEL_SETTLE_MS = 300;
 const PAD = 6;
+const FADE_MS = 120;
+// Frames the target must hold still before it is measured for good.
+const STILL_FRAMES = 3;
+// How long to look for a target before skipping its step. Right after
+// something changed — a new page, a panel opening, a button the last step
+// tapped — the new screen may still be downloading its code or data, so the
+// first step there waits longer. Everywhere else a missing target is skipped
+// quickly instead of leaving the reader staring at a dimmed screen.
+const FIND_MS = 800;
+const FIND_AFTER_ROUTE_MS = 4000;
+// But a target is only declared missing once the page has stopped changing:
+// no DOM mutations for this long (longer after a change), and nothing marked
+// [data-tour-loading] — a lazy pop-up's Suspense fallback, which is silent
+// while its code downloads.
+const QUIET_MS = 200;
+const QUIET_AFTER_CHANGE_MS = 500;
+const MIN_WAIT_AFTER_CHANGE_MS = 600;
 
 function readSeen(): string[] {
   try {
@@ -50,6 +79,26 @@ function findTarget(id: string): HTMLElement | null {
   return null;
 }
 
+/**
+ * Is something else painted over the target? The site's route-change loading
+ * screen, or a pop-up still animating in, can sit on top of an element that is
+ * already in the DOM — outlining it then draws a box around a blank. The
+ * tour's own layers don't count.
+ */
+function covered(el: HTMLElement): boolean {
+  const r = el.getBoundingClientRect();
+  const x = Math.min(Math.max(r.left + r.width / 2, 0), window.innerWidth - 1);
+  const y = Math.min(Math.max(r.top + Math.min(r.height / 2, 20), 0), window.innerHeight - 1);
+  const top = document.elementsFromPoint(x, y).find(n => !(n as HTMLElement).closest('[data-tour-overlay]'));
+  return !!top && !el.contains(top) && !top.contains(el);
+}
+
+/** The console panel open on /admin ('' for none), or null off the dashboard. */
+function openPanel(): string | null {
+  const root = document.querySelector<HTMLElement>('[data-tour-root="admin"]');
+  return root ? root.dataset.activePanel ?? '' : null;
+}
+
 interface TourContextValue {
   start: (id: string) => void;
   activeId: string | null;
@@ -60,7 +109,7 @@ interface TourContextValue {
 const TourContext = createContext<TourContextValue | undefined>(undefined);
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const [active, setActive] = useState<{ tour: Tour; index: number } | null>(null);
+  const [tour, setTour] = useState<Tour | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
 
   const markSeen = useCallback((id: string) => {
@@ -73,38 +122,26 @@ export function TourProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const start = useCallback((id: string) => {
-    const tour = getTour(id);
-    if (tour) setActive({ tour, index: 0 });
+    const t = getTour(id);
+    if (t) setTour(t);
   }, []);
 
   const finish = useCallback(() => {
-    setActive(prev => {
-      if (prev) markSeen(prev.tour.id);
+    setTour(prev => {
+      if (prev) markSeen(prev.id);
       return null;
     });
   }, [markSeen]);
 
   const value = useMemo(
-    () => ({ start, activeId: active?.tour.id ?? null, seen, markSeen }),
-    [start, active, seen, markSeen]
+    () => ({ start, activeId: tour?.id ?? null, seen, markSeen }),
+    [start, tour, seen, markSeen]
   );
 
   return (
     <TourContext.Provider value={value}>
       {children}
-      {active && (
-        <TourOverlay
-          key={`${active.tour.id}:${active.index}`}
-          tour={active.tour}
-          index={active.index}
-          onBack={() => setActive(a => (a && a.index > 0 ? { ...a, index: a.index - 1 } : a))}
-          onNext={() => {
-            if (active.index >= active.tour.steps.length - 1) finish();
-            else setActive(a => (a ? { ...a, index: a.index + 1 } : a));
-          }}
-          onClose={finish}
-        />
-      )}
+      {tour && <TourOverlay key={tour.id} tour={tour} onClose={finish} />}
     </TourContext.Provider>
   );
 }
@@ -117,90 +154,214 @@ export function useTour() {
 
 interface Box { top: number; left: number; width: number; height: number }
 
-function TourOverlay({
-  tour, index, onBack, onNext, onClose,
-}: {
-  tour: Tour;
-  index: number;
-  onBack: () => void;
-  onNext: () => void;
-  onClose: () => void;
-}) {
-  const step = tour.steps[index];
-  const isLast = index === tour.steps.length - 1;
+const sameBox = (a: Box | null, b: Box | null) =>
+  !!a && !!b && Math.abs(a.top - b.top) < 0.5 && Math.abs(a.left - b.left) < 0.5 &&
+  Math.abs(a.width - b.width) < 0.5 && Math.abs(a.height - b.height) < 0.5;
+
+const measure = (el: HTMLElement): Box => {
+  const r = el.getBoundingClientRect();
+  return { top: r.top, left: r.left, width: r.width, height: r.height };
+};
+
+function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
   const navigate = useNavigate();
-  const [el, setEl] = useState<HTMLElement | null>(null);
-  const [searching, setSearching] = useState(!!step.target);
+  // `index` is where the tour is going; `shown` is the step on the card. They
+  // differ while the card is faded out and the page is moving.
+  const [index, setIndex] = useState(0);
+  const [shown, setShown] = useState<{ index: number; step: TourStep; el: HTMLElement | null } | null>(null);
+  const [visible, setVisible] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
   const [vw, setVw] = useState(window.innerWidth);
   const [vh, setVh] = useState(window.innerHeight);
+  // Which way the reader is travelling, so a skipped step skips the same way.
+  const dirRef = useRef<1 | -1>(1);
+  const shownRef = useRef(shown);
+  shownRef.current = shown;
+  // Last time the page (not the tour) changed, and how many steps were shown.
+  const lastMutationRef = useRef(performance.now());
+  const shownCountRef = useRef(0);
 
-  // Move the page into position, then wait for the target to exist.
   useEffect(() => {
-    // The tour is already covering the page with its own outline and card, so
-    // the site's 1.2s route-change loading screen would only hide the very
-    // thing the step is pointing at. Layout reads this flag and skips it.
-    if (step.route && window.location.pathname !== step.route) navigate(step.route, { state: { skipRouteLoading: true } });
-
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-    let panelSentAt = step.panel === undefined ? 0 : -1;
-    let eventSent = !step.event;
-    const startedAt = Date.now();
-
-    const tick = () => {
-      if (cancelled) return;
-      // The panel event only lands once the dashboard is mounted.
-      if (panelSentAt === -1 && document.querySelector('[data-tour-root="admin"]')) {
-        window.dispatchEvent(new CustomEvent(ADMIN_PANEL_EVENT, { detail: step.panel }));
-        panelSentAt = Date.now();
+    const mo = new MutationObserver(records => {
+      for (const r of records) {
+        const n = r.target as Element;
+        const el = n.nodeType === 1 ? n : n.parentElement;
+        if (el && !el.closest('[data-tour-overlay]')) { lastMutationRef.current = performance.now(); return; }
       }
-      const settled = panelSentAt === 0 || (panelSentAt > 0 && Date.now() - panelSentAt >= PANEL_SETTLE_MS);
-      // A step's event (e.g. opening a pop-up) goes out once the panel is in place.
-      if (!eventSent && settled) {
-        window.dispatchEvent(new CustomEvent(step.event!));
-        eventSent = true;
-      }
-      const found = step.target && settled ? findTarget(step.target) : null;
-      if (found) {
-        const tall = found.getBoundingClientRect().height > window.innerHeight * 0.6;
-        found.scrollIntoView({ block: tall ? 'start' : 'center', behavior: 'smooth' });
-        setEl(found);
-        setSearching(false);
-        return;
-      }
-      if (!step.target && settled) { setSearching(false); return; }
-      if (Date.now() - startedAt > TARGET_WAIT_MS) { setSearching(false); return; }
-      timer = setTimeout(tick, 100);
-    };
-    timer = setTimeout(tick, 0);
-    return () => { cancelled = true; clearTimeout(timer); };
-    // The overlay is keyed per step, so this runs once per step.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    });
+    // Elements arriving or leaving only. Text and style churn — the dashboard
+    // clock ticks every second behind every panel — would keep the page from
+    // ever counting as quiet.
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => mo.disconnect();
   }, []);
 
-  // Follow the target as it scrolls, animates in or reflows.
+  const go = useCallback((to: number) => {
+    if (to >= tour.steps.length) { onClose(); return; }
+    if (to < 0) return;
+    setIndex(prev => { dirRef.current = to >= prev ? 1 : -1; return to; });
+  }, [tour.steps.length, onClose]);
+
+  // Arrive at a step: fade out, move the page, wait for the target to settle,
+  // then glide and fade back in.
   useEffect(() => {
+    const step = tour.steps[index];
+    let cancelled = false;
+    let raf = 0;
+    setVisible(false);
+
+    const begin = () => {
+      if (cancelled) return;
+      const routed = !!step.route && window.location.pathname !== step.route;
+      // The tour covers the page itself, so the site's route-change loading
+      // screen would only hide what the step points at. Layout skips it.
+      if (routed) navigate(step.route!, { state: { skipRouteLoading: true } });
+
+      const started = performance.now();
+      const prev = shownRef.current;
+      // Only the step straight after the tap: steps skipped past it don't count.
+      const afterAction = !!prev && prev.step.action === 'click' && dirRef.current === 1 && prev.index === index - 1;
+      const panelChanges = step.panel !== undefined && openPanel() !== (step.panel ?? '');
+      const limit = routed || afterAction || panelChanges ? FIND_AFTER_ROUTE_MS : FIND_MS;
+      let panelSent = false;
+      let last: Box | null = null;
+      let still = 0;
+      let scrolledTo: HTMLElement | null = null;
+
+      const tick = () => {
+        if (cancelled) return;
+        const elapsed = performance.now() - started;
+
+        // Open or close a console panel, once the dashboard is there to hear it.
+        if (step.panel !== undefined) {
+          const current = openPanel();
+          const want = step.panel ?? '';
+          if (current !== null && current !== want) {
+            if (!panelSent) {
+              window.dispatchEvent(new CustomEvent(ADMIN_PANEL_EVENT, { detail: step.panel }));
+              panelSent = true;
+            }
+            if (elapsed < limit) { raf = requestAnimationFrame(tick); return; }
+          }
+        }
+
+        if (!step.target) { arrive(step, null); return; }
+
+        const el = findTarget(step.target);
+        if (!el) {
+          last = null; still = 0;
+          const changed = limit === FIND_AFTER_ROUTE_MS;
+          const quiet = performance.now() - lastMutationRef.current >= (changed ? QUIET_AFTER_CHANGE_MS : QUIET_MS);
+          const loading = !!document.querySelector('[data-tour-loading]');
+          const settledPage = quiet && !loading && elapsed >= (changed ? MIN_WAIT_AFTER_CHANGE_MS : 0);
+          if (elapsed < limit && !settledPage) { raf = requestAnimationFrame(tick); return; }
+          // Never turned up. Say why if the step knows; otherwise skip it.
+          if (step.missingNote) { arrive(step, null); return; }
+          let to = index + dirRef.current;
+          // Backing into a missing first step: stay where the reader was.
+          if (to < 0) to = shownRef.current ? shownRef.current.index : index + 1;
+          if (to >= tour.steps.length) {
+            // Ran off the end skipping. If most of the tour never showed —
+            // an empty CRM, no tickets yet — say so rather than vanish.
+            if (shownCountRef.current * 2 < tour.steps.length) {
+              arrive({ title: 'That\u2019s It For Now', body: 'The rest of this tool appears once it has something in it. Run this tutorial again from TUTORIALS then.' }, null, tour.steps.length - 1);
+            } else onClose();
+            return;
+          }
+          setIndex(to);
+          return;
+        }
+
+        if (scrolledTo !== el) {
+          // First sighting: bring it on screen. Tall things align to the top
+          // so the card under them is not pushed off the bottom.
+          scrolledTo = el;
+          const r = el.getBoundingClientRect();
+          const offscreen = r.top < 0 || r.bottom > window.innerHeight;
+          if (offscreen) el.scrollIntoView({ block: r.height > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'smooth' });
+        }
+        const b = measure(el);
+        // Something painted over it: wait, unless it is only off screen
+        // because the scroll above is still running.
+        const onScreen = b.top >= 0 && b.top < window.innerHeight;
+        if (onScreen && covered(el) && elapsed < limit) {
+          last = null; still = 0;
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+        still = sameBox(last, b) ? still + 1 : 0;
+        last = b;
+        if (still >= STILL_FRAMES || elapsed > limit + 1500) { arrive(step, el); return; }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    const arrive = (s: TourStep, el: HTMLElement | null, at = index) => {
+      if (cancelled) return;
+      shownCountRef.current += 1;
+      setShown({ index: at, step: s, el });
+      setBox(el ? measure(el) : null);
+      // One frame at the new spot while still transparent, then fade in.
+      raf = requestAnimationFrame(() => { if (!cancelled) setVisible(true); });
+    };
+
+    // Let the fade-out finish before anything moves. The first step has
+    // nothing to fade.
+    const wait = shownRef.current ? FADE_MS : 0;
+    const t = setTimeout(begin, wait);
+    return () => { cancelled = true; clearTimeout(t); cancelAnimationFrame(raf); };
+    // Runs once per step; `go` and `navigate` are stable for the tour's life.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  // Follow the target while it is shown: scrolling, a panel animating in.
+  useEffect(() => {
+    const el = shown?.el;
     if (!el) return;
     let raf = 0;
     const loop = () => {
       if (el.isConnected) {
-        const r = el.getBoundingClientRect();
-        setBox(prev =>
-          prev && prev.top === r.top && prev.left === r.left && prev.width === r.width && prev.height === r.height
-            ? prev
-            : { top: r.top, left: r.left, width: r.width, height: r.height }
-        );
-      } else {
-        setBox(null);
+        const b = measure(el);
+        setBox(prev => (sameBox(prev, b) ? prev : b));
       }
       setVw(w => (w === window.innerWidth ? w : window.innerWidth));
       setVh(h => (h === window.innerHeight ? h : window.innerHeight));
       raf = requestAnimationFrame(loop);
     };
-    loop();
+    raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [el]);
+  }, [shown]);
+
+  // Action steps advance when the reader does the thing.
+  useEffect(() => {
+    if (!shown || !visible || !shown.el || !shown.step.action) return;
+    const el = shown.el;
+    const next = () => setTimeout(() => go(shown.index + 1), 0);
+    if (shown.step.action === 'click') {
+      // Capture phase, so it is seen even if the control stops propagation.
+      // The tour moves on after the control's own handler has run.
+      const onClick = (e: MouseEvent) => { if (el.contains(e.target as Node)) next(); };
+      document.addEventListener('click', onClick, true);
+      return () => document.removeEventListener('click', onClick, true);
+    }
+    const onChange = () => next();
+    el.addEventListener('change', onChange);
+    return () => el.removeEventListener('change', onChange);
+  }, [shown, visible, go]);
+
+  const onNext = useCallback(() => {
+    if (!shown) return;
+    // NEXT on a "tap this" step taps it for you, so the tour still follows.
+    // A disabled control can't be tapped (it waits on a photo, say), so NEXT
+    // just moves on.
+    if (shown.step.action === 'click' && shown.el?.isConnected && !(shown.el as HTMLButtonElement).disabled) {
+      shown.el.click();
+      return; // the click listener above advances
+    }
+    go(shown.index + 1);
+  }, [shown, go]);
+  const onBack = useCallback(() => { if (shown) go(shown.index - 1); }, [shown, go]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -212,8 +373,9 @@ function TourOverlay({
     return () => window.removeEventListener('keydown', onKey);
   }, [onBack, onNext, onClose]);
 
-  // The hole, clamped to the viewport so a board taller than the screen still
-  // leaves dim panes to click on.
+  // The hole, clamped to the viewport so a target taller than the screen still
+  // leaves dim around it. It stays on the old target while the page moves,
+  // then glides, rather than collapsing between every step.
   const hole = box
     ? (() => {
         const top = Math.max(box.top - PAD, 0);
@@ -224,93 +386,112 @@ function TourOverlay({
       })()
     : null;
 
+  const step = shown?.step;
+  const isLast = (shown?.index ?? 0) >= tour.steps.length - 1;
   const cardWidth = Math.min(380, vw - 32);
   const CARD_ROOM = 260;
-  // No target: centred by a flex wrapper, not translate(-50%), which puts the
-  // card on a half pixel and draws a hairline along its edge.
-  let cardStyle: CSSProperties | null = null;
+  let cardPos: { top?: number; bottom?: number; left: number } | null = null;
   if (hole) {
     const left = Math.min(Math.max(hole.left, 16), vw - cardWidth - 16);
-    if (vh - (hole.top + hole.height) >= CARD_ROOM) cardStyle = { top: hole.top + hole.height + 12, left };
-    else if (hole.top >= CARD_ROOM) cardStyle = { bottom: vh - hole.top + 12, left };
-    else cardStyle = { bottom: 16, left };
+    if (vh - (hole.top + hole.height) >= CARD_ROOM) cardPos = { top: hole.top + hole.height + 12, left };
+    else if (hole.top >= CARD_ROOM) cardPos = { bottom: vh - hole.top + 12, left };
+    else cardPos = { bottom: 16, left };
   }
 
-  const dim = 'fixed bg-black/80 z-[100010]';
-  const missing = !searching && step.target && !box;
+  // With no target the spotlight collapses to a point in the middle, so the
+  // whole screen dims without a different element taking over.
+  const spot = hole ?? { top: vh / 2, left: vw / 2, width: 0, height: 0 };
+  const blocker = 'fixed z-[100010]';
+  const fade = { transition: `opacity ${FADE_MS}ms ease`, opacity: visible ? 1 : 0 };
+  const missing = !!step?.target && !shown?.el;
+  const doIt = step?.action === 'click' && !!shown?.el;
 
   return createPortal(
     // data-sage-chrome: SAGE MODE's capture listener must never swallow these taps.
-    <div data-sage-chrome role="dialog" aria-modal="true" aria-label={`${tour.title} walkthrough`}>
-      {hole ? (
+    <div data-sage-chrome data-tour-overlay role="dialog" aria-modal="true" aria-label={`${tour.title} walkthrough`}>
+      {/* Spotlight: outline + page dim in one element, gliding between steps. */}
+      <div
+        className="fixed z-[100011] pointer-events-none"
+        style={{
+          ...spot,
+          outline: `2px solid rgba(255,255,255,${hole && visible ? 1 : 0})`,
+          boxShadow: '0 0 0 200vmax rgba(0,0,0,0.8)',
+          borderRadius: 0,
+          transition: `top 250ms ease, left 250ms ease, width 250ms ease, height 250ms ease, outline-color ${FADE_MS}ms ease`,
+        }}
+      />
+      {/* Tap blockers around the hole; one full pane while moving. */}
+      {hole && visible ? (
         <>
-          <div className={dim} style={{ top: 0, left: 0, width: vw, height: hole.top }} />
-          <div className={dim} style={{ top: hole.top + hole.height, left: 0, width: vw, height: Math.max(vh - hole.top - hole.height, 0) }} />
-          <div className={dim} style={{ top: hole.top, left: 0, width: hole.left, height: hole.height }} />
-          <div className={dim} style={{ top: hole.top, left: hole.left + hole.width, width: Math.max(vw - hole.left - hole.width, 0), height: hole.height }} />
-          {/* The white outline the owner asked for. An outline on an overlay,
-              not a border on a component: no-border-design is about surfaces. */}
-          <div
-            className="fixed z-[100011] pointer-events-none transition-all duration-200"
-            style={{ ...hole, outline: '2px solid #FFFFFF', outlineOffset: 0, borderRadius: 0 }}
-          />
+          <div className={blocker} style={{ top: 0, left: 0, width: vw, height: hole.top }} />
+          <div className={blocker} style={{ top: hole.top + hole.height, left: 0, width: vw, height: Math.max(vh - hole.top - hole.height, 0) }} />
+          <div className={blocker} style={{ top: hole.top, left: 0, width: hole.left, height: hole.height }} />
+          <div className={blocker} style={{ top: hole.top, left: hole.left + hole.width, width: Math.max(vw - hole.left - hole.width, 0), height: hole.height }} />
         </>
       ) : (
-        <div className={`${dim} inset-0`} />
+        <div className={`${blocker} inset-0`} />
       )}
 
-      <div className={cardStyle ? 'contents' : 'fixed inset-0 z-[100012] flex items-center justify-center pointer-events-none'}>
-      <div
-        className={`${cardStyle ? 'fixed' : 'pointer-events-auto'} z-[100012] bg-black text-white p-5 text-left`}
-        style={{ ...cardStyle, width: cardWidth, borderRadius: 0 }}
-      >
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">
-          {tour.title} · {index + 1} / {tour.steps.length}
-        </p>
-        <h2 className="text-base font-black uppercase tracking-widest mb-3">{step.title}</h2>
-        {searching ? (
-          <p className="text-sm text-white/50">Finding it…</p>
-        ) : (
-          <div className="space-y-2">
-            {step.body.split('\n\n').map((para, i) => (
-              <p key={i} className="text-sm text-white/80 leading-relaxed">{para}</p>
-            ))}
-            {missing && (
-              <p className="text-xs text-white/50 leading-relaxed">
-                {step.missingNote || 'This isn’t on screen right now.'}
-              </p>
-            )}
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-2 mt-5">
-          <button
-            onClick={onClose}
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
+      {step && (
+        // No target: centred by a flex wrapper, not translate(-50%), which
+        // puts the card on a half pixel and draws a hairline along its edge.
+        <div className={cardPos ? 'contents' : 'fixed inset-0 z-[100012] flex items-center justify-center pointer-events-none'}>
+          <div
+            className={`${cardPos ? 'fixed' : ''} pointer-events-auto z-[100012] bg-black text-white p-5 text-left`}
+            style={{ ...cardPos, ...fade, width: cardWidth, borderRadius: 0 }}
           >
-            {isLast ? 'Close' : 'Skip tour'}
-          </button>
-          <div className="flex gap-2">
-            {index > 0 && (
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">
+              {tour.title} · {(shown?.index ?? 0) + 1} / {tour.steps.length}
+            </p>
+            <h2 className="text-base font-black uppercase tracking-widest mb-3">{step.title}</h2>
+            <div className="space-y-2">
+              {step.body.split('\n\n').map((para, i) => (
+                <p key={i} className="text-sm text-white/80 leading-relaxed">{para}</p>
+              ))}
+              {missing && (
+                <p className="text-xs text-white/50 leading-relaxed">{step.missingNote}</p>
+              )}
+              {doIt && (
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400">
+                  Tap the outlined button, or NEXT does it for you
+                </p>
+              )}
+              {step.action === 'choose' && shown?.el && (
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400">
+                  Make your pick in the outlined box
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-5">
               <button
-                onClick={onBack}
-                className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
-                style={{ borderRadius: 0 }}
+                onClick={onClose}
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
               >
-                Back
+                {isLast ? 'Close' : 'Skip tour'}
               </button>
-            )}
-            <button
-              onClick={onNext}
-              autoFocus
-              className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] bg-white text-black hover:bg-white/80 transition-colors"
-              style={{ borderRadius: 0 }}
-            >
-              {isLast ? 'Done' : 'Next'}
-            </button>
+              <div className="flex gap-2">
+                {(shown?.index ?? 0) > 0 && (
+                  <button
+                    onClick={onBack}
+                    className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+                    style={{ borderRadius: 0 }}
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  onClick={onNext}
+                  autoFocus
+                  className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] bg-white text-black hover:bg-white/80 transition-colors"
+                  style={{ borderRadius: 0 }}
+                >
+                  {isLast && !doIt ? 'Done' : 'Next'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      </div>
+      )}
     </div>,
     document.body
   );
