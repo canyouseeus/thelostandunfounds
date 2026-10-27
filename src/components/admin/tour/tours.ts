@@ -508,7 +508,7 @@ const halftoneTour: Tour = {
     openFromDock('gallery', 'Screen Generator', 'The screen generator lives in Gallery. Tap the Gallery icon.'),
     inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
     { target: 'halftone-canvas-size', title: 'Canvas', body: '18 × 24 or 8.5 × 11. The page turns to match the photo.' },
-    { target: 'halftone-from-gallery', title: 'Choose A Photo', body: 'FROM A GALLERY picks one you already have. UPLOAD takes one from your device.' },
+    { target: 'halftone-from-gallery', title: 'Choose A Photo', body: 'FROM A GALLERY browses your galleries and Drive folders full screen. UPLOAD takes one from your device.' },
     { target: 'halftone-preview', title: 'Position It', body: 'Drag to move. Pinch or scroll to resize. The whole photo prints, never cropped.' },
     { target: 'halftone-levels', title: 'Auto Levels', body: 'Stretches the photo from darkest to lightest. Good for night shots.' },
     { target: 'halftone-ink', title: 'Ink', body: 'WHITE INK inverts it, for light ink on a dark shirt.' },
@@ -523,7 +523,24 @@ const halftoneTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+const screensFromGalleryTour: Tour = {
+  id: 'screens-from-gallery',
+  title: 'Screens From Your Galleries & Folders',
+  summary: 'Pick the screen generator\'s photo from any gallery or Drive folder, full screen.',
+  group: 'new',
+  announce: '2026-10-27',
+  steps: [
+    openFromDock('gallery', 'Screens From Your Galleries', 'The screen generator lives in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
+    { target: 'halftone-from-gallery', action: 'click', title: 'From A Gallery', body: 'Tap FROM A GALLERY.' },
+    { target: 'halftone-picker-filter', title: 'Find One', body: 'Type part of a name to narrow the list.' },
+    { target: 'halftone-picker-galleries', title: 'Galleries', body: 'Your galleries, published or not.' },
+    { target: 'halftone-picker-folders', title: 'Folders', body: 'Every folder in your Drive JPG folder: VANCERTS, ROSE ROOM and the rest. Nothing here gets published.' },
+    { target: 'halftone-picker-dates', title: 'Dates', body: 'Year, month and day folders. Tap any folder, scroll its photos, and tap one to use it.' },
+  ],
+};
+
+export const TOURS: Tour[] = [screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);
