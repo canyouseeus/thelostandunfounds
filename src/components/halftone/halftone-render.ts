@@ -60,15 +60,23 @@ export interface ToneSettings {
   invert: boolean
 }
 
-/** `scale` is a multiple of "cover" (1 = the photo just fills the page); `ox`/`oy` move its centre, in page-widths. */
-export interface PhotoView {
+/**
+ * Where the photo sits on the page. The photo is never cropped: it keeps the
+ * camera's own shape (3:2 for a Fujifilm X body) and only resizes
+ * proportionally. `scale` is a fraction of the largest size that fits the
+ * page; `cx`/`cy` are the frame's centre as fractions of page width / height.
+ */
+export interface PhotoFrame {
   scale: number
-  ox: number
-  oy: number
+  cx: number
+  cy: number
 }
-export const DEFAULT_PHOTO_VIEW: PhotoView = { scale: 1, ox: 0, oy: 0 }
-export const PHOTO_SCALE_MIN = 0.2
-export const PHOTO_SCALE_MAX = 8
+export const DEFAULT_FRAME: PhotoFrame = { scale: 0.8, cx: 0.5, cy: 0.5 }
+export const FRAME_SCALE_MIN = 0.2
+export const FRAME_SCALE_MAX = 1
+
+/** Fujifilm X-series sensors are 3:2; used for the empty frame before a photo is chosen. */
+export const FUJI_ASPECT = 3 / 2
 
 export interface PhotoSource {
   source: CanvasImageSource
@@ -76,35 +84,61 @@ export interface PhotoSource {
   height: number
 }
 
-export type TextInk = 'ink' | 'knockout'
-export interface TextLayer {
-  text: string
+export interface TextStyle {
   weight: 400 | 700 | 900
-  /** Font size in inches. */
+  /** Font size in inches (shrunk automatically if a line would not fit the page width). */
   size: number
   /** Letter spacing, in ems. */
   tracking: number
   uppercase: boolean
-  /** 'ink' prints solid; 'knockout' clears the dots under the letters. */
-  ink: TextInk
-  /** Centre of the text block, as fractions of page width / height. */
+}
+
+/** A laid-out block of text, in page inches. Text always prints as solid ink. */
+export interface TextBlock {
+  lines: string[]
+  weight: number
+  size: number
+  tracking: number
   cx: number
   cy: number
+  width: number
+  height: number
+  /** True when the block runs off the page — the frame needs to be smaller or moved. */
+  offPage: boolean
 }
 
 /** The site's typeface, registered for canvas under its own name (see fonts.ts). */
 export const TEXT_FAMILY = '"TLU Inter", Inter, system-ui, sans-serif'
 
-export function clampPhotoView(v: PhotoView): PhotoView {
-  const scale = Math.min(PHOTO_SCALE_MAX, Math.max(PHOTO_SCALE_MIN, v.scale))
-  return { scale, ox: Math.min(1.5, Math.max(-1.5, v.ox)), oy: Math.min(1.5, Math.max(-1.5, v.oy)) }
+/** Page orientation follows the photo: horizontal photo, landscape page. */
+export function orientationFor(photo: { width: number; height: number } | null): Orientation {
+  return photo && photo.width > photo.height ? 'landscape' : 'portrait'
 }
 
-/** Zoom about a focal point given in page-widths from the page centre. */
-export function zoomPhotoAbout(v: PhotoView, factor: number, fx: number, fy: number): PhotoView {
-  const next = clampPhotoView({ ...v, scale: v.scale * factor })
-  const f = next.scale / v.scale
-  return clampPhotoView({ ...next, ox: fx + (v.ox - fx) * f, oy: fy + (v.oy - fy) * f })
+export function photoAspect(photo: { width: number; height: number } | null, orientation: Orientation): number {
+  if (photo) return photo.width / photo.height
+  return orientation === 'landscape' ? FUJI_ASPECT : 1 / FUJI_ASPECT
+}
+
+/** The photo's rectangle on the page, in inches. */
+export function frameRect(page: { w: number; h: number }, aspect: number, f: PhotoFrame) {
+  const fitW = Math.min(page.w, page.h * aspect)
+  const w = fitW * f.scale
+  const h = w / aspect
+  return { x: f.cx * page.w - w / 2, y: f.cy * page.h - h / 2, w, h }
+}
+
+/** Keep the frame's size in range and the whole frame on the page. */
+export function clampFrame(f: PhotoFrame, page: { w: number; h: number }, aspect: number): PhotoFrame {
+  const scale = Math.min(FRAME_SCALE_MAX, Math.max(FRAME_SCALE_MIN, f.scale))
+  const r = frameRect(page, aspect, { ...f, scale })
+  const hx = r.w / 2 / page.w
+  const hy = r.h / 2 / page.h
+  return {
+    scale,
+    cx: Math.min(1 - hx, Math.max(hx, f.cx)),
+    cy: Math.min(1 - hy, Math.max(hy, f.cy)),
+  }
 }
 
 // --- Tone ---------------------------------------------------------------------
@@ -126,17 +160,17 @@ export function applyTone(lum: number, t: ToneSettings): number {
 }
 
 /**
- * Draw the photo onto a white page `w` × `h` px. The canvas's pixel (0,0) is
- * page pixel (originX, originY), so a strip or a loupe can be painted at full
- * output resolution; `mirror` flips it with the film. The preview, the loupe
- * and the film all go through here.
+ * Draw the photo, uncropped, into its frame on a white page `w` × `h` px. The
+ * canvas's pixel (0,0) is page pixel (originX, originY), so a strip or a
+ * loupe can be painted at full output resolution; `mirror` flips it with the
+ * film. The preview, the loupe and the film all go through here.
  */
 export function drawPhoto(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   photo: PhotoSource | null,
-  view: PhotoView,
+  frame: PhotoFrame,
   originX = 0,
   originY = 0,
   mirror = false,
@@ -147,14 +181,11 @@ export function drawPhoto(
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   if (photo) {
     ctx.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? w - originX : -originX, -originY)
-    const cover = Math.max(w / photo.width, h / photo.height) * view.scale
-    const dw = photo.width * cover
-    const dh = photo.height * cover
-    const cx = w / 2 + view.ox * w
-    const cy = h / 2 + view.oy * w
+    // Work in page pixels: frameRect's inches scale by the same factor on both axes.
+    const r = frameRect({ w, h }, photo.width / photo.height, frame)
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(photo.source, cx - dw / 2, cy - dh / 2, dw, dh)
+    ctx.drawImage(photo.source, r.x, r.y, r.w, r.h)
   }
   ctx.restore()
 }
@@ -163,7 +194,7 @@ export function buildToneMap(
   page: { w: number; h: number },
   pxPerIn: number,
   photo: PhotoSource | null,
-  view: PhotoView,
+  frame: PhotoFrame,
   tone: ToneSettings,
 ): ToneMap {
   const w = Math.max(1, Math.round(page.w * pxPerIn))
@@ -172,7 +203,7 @@ export function buildToneMap(
   c.width = w
   c.height = h
   const ctx = c.getContext('2d', { willReadFrequently: true })!
-  drawPhoto(ctx, w, h, photo, view)
+  drawPhoto(ctx, w, h, photo, frame)
   const px = ctx.getImageData(0, 0, w, h).data
   const dark = new Float32Array(w * h)
   for (let i = 0, p = 0; i < dark.length; i++, p += 4) {
@@ -333,7 +364,7 @@ export interface ScreenJob {
   minDot: number
   maxDot: number
   photo: PhotoSource | null
-  view: PhotoView
+  frame: PhotoFrame
   tone: ToneSettings
   table: DotTable
 }
@@ -343,7 +374,7 @@ export function buildScreenJob(
   s: ScreenSettings,
   table: DotTable,
   photo: PhotoSource | null,
-  view: PhotoView,
+  frame: PhotoFrame,
   tone: ToneSettings,
 ): ScreenJob {
   const a = (s.angle * Math.PI) / 180
@@ -351,15 +382,15 @@ export function buildScreenJob(
   return {
     page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror,
     minDot, maxDot: Math.max(minDot, Math.min(1, s.maxDot)),
-    photo, view, tone, table,
+    photo, frame, tone, table,
   }
 }
 
 /**
  * Screen a region of the film. (x0, y0, w, h) are output pixels at `dpi`.
  * `out[i]` = 1 where ink prints. `photoCanvas` is scratch space for the
- * resampled photo; `text` is the RGBA of the text layer over the same region
- * (see textRegion), or null.
+ * resampled photo; `text` is the RGBA of the text over the same region
+ * (see textRegion), or null. Text prints solid.
  */
 export function renderRegion(
   job: ScreenJob,
@@ -369,7 +400,7 @@ export function renderRegion(
   h: number,
   dpi: number,
   out: Uint8Array,
-  text: { rgba: Uint8ClampedArray; ink: TextInk } | null,
+  text: Uint8ClampedArray | null,
   photoCanvas: HTMLCanvasElement,
 ) {
   if (photoCanvas.width !== w || photoCanvas.height !== h) {
@@ -379,7 +410,7 @@ export function renderRegion(
   const pctx = photoCanvas.getContext('2d', { willReadFrequently: true })!
   const Wpx = job.page.w * dpi
   const Hpx = job.page.h * dpi
-  drawPhoto(pctx, Wpx, Hpx, job.photo, job.view, x0, y0, job.mirror)
+  drawPhoto(pctx, Wpx, Hpx, job.photo, job.frame, x0, y0, job.mirror)
   const px = pctx.getImageData(0, 0, w, h).data
 
   // Tone → cell code, once per grey level rather than once per pixel.
@@ -430,42 +461,16 @@ export function renderRegion(
     }
   }
   if (text) {
-    const set = text.ink === 'ink' ? 1 : 0
-    const a = text.rgba
-    for (let i = 0, p = 3; i < w * h; i++, p += 4) if (a[p] >= 128) out[i] = set
+    for (let i = 0, p = 3; i < w * h; i++, p += 4) if (text[p] >= 128) out[i] = 1
   }
 }
 
 // --- Text -----------------------------------------------------------------------
 
-export function textFont(layer: TextLayer, px: number): string {
-  return `${layer.weight} ${px}px ${TEXT_FAMILY}`
-}
-
-function textLines(layer: TextLayer): string[] {
-  const t = layer.uppercase ? layer.text.toUpperCase() : layer.text
-  return t.split('\n')
-}
-
 const LINE_HEIGHT = 1.05
 
-/** Page-pixel bounds of the text block at `pxPerIn`, padded; null when empty. */
-export function textBounds(
-  ctx: CanvasRenderingContext2D,
-  layer: TextLayer,
-  page: { w: number; h: number },
-  pxPerIn: number,
-): { x: number; y: number; w: number; h: number } | null {
-  const lines = textLines(layer)
-  if (!lines.some(l => l.trim())) return null
-  const size = layer.size * pxPerIn
-  ctx.font = textFont(layer, size)
-  const widest = Math.max(...lines.map(l => lineWidth(ctx, l, layer.tracking * size)))
-  const tall = lines.length * size * LINE_HEIGHT
-  const cx = layer.cx * page.w * pxPerIn
-  const cy = layer.cy * page.h * pxPerIn
-  const pad = size * 0.5
-  return { x: cx - widest / 2 - pad, y: cy - tall / 2 - pad, w: widest + pad * 2, h: tall + pad * 2 }
+function blockFont(weight: number, px: number): string {
+  return `${weight} ${px}px ${TEXT_FAMILY}`
 }
 
 function lineWidth(ctx: CanvasRenderingContext2D, line: string, track: number): number {
@@ -475,12 +480,47 @@ function lineWidth(ctx: CanvasRenderingContext2D, line: string, track: number): 
 }
 
 /**
- * Draw the text block. The canvas's pixel (0,0) is page pixel (originX, originY)
+ * Lay out the text above and below the photo frame. Each block sits a small
+ * gap off the frame, centred on it, and shrinks to fit the page width.
+ */
+export function layoutText(
+  ctx: CanvasRenderingContext2D,
+  page: { w: number; h: number },
+  frame: { x: number; y: number; w: number; h: number },
+  above: string,
+  below: string,
+  style: TextStyle,
+): TextBlock[] {
+  const margin = page.w * 0.04
+  const blocks: TextBlock[] = []
+  for (const [raw, side] of [[above, 'above'], [below, 'below']] as const) {
+    const text = style.uppercase ? raw.toUpperCase() : raw
+    const lines = text.split('\n')
+    if (!lines.some(l => l.trim())) continue
+    // Measure at 100 px per inch, then scale.
+    ctx.font = blockFont(style.weight, style.size * 100)
+    const natural = Math.max(...lines.map(l => lineWidth(ctx, l, style.tracking * style.size * 100))) / 100
+    const size = natural > page.w - 2 * margin ? (style.size * (page.w - 2 * margin)) / natural : style.size
+    const width = (natural * size) / style.size
+    const height = lines.length * size * LINE_HEIGHT
+    const gap = Math.max(0.15, size * 0.35)
+    const cy = side === 'above' ? frame.y - gap - height / 2 : frame.y + frame.h + gap + height / 2
+    blocks.push({
+      lines, weight: style.weight, size, tracking: style.tracking,
+      cx: frame.x + frame.w / 2, cy, width, height,
+      offPage: cy - height / 2 < 0 || cy + height / 2 > page.h,
+    })
+  }
+  return blocks
+}
+
+/**
+ * Draw text blocks. The canvas's pixel (0,0) is page pixel (originX, originY)
  * at `pxPerIn`; `mirror` flips it with the film.
  */
 export function drawText(
   ctx: CanvasRenderingContext2D,
-  layer: TextLayer,
+  blocks: TextBlock[],
   page: { w: number; h: number },
   pxPerIn: number,
   originX: number,
@@ -488,39 +528,36 @@ export function drawText(
   mirror: boolean,
   fill: string,
 ) {
-  const lines = textLines(layer)
-  if (!lines.some(l => l.trim())) return
-  const size = layer.size * pxPerIn
-  const track = layer.tracking * size
   ctx.save()
   ctx.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? page.w * pxPerIn - originX : -originX, -originY)
-  ctx.font = textFont(layer, size)
   ctx.fillStyle = fill
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'left'
-  const cx = layer.cx * page.w * pxPerIn
-  const cy = layer.cy * page.h * pxPerIn
-  const lh = size * LINE_HEIGHT
-  lines.forEach((line, idx) => {
-    const y = cy + (idx - (lines.length - 1) / 2) * lh
-    let x = cx - lineWidth(ctx, line, track) / 2
-    if (!track) {
-      ctx.fillText(line, x, y)
-      return
-    }
-    for (const ch of Array.from(line)) {
-      ctx.fillText(ch, x, y)
-      x += ctx.measureText(ch).width + track
-    }
-  })
+  for (const b of blocks) {
+    const size = b.size * pxPerIn
+    const track = b.tracking * size
+    ctx.font = blockFont(b.weight, size)
+    const lh = size * LINE_HEIGHT
+    b.lines.forEach((line, idx) => {
+      const y = b.cy * pxPerIn + (idx - (b.lines.length - 1) / 2) * lh
+      let x = b.cx * pxPerIn - lineWidth(ctx, line, track) / 2
+      if (!track) {
+        ctx.fillText(line, x, y)
+        return
+      }
+      for (const ch of Array.from(line)) {
+        ctx.fillText(ch, x, y)
+        x += ctx.measureText(ch).width + track
+      }
+    })
+  }
   ctx.restore()
 }
 
-/** The text layer's pixels over one region, or null when the text misses it. */
+/** The text's pixels over one output region at `dpi`, or null when no text touches it. */
 export function textRegion(
   scratch: HTMLCanvasElement,
-  layer: TextLayer | null,
-  bounds: { x: number; y: number; w: number; h: number } | null,
+  blocks: TextBlock[],
   page: { w: number; h: number },
   dpi: number,
   mirror: boolean,
@@ -529,10 +566,17 @@ export function textRegion(
   w: number,
   h: number,
 ): Uint8ClampedArray | null {
-  if (!layer || !bounds) return null
-  // Bounds are in unmirrored page pixels; mirror them into output space.
-  const bx = mirror ? page.w * dpi - bounds.x - bounds.w : bounds.x
-  if (bx > x0 + w || bx + bounds.w < x0 || bounds.y > y0 + h || bounds.y + bounds.h < y0) return null
+  const hits = blocks.filter(b => {
+    const pad = b.size // generous: covers overhangs and tracking
+    const left = (b.cx - b.width / 2 - pad) * dpi
+    const right = (b.cx + b.width / 2 + pad) * dpi
+    const bx0 = mirror ? page.w * dpi - right : left
+    const bx1 = mirror ? page.w * dpi - left : right
+    const by0 = (b.cy - b.height / 2 - pad) * dpi
+    const by1 = (b.cy + b.height / 2 + pad) * dpi
+    return bx1 >= x0 && bx0 <= x0 + w && by1 >= y0 && by0 <= y0 + h
+  })
+  if (!hits.length) return null
   if (scratch.width !== w || scratch.height !== h) {
     scratch.width = w
     scratch.height = h
@@ -540,7 +584,7 @@ export function textRegion(
   const ctx = scratch.getContext('2d', { willReadFrequently: true })!
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.clearRect(0, 0, w, h)
-  drawText(ctx, layer, page, dpi, x0, y0, mirror, '#000')
+  drawText(ctx, hits, page, dpi, x0, y0, mirror, '#000')
   return ctx.getImageData(0, 0, w, h).data
 }
 
@@ -595,7 +639,7 @@ export function packRow(ink: Uint8Array, offset: number, w: number, dst: Uint8Ar
 export async function renderFilmPng(
   job: ScreenJob,
   dpi: number,
-  text: TextLayer | null,
+  text: TextBlock[],
   onProgress: (fraction: number) => void,
 ): Promise<Blob> {
   const W = Math.round(job.page.w * dpi)
@@ -604,8 +648,6 @@ export async function renderFilmPng(
   const rowBytes = 1 + ((W + 7) >> 3)
   const scratch = document.createElement('canvas')
   const photoCanvas = document.createElement('canvas')
-  const measure = document.createElement('canvas').getContext('2d')!
-  const bounds = text ? textBounds(measure, text, job.page, dpi) : null
 
   const cs = new CompressionStream('deflate') // zlib framing, which is what IDAT wants
   const compressed = new Response(cs.readable).arrayBuffer()
@@ -614,8 +656,8 @@ export async function renderFilmPng(
   try {
     for (let y = 0; y < H; y += strip) {
       const h = Math.min(strip, H - y)
-      const rgba = textRegion(scratch, text, bounds, job.page, dpi, job.mirror, 0, y, W, h)
-      renderRegion(job, 0, y, W, h, dpi, ink, rgba && text ? { rgba, ink: text.ink } : null, photoCanvas)
+      const rgba = textRegion(scratch, text, job.page, dpi, job.mirror, 0, y, W, h)
+      renderRegion(job, 0, y, W, h, dpi, ink, rgba, photoCanvas)
       const packed = new Uint8Array(rowBytes * h)
       for (let r = 0; r < h; r++) packRow(ink, r * W, W, packed, r * rowBytes)
       await writer.write(packed)

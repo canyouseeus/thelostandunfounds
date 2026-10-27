@@ -3,12 +3,12 @@ import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/
 import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 import { loadSiteFont } from './fonts'
 import {
-  PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_PHOTO_VIEW, PHOTO_SCALE_MIN, PHOTO_SCALE_MAX, TEXT_FAMILY,
-  pageInches, recommendedLpi, clampPhotoView, zoomPhotoAbout, buildToneMap,
-  triangleMask, glyphMask, buildDotTable, buildScreenJob, renderRegion, drawText, textBounds, textRegion,
+  PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_FRAME, FRAME_SCALE_MIN, FRAME_SCALE_MAX, TEXT_FAMILY,
+  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap,
+  triangleMask, glyphMask, buildDotTable, buildScreenJob, renderRegion, drawText, layoutText, textRegion,
   renderFilmPng, applyTone,
-  type DotShape, type Orientation, type PhotoSource, type PhotoView, type PrintSize, type ScreenJob,
-  type TextLayer, type ToneSettings,
+  type DotShape, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
+  type TextStyle, type ToneSettings,
 } from './halftone-render'
 
 type Step = 'photo' | 'text' | 'screen'
@@ -26,9 +26,7 @@ const DPI = 360
 const LOUPE_SIZE = 160
 
 const DEFAULT_TONE: ToneSettings = { brightness: 0, contrast: 0, invert: false }
-const DEFAULT_TEXT: TextLayer = {
-  text: '', weight: 900, size: 1.25, tracking: 0.1, uppercase: true, ink: 'ink', cx: 0.5, cy: 0.88,
-}
+const DEFAULT_STYLE: TextStyle = { weight: 900, size: 1, tracking: 0.1, uppercase: true }
 
 interface Props {
   onClose: () => void
@@ -43,6 +41,15 @@ function saveBlob(blob: Blob, filename: string) {
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 30000)
+}
+
+/** "3:2" for a Fujifilm X frame, else the reduced ratio. */
+function ratioLabel(w: number, h: number): string {
+  const r = Math.max(w, h) / Math.min(w, h)
+  for (const [a, b] of [[3, 2], [4, 3], [16, 9], [5, 4], [1, 1]]) {
+    if (Math.abs(r - a / b) < 0.01) return w >= h ? `${a}:${b}` : `${b}:${a}`
+  }
+  return `${r.toFixed(2)}:1`
 }
 
 const seg = (on: boolean) =>
@@ -74,12 +81,13 @@ function Slider(props: {
 export default function HalftoneModal({ onClose }: Props) {
   const [step, setStep] = useState<Step>('photo')
   const [size, setSize] = useState<PrintSize>('18x24')
-  const [orientation, setOrientation] = useState<Orientation>('portrait')
   const [photo, setPhoto] = useState<(PhotoSource & { label: string }) | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
-  const [view, setView] = useState<PhotoView>(DEFAULT_PHOTO_VIEW)
+  const [frame, setFrame] = useState<PhotoFrame>(DEFAULT_FRAME)
   const [tone, setTone] = useState<ToneSettings>(DEFAULT_TONE)
-  const [text, setText] = useState<TextLayer>(DEFAULT_TEXT)
+  const [textAbove, setTextAbove] = useState('')
+  const [textBelow, setTextBelow] = useState('')
+  const [style, setStyle] = useState<TextStyle>(DEFAULT_STYLE)
   const [shape, setShape] = useState<DotShape>('triangle')
   const [mesh, setMesh] = useState(DEFAULT_MESH)
   const [lpi, setLpi] = useState(recommendedLpi(DEFAULT_MESH))
@@ -93,7 +101,11 @@ export default function HalftoneModal({ onClose }: Props) {
   const [progress, setProgress] = useState<number | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
+  // The page turns with the photo: horizontal photo, landscape page.
+  const orientation = orientationFor(photo)
   const page = useMemo(() => pageInches(size, orientation), [size, orientation])
+  const aspect = photoAspect(photo, orientation)
+  const rect = useMemo(() => frameRect(page, aspect, frame), [page, aspect, frame])
   const previewCanvas = useRef<HTMLCanvasElement>(null)
   const loupeCanvas = useRef<HTMLCanvasElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -122,7 +134,13 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }, [])
 
-  const textLayer = text.text.trim() ? text : null
+  // Text above and below the frame, laid out in page inches.
+  const blocks = useMemo(() => {
+    if (!fontReady) return []
+    const ctx = document.createElement('canvas').getContext('2d')!
+    return layoutText(ctx, page, rect, textAbove, textBelow, style)
+  }, [fontReady, page, rect, textAbove, textBelow, style])
+  const offPage = blocks.some(b => b.offPage)
 
   // The dot shape and its exact-coverage table. The 3 is cut from the site's typeface.
   const dotTable = useMemo(() => {
@@ -136,7 +154,7 @@ export default function HalftoneModal({ onClose }: Props) {
     const c = previewCanvas.current
     if (!c) return
     const ctx = c.getContext('2d')!
-    const tm = buildToneMap(page, previewPpi, photo, view, tone)
+    const tm = buildToneMap(page, previewPpi, photo, frame, tone)
     const img = ctx.createImageData(tm.w, tm.h)
     for (let i = 0, p = 0; i < tm.dark.length; i++, p += 4) {
       const v = Math.round(255 * (1 - tm.dark[i]))
@@ -144,7 +162,12 @@ export default function HalftoneModal({ onClose }: Props) {
       img.data[p + 3] = 255
     }
     ctx.putImageData(img, 0, 0)
-    if (textLayer && fontReady) drawText(ctx, textLayer, page, tm.pxPerIn, 0, 0, false, textLayer.ink === 'ink' ? '#000' : '#fff')
+    if (!photo) {
+      // Show where the frame will go before there is a photo.
+      ctx.fillStyle = '#e5e5e5'
+      ctx.fillRect(rect.x * tm.pxPerIn, rect.y * tm.pxPerIn, rect.w * tm.pxPerIn, rect.h * tm.pxPerIn)
+    }
+    drawText(ctx, blocks, page, tm.pxPerIn, 0, 0, false, '#000')
     if (step === 'screen') {
       const span = (LOUPE_SIZE / DPI) * tm.pxPerIn
       ctx.save()
@@ -154,12 +177,12 @@ export default function HalftoneModal({ onClose }: Props) {
       ctx.strokeRect(loupe.x * tm.w - span / 2, loupe.y * tm.h - span / 2, span, span)
       ctx.restore()
     }
-  }, [page, previewPpi, photo, view, tone, textLayer, fontReady, step, loupe])
+  }, [page, previewPpi, photo, frame, rect, tone, blocks, step, loupe])
 
   // The screen settings. Cheap: the photo is resampled per region as it is screened.
   const job: ScreenJob | null = useMemo(
-    () => (dotTable ? buildScreenJob(page, { lpi, angle, shape, minDot, maxDot, mirror }, dotTable, photo, view, tone) : null),
-    [dotTable, page, lpi, angle, shape, minDot, maxDot, mirror, photo, view, tone],
+    () => (dotTable ? buildScreenJob(page, { lpi, angle, shape, minDot, maxDot, mirror }, dotTable, photo, frame, tone) : null),
+    [dotTable, page, lpi, angle, shape, minDot, maxDot, mirror, photo, frame, tone],
   )
 
   // Loupe: real film pixels, through the same renderer as the download.
@@ -174,12 +197,10 @@ export default function HalftoneModal({ onClose }: Props) {
     const x0 = Math.round(cx - LOUPE_SIZE / 2)
     const y0 = Math.round(loupe.y * page.h * ldpi - LOUPE_SIZE / 2)
     const scratch = document.createElement('canvas')
-    const measure = scratch.getContext('2d')!
-    const bounds = textLayer && fontReady ? textBounds(measure, textLayer, page, ldpi) : null
-    const rgba = textRegion(scratch, fontReady ? textLayer : null, bounds, page, ldpi, mirror, x0, y0, LOUPE_SIZE, LOUPE_SIZE)
+    const rgba = textRegion(scratch, blocks, page, ldpi, mirror, x0, y0, LOUPE_SIZE, LOUPE_SIZE)
     const ink = new Uint8Array(LOUPE_SIZE * LOUPE_SIZE)
     const photoCanvas = document.createElement('canvas')
-    renderRegion(job, x0, y0, LOUPE_SIZE, LOUPE_SIZE, ldpi, ink, rgba && textLayer ? { rgba, ink: textLayer.ink } : null, photoCanvas)
+    renderRegion(job, x0, y0, LOUPE_SIZE, LOUPE_SIZE, ldpi, ink, rgba, photoCanvas)
     photoCanvas.width = photoCanvas.height = 0
     const ctx = c.getContext('2d')!
     const img = ctx.createImageData(LOUPE_SIZE, LOUPE_SIZE)
@@ -194,21 +215,20 @@ export default function HalftoneModal({ onClose }: Props) {
     }
     ctx.putImageData(img, 0, 0)
     scratch.width = scratch.height = 0
-  }, [step, job, page, loupe, mirror, textLayer, fontReady])
+  }, [step, job, page, loupe, mirror, blocks])
 
   useCanvasGestures(previewCanvas, true, {
     onDrag: (dx, dy) => {
-      if (step === 'photo') {
-        setView(v => clampPhotoView({ ...v, ox: v.ox + dx, oy: v.oy + (dy * page.h) / page.w }))
-      } else if (step === 'text') {
-        setText(t => ({ ...t, cx: Math.min(1, Math.max(0, t.cx + dx)), cy: Math.min(1, Math.max(0, t.cy + dy)) }))
+      if (step !== 'screen') {
+        // Photo and text steps: drag the whole frame (the text rides along with it).
+        setFrame(f => clampFrame({ ...f, cx: f.cx + dx, cy: f.cy + dy }, page, aspect))
       } else {
         setLoupe(l => ({ x: Math.min(1, Math.max(0, l.x + dx)), y: Math.min(1, Math.max(0, l.y + dy)) }))
       }
     },
-    onZoom: (factor, fx, fy) => {
-      if (step === 'photo') setView(v => zoomPhotoAbout(v, factor, fx, fy))
-      else if (step === 'text') setText(t => ({ ...t, size: Math.min(8, Math.max(0.1, t.size * factor)) }))
+    onZoom: factor => {
+      // Proportional only: the photo is never cropped or stretched.
+      if (step !== 'screen') setFrame(f => clampFrame({ ...f, scale: f.scale * factor }, page, aspect))
     },
   })
 
@@ -217,7 +237,7 @@ export default function HalftoneModal({ onClose }: Props) {
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
       setPhoto({ source: bitmap, width: bitmap.width, height: bitmap.height, label: file.name })
-      setView(DEFAULT_PHOTO_VIEW)
+      setFrame(DEFAULT_FRAME)
     } catch {
       setPhotoError('That file could not be read as a photo. Try a JPG or PNG.')
     }
@@ -226,7 +246,7 @@ export default function HalftoneModal({ onClose }: Props) {
   const changeSize = (next: PrintSize) => {
     // Keep the text the same size relative to the page.
     const ratio = PRINT_SIZES[next].w / PRINT_SIZES[size].w
-    setText(t => ({ ...t, size: Math.round(t.size * ratio * 100) / 100 }))
+    setStyle(t => ({ ...t, size: Math.round(t.size * ratio * 100) / 100 }))
     setSize(next)
   }
 
@@ -238,14 +258,14 @@ export default function HalftoneModal({ onClose }: Props) {
   const outW = Math.round(page.w * DPI)
   const outH = Math.round(page.h * DPI)
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
-  const filename = `${baseName}-${size}-${shape === 'three' ? '3s' : 'triangles'}-${lpi}lpi-${angle}deg-${DPI}dpi${mirror ? '-mirror' : ''}.png`
+  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : 'triangles'}-${lpi}lpi-${angle}deg-${DPI}dpi${mirror ? '-mirror' : ''}.png`
 
   const exportFilm = async () => {
     if (!job) return
     setExportError(null)
     setProgress(0)
     try {
-      const blob = await renderFilmPng(job, DPI, fontReady ? textLayer : null, setProgress)
+      const blob = await renderFilmPng(job, DPI, blocks, setProgress)
       saveBlob(blob, filename)
     } catch (e) {
       setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
@@ -271,7 +291,7 @@ export default function HalftoneModal({ onClose }: Props) {
         </button>
         <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">SCREEN GENERATOR</h2>
         <p className="text-white/40 text-xs font-mono mt-1 mb-4">
-          {PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · {shape === 'three' ? '3s' : 'TRIANGLES'}
+          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · {shape === 'three' ? '3s' : 'TRIANGLES'}
         </p>
         <div className="flex gap-1 mb-4" role="tablist">
           {STEPS.map((s, i) => (
@@ -309,15 +329,11 @@ export default function HalftoneModal({ onClose }: Props) {
 
         {step === 'photo' && (
           <div>
-            <p className={label}>CANVAS</p>
-            <div className="flex gap-1 mb-2">
+            <p className={label}>CANVAS · TURNS WITH THE PHOTO</p>
+            <div className="flex gap-1 mb-4">
               {(Object.keys(PRINT_SIZES) as PrintSize[]).map(s => (
                 <button key={s} className={seg(size === s)} onClick={() => changeSize(s)}>{PRINT_SIZES[s].label}</button>
               ))}
-            </div>
-            <div className="flex gap-1 mb-4">
-              <button className={seg(orientation === 'portrait')} onClick={() => setOrientation('portrait')}>PORTRAIT</button>
-              <button className={seg(orientation === 'landscape')} onClick={() => setOrientation('landscape')}>LANDSCAPE</button>
             </div>
             <input
               ref={fileInput}
@@ -334,14 +350,16 @@ export default function HalftoneModal({ onClose }: Props) {
               <ArrowUpTrayIcon className="w-4 h-4" /> {photo ? 'CHOOSE A DIFFERENT PHOTO' : 'CHOOSE A PHOTO'}
             </button>
             {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
+            {photo && (
+              <p className="text-white/40 text-xs font-mono mb-3">
+                {photo.width} × {photo.height} · {ratioLabel(photo.width, photo.height)} · {orientation.toUpperCase()} · PRINTS {rect.w.toFixed(2)} × {rect.h.toFixed(2)} IN
+              </p>
+            )}
             <Slider
-              name="ZOOM PHOTO" min={0} max={100} step={0.5} disabled={!photo}
-              value={(Math.log(view.scale / PHOTO_SCALE_MIN) / Math.log(PHOTO_SCALE_MAX / PHOTO_SCALE_MIN)) * 100}
-              display={`${Math.round(view.scale * 100)}%`}
-              onChange={v => {
-                const s = PHOTO_SCALE_MIN * Math.pow(PHOTO_SCALE_MAX / PHOTO_SCALE_MIN, v / 100)
-                setView(cur => zoomPhotoAbout(cur, s / cur.scale, 0, 0))
-              }}
+              name="PHOTO SIZE" min={FRAME_SCALE_MIN * 100} max={FRAME_SCALE_MAX * 100} step={0.5} disabled={!photo}
+              value={frame.scale * 100}
+              display={`${rect.w.toFixed(2)} × ${rect.h.toFixed(2)} IN`}
+              onChange={v => setFrame(f => clampFrame({ ...f, scale: v / 100 }, page, aspect))}
             />
             <Slider
               name="BRIGHTNESS" min={-100} max={100} step={1} value={Math.round(tone.brightness * 100)}
@@ -359,8 +377,8 @@ export default function HalftoneModal({ onClose }: Props) {
             </div>
             <p className="text-white/40 text-xs mb-4">
               {photo
-                ? `Drag to move. Pinch or scroll to zoom. Mid-grey prints at ${midGrey}% ink. Use WHITE INK when printing light ink on a dark shirt.`
-                : 'Pick the photo to turn into a screen. It is converted to black and white.'}
+                ? `The whole photo prints, never cropped. Drag to move it, pinch or scroll to resize it. Mid-grey prints at ${midGrey}% ink.`
+                : 'Pick the photo to turn into a screen. A horizontal photo gets a landscape page, a vertical one a portrait page.'}
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('text')} disabled={!photo} className={primary}>ADD TEXT →</button>
@@ -370,45 +388,63 @@ export default function HalftoneModal({ onClose }: Props) {
 
         {step === 'text' && (
           <div>
-            <label className={label} htmlFor="halftone-text">TEXT (OPTIONAL)</label>
+            <label className={label} htmlFor="halftone-text-above">TEXT ABOVE THE PHOTO</label>
             <textarea
-              id="halftone-text"
+              id="halftone-text-above"
               rows={2}
-              value={text.text}
-              onChange={e => setText(t => ({ ...t, text: e.target.value }))}
-              placeholder="A name, a date, a place…"
+              value={textAbove}
+              onChange={e => setTextAbove(e.target.value)}
+              placeholder="Optional"
               className="w-full bg-white/5 text-white text-sm p-3 mb-3 focus:outline-none focus:bg-white/10"
-              style={{ borderRadius: 0, fontFamily: TEXT_FAMILY, fontWeight: text.weight }}
-              data-testid="halftone-text"
+              style={{ borderRadius: 0, fontFamily: TEXT_FAMILY, fontWeight: style.weight }}
+              data-testid="halftone-text-above"
+            />
+            <label className={label} htmlFor="halftone-text-below">TEXT BELOW THE PHOTO</label>
+            <textarea
+              id="halftone-text-below"
+              rows={2}
+              value={textBelow}
+              onChange={e => setTextBelow(e.target.value)}
+              placeholder="Optional"
+              className="w-full bg-white/5 text-white text-sm p-3 mb-3 focus:outline-none focus:bg-white/10"
+              style={{ borderRadius: 0, fontFamily: TEXT_FAMILY, fontWeight: style.weight }}
+              data-testid="halftone-text-below"
             />
             <p className={label}>WEIGHT · INTER</p>
             <div className="flex gap-1 mb-3">
               {([400, 700, 900] as const).map(w => (
-                <button key={w} className={seg(text.weight === w)} onClick={() => setText(t => ({ ...t, weight: w }))}>
+                <button key={w} className={seg(style.weight === w)} onClick={() => setStyle(t => ({ ...t, weight: w }))}>
                   {w === 400 ? 'REGULAR' : w === 700 ? 'BOLD' : 'BLACK'}
                 </button>
               ))}
             </div>
             <Slider
-              name="SIZE" min={0.1} max={8} step={0.05} value={text.size}
-              display={`${text.size.toFixed(2)} IN`}
-              onChange={v => setText(t => ({ ...t, size: v }))}
+              name="TEXT SIZE" min={0.1} max={4} step={0.05} value={style.size}
+              display={`${style.size.toFixed(2)} IN`}
+              onChange={v => setStyle(t => ({ ...t, size: v }))}
             />
             <Slider
-              name="LETTER SPACING" min={0} max={0.5} step={0.01} value={text.tracking}
-              display={`${text.tracking.toFixed(2)} EM`}
-              onChange={v => setText(t => ({ ...t, tracking: v }))}
+              name="LETTER SPACING" min={0} max={0.5} step={0.01} value={style.tracking}
+              display={`${style.tracking.toFixed(2)} EM`}
+              onChange={v => setStyle(t => ({ ...t, tracking: v }))}
             />
-            <div className="flex gap-1 mb-2">
-              <button className={seg(text.uppercase)} onClick={() => setText(t => ({ ...t, uppercase: true }))}>UPPERCASE</button>
-              <button className={seg(!text.uppercase)} onClick={() => setText(t => ({ ...t, uppercase: false }))}>AS TYPED</button>
+            <div className="flex gap-1 mb-3">
+              <button className={seg(style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: true }))}>UPPERCASE</button>
+              <button className={seg(!style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: false }))}>AS TYPED</button>
             </div>
-            <div className="flex gap-1 mb-2">
-              <button className={seg(text.ink === 'ink')} onClick={() => setText(t => ({ ...t, ink: 'ink' }))}>SOLID INK</button>
-              <button className={seg(text.ink === 'knockout')} onClick={() => setText(t => ({ ...t, ink: 'knockout' }))}>KNOCKOUT</button>
-            </div>
+            <Slider
+              name="PHOTO SIZE" min={FRAME_SCALE_MIN * 100} max={FRAME_SCALE_MAX * 100} step={0.5}
+              value={frame.scale * 100}
+              display={`${rect.w.toFixed(2)} × ${rect.h.toFixed(2)} IN`}
+              onChange={v => setFrame(f => clampFrame({ ...f, scale: v / 100 }, page, aspect))}
+            />
+            {offPage && (
+              <p className="text-amber-400 text-xs mb-3" data-testid="halftone-text-offpage">
+                The text runs off the page. Make the photo or the text smaller, or drag the photo to make room.
+              </p>
+            )}
             <p className="text-white/40 text-xs mb-4">
-              Drag the preview to move the text. Pinch or scroll to resize it. SOLID INK prints the letters solid; KNOCKOUT cuts them out of the photo.
+              Text prints in solid ink, centred above and below the photo. A line too wide for the page shrinks to fit. Drag the preview to move the photo and its text together.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('photo')} className={ghost}>← BACK</button>

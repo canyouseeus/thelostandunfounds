@@ -356,11 +356,11 @@ const halftoneTour: Tour = {
     },
     {
       title: 'Step 1: Photo',
-      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, portrait or landscape. Choose a photo, drag it to move and pinch (or scroll) to zoom.\n\nBRIGHTNESS and CONTRAST set the tones. WHITE INK inverts the photo for printing light ink on a dark shirt.',
+      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, and choose a photo. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. BRIGHTNESS and CONTRAST set the tones, and WHITE INK inverts it for light ink on a dark shirt.',
     },
     {
       title: 'Step 2: Text',
-      body: 'Optional. Type a name, a date or a place. It is set in Inter, the site typeface, in REGULAR, BOLD or BLACK. Drag the preview to move it and pinch to resize it.\n\nSOLID INK prints the letters solid. KNOCKOUT cuts them out of the photo.',
+      body: 'Optional. Type text ABOVE and BELOW the photo — a name, a date, a place. It is set in Inter, the site typeface, in REGULAR, BOLD or BLACK, and prints in solid ink.\n\nThe text stays centred on the photo and moves with it. A line too wide for the page shrinks to fit, and a warning shows if the text runs off the page.',
     },
     {
       target: 'halftone-dot-shape',
