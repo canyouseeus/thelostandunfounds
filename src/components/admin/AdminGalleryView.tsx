@@ -1,6 +1,6 @@
 import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { Eye, EyeOff, Radio } from 'lucide-react';
@@ -15,9 +15,14 @@ import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/ga
 import { LoadingSpinner } from '@/components/Loading';
 import { isAdminUser } from '@/utils/admin';
 
+// Lazy: the screen generator bundles its own typeface; nobody else should download it.
+const HalftoneModal = lazy(() => import('@/components/halftone/HalftoneModal'));
+
 interface AdminGalleryViewProps {
     onBack: () => void;
     isPhotographerView?: boolean;
+    /** The admin console draws its own panel title above this view; skip ours so it is not shown twice. */
+    hideTitle?: boolean;
 }
 
 interface GalleryStats {
@@ -55,7 +60,7 @@ interface PricingOption {
     is_active?: boolean;
 }
 
-export default function AdminGalleryView({ onBack, isPhotographerView = false }: AdminGalleryViewProps) {
+export default function AdminGalleryView({ onBack, isPhotographerView = false, hideTitle = false }: AdminGalleryViewProps) {
     const { user } = useAuth(); // Get authenticated user
     const [stats, setStats] = useState<GalleryStats | null>(null);
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
@@ -97,6 +102,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     // Photographer Invite State
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [qrLibrary, setQrLibrary] = useState<{ slug: string; name: string } | null>(null);
+    const [isHalftoneOpen, setIsHalftoneOpen] = useState(false);
     const [inviteData, setInviteData] = useState({ email: '', name: '' });
     const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -1270,8 +1276,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             </ExpandableScreen>
 
             {/* Compact header — title + actions */}
-            <div className="shrink-0 flex items-center justify-between gap-3 pb-3">
-                <div className="flex items-center gap-2">
+            <div className={`shrink-0 flex items-center gap-3 pb-3 ${hideTitle ? 'justify-start' : 'justify-between'}`}>
+                {!hideTitle && <div className="flex items-center gap-2">
                     <div className="bg-white p-1.5">
                         <PhotoIcon className="w-4 h-4 text-black" />
                     </div>
@@ -1283,17 +1289,30 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             {pendingAppsCount}
                         </span>
                     )}
-                </div>
-                <div className="flex items-center gap-2">
+                </div>}
+                <div className="flex flex-wrap items-center gap-2">
                     {!isPhotographerView && (
                         <a
                             href="/admin/live"
                             className="p-2 bg-white/5 hover:bg-white/10 text-green-400 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
                             title="Live events — camera uploads and review inbox"
+                            data-tour="gallery-live-link"
                         >
                             <Radio className="w-3 h-3" />
-                            <span className="hidden sm:inline">Live</span>
+                            <span>Live</span>
                         </a>
+                    )}
+                    {!isPhotographerView && (
+                        <button
+                            onClick={() => setIsHalftoneOpen(true)}
+                            className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
+                            title="Screen generator — halftone film positives for screen printing"
+                            aria-label="Screen generator"
+                            data-tour="gallery-screens-button"
+                        >
+                            <span className="text-xs leading-none" aria-hidden="true">▲</span>
+                            <span>Screens</span>
+                        </button>
                     )}
                     {!isPhotographerView && (
                         <button
@@ -1641,6 +1660,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )}
             </div>
 
+
+            {isHalftoneOpen && (
+                <Suspense fallback={null}>
+                    <HalftoneModal onClose={() => setIsHalftoneOpen(false)} />
+                </Suspense>
+            )}
 
             {qrLibrary && (
                 <QrWallpaperModal slug={qrLibrary.slug} name={qrLibrary.name} onClose={() => setQrLibrary(null)} />

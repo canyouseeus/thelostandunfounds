@@ -229,7 +229,7 @@ const liveEventTour: Tour = {
       panel: 'gallery',
       target: 'gallery-live-link',
       title: 'Open Live Event',
-      body: 'LIVE EVENT, next to the Gallery Management title, opens the live console.',
+      body: 'LIVE, the green button at the top of Gallery Management, opens the live console.',
     },
     {
       route: '/admin/live',
@@ -339,7 +339,43 @@ const supportTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+const halftoneTour: Tour = {
+  id: 'gallery-screen-generator',
+  title: 'Screen Generator',
+  summary: 'Turn a photo into a halftone film positive for screen printing, with triangle or 3 dots and your own text.',
+  group: 'new',
+  announce: '2026-10-27',
+  steps: [
+    {
+      route: '/admin',
+      panel: 'gallery',
+      target: 'gallery-screens-button',
+      title: 'Screens Button',
+      body: 'SCREENS, at the top of Gallery Management, opens the screen generator. It turns a photo into a black and white halftone film for burning a screen.\n\nIt has three steps: PHOTO, TEXT, SCREEN.',
+      missingNote: 'Open Gallery Management from the console. SCREENS sits in the row of buttons at the top, next to LIVE.',
+    },
+    {
+      title: 'Step 1: Photo',
+      body: 'Pick the canvas, 18 × 24 or 8.5 × 11, and choose a photo. The page turns with the photo: a horizontal photo gets a landscape page, a vertical one a portrait page.\n\nThe whole photo prints at its own shape (3:2 from a Fujifilm), never cropped. PHOTO SIZE, a pinch or a scroll resizes it proportionally; drag to move it. AUTO LEVELS stretches the photo from its darkest to its lightest point (good for night shots). BRIGHTNESS and CONTRAST fine-tune it, and WHITE INK inverts it for light ink on a dark shirt.',
+    },
+    {
+      title: 'Step 2: Text',
+      body: 'Optional. Type text ABOVE and BELOW the photo — a name, a date, a place. It is set in Inter, the site typeface, in REGULAR, BOLD or BLACK, and prints in solid ink.\n\nThe text stays centred on the photo and moves with it. A line too wide for the page shrinks to fit, and a warning shows if the text runs off the page.',
+    },
+    {
+      target: 'halftone-dot-shape',
+      title: 'Step 3: Screen',
+      body: 'Choose the dot: a CIRCLE (the classic halftone), a perfect equilateral TRIANGLE, or a BOLD 3 from Inter. Every dot is a copy of that one shape, always whole and upright.\n\nSIZE FOLLOWS TONE grows each dot with the darkness, like a normal halftone; ONE SIZE keeps every dot identical and prints darker areas with more of them. LARGEST DOT sets how big a dot gets in pure black. Spacing starts at 250 mesh → 55 LPI, at 22.5°. DOT DETAIL shows the real dots; drag the preview to look around.',
+      missingNote: 'Open the generator and go to 3 · SCREEN to see these settings.',
+    },
+    {
+      title: 'Download The Film',
+      body: 'DOWNLOAD FILM saves a vector PDF at true size: the dot is one object stamped everywhere and the text is converted to outlines, so every edge prints sharp at your film printer\'s resolution. PNG INSTEAD saves a 360 DPI raster if your printer needs one. Choose MIRRORED if your film goes emulsion side down.',
+    },
+  ],
+};
+
+export const TOURS: Tour[] = [halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);
