@@ -1,17 +1,16 @@
 /**
- * Everything the screen (halftone) generator draws, as pure functions.
- * The on-screen loupe and the downloaded film positive run through the same
- * `renderRegion`, so the dots you inspect are the dots that print.
+ * Everything the screen generator draws, as pure functions.
  *
- * Units: the page is measured in inches. The screen is a grid of cells
- * `1 / lpi` inches square, turned by `angle`. Each cell holds a dot — a
- * triangle or a "3" — and, as in Photoshop's Halftone Screen, every output
- * pixel is decided by the photo's tone at that pixel, so the dot is sized by
- * the tone and cut by any edge running through the cell. Coverage is exact: it comes from a measured lookup table,
- * not from the shape's nominal area, so a 40% grey prints as 40% ink.
+ * The screen is ONE shape at ONE size — a perfect equilateral triangle or a
+ * Bold "3" from Inter, outlined into a vector object — cloned onto a grid of
+ * cells `1 / lpi` inches apart, turned by `angle`. Tone comes from how many
+ * cells get a clone (an ordered dither), never from resizing, clipping or
+ * flipping the shape: every dot on the film is identical.
  *
- * Output is a 1-bit PNG (black = ink) tagged with its DPI, the format a
- * film-positive printer or RIP expects.
+ * The film downloads as a vector PDF: the clone is defined once and stamped
+ * at every position, and the text is converted to outlines, so the film
+ * printer draws every edge sharp at its own resolution. A 1-bit PNG of the
+ * same drawing is available for printers that want a raster file.
  */
 
 export type DotShape = 'triangle' | 'three'
@@ -45,10 +44,10 @@ export interface ScreenSettings {
   lpi: number
   angle: number // degrees
   shape: DotShape
-  /** Darkness below this prints nothing — a smaller dot would not hold in the mesh. */
-  minDot: number
-  /** Darkness above this prints solid — a bigger gap would plug. */
-  maxDot: number
+  /** The clone's size as a fraction of the cell spacing (triangle side, or the 3's height). */
+  dotSize: number
+  /** Tones lighter than this print as bare paper. */
+  cutoff: number
   /** Wrong-reading film, for printing emulsion-side down. */
   mirror: boolean
 }
@@ -93,21 +92,25 @@ export interface TextStyle {
   uppercase: boolean
 }
 
-/** A laid-out block of text, in page inches. Text always prints as solid ink. */
+/** One drawing command, in the shape opentype.js produces (y grows downward). */
+export type Cmd =
+  | { type: 'M' | 'L'; x: number; y: number }
+  | { type: 'C'; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
+  | { type: 'Q'; x1: number; y1: number; x: number; y: number }
+  | { type: 'Z' }
+
+/** A laid-out block of text, converted to outlines, in page inches. Text always prints as solid ink. */
 export interface TextBlock {
-  lines: string[]
-  weight: number
-  size: number
-  tracking: number
-  cx: number
-  cy: number
-  width: number
-  height: number
+  cmds: Cmd[]
+  x0: number
+  y0: number
+  x1: number
+  y1: number
   /** True when the block runs off the page — the frame needs to be smaller or moved. */
   offPage: boolean
 }
 
-/** The site's typeface, registered for canvas under its own name (see fonts.ts). */
+/** The site's typeface, registered for the page under its own name (see fonts.ts). */
 export const TEXT_FAMILY = '"TLU Inter", Inter, system-ui, sans-serif'
 
 /** Page orientation follows the photo: horizontal photo, landscape page. */
@@ -215,276 +218,303 @@ export function buildToneMap(
   return { w, h, pxPerIn: w / page.w, dark }
 }
 
-// --- Dot shapes ---------------------------------------------------------------
+// --- The clone ------------------------------------------------------------------
 
-/**
- * A dot shape as a bitmap over the unit box [-0.5, 0.5]², upright.
- * At scale k the shape spans k cells; anything past the cell edge is clipped,
- * so each pixel only ever asks its own cell.
- */
-export interface ShapeMask {
-  n: number
-  data: Uint8Array
+/** The one shape every dot is a copy of, in cell units, centred on (0, 0), y down. */
+export interface Clone {
+  shape: DotShape
+  cmds: Cmd[]
+  /** Ink area of one clone as a fraction of one cell. */
+  coverage: number
 }
 
-const MASK_N = 512
-
-/** Equilateral triangle, point up, side = 1, centred on its bounding box. */
-export function triangleMask(): ShapeMask {
-  const n = MASK_N
-  const data = new Uint8Array(n * n)
-  const h = Math.sqrt(3) / 2
-  for (let r = 0; r < n; r++) {
-    const y = (r + 0.5) / n - 0.5
-    for (let c = 0; c < n; c++) {
-      const x = (c + 0.5) / n - 0.5
-      if (y <= h / 2 && Math.sqrt(3) * Math.abs(x) <= y + h / 2) data[r * n + c] = 1
+function mapCmds(cmds: Cmd[], f: (x: number, y: number) => [number, number]): Cmd[] {
+  return cmds.map(c => {
+    if (c.type === 'Z') return c
+    if (c.type === 'C') {
+      const [x1, y1] = f(c.x1, c.y1)
+      const [x2, y2] = f(c.x2, c.y2)
+      const [x, y] = f(c.x, c.y)
+      return { type: 'C', x1, y1, x2, y2, x, y }
     }
-  }
-  return { n, data }
+    if (c.type === 'Q') {
+      const [x1, y1] = f(c.x1, c.y1)
+      const [x, y] = f(c.x, c.y)
+      return { type: 'Q', x1, y1, x, y }
+    }
+    const [x, y] = f(c.x, c.y)
+    return { type: c.type, x, y }
+  })
 }
 
-/** The numeral 3 in the site's typeface, its glyph box fitted to the unit box. */
-export function glyphMask(glyph: string, weight: number, family: string): ShapeMask {
-  const n = MASK_N
+/** Append commands to the context's current path, scaled by `s` and offset. */
+export function tracePath(ctx: CanvasRenderingContext2D | Path2D, cmds: Cmd[], s = 1, ox = 0, oy = 0) {
+  for (const c of cmds) {
+    if (c.type === 'M') ctx.moveTo(c.x * s + ox, c.y * s + oy)
+    else if (c.type === 'L') ctx.lineTo(c.x * s + ox, c.y * s + oy)
+    else if (c.type === 'C') ctx.bezierCurveTo(c.x1 * s + ox, c.y1 * s + oy, c.x2 * s + ox, c.y2 * s + oy, c.x * s + ox, c.y * s + oy)
+    else if (c.type === 'Q') ctx.quadraticCurveTo(c.x1 * s + ox, c.y1 * s + oy, c.x * s + ox, c.y * s + oy)
+    else ctx.closePath()
+  }
+}
+
+/** Area of a shape as a fraction of one cell, by rasterising it large. */
+function measureCoverage(cmds: Cmd[]): number {
+  const n = 512 // canvas px; the cell is n/2 px so a clone up to 2 cells wide fits
   const c = document.createElement('canvas')
   c.width = c.height = n
   const ctx = c.getContext('2d', { willReadFrequently: true })!
-  const probe = 100
-  ctx.font = `${weight} ${probe}px ${family}`
-  const m = ctx.measureText(glyph)
-  const gw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight
-  const gh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
-  const fit = (n * 0.98) / Math.max(gw, gh)
-  ctx.font = `${weight} ${probe * fit}px ${family}`
-  ctx.fillStyle = '#000'
-  ctx.textBaseline = 'alphabetic'
-  const left = (n - gw * fit) / 2 + m.actualBoundingBoxLeft * fit
-  const base = (n - gh * fit) / 2 + m.actualBoundingBoxAscent * fit
-  ctx.fillText(glyph, left, base)
-  const px = ctx.getImageData(0, 0, n, n).data
-  const data = new Uint8Array(n * n)
-  for (let i = 0; i < data.length; i++) data[i] = px[i * 4 + 3] >= 128 ? 1 : 0
+  ctx.beginPath()
+  tracePath(ctx, cmds, n / 2, n / 2, n / 2)
+  ctx.fill('nonzero')
+  const a = ctx.getImageData(0, 0, n, n).data
+  let ink = 0
+  for (let i = 3; i < a.length; i += 4) ink += a[i] / 255
   c.width = c.height = 0
-  return { n, data }
-}
-
-/** Ink coverage of one cell holding the shape at scale k (clipped to the cell). */
-function coverageAt(mask: ShapeMask, k: number, grid = 64): number {
-  if (k <= 0) return 0
-  let hit = 0
-  const { n, data } = mask
-  for (let r = 0; r < grid; r++) {
-    const my = Math.floor((((r + 0.5) / grid - 0.5) / k + 0.5) * n)
-    if (my < 0 || my >= n) continue
-    for (let c = 0; c < grid; c++) {
-      const mx = Math.floor((((c + 0.5) / grid - 0.5) / k + 0.5) * n)
-      if (mx >= 0 && mx < n && data[my * n + mx]) hit++
-    }
-  }
-  return hit / (grid * grid)
+  return ink / ((n / 2) * (n / 2))
 }
 
 /**
- * Darkness → cell code. Codes: 0 = paper; +k = ink shape at scale k;
- * -k = paper shape at scale k on a solid cell; SOLID = solid ink.
- *
- * Triangles grow past the cell edge (clipped) until the cell is solid — the
- * gaps left in the shadows are themselves little triangles. A "3" can never
- * fill its cell, so past 50% it flips to a paper-white 3 on solid ink: the
- * shape stays legible from highlight to shadow and the tone stays exact.
+ * The clone. `size` is in cells: the triangle's side, or the 3's height.
+ * `three` is the Bold "3" glyph from Inter (an opentype.js glyph), whose
+ * outline becomes the shape.
  */
-export const SOLID = 1e6
-const LUT_N = 1024
-
-export interface DotTable {
-  shape: DotShape
-  mask: ShapeMask
-  codes: Float32Array // LUT_N + 1 entries, indexed by round(darkness * LUT_N)
-}
-
-export function buildDotTable(shape: DotShape, mask: ShapeMask): DotTable {
-  const kMax = shape === 'triangle' ? 3.3 : 2.2
-  const steps = 600
-  const ks = new Float32Array(steps + 1)
-  const cov = new Float32Array(steps + 1)
-  let best = 0
-  for (let s = 0; s <= steps; s++) {
-    const k = (kMax * s) / steps
-    best = Math.max(best, coverageAt(mask, k))
-    ks[s] = k
-    cov[s] = best // running max: never pick a bigger dot for less ink
+export function makeClone(
+  shape: DotShape,
+  size: number,
+  three?: { getPath(x: number, y: number, fontSize: number): { commands: Cmd[] } },
+): Clone {
+  let cmds: Cmd[]
+  if (shape === 'triangle') {
+    // A perfect equilateral triangle, point up, centred on its bounding box.
+    const h = (size * Math.sqrt(3)) / 2
+    cmds = [
+      { type: 'M', x: 0, y: -h / 2 },
+      { type: 'L', x: size / 2, y: h / 2 },
+      { type: 'L', x: -size / 2, y: h / 2 },
+      { type: 'Z' },
+    ]
+    return { shape, cmds, coverage: (Math.sqrt(3) / 4) * size * size }
   }
-  const smallestK = (target: number): number => {
-    let lo = 0
-    let hi = steps
-    if (cov[hi] < target) return -1
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1
-      if (cov[mid] >= target) hi = mid
-      else lo = mid + 1
-    }
-    return ks[lo]
-  }
-  const flip = shape === 'three' ? Math.min(0.5, cov[steps]) : Infinity
-  const codes = new Float32Array(LUT_N + 1)
-  for (let q = 0; q <= LUT_N; q++) {
-    const d = q / LUT_N
-    if (d <= 0) codes[q] = 0
-    else if (d >= 1) codes[q] = SOLID
-    else if (d <= flip) {
-      const k = smallestK(d)
-      codes[q] = k < 0 ? SOLID : k
-    } else {
-      // Paper shape on ink: the white 3 covers (1 - d).
-      const k = smallestK(Math.min(1 - d, flip))
-      codes[q] = k <= 0 ? SOLID : -k
+  if (!three) throw new Error('The 3 needs the Bold font loaded')
+  const raw = three.getPath(0, 0, 1).commands
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const c of raw) {
+    if (c.type === 'Z') continue
+    const pts: [number, number][] = [[c.x, c.y]]
+    if (c.type === 'C') pts.push([c.x1, c.y1], [c.x2, c.y2])
+    if (c.type === 'Q') pts.push([c.x1, c.y1])
+    for (const [x, y] of pts) {
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x)
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y)
     }
   }
-  return { shape, mask, codes }
+  const k = size / (maxY - minY)
+  const cx = (minX + maxX) / 2
+  const cy = (minY + maxY) / 2
+  cmds = mapCmds(raw, (x, y) => [(x - cx) * k, (y - cy) * k])
+  return { shape, cmds, coverage: measureCoverage(cmds) }
 }
 
-// --- The screen -----------------------------------------------------------------
+// --- Placing the clones -----------------------------------------------------------
 
-/**
- * Everything needed to screen any region of the film at any DPI.
- *
- * Screening works the way Photoshop's Bitmap → Halftone Screen does: the
- * photo is first resampled to the output resolution, then every output pixel
- * is decided by the photo's own tone *at that pixel* against the dot shape of
- * the cell it falls in. A dot that straddles an edge is cut by the edge, so
- * detail finer than a cell survives instead of being averaged away.
- */
+/** 8×8 Bayer matrix: an even, ordered spread of 64 thresholds. */
+const BAYER: number[][] = (() => {
+  let m = [[0]]
+  while (m.length < 8) {
+    const n = m.length
+    const next = Array.from({ length: n * 2 }, () => Array<number>(n * 2).fill(0))
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const v = m[y][x] * 4
+        next[y][x] = v
+        next[y][x + n] = v + 2
+        next[y + n][x] = v + 3
+        next[y + n][x + n] = v + 1
+      }
+    }
+    m = next
+  }
+  return m
+})()
+
 export interface ScreenJob {
   page: { w: number; h: number }
   lpi: number
   cos: number
   sin: number
   mirror: boolean
-  minDot: number
-  maxDot: number
-  photo: PhotoSource | null
-  frame: PhotoFrame
-  tone: ToneSettings
-  table: DotTable
+  cutoff: number
+  tone: ToneMap
+  clone: Clone
 }
 
-export function buildScreenJob(
-  page: { w: number; h: number },
-  s: ScreenSettings,
-  table: DotTable,
-  photo: PhotoSource | null,
-  frame: PhotoFrame,
-  tone: ToneSettings,
-): ScreenJob {
+export function buildScreenJob(page: { w: number; h: number }, s: ScreenSettings, clone: Clone, tone: ToneMap): ScreenJob {
   const a = (s.angle * Math.PI) / 180
-  const minDot = Math.max(0, Math.min(1, s.minDot))
-  return {
-    page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror,
-    minDot, maxDot: Math.max(minDot, Math.min(1, s.maxDot)),
-    photo, frame, tone, table,
-  }
+  return { page, lpi: s.lpi, cos: Math.cos(a), sin: Math.sin(a), mirror: s.mirror, cutoff: s.cutoff, tone, clone }
+}
+
+/** Tone-map resolution for screening: two samples per cell, capped at ~6 MP. */
+export function toneResolution(page: { w: number; h: number }, lpi: number): number {
+  return Math.min(lpi * 2, Math.sqrt(6e6 / (page.w * page.h)))
+}
+
+function sampleTone(t: ToneMap, xIn: number, yIn: number): number {
+  const x = xIn * t.pxPerIn - 0.5
+  const y = yIn * t.pxPerIn - 0.5
+  if (x < -0.5 || y < -0.5 || x > t.w - 0.5 || y > t.h - 0.5) return 0
+  const x0 = Math.max(0, Math.min(t.w - 1, Math.floor(x)))
+  const y0 = Math.max(0, Math.min(t.h - 1, Math.floor(y)))
+  const x1 = Math.min(t.w - 1, x0 + 1)
+  const y1 = Math.min(t.h - 1, y0 + 1)
+  const fx = Math.max(0, Math.min(1, x - x0))
+  const fy = Math.max(0, Math.min(1, y - y0))
+  const d = t.dark
+  const a = d[y0 * t.w + x0] * (1 - fx) + d[y0 * t.w + x1] * fx
+  const b = d[y1 * t.w + x0] * (1 - fx) + d[y1 * t.w + x1] * fx
+  return a * (1 - fy) + b * fy
 }
 
 /**
- * Screen a region of the film. (x0, y0, w, h) are output pixels at `dpi`.
- * `out[i]` = 1 where ink prints. `photoCanvas` is scratch space for the
- * resampled photo; `text` is the RGBA of the text over the same region
- * (see textRegion), or null. Text prints solid.
+ * Call `dot(x, y)` (page inches, right-reading) for every clone whose centre
+ * lies in the page rectangle [x0, x1] × [y0, y1], row by row.
+ *
+ * A cell gets a clone when its darkness beats the cell's Bayer threshold, so
+ * the photo's darkness is the share of cells filled: black fills every cell,
+ * 50% grey half of them, white none. The full tonal range of the photo maps
+ * onto the range one clone size can print (bare paper up to every cell full).
  */
-export function renderRegion(
+export function forEachDot(
   job: ScreenJob,
   x0: number,
   y0: number,
-  w: number,
-  h: number,
-  dpi: number,
-  out: Uint8Array,
-  text: Uint8ClampedArray | null,
-  photoCanvas: HTMLCanvasElement,
+  x1: number,
+  y1: number,
+  dot: (x: number, y: number) => void,
+  onRow?: (fraction: number) => void,
 ) {
-  if (photoCanvas.width !== w || photoCanvas.height !== h) {
-    photoCanvas.width = w
-    photoCanvas.height = h
+  const { cos, sin, lpi, page } = job
+  const us: number[] = []
+  const vs: number[] = []
+  for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) {
+    us.push((x * cos + y * sin) * lpi)
+    vs.push((-x * sin + y * cos) * lpi)
   }
-  const pctx = photoCanvas.getContext('2d', { willReadFrequently: true })!
-  const Wpx = job.page.w * dpi
-  const Hpx = job.page.h * dpi
-  drawPhoto(pctx, Wpx, Hpx, job.photo, job.frame, x0, y0, job.mirror)
-  const px = pctx.getImageData(0, 0, w, h).data
-
-  // Tone → cell code, once per grey level rather than once per pixel.
-  const codeFor = new Float32Array(256)
-  for (let g = 0; g < 256; g++) {
-    let d = applyTone(g / 255, job.tone)
-    if (d < job.minDot) d = 0
-    else if (d > job.maxDot) d = 1
-    codeFor[g] = job.table.codes[Math.round(d * LUT_N)]
-  }
-
-  const { cos, sin, lpi } = job
-  const { n, data } = job.table.mask
-  // Moving one output pixel right moves `sx` page inches (negative when mirrored).
-  const sx = (job.mirror ? -1 : 1) / dpi
-  const du = sx * cos * lpi
-  const dv = -sx * sin * lpi
-  for (let r = 0; r < h; r++) {
-    const yIn = (y0 + r + 0.5) / dpi
-    const pxStart = x0 + 0.5
-    const xIn = job.mirror ? (Wpx - pxStart) / dpi : pxStart / dpi
-    let u = (xIn * cos + yIn * sin) * lpi
-    let v = (-xIn * sin + yIn * cos) * lpi
-    const row = r * w
-    const offPageRow = y0 + r < 0 || y0 + r >= Hpx
-    for (let c = 0; c < w; c++, u += du, v += dv) {
-      const i = row + c
-      const p = i * 4
-      const xPage = x0 + c
-      if (offPageRow || xPage < 0 || xPage >= Wpx) {
-        out[i] = 0
-        continue
-      }
-      const grey = Math.round(0.2126 * px[p] + 0.7152 * px[p + 1] + 0.0722 * px[p + 2])
-      const code = codeFor[grey]
-      let ink = 0
-      if (code >= SOLID) ink = 1
-      else if (code !== 0) {
-        const fi = Math.floor(u)
-        const fj = Math.floor(v)
-        const k = code > 0 ? code : -code
-        const mx = Math.floor(((u - fi - 0.5) / k + 0.5) * n)
-        const my = Math.floor(((v - fj - 0.5) / k + 0.5) * n)
-        const inShape = mx >= 0 && my >= 0 && mx < n && my < n && data[my * n + mx] === 1
-        ink = code > 0 ? (inShape ? 1 : 0) : inShape ? 0 : 1
-      }
-      out[i] = ink
+  const iMin = Math.floor(Math.min(...us)) - 1
+  const iMax = Math.ceil(Math.max(...us)) + 1
+  const jMin = Math.floor(Math.min(...vs)) - 1
+  const jMax = Math.ceil(Math.max(...vs)) + 1
+  for (let j = jMin; j <= jMax; j++) {
+    const v = j + 0.5
+    const row = BAYER[((j % 8) + 8) % 8]
+    for (let i = iMin; i <= iMax; i++) {
+      const u = i + 0.5
+      const x = (u * cos - v * sin) / lpi
+      const y = (u * sin + v * cos) / lpi
+      if (x < x0 || x > x1 || y < y0 || y > y1 || x < 0 || y < 0 || x > page.w || y > page.h) continue
+      const d = sampleTone(job.tone, x, y)
+      if (d < job.cutoff) continue
+      if (d > (row[((i % 8) + 8) % 8] + 0.5) / 64) dot(x, y)
     }
+    if (onRow && (j - jMin) % 64 === 0) onRow((j - jMin) / (jMax - jMin + 1))
   }
-  if (text) {
-    for (let i = 0, p = 3; i < w * h; i++, p += 4) if (text[p] >= 128) out[i] = 1
+}
+
+/** How far a clone reaches from its centre, in inches — for padding regions. */
+function cloneReach(job: ScreenJob): number {
+  return 1.5 / job.lpi
+}
+
+/**
+ * Draw the film (clones + text) into a canvas: white paper, black ink,
+ * antialiased. The canvas's pixel (0,0) is output pixel (originX, originY) at
+ * `dpi`; the output is mirrored when the film is.
+ */
+export function drawFilm(
+  ctx: CanvasRenderingContext2D,
+  job: ScreenJob,
+  text: TextBlock[],
+  dpi: number,
+  originX: number,
+  originY: number,
+) {
+  const w = ctx.canvas.width
+  const h = ctx.canvas.height
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, w, h)
+  ctx.fillStyle = '#000'
+  const Wpx = job.page.w * dpi
+  // The region, back in right-reading page inches.
+  const xa = (job.mirror ? Wpx - originX - w : originX) / dpi
+  const ya = originY / dpi
+  const pad = cloneReach(job)
+  const sx = job.mirror ? -1 : 1
+  const k = dpi / job.lpi // canvas px per cell
+  const clone = new Path2D()
+  tracePath(clone, job.clone.cmds)
+  forEachDot(job, xa - pad, ya - pad, xa + w / dpi + pad, ya + h / dpi + pad, (x, y) => {
+    const X = (job.mirror ? job.page.w - x : x) * dpi - originX
+    ctx.setTransform(sx * k, 0, 0, k, X, y * dpi - originY)
+    ctx.fill(clone, 'nonzero')
+  })
+  if (text.length) {
+    ctx.setTransform(sx * dpi, 0, 0, dpi, job.mirror ? Wpx - originX : -originX, -originY)
+    ctx.beginPath()
+    for (const b of text) tracePath(ctx, b.cmds)
+    ctx.fill('nonzero')
   }
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
 }
 
 // --- Text -----------------------------------------------------------------------
 
 const LINE_HEIGHT = 1.05
 
-function blockFont(weight: number, px: number): string {
-  return `${weight} ${px}px ${TEXT_FAMILY}`
+/** The parts of an opentype.js font the layout uses. */
+export interface OutlineFont {
+  unitsPerEm: number
+  tables: { os2?: { sCapHeight?: number } }
+  charToGlyph(ch: string): OutlineGlyph
+  getKerningValue(left: OutlineGlyph, right: OutlineGlyph): number
+}
+export interface OutlineGlyph {
+  index: number
+  advanceWidth?: number
+  getPath(x: number, y: number, fontSize: number): { commands: Cmd[] }
 }
 
-function lineWidth(ctx: CanvasRenderingContext2D, line: string, track: number): number {
-  if (!track) return ctx.measureText(line).width
+/** One line as outlines with its baseline at y = 0, starting at x = 0; size in inches. */
+function lineOutline(fonts: OutlineFont[], line: string, size: number, track: number) {
+  const cmds: Cmd[] = []
+  let x = 0
+  let prev: { font: OutlineFont; glyph: OutlineGlyph } | null = null
   const chars = Array.from(line)
-  return chars.reduce((s, ch) => s + ctx.measureText(ch).width, 0) + track * Math.max(0, chars.length - 1)
+  chars.forEach((ch, idx) => {
+    // Latin first; fall back to Latin Extended for anything it lacks.
+    let font = fonts[0]
+    let glyph = font.charToGlyph(ch)
+    for (const f of fonts.slice(1)) {
+      if (glyph.index !== 0) break
+      const g = f.charToGlyph(ch)
+      if (g.index !== 0) { font = f; glyph = g }
+    }
+    const scale = size / font.unitsPerEm
+    if (prev && prev.font === font && !track) x += font.getKerningValue(prev.glyph, glyph) * scale
+    cmds.push(...glyph.getPath(x, 0, size).commands)
+    x += (glyph.advanceWidth ?? 0) * scale
+    if (idx < chars.length - 1) x += track
+    prev = { font, glyph }
+  })
+  return { cmds, width: x }
 }
 
 /**
- * Lay out the text above and below the photo frame. Each block sits a small
- * gap off the frame, centred on it, and shrinks to fit the page width.
+ * Lay out the text above and below the photo frame, as outlines. Each block
+ * sits a small gap off the frame, centred on it, and shrinks to fit the page width.
  */
 export function layoutText(
-  ctx: CanvasRenderingContext2D,
+  fonts: OutlineFont[],
   page: { w: number; h: number },
   frame: { x: number; y: number; w: number; h: number },
   above: string,
@@ -492,103 +522,136 @@ export function layoutText(
   style: TextStyle,
 ): TextBlock[] {
   const margin = page.w * 0.04
+  const capHeight = (fonts[0].tables.os2?.sCapHeight ?? 0.727 * fonts[0].unitsPerEm) / fonts[0].unitsPerEm
   const blocks: TextBlock[] = []
   for (const [raw, side] of [[above, 'above'], [below, 'below']] as const) {
     const text = style.uppercase ? raw.toUpperCase() : raw
     const lines = text.split('\n')
     if (!lines.some(l => l.trim())) continue
-    // Measure at 100 px per inch, then scale.
-    ctx.font = blockFont(style.weight, style.size * 100)
-    const natural = Math.max(...lines.map(l => lineWidth(ctx, l, style.tracking * style.size * 100))) / 100
+    const natural = Math.max(...lines.map(l => lineOutline(fonts, l, style.size, style.tracking * style.size).width))
     const size = natural > page.w - 2 * margin ? (style.size * (page.w - 2 * margin)) / natural : style.size
-    const width = (natural * size) / style.size
-    const height = lines.length * size * LINE_HEIGHT
+    const lh = size * LINE_HEIGHT
+    const height = lines.length * lh
     const gap = Math.max(0.15, size * 0.35)
     const cy = side === 'above' ? frame.y - gap - height / 2 : frame.y + frame.h + gap + height / 2
-    blocks.push({
-      lines, weight: style.weight, size, tracking: style.tracking,
-      cx: frame.x + frame.w / 2, cy, width, height,
-      offPage: cy - height / 2 < 0 || cy + height / 2 > page.h,
+    const cx = frame.x + frame.w / 2
+    const cmds: Cmd[] = []
+    let width = 0
+    lines.forEach((line, idx) => {
+      const l = lineOutline(fonts, line, size, style.tracking * size)
+      width = Math.max(width, l.width)
+      // Centre each line's cap height on its slot.
+      const baseline = cy + (idx - (lines.length - 1) / 2) * lh + (capHeight * size) / 2
+      const left = cx - l.width / 2
+      cmds.push(...mapCmds(l.cmds, (x, y) => [x + left, y + baseline]))
     })
+    const y0 = cy - height / 2
+    const y1 = cy + height / 2
+    blocks.push({ cmds, x0: cx - width / 2, y0, x1: cx + width / 2, y1, offPage: y0 < 0 || y1 > page.h })
   }
   return blocks
 }
 
+// --- PDF (vector) ---------------------------------------------------------------------
+
+const n4 = (v: number) => (Math.round(v * 10000) / 10000).toString()
+
+/** Path operators for commands; quadratic curves become cubics (PDF has no quads). */
+function pdfPath(cmds: Cmd[]): string {
+  const out: string[] = []
+  let cx = 0
+  let cy = 0
+  for (const c of cmds) {
+    if (c.type === 'M') { out.push(`${n4(c.x)} ${n4(c.y)} m`); cx = c.x; cy = c.y }
+    else if (c.type === 'L') { out.push(`${n4(c.x)} ${n4(c.y)} l`); cx = c.x; cy = c.y }
+    else if (c.type === 'C') { out.push(`${n4(c.x1)} ${n4(c.y1)} ${n4(c.x2)} ${n4(c.y2)} ${n4(c.x)} ${n4(c.y)} c`); cx = c.x; cy = c.y }
+    else if (c.type === 'Q') {
+      const x1 = cx + (2 / 3) * (c.x1 - cx)
+      const y1 = cy + (2 / 3) * (c.y1 - cy)
+      const x2 = c.x + (2 / 3) * (c.x1 - c.x)
+      const y2 = c.y + (2 / 3) * (c.y1 - c.y)
+      out.push(`${n4(x1)} ${n4(y1)} ${n4(x2)} ${n4(y2)} ${n4(c.x)} ${n4(c.y)} c`)
+      cx = c.x; cy = c.y
+    } else out.push('h')
+  }
+  return out.join('\n')
+}
+
+async function deflate(parts: AsyncIterable<string> | Iterable<string>): Promise<Uint8Array> {
+  const cs = new CompressionStream('deflate')
+  const done = new Response(cs.readable).arrayBuffer()
+  const writer = cs.writable.getWriter()
+  const enc = new TextEncoder()
+  for await (const p of parts) await writer.write(enc.encode(p))
+  await writer.close()
+  return new Uint8Array(await done)
+}
+
 /**
- * Draw text blocks. The canvas's pixel (0,0) is page pixel (originX, originY)
- * at `pxPerIn`; `mirror` flips it with the film.
+ * The film as a one-page vector PDF at true size. The clone is a Form XObject
+ * drawn once and placed at every dot; the text is outlines. Black = ink.
  */
-export function drawText(
-  ctx: CanvasRenderingContext2D,
-  blocks: TextBlock[],
-  page: { w: number; h: number },
-  pxPerIn: number,
-  originX: number,
-  originY: number,
-  mirror: boolean,
-  fill: string,
-) {
-  ctx.save()
-  ctx.setTransform(mirror ? -1 : 1, 0, 0, 1, mirror ? page.w * pxPerIn - originX : -originX, -originY)
-  ctx.fillStyle = fill
-  ctx.textBaseline = 'middle'
-  ctx.textAlign = 'left'
-  for (const b of blocks) {
-    const size = b.size * pxPerIn
-    const track = b.tracking * size
-    ctx.font = blockFont(b.weight, size)
-    const lh = size * LINE_HEIGHT
-    b.lines.forEach((line, idx) => {
-      const y = b.cy * pxPerIn + (idx - (b.lines.length - 1) / 2) * lh
-      let x = b.cx * pxPerIn - lineWidth(ctx, line, track) / 2
-      if (!track) {
-        ctx.fillText(line, x, y)
-        return
-      }
-      for (const ch of Array.from(line)) {
-        ctx.fillText(ch, x, y)
-        x += ctx.measureText(ch).width + track
-      }
-    })
+export async function renderFilmPdf(
+  job: ScreenJob,
+  text: TextBlock[],
+  onProgress: (fraction: number) => void,
+): Promise<Blob> {
+  const Wpt = job.page.w * 72
+  const Hpt = job.page.h * 72
+
+  // Page content, in inches with y down: mirror, flip, then scale to points
+  // (PDF applies the last `cm` to a point first).
+  async function* content() {
+    let head = 'q\n'
+    if (job.mirror) head += `-1 0 0 1 ${n4(Wpt)} 0 cm\n`
+    head += `1 0 0 -1 0 ${n4(Hpt)} cm\n72 0 0 72 0 0 cm\n0 g\n`
+    yield head
+    // Placing dots is synchronous; collect them, then stream them out in chunks.
+    const dots: string[] = []
+    forEachDot(
+      job, 0, 0, job.page.w, job.page.h,
+      (x, y) => { dots.push(`q 1 0 0 1 ${n4(x)} ${n4(y)} cm /D Do Q`) },
+      f => onProgress(f * 0.9),
+    )
+    for (let i = 0; i < dots.length; i += 20000) yield dots.slice(i, i + 20000).join('\n') + '\n'
+    if (text.length) yield pdfPath(text.flatMap(b => b.cmds)) + '\nf\n'
+    yield 'Q\n'
   }
-  ctx.restore()
+  const page = await deflate(content())
+  const r = 2 // the clone never reaches past 2 cells
+  const form = new TextEncoder().encode(`0 g\n${pdfPath(job.clone.cmds)}\nf\n`)
+
+  const enc = new TextEncoder()
+  const parts: Uint8Array[] = []
+  const offsets: number[] = []
+  let length = 0
+  const push = (b: Uint8Array | string) => {
+    const bytes = typeof b === 'string' ? enc.encode(b) : b
+    parts.push(bytes)
+    length += bytes.length
+  }
+  const obj = (n: number, body: string, stream?: Uint8Array) => {
+    offsets[n] = length
+    push(`${n} 0 obj\n${body}\n`)
+    if (stream) { push('stream\n'); push(stream); push('\nendstream\n') }
+    push('endobj\n')
+  }
+  push('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n')
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>')
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>')
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n4(Wpt)} ${n4(Hpt)}] /Resources << /XObject << /D 5 0 R >> >> /Contents 4 0 R >>`)
+  obj(4, `<< /Length ${page.length} /Filter /FlateDecode >>`, page)
+  obj(5, `<< /Type /XObject /Subtype /Form /BBox [${-r} ${-r} ${r} ${r}] /Matrix [${n4(1 / job.lpi)} 0 0 ${n4(1 / job.lpi)} 0 0] /Length ${form.length} >>`, form)
+  const xref = length
+  let table = `xref\n0 6\n0000000000 65535 f \n`
+  for (let i = 1; i <= 5; i++) table += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`
+  push(table)
+  push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`)
+  onProgress(1)
+  return new Blob(parts as BlobPart[], { type: 'application/pdf' })
 }
 
-/** The text's pixels over one output region at `dpi`, or null when no text touches it. */
-export function textRegion(
-  scratch: HTMLCanvasElement,
-  blocks: TextBlock[],
-  page: { w: number; h: number },
-  dpi: number,
-  mirror: boolean,
-  x0: number,
-  y0: number,
-  w: number,
-  h: number,
-): Uint8ClampedArray | null {
-  const hits = blocks.filter(b => {
-    const pad = b.size // generous: covers overhangs and tracking
-    const left = (b.cx - b.width / 2 - pad) * dpi
-    const right = (b.cx + b.width / 2 + pad) * dpi
-    const bx0 = mirror ? page.w * dpi - right : left
-    const bx1 = mirror ? page.w * dpi - left : right
-    const by0 = (b.cy - b.height / 2 - pad) * dpi
-    const by1 = (b.cy + b.height / 2 + pad) * dpi
-    return bx1 >= x0 && bx0 <= x0 + w && by1 >= y0 && by0 <= y0 + h
-  })
-  if (!hits.length) return null
-  if (scratch.width !== w || scratch.height !== h) {
-    scratch.width = w
-    scratch.height = h
-  }
-  const ctx = scratch.getContext('2d', { willReadFrequently: true })!
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, w, h)
-  drawText(ctx, hits, page, dpi, x0, y0, mirror, '#000')
-  return ctx.getImageData(0, 0, w, h).data
-}
-
-// --- PNG ------------------------------------------------------------------------
+// --- PNG (raster) -----------------------------------------------------------------
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256)
@@ -633,7 +696,7 @@ export function packRow(ink: Uint8Array, offset: number, w: number, dst: Uint8Ar
 }
 
 /**
- * Render the whole film as a 1-bit PNG with its DPI recorded (pHYs), in
+ * The same film as a 1-bit PNG at `dpi`, DPI recorded (pHYs), drawn in
  * horizontal strips so neither memory nor the main thread is held for long.
  */
 export async function renderFilmPng(
@@ -646,8 +709,10 @@ export async function renderFilmPng(
   const H = Math.round(job.page.h * dpi)
   const strip = 256
   const rowBytes = 1 + ((W + 7) >> 3)
-  const scratch = document.createElement('canvas')
-  const photoCanvas = document.createElement('canvas')
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = strip
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
 
   const cs = new CompressionStream('deflate') // zlib framing, which is what IDAT wants
   const compressed = new Response(cs.readable).arrayBuffer()
@@ -656,8 +721,9 @@ export async function renderFilmPng(
   try {
     for (let y = 0; y < H; y += strip) {
       const h = Math.min(strip, H - y)
-      const rgba = textRegion(scratch, text, job.page, dpi, job.mirror, 0, y, W, h)
-      renderRegion(job, 0, y, W, h, dpi, ink, rgba, photoCanvas)
+      drawFilm(ctx, job, text, dpi, 0, y)
+      const px = ctx.getImageData(0, 0, W, h).data
+      for (let i = 0; i < W * h; i++) ink[i] = px[i * 4] < 128 ? 1 : 0
       const packed = new Uint8Array(rowBytes * h)
       for (let r = 0; r < h; r++) packRow(ink, r * W, W, packed, r * rowBytes)
       await writer.write(packed)
@@ -666,8 +732,7 @@ export async function renderFilmPng(
     }
     await writer.close()
   } finally {
-    scratch.width = scratch.height = 0
-    photoCanvas.width = photoCanvas.height = 0
+    canvas.width = canvas.height = 0
   }
   const idat = new Uint8Array(await compressed)
 

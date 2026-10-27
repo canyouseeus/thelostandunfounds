@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useCanvasGestures } from '@/hooks/useCanvasGestures'
-import { loadSiteFont } from './fonts'
+import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
 import {
   PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_FRAME, FRAME_SCALE_MIN, FRAME_SCALE_MAX, TEXT_FAMILY,
-  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap,
-  triangleMask, glyphMask, buildDotTable, buildScreenJob, renderRegion, drawText, layoutText, textRegion,
-  renderFilmPng, applyTone,
+  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap, toneResolution,
+  makeClone, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng, applyTone,
+  type OutlineFont,
   type DotShape, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
   type TextStyle, type ToneSettings,
 } from './halftone-render'
@@ -22,8 +22,9 @@ const STEPS: { id: Step; label: string }[] = [
 const PREVIEW_LONG = 720
 /** Film resolution, set by the owner: 360 DPI. */
 const DPI = 360
-/** Loupe: a square of real film pixels at DPI, enlarged on screen (pixelated) so it never looks finer than the film. */
-const LOUPE_SIZE = 160
+/** Loupe: canvas size, and how many canvas pixels it gives each screen cell. */
+const LOUPE_SIZE = 320
+const LOUPE_PX_PER_CELL = 14
 
 const DEFAULT_TONE: ToneSettings = { brightness: 0, contrast: 0, invert: false }
 const DEFAULT_STYLE: TextStyle = { weight: 900, size: 1, tracking: 0.1, uppercase: true }
@@ -92,12 +93,13 @@ export default function HalftoneModal({ onClose }: Props) {
   const [mesh, setMesh] = useState(DEFAULT_MESH)
   const [lpi, setLpi] = useState(recommendedLpi(DEFAULT_MESH))
   const [angle, setAngle] = useState(DEFAULT_ANGLE)
-  const [minDot, setMinDot] = useState(0.05)
-  const [maxDot, setMaxDot] = useState(0.95)
+  const [dotSize, setDotSize] = useState(0.9)
+  const [cutoff, setCutoff] = useState(0.04)
   const [mirror, setMirror] = useState(false)
   const [loupe, setLoupe] = useState({ x: 0.5, y: 0.5 })
-  const [fontReady, setFontReady] = useState(false)
   const [fontError, setFontError] = useState<string | null>(null)
+  const [outlines, setOutlines] = useState<OutlineFonts | null>(null)
+  const [job, setJob] = useState<ScreenJob | null>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
@@ -115,8 +117,11 @@ export default function HalftoneModal({ onClose }: Props) {
   const previewH = Math.round(page.h * previewPpi)
 
   useEffect(() => {
+    // The page font (for the text boxes) and the outlines (for the film).
     loadSiteFont()
-      .then(() => setFontReady(true))
+      .catch(() => setFontError('The typeface did not load. Check the connection and reopen this window.'))
+    loadOutlineFonts()
+      .then(setOutlines)
       .catch(() => setFontError('The typeface did not load. Check the connection and reopen this window.'))
   }, [])
 
@@ -134,20 +139,19 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }, [])
 
-  // Text above and below the frame, laid out in page inches.
+  // Text above and below the frame, converted to outlines, in page inches.
   const blocks = useMemo(() => {
-    if (!fontReady) return []
-    const ctx = document.createElement('canvas').getContext('2d')!
-    return layoutText(ctx, page, rect, textAbove, textBelow, style)
-  }, [fontReady, page, rect, textAbove, textBelow, style])
+    if (!outlines) return []
+    return layoutText(outlines[style.weight] as unknown as OutlineFont[], page, rect, textAbove, textBelow, style)
+  }, [outlines, page, rect, textAbove, textBelow, style])
   const offPage = blocks.some(b => b.offPage)
 
-  // The dot shape and its exact-coverage table. The 3 is cut from the site's typeface.
-  const dotTable = useMemo(() => {
-    if (shape === 'three' && !fontReady) return null
-    const mask = shape === 'triangle' ? triangleMask() : glyphMask('3', 900, TEXT_FAMILY)
-    return buildDotTable(shape, mask)
-  }, [shape, fontReady])
+  // The one shape every dot is a clone of: an equilateral triangle, or Inter Bold's 3 as an outline.
+  const clone = useMemo(() => {
+    if (shape === 'triangle') return makeClone('triangle', dotSize)
+    if (!outlines) return null
+    return makeClone('three', dotSize, (outlines[700][0] as unknown as OutlineFont).charToGlyph('3'))
+  }, [shape, dotSize, outlines])
 
   // Preview: the adjusted greyscale the dots are cut from, plus the text.
   useEffect(() => {
@@ -167,9 +171,14 @@ export default function HalftoneModal({ onClose }: Props) {
       ctx.fillStyle = '#e5e5e5'
       ctx.fillRect(rect.x * tm.pxPerIn, rect.y * tm.pxPerIn, rect.w * tm.pxPerIn, rect.h * tm.pxPerIn)
     }
-    drawText(ctx, blocks, page, tm.pxPerIn, 0, 0, false, '#000')
+    if (blocks.length) {
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      for (const b of blocks) tracePath(ctx, b.cmds, tm.pxPerIn)
+      ctx.fill('nonzero')
+    }
     if (step === 'screen') {
-      const span = (LOUPE_SIZE / DPI) * tm.pxPerIn
+      const span = (LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)) * tm.pxPerIn
       ctx.save()
       ctx.globalCompositeOperation = 'difference'
       ctx.strokeStyle = '#fff'
@@ -177,45 +186,31 @@ export default function HalftoneModal({ onClose }: Props) {
       ctx.strokeRect(loupe.x * tm.w - span / 2, loupe.y * tm.h - span / 2, span, span)
       ctx.restore()
     }
-  }, [page, previewPpi, photo, frame, rect, tone, blocks, step, loupe])
+  }, [page, previewPpi, photo, frame, rect, tone, blocks, step, loupe, lpi])
 
-  // The screen settings. Cheap: the photo is resampled per region as it is screened.
-  const job: ScreenJob | null = useMemo(
-    () => (dotTable ? buildScreenJob(page, { lpi, angle, shape, minDot, maxDot, mirror }, dotTable, photo, frame, tone) : null),
-    [dotTable, page, lpi, angle, shape, minDot, maxDot, mirror, photo, frame, tone],
-  )
+  // The screen: where every clone goes. Rebuilt (debounced) as settings change on the SCREEN step.
+  useEffect(() => {
+    if (step !== 'screen' || !clone) return
+    const t = setTimeout(() => {
+      const tm = buildToneMap(page, toneResolution(page, lpi), photo, frame, tone)
+      setJob(buildScreenJob(page, { lpi, angle, shape, dotSize, cutoff, mirror }, clone, tm))
+    }, 150)
+    return () => clearTimeout(t)
+  }, [step, clone, page, photo, frame, tone, lpi, angle, shape, dotSize, cutoff, mirror])
 
-  // Loupe: real film pixels, through the same renderer as the download.
+  // Loupe: the real clones, drawn by the same code as the film, enlarged.
   useEffect(() => {
     const c = loupeCanvas.current
-    if (step !== 'screen' || !c || !job) return
-    const ldpi = DPI
+    if (step !== 'screen' || !c || !job || job.page !== page) return
+    const ldpi = lpi * LOUPE_PX_PER_CELL
     const Wpx = page.w * ldpi
     const cxRight = loupe.x * Wpx
     // The loupe point is picked on the right-reading preview; on mirrored film it sits opposite.
     const cx = mirror ? Wpx - cxRight : cxRight
     const x0 = Math.round(cx - LOUPE_SIZE / 2)
     const y0 = Math.round(loupe.y * page.h * ldpi - LOUPE_SIZE / 2)
-    const scratch = document.createElement('canvas')
-    const rgba = textRegion(scratch, blocks, page, ldpi, mirror, x0, y0, LOUPE_SIZE, LOUPE_SIZE)
-    const ink = new Uint8Array(LOUPE_SIZE * LOUPE_SIZE)
-    const photoCanvas = document.createElement('canvas')
-    renderRegion(job, x0, y0, LOUPE_SIZE, LOUPE_SIZE, ldpi, ink, rgba, photoCanvas)
-    photoCanvas.width = photoCanvas.height = 0
-    const ctx = c.getContext('2d')!
-    const img = ctx.createImageData(LOUPE_SIZE, LOUPE_SIZE)
-    const Hpx = page.h * ldpi
-    for (let i = 0; i < ink.length; i++) {
-      const x = x0 + (i % LOUPE_SIZE)
-      const y = y0 + Math.floor(i / LOUPE_SIZE)
-      const off = x < 0 || y < 0 || x >= Wpx || y >= Hpx
-      const v = off ? 40 : ink[i] ? 0 : 255
-      img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v
-      img.data[i * 4 + 3] = 255
-    }
-    ctx.putImageData(img, 0, 0)
-    scratch.width = scratch.height = 0
-  }, [step, job, page, loupe, mirror, blocks])
+    drawFilm(c.getContext('2d')!, job, blocks, ldpi, x0, y0)
+  }, [step, job, page, lpi, loupe, mirror, blocks])
 
   useCanvasGestures(previewCanvas, true, {
     onDrag: (dx, dy) => {
@@ -257,16 +252,21 @@ export default function HalftoneModal({ onClose }: Props) {
 
   const outW = Math.round(page.w * DPI)
   const outH = Math.round(page.h * DPI)
+  const clones = clone ? Math.round(clone.coverage * 100) : 0
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
-  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : 'triangles'}-${lpi}lpi-${angle}deg-${DPI}dpi${mirror ? '-mirror' : ''}.png`
+  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : 'triangles'}-${lpi}lpi-${angle}deg${mirror ? '-mirror' : ''}`
 
-  const exportFilm = async () => {
+  const exportFilm = async (format: 'pdf' | 'png') => {
     if (!job) return
     setExportError(null)
     setProgress(0)
     try {
-      const blob = await renderFilmPng(job, DPI, blocks, setProgress)
-      saveBlob(blob, filename)
+      // Let the button repaint before the work starts.
+      await new Promise(r => setTimeout(r, 30))
+      const blob = format === 'pdf'
+        ? await renderFilmPdf(job, blocks, setProgress)
+        : await renderFilmPng(job, DPI, blocks, setProgress)
+      saveBlob(blob, `${filename}${format === 'png' ? `-${DPI}dpi` : ''}.${format}`)
     } catch (e) {
       setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
     } finally {
@@ -455,10 +455,10 @@ export default function HalftoneModal({ onClose }: Props) {
 
         {step === 'screen' && (
           <div>
-            <p className={label}>DOT</p>
+            <p className={label}>DOT · ONE SHAPE, ONE SIZE, CLONED</p>
             <div className="flex gap-1 mb-3" data-tour="halftone-dot-shape">
-              <button className={seg(shape === 'triangle')} onClick={() => setShape('triangle')}>▲ TRIANGLES</button>
-              <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!fontReady}>3 · THREES</button>
+              <button className={seg(shape === 'triangle')} onClick={() => setShape('triangle')}>▲ TRIANGLE</button>
+              <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!outlines}>3 · BOLD THREE</button>
             </div>
 
             <p className={label}>DOT DETAIL · DRAG THE PREVIEW TO MOVE THE BOX</p>
@@ -468,12 +468,23 @@ export default function HalftoneModal({ onClose }: Props) {
                 width={LOUPE_SIZE}
                 height={LOUPE_SIZE}
                 className="w-full max-w-[320px] bg-white"
-                style={{ imageRendering: 'pixelated', aspectRatio: '1 / 1' }}
+                style={{ aspectRatio: '1 / 1' }}
                 data-testid="halftone-loupe"
               />
             </div>
             <p className="text-white/40 text-xs mb-4">
-              {job ? `Actual film pixels at ${DPI} DPI, enlarged. The box covers ${(LOUPE_SIZE / DPI).toFixed(2)} in of the print, about ${(DPI / lpi).toFixed(1)} px per dot.` : 'Building the screen…'}
+              {job
+                ? `Every dot is the same ${shape === 'three' ? 'Bold 3' : 'equilateral triangle'}, ${((dotSize / lpi) * 25.4).toFixed(2)} mm ${shape === 'three' ? 'tall' : 'wide'}. Darker tones get more of them, not bigger ones. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
+                : 'Building the screen…'}
+            </p>
+
+            <Slider
+              name="DOT SIZE" min={40} max={100} step={1} value={Math.round(dotSize * 100)}
+              display={`${Math.round(dotSize * 100)}% OF SPACING`}
+              onChange={v => setDotSize(v / 100)}
+            />
+            <p className="text-white/40 text-xs -mt-2 mb-3">
+              Black in the photo fills every spot, mid-grey half of them, white none. With every spot filled the ink is {clones}% at this size; a bigger dot prints heavier shadows, and at 100% neighbouring dots touch.
             </p>
 
             <div className="flex items-end gap-3 mb-3">
@@ -498,45 +509,52 @@ export default function HalftoneModal({ onClose }: Props) {
               onChange={setLpi}
             />
             <p className="text-white/40 text-xs -mt-2 mb-3">
-              {mesh} mesh holds about {recommendedLpi(mesh)} LPI (mesh ÷ 4.5). Finer than that and the smallest dots fall through the mesh.
+              Dot spacing. {mesh} mesh holds about {recommendedLpi(mesh)} LPI (mesh ÷ 4.5); finer than that and the dots fall through the mesh.
             </p>
             <Slider
               name="ANGLE" min={0} max={90} step={0.5} value={angle} display={`${angle}°`}
               onChange={setAngle}
             />
+            <p className="text-white/40 text-xs -mt-2 mb-3">
+              The grid turns; the shape stays upright.
+            </p>
             <Slider
-              name="SMALLEST DOT" min={0} max={20} step={1} value={Math.round(minDot * 100)} display={`${Math.round(minDot * 100)}%`}
-              onChange={v => setMinDot(v / 100)}
-            />
-            <Slider
-              name="SOLID ABOVE" min={80} max={100} step={1} value={Math.round(maxDot * 100)} display={`${Math.round(maxDot * 100)}%`}
-              onChange={v => setMaxDot(v / 100)}
+              name="HIGHLIGHT CUTOFF" min={0} max={20} step={1} value={Math.round(cutoff * 100)} display={`${Math.round(cutoff * 100)}%`}
+              onChange={v => setCutoff(v / 100)}
             />
             <p className="text-white/40 text-xs -mt-2 mb-3">
-              Tones lighter than the smallest dot print as paper; darker than SOLID ABOVE print solid. Dots outside that range do not hold on press.
+              Tones lighter than this print as bare paper, so near-white areas stay clean.
             </p>
             <p className={label}>FILM</p>
-            <div className="flex gap-1 mb-2">
+            <div className="flex gap-1 mb-4">
               <button className={seg(!mirror)} onClick={() => setMirror(false)}>RIGHT READING</button>
               <button className={seg(mirror)} onClick={() => setMirror(true)}>MIRRORED</button>
             </div>
-            <p className="text-white/40 text-xs mb-4 font-mono">
-              {outW} × {outH} PX · {DPI} DPI · 1-BIT PNG · BLACK = INK
-            </p>
             {exportError && <p className="text-red-400 text-xs mb-3">{exportError}</p>}
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-2">
               <button onClick={() => setStep('text')} disabled={progress !== null} className={ghost}>← BACK</button>
               <button
-                onClick={exportFilm}
+                onClick={() => exportFilm('pdf')}
                 disabled={!job || progress !== null || !photo}
                 className={primary}
                 data-tour="halftone-download"
                 data-testid="halftone-download"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
-                {progress !== null ? `RENDERING ${Math.round(progress * 100)}%` : 'DOWNLOAD FILM'}
+                {progress !== null ? `RENDERING ${Math.round(progress * 100)}%` : 'DOWNLOAD FILM (VECTOR PDF)'}
               </button>
             </div>
+            <button
+              onClick={() => exportFilm('png')}
+              disabled={!job || progress !== null || !photo}
+              className="w-full px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40 mb-2"
+              data-testid="halftone-download-png"
+            >
+              PNG INSTEAD · {DPI} DPI
+            </button>
+            <p className="text-white/40 text-xs font-mono">
+              PDF: TRUE SIZE, SHARP AT ANY PRINTER RESOLUTION, TEXT AS OUTLINES · PNG: {outW} × {outH} PX, 1-BIT · BLACK = INK
+            </p>
           </div>
         )}
       </div>

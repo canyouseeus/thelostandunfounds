@@ -365,12 +365,12 @@ const halftoneTour: Tour = {
     {
       target: 'halftone-dot-shape',
       title: 'Step 3: Screen',
-      body: 'Choose TRIANGLES or 3s for the dots. The DOT DETAIL box shows the real film pixels. Drag the preview to look at a different part.\n\nThe settings start at 250 mesh, 55 LPI and 22.5°. Dots below 5% are dropped and tones above 95% print solid, so every dot holds on press.',
+      body: 'Choose the dot: a perfect equilateral TRIANGLE, or a BOLD THREE from Inter. Every dot on the film is the same shape at the same size, cloned. Darker parts of the photo get more of them, never bigger ones.\n\nDOT SIZE sets the clone\'s size; spacing starts at 250 mesh → 55 LPI, at 22.5°. DOT DETAIL shows the real clones; drag the preview to look around.',
       missingNote: 'Open the generator and go to 3 · SCREEN to see these settings.',
     },
     {
       title: 'Download The Film',
-      body: 'DOWNLOAD FILM saves a 1-bit PNG at 360 DPI, black where ink prints, with the DPI set in the file so it prints at true size. Choose MIRRORED if your film goes emulsion side down.',
+      body: 'DOWNLOAD FILM saves a vector PDF at true size: the dot is one object stamped everywhere and the text is converted to outlines, so every edge prints sharp at your film printer\'s resolution. PNG INSTEAD saves a 360 DPI raster if your printer needs one. Choose MIRRORED if your film goes emulsion side down.',
     },
   ],
 };
