@@ -5,7 +5,7 @@ import GalleryPhotoPicker from './GalleryPhotoPicker'
 import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
 import {
   PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, TEXT_FAMILY,
-  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, fitFrame, buildToneMap, toneResolution,
+  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, fitFrame, printArea, buildToneMap, toneResolution,
   makeClone, measureLevels, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng,
   type OutlineFont,
   type DotShape, type DotMode, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
@@ -157,16 +157,18 @@ export default function HalftoneModal({ onClose }: Props) {
   const fonts = outlines ? (outlines[style.weight] as unknown as OutlineFont[]) : null
   const frame: PhotoFrame = useMemo(() => {
     if (!fonts) return fitFrame(page, aspect, 0, 0)
-    const full = frameRect(page, aspect, { scale: 1, cx: 0.5, cy: 0.5 })
+    // Measure the text against a zero-height frame at the middle of the
+    // printable area: how far each block reaches from that line is the room
+    // it needs above or below the photo, gap included.
+    const area = printArea(page)
+    const mid = area.y + area.h / 2
     let top = 0
     let bottom = 0
-    for (const b of layoutText(fonts, page, full, textAbove, textBelow, style)) {
-      if (b.y1 <= full.y + 1e-6) top = full.y - b.y0
-      else bottom = b.y1 - (full.y + full.h)
+    for (const b of layoutText(fonts, page, { x: area.x, y: mid, w: area.w, h: 0 }, textAbove, textBelow, style)) {
+      if (b.y1 <= mid + 1e-6) top = mid - b.y0
+      else bottom = b.y1 - mid
     }
-    // Keep text off the very edge of the film.
-    const edge = page.h * 0.03
-    return fitFrame(page, aspect, top ? top + edge : 0, bottom ? bottom + edge : 0)
+    return fitFrame(page, aspect, top, bottom)
   }, [fonts, page, aspect, textAbove, textBelow, style])
   const rect = useMemo(() => frameRect(page, aspect, frame), [page, aspect, frame])
 
@@ -198,10 +200,18 @@ export default function HalftoneModal({ onClose }: Props) {
     }
     ctx.putImageData(img, 0, 0)
     if (!photo) {
-      // Show where the frame will go before there is a photo.
+      // Show where the photo will go before there is one.
       ctx.fillStyle = '#e5e5e5'
       ctx.fillRect(rect.x * tm.pxPerIn, rect.y * tm.pxPerIn, rect.w * tm.pxPerIn, rect.h * tm.pxPerIn)
     }
+    // The printable area: the safe margin is kept clear of ink.
+    const area = printArea(page)
+    ctx.save()
+    ctx.setLineDash([8, 6])
+    ctx.strokeStyle = '#888'
+    ctx.lineWidth = 2
+    ctx.strokeRect(area.x * tm.pxPerIn, area.y * tm.pxPerIn, area.w * tm.pxPerIn, area.h * tm.pxPerIn)
+    ctx.restore()
     if (blocks.length) {
       ctx.fillStyle = '#000'
       ctx.beginPath()
@@ -414,7 +424,7 @@ export default function HalftoneModal({ onClose }: Props) {
             </div>
             <p className="text-white/40 text-xs mb-4">
               {photo
-                ? 'The photo fills the canvas: the largest size that fits, never cropped or stretched. Pick 18 × 24 or 8.5 × 11 above.'
+                ? 'The photo is centred inside the dashed line, the 1 in safe margin, and is never cropped or stretched. Nothing prints outside the line.'
                 : 'Pick one from your galleries or upload one. A horizontal photo gets a landscape page, a vertical one a portrait page.'}
             </p>
             <div className="flex gap-2">
