@@ -42,6 +42,9 @@ body {
   min-height: 100vh;
   background-color: #000000;
   overflow-x: hidden;
+  /* clip, not hidden: hidden turns body into a scroll container, and every
+     position: sticky element then scrolls away instead of sticking. */
+  overflow-x: clip;
 }
 
 html {
