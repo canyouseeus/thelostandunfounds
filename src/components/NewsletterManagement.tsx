@@ -621,7 +621,7 @@ export default function NewsletterManagement() {
   return (
     <div className="space-y-6">
       {/* Analytics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div data-tour="nl-stats" className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <button
           onClick={handleOpenSubscriberModal}
           className="text-left w-full focus:outline-none transition-all"
@@ -680,6 +680,7 @@ export default function NewsletterManagement() {
       {/* Compose Newsletter */}
       <AdminBentoCard
         title="COMPOSE NEWSLETTER"
+        tourId="nl-compose"
         icon={<EnvelopeIcon className="w-4 h-4" />}
         action={
           <div className="flex items-center gap-2 text-white/40 text-[10px] uppercase tracking-widest font-medium">
@@ -690,7 +691,7 @@ export default function NewsletterManagement() {
       >
         <div className="space-y-6">
           {/* Subject */}
-          <div>
+          <div data-tour="nl-subject">
             <label htmlFor="subject" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
               Subject Line
             </label>
@@ -706,7 +707,7 @@ export default function NewsletterManagement() {
           </div>
 
           {/* Content */}
-          <div>
+          <div data-tour="nl-content">
             <label htmlFor="content" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
               Content Body
             </label>
@@ -727,7 +728,7 @@ export default function NewsletterManagement() {
               <label className="block text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
                 Target Audience
               </label>
-              <button
+              <button data-tour="nl-recipients"
                 onClick={() => setShowRecipientSelection(!showRecipientSelection)}
                 className="text-blue-400 hover:text-blue-300 text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
               >
@@ -762,7 +763,7 @@ export default function NewsletterManagement() {
           </div>
 
           {/* Schedule */}
-          <div className="p-6 bg-white/[0.02]">
+          <div data-tour="nl-schedule" className="p-6 bg-white/[0.02]">
             <div className="flex items-center justify-between mb-4">
               <label
                 className="flex items-center gap-3 cursor-pointer group"
@@ -824,7 +825,7 @@ export default function NewsletterManagement() {
             <label htmlFor="test-email" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-3 font-medium">
               Send Formatting Test
             </label>
-            <div className="flex gap-4">
+            <div data-tour="nl-test" className="flex gap-4">
               <input
                 type="email"
                 id="test-email"
@@ -850,7 +851,7 @@ export default function NewsletterManagement() {
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
-            <button
+            <button data-tour="nl-send"
               onClick={handleSend}
               disabled={sending || !subject.trim() || !content.trim() || subscriberCount === 0 || (scheduleEnabled && (!scheduledDate || !scheduledTime))}
               className={cn(
@@ -877,7 +878,7 @@ export default function NewsletterManagement() {
                 </>
               )}
             </button>
-            <button
+            <button data-tour="nl-preview"
               onClick={() => setShowPreview(!showPreview)}
               className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-[0.2em] text-xs transition-all flex items-center gap-2"
             >

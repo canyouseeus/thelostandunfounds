@@ -1680,7 +1680,7 @@ export default function Admin() {
           dashboard a narrow column with dead space either side; 1600 gives
           ~171px cells and fills the screen without the tiles becoming
           furniture. */}
-      <div ref={pageTopRef} data-tour-root="admin" className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
+      <div ref={pageTopRef} data-tour-root="admin" data-active-panel={activePanelSection ?? ''} className="min-h-screen bg-black text-white max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -2108,7 +2108,7 @@ export default function Admin() {
               {/* Fixed header — back button + section title, pr-16 clears the X button */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
-                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" />, extra: <Link to="/admin/live" data-tour="gallery-live-link" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Live Event →</Link> },
+                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
@@ -2151,7 +2151,7 @@ export default function Admin() {
               <div data-tour="panel-body" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
                 {activePanelSection === 'gallery' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
-                    <AdminGalleryView onBack={() => setActivePanelSection(null)} />
+                    <AdminGalleryView onBack={() => setActivePanelSection(null)} hideTitle />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'clientuploads' && (

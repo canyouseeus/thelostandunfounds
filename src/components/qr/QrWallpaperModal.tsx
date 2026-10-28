@@ -8,6 +8,7 @@ import {
   clampPhotoView, clampQrPlacement, drawQrCard, drawWallpaper, matrixFromSvgMarkup, zoomPhotoAbout,
   type PhotoSource, type PhotoView, type QrMatrix, type QrPlacement, type QrScheme, type QrShape,
 } from './qr-render'
+import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 
 const SITE = 'https://www.thelostandunfounds.com'
 
@@ -43,92 +44,6 @@ function saveCanvas(canvas: HTMLCanvasElement, filename: string): Promise<Blob |
       resolve(blob)
     }, 'image/png')
   })
-}
-
-/**
- * Pan + pinch on a canvas. Reports drags in fractions of the canvas box and
- * pinch/wheel zoom as a factor about the fingers' midpoint, so callers never
- * touch pixels. Two pointers = pinch; one = drag.
- */
-function useGestures(
-  ref: React.RefObject<HTMLCanvasElement>,
-  active: boolean,
-  h: {
-    onDrag: (dx: number, dy: number) => void // fractions of canvas width / height
-    onZoom: (factor: number, fx: number, fy: number) => void // fx, fy: fractions of width from the centre
-  },
-) {
-  const handlers = useRef(h)
-  handlers.current = h
-
-  useEffect(() => {
-    const el = ref.current
-    if (!active || !el) return
-    const pts = new Map<number, { x: number; y: number }>()
-    let lastDist = 0
-
-    const mid = () => {
-      const p = Array.from(pts.values())
-      return { x: p.reduce((s, q) => s + q.x, 0) / p.length, y: p.reduce((s, q) => s + q.y, 0) / p.length }
-    }
-    const dist = () => {
-      const [a, b] = Array.from(pts.values())
-      return Math.hypot(a.x - b.x, a.y - b.y)
-    }
-    const focal = (x: number, y: number) => {
-      const r = el.getBoundingClientRect()
-      return { fx: (x - r.left) / r.width - 0.5, fy: (y - r.top) / r.width - r.height / r.width / 2 }
-    }
-
-    const down = (e: PointerEvent) => {
-      try { el.setPointerCapture(e.pointerId) } catch { /* pointer already gone */ }
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
-      if (pts.size === 2) lastDist = dist()
-    }
-    const move = (e: PointerEvent) => {
-      const prev = pts.get(e.pointerId)
-      if (!prev) return
-      const r = el.getBoundingClientRect()
-      if (pts.size === 1) {
-        handlers.current.onDrag((e.clientX - prev.x) / r.width, (e.clientY - prev.y) / r.height)
-        pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
-      } else if (pts.size === 2) {
-        const before = mid()
-        pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
-        const after = mid()
-        const d = dist()
-        if (lastDist > 0 && d > 0) {
-          const f = focal(after.x, after.y)
-          handlers.current.onZoom(d / lastDist, f.fx, f.fy)
-        }
-        lastDist = d
-        // Two fingers also carry the content along as they travel.
-        handlers.current.onDrag((after.x - before.x) / r.width, (after.y - before.y) / r.height)
-      }
-    }
-    const up = (e: PointerEvent) => {
-      pts.delete(e.pointerId)
-      lastDist = pts.size === 2 ? dist() : 0
-    }
-    const wheel = (e: WheelEvent) => {
-      e.preventDefault()
-      const f = focal(e.clientX, e.clientY)
-      handlers.current.onZoom(Math.exp(-e.deltaY * 0.0015), f.fx, f.fy)
-    }
-
-    el.addEventListener('pointerdown', down)
-    el.addEventListener('pointermove', move)
-    el.addEventListener('pointerup', up)
-    el.addEventListener('pointercancel', up)
-    el.addEventListener('wheel', wheel, { passive: false })
-    return () => {
-      el.removeEventListener('pointerdown', down)
-      el.removeEventListener('pointermove', move)
-      el.removeEventListener('pointerup', up)
-      el.removeEventListener('pointercancel', up)
-      el.removeEventListener('wheel', wheel)
-    }
-  }, [ref, active])
 }
 
 const seg = (on: boolean) =>
@@ -200,7 +115,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
     })
   }, [step, photo, view, matrix, shape, scheme, placement])
 
-  useGestures(wallCanvas, step !== 'qr', {
+  useCanvasGestures(wallCanvas, step !== 'qr', {
     onDrag: (dx, dy) => {
       if (step === 'photo') {
         // Drag distances are fractions of width/height; photo offsets are in screen-widths.
@@ -298,24 +213,24 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
               <canvas ref={qrCanvas} width={512} height={512} className="w-56 h-56" data-testid="qr-preview" />
             </div>
             <p className="text-white/60 text-xs uppercase tracking-wider mb-2">SHAPE</p>
-            <div className="flex gap-1 mb-4">
+            <div data-tour="qr-shape" className="flex gap-1 mb-4">
               <button className={seg(shape === 'square')} onClick={() => setShape('square')}>SQUARE</button>
               <button className={seg(shape === 'rounded')} onClick={() => setShape('rounded')}>ROUNDED</button>
             </div>
             <p className="text-white/60 text-xs uppercase tracking-wider mb-2">COLOR</p>
-            <div className="flex gap-1 mb-5">
+            <div data-tour="qr-scheme" className="flex gap-1 mb-5">
               <button className={seg(scheme === 'light')} onClick={() => setScheme('light')}>BLACK ON WHITE</button>
               <button className={seg(scheme === 'dark')} onClick={() => setScheme('dark')}>WHITE ON BLACK</button>
             </div>
             <div className="flex gap-2">
-              <button
+              <button data-tour="qr-download"
                 onClick={downloadQr}
                 disabled={!matrix}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" /> DOWNLOAD QR
               </button>
-              <button
+              <button data-tour="qr-make-wallpaper"
                 onClick={() => setStep('photo')}
                 disabled={!matrix}
                 className="flex-1 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -349,7 +264,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                   data-testid="wallpaper-file"
                   onChange={e => { const f = e.target.files?.[0]; if (f) void loadPhoto(f); e.target.value = '' }}
                 />
-                <button
+                <button data-tour="qr-choose-photo"
                   onClick={() => fileInput.current?.click()}
                   className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-3"
                 >
@@ -357,7 +272,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 </button>
                 {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
                 <label className="block text-white/60 text-xs uppercase tracking-wider mb-1">ZOOM PHOTO</label>
-                <input
+                <input data-tour="qr-zoom"
                   type="range" min={0} max={100} step={0.5} disabled={!photo}
                   aria-label="Zoom photo"
                   className="w-full mb-1 accent-white"
@@ -372,7 +287,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setStep('qr')} className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider">← BACK</button>
-                  <button
+                  <button data-tour="qr-to-place"
                     onClick={() => setStep('place')}
                     disabled={!photo}
                     className="flex-1 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -386,7 +301,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
             {step === 'place' && (
               <div>
                 <label className="block text-white/60 text-xs uppercase tracking-wider mb-1">QR SIZE</label>
-                <input
+                <input data-tour="qr-size"
                   type="range" min={QR_SIZE_MIN * 100} max={QR_SIZE_MAX * 100} step={0.5}
                   aria-label="QR size"
                   className="w-full mb-1 accent-white"
@@ -396,7 +311,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                 <p className="text-white/40 text-xs mb-4">Drag the preview to move the QR code. Pinch or scroll to resize it.</p>
                 <div className="flex gap-2 mb-2">
                   <button onClick={() => setStep('photo')} className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider">← BACK</button>
-                  <button
+                  <button data-tour="qr-download-wallpaper"
                     onClick={downloadWallpaper}
                     disabled={busy || !matrix}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40"
@@ -405,7 +320,7 @@ export default function QrWallpaperModal({ slug, name, onClose }: Props) {
                   </button>
                 </div>
                 {canShareFiles && (
-                  <button
+                  <button data-tour="qr-share"
                     onClick={shareWallpaper}
                     disabled={busy}
                     className="w-full px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"

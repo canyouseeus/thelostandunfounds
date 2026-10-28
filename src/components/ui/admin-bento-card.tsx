@@ -14,6 +14,8 @@ interface AdminBentoCardProps {
   action?: React.ReactNode;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  /** `data-tour` id for the header, so a walkthrough can point at it. */
+  tourId?: string;
 }
 
 export function AdminBentoCard({
@@ -26,7 +28,8 @@ export function AdminBentoCard({
   className,
   action,
   collapsible = true,
-  defaultCollapsed = true
+  defaultCollapsed = true,
+  tourId
 }: AdminBentoCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -80,6 +83,7 @@ export function AdminBentoCard({
           collapsible && "cursor-pointer select-none"
         )}
         onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
+        data-tour={tourId}
       >
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {icon && (

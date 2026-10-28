@@ -878,7 +878,7 @@ export default function BlogSubmissionReview() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
+      <div data-tour="sub-filters" className="flex flex-wrap gap-2">
         {(['all', 'pending', 'approved', 'rejected', 'published'] as const).map((status) => (
           <button
             key={status}
@@ -954,7 +954,7 @@ export default function BlogSubmissionReview() {
                       </span>
                     </div>
                   </div>
-                  <button
+                  <button data-tour="sub-review"
                     onClick={() => {
                       setSelectedSubmission(submission);
                       setReviewNotes(submission.admin_notes || '');
@@ -1016,7 +1016,7 @@ export default function BlogSubmissionReview() {
                       <p className="text-lg font-bold text-white">{selectedSubmission.title}</p>
                     </div>
 
-                    <div>
+                    <div data-tour="sub-column">
                       <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Column Classification</label>
                       <select
                         value={selectedColumn}
@@ -1174,7 +1174,7 @@ export default function BlogSubmissionReview() {
 
               <div className="p-6 bg-white/[0.02] border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex gap-3">
-                  <button
+                  <button data-tour="sub-save"
                     onClick={() => handleSaveRevisions(selectedSubmission)}
                     disabled={isSaving}
                     className="px-6 py-2 bg-white/5 hover:bg-white text-white hover:text-black font-black uppercase tracking-widest text-[10px] transition-all disabled:opacity-50"
@@ -1184,13 +1184,13 @@ export default function BlogSubmissionReview() {
 
                   {selectedSubmission.status === 'pending' && (
                     <>
-                      <button
+                      <button data-tour="sub-approve"
                         onClick={() => handleApprove(selectedSubmission)}
                         className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
                       >
                         APPROVE
                       </button>
-                      <button
+                      <button data-tour="sub-reject"
                         onClick={() => handleReject(selectedSubmission)}
                         className="px-6 py-2 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
                       >
