@@ -28,7 +28,7 @@ const LOUPE_SIZE = 320
 const LOUPE_PX_PER_CELL = 14
 
 const DEFAULT_TONE: ToneSettings = { brightness: 0, contrast: 0, invert: false }
-const DEFAULT_STYLE: TextStyle = { weight: 900, size: { above: 1, below: 1 }, tracking: 0.1, uppercase: true }
+const DEFAULT_STYLE: TextStyle = { weight: 900, size: { above: 1, below: 1 }, tracking: 0.1 }
 
 interface Props {
   onClose: () => void
@@ -496,10 +496,6 @@ export default function HalftoneModal({ onClose }: Props) {
               display={`${style.tracking.toFixed(2)} EM`}
               onChange={v => setStyle(t => ({ ...t, tracking: v }))}
             />
-            <div className="flex gap-1 mb-3">
-              <button className={seg(style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: true }))}>UPPERCASE</button>
-              <button className={seg(!style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: false }))}>AS TYPED</button>
-            </div>
             {offPage && (
               <p className="text-amber-400 text-xs mb-3" data-testid="halftone-text-offpage">
                 The text is too tall to fit with the photo. Make the text smaller or shorten it.

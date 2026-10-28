@@ -97,7 +97,6 @@ export interface TextStyle {
   size: { above: number; below: number }
   /** Letter spacing, in ems. */
   tracking: number
-  uppercase: boolean
 }
 
 /** One drawing command, in the shape opentype.js produces (y grows downward). */
@@ -618,7 +617,8 @@ export function layoutText(
   const capHeight = (fonts[0].tables.os2?.sCapHeight ?? 0.727 * fonts[0].unitsPerEm) / fonts[0].unitsPerEm
   const blocks: TextBlock[] = []
   for (const [raw, side] of [[above, 'above'], [below, 'below']] as const) {
-    const text = style.uppercase ? raw.toUpperCase() : raw
+    // Text is always uppercase on the film.
+    const text = raw.toUpperCase()
     const lines = text.split('\n')
     if (!lines.some(l => l.trim())) continue
     const asked = style.size[side]
