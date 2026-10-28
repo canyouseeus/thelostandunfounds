@@ -139,6 +139,36 @@ export function frameRect(page: { w: number; h: number }, aspect: number, f: Pho
   return { x: f.cx * page.w - w / 2, y: f.cy * page.h - h / 2, w, h }
 }
 
+/**
+ * The safe margin kept clear on every edge of the film, in inches. Nothing
+ * prints inside it, so a screen's edge and the squeegee never reach the image.
+ */
+export const PRINT_MARGIN_IN = 1
+
+/** The fixed printable area: the page inset by the safe margin on every side. */
+export function printArea(page: { w: number; h: number }): { x: number; y: number; w: number; h: number } {
+  const m = PRINT_MARGIN_IN
+  return { x: m, y: m, w: page.w - 2 * m, h: page.h - 2 * m }
+}
+
+/**
+ * The photo sized to the printable area: the largest proportional fit (never
+ * cropped or stretched) in the height left after the text above (`top`) and
+ * below (`bottom`), with the whole stack — text, photo, text — centred in the
+ * area. Centred horizontally and vertically, so the layout is the same every
+ * time for the same canvas and text.
+ */
+export function fitFrame(page: { w: number; h: number }, aspect: number, top: number, bottom: number): PhotoFrame {
+  const area = printArea(page)
+  const fitW = Math.min(page.w, page.h * aspect)
+  const availH = Math.max(area.h * 0.2, area.h - top - bottom)
+  const w = Math.min(area.w, availH * aspect)
+  const h = w / aspect
+  const stackH = top + h + bottom
+  const y = area.y + (area.h - stackH) / 2 + top
+  return { scale: w / fitW, cx: 0.5, cy: (y + h / 2) / page.h }
+}
+
 /** Keep the frame's size in range and the whole frame on the page. */
 export function clampFrame(f: PhotoFrame, page: { w: number; h: number }, aspect: number): PhotoFrame {
   const scale = Math.min(FRAME_SCALE_MAX, Math.max(FRAME_SCALE_MIN, f.scale))
@@ -583,7 +613,7 @@ export function layoutText(
   below: string,
   style: TextStyle,
 ): TextBlock[] {
-  const margin = page.w * 0.04
+  const area = printArea(page)
   const capHeight = (fonts[0].tables.os2?.sCapHeight ?? 0.727 * fonts[0].unitsPerEm) / fonts[0].unitsPerEm
   const blocks: TextBlock[] = []
   for (const [raw, side] of [[above, 'above'], [below, 'below']] as const) {
@@ -591,7 +621,7 @@ export function layoutText(
     const lines = text.split('\n')
     if (!lines.some(l => l.trim())) continue
     const natural = Math.max(...lines.map(l => lineOutline(fonts, l, style.size, style.tracking * style.size).width))
-    const size = natural > page.w - 2 * margin ? (style.size * (page.w - 2 * margin)) / natural : style.size
+    const size = natural > area.w ? (style.size * area.w) / natural : style.size
     const lh = size * LINE_HEIGHT
     const height = lines.length * lh
     const gap = Math.max(0.15, size * 0.35)
@@ -609,7 +639,7 @@ export function layoutText(
     })
     const y0 = cy - height / 2
     const y1 = cy + height / 2
-    blocks.push({ cmds, x0: cx - width / 2, y0, x1: cx + width / 2, y1, offPage: y0 < 0 || y1 > page.h })
+    blocks.push({ cmds, x0: cx - width / 2, y0, x1: cx + width / 2, y1, offPage: y0 < area.y || y1 > area.y + area.h })
   }
   return blocks
 }
