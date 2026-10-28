@@ -509,7 +509,7 @@ const halftoneTour: Tour = {
     inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
     { target: 'halftone-canvas-size', title: 'Canvas', body: '18 × 24 or 8.5 × 11. The page turns to match the photo.' },
     { target: 'halftone-from-gallery', title: 'Choose A Photo', body: 'FROM A GALLERY browses your galleries and Drive folders full screen. UPLOAD takes one from your device.' },
-    { target: 'halftone-preview', title: 'Position It', body: 'Drag to move. Pinch or scroll to resize. The whole photo prints, never cropped.' },
+    { target: 'halftone-preview', title: 'Preview', body: 'The photo fills the canvas you picked, never cropped. Text above or below makes it shrink just enough to fit.' },
     { target: 'halftone-levels', title: 'Auto Levels', body: 'Stretches the photo from darkest to lightest. Good for night shots.' },
     { target: 'halftone-ink', title: 'Ink', body: 'WHITE INK inverts it, for light ink on a dark shirt.' },
     { target: 'halftone-step-text', action: 'click', title: 'Text', body: 'Tap 2 · TEXT.' },

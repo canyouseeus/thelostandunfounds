@@ -4,8 +4,8 @@ import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 import GalleryPhotoPicker from './GalleryPhotoPicker'
 import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
 import {
-  PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, DEFAULT_FRAME, FRAME_SCALE_MIN, FRAME_SCALE_MAX, TEXT_FAMILY,
-  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, clampFrame, buildToneMap, toneResolution,
+  PRINT_SIZES, DEFAULT_ANGLE, DEFAULT_MESH, TEXT_FAMILY,
+  pageInches, recommendedLpi, orientationFor, photoAspect, frameRect, fitFrame, buildToneMap, toneResolution,
   makeClone, measureLevels, buildScreenJob, drawFilm, layoutText, tracePath, renderFilmPdf, renderFilmPng,
   type OutlineFont,
   type DotShape, type DotMode, type PhotoFrame, type PhotoSource, type PrintSize, type ScreenJob,
@@ -88,7 +88,6 @@ export default function HalftoneModal({ onClose }: Props) {
   const [picking, setPicking] = useState(false)
   const pickingRef = useRef(false)
   pickingRef.current = picking
-  const [frame, setFrame] = useState<PhotoFrame>(DEFAULT_FRAME)
   const [tone, setTone] = useState<ToneSettings>(DEFAULT_TONE)
   const [textAbove, setTextAbove] = useState('')
   const [textBelow, setTextBelow] = useState('')
@@ -120,7 +119,6 @@ export default function HalftoneModal({ onClose }: Props) {
   const orientation = orientationFor(photo)
   const page = useMemo(() => pageInches(size, orientation), [size, orientation])
   const aspect = photoAspect(photo, orientation)
-  const rect = useMemo(() => frameRect(page, aspect, frame), [page, aspect, frame])
   const previewCanvas = useRef<HTMLCanvasElement>(null)
   const loupeCanvas = useRef<HTMLCanvasElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -153,11 +151,30 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }, [])
 
-  // Text above and below the frame, converted to outlines, in page inches.
-  const blocks = useMemo(() => {
-    if (!outlines) return []
-    return layoutText(outlines[style.weight] as unknown as OutlineFont[], page, rect, textAbove, textBelow, style)
-  }, [outlines, page, rect, textAbove, textBelow, style])
+  // The photo fills the canvas: the largest proportional fit, leaving just
+  // the room the text above and below needs. First measure that text against
+  // a full-size frame, then fit the photo into what is left.
+  const fonts = outlines ? (outlines[style.weight] as unknown as OutlineFont[]) : null
+  const frame: PhotoFrame = useMemo(() => {
+    if (!fonts) return fitFrame(page, aspect, 0, 0)
+    const full = frameRect(page, aspect, { scale: 1, cx: 0.5, cy: 0.5 })
+    let top = 0
+    let bottom = 0
+    for (const b of layoutText(fonts, page, full, textAbove, textBelow, style)) {
+      if (b.y1 <= full.y + 1e-6) top = full.y - b.y0
+      else bottom = b.y1 - (full.y + full.h)
+    }
+    // Keep text off the very edge of the film.
+    const edge = page.h * 0.03
+    return fitFrame(page, aspect, top ? top + edge : 0, bottom ? bottom + edge : 0)
+  }, [fonts, page, aspect, textAbove, textBelow, style])
+  const rect = useMemo(() => frameRect(page, aspect, frame), [page, aspect, frame])
+
+  // Text above and below the photo, converted to outlines, in page inches.
+  const blocks = useMemo(
+    () => (fonts ? layoutText(fonts, page, rect, textAbove, textBelow, style) : []),
+    [fonts, page, rect, textAbove, textBelow, style],
+  )
   const offPage = blocks.some(b => b.offPage)
 
   // The one shape every dot is a clone of: an equilateral triangle, or Inter Bold's 3 as an outline.
@@ -228,17 +245,10 @@ export default function HalftoneModal({ onClose }: Props) {
 
   useCanvasGestures(previewCanvas, true, {
     onDrag: (dx, dy) => {
-      if (step !== 'screen') {
-        // Photo and text steps: drag the whole frame (the text rides along with it).
-        setFrame(f => clampFrame({ ...f, cx: f.cx + dx, cy: f.cy + dy }, page, aspect))
-      } else {
-        setLoupe(l => ({ x: Math.min(1, Math.max(0, l.x + dx)), y: Math.min(1, Math.max(0, l.y + dy)) }))
-      }
+      // The photo always fills the canvas, so dragging only moves the DOT DETAIL box.
+      if (step === 'screen') setLoupe(l => ({ x: Math.min(1, Math.max(0, l.x + dx)), y: Math.min(1, Math.max(0, l.y + dy)) }))
     },
-    onZoom: factor => {
-      // Proportional only: the photo is never cropped or stretched.
-      if (step !== 'screen') setFrame(f => clampFrame({ ...f, scale: f.scale * factor }, page, aspect))
-    },
+    onZoom: () => {},
   })
 
   // From an upload (a File) or a gallery photo (a Blob from /api/gallery/stream).
@@ -247,7 +257,6 @@ export default function HalftoneModal({ onClose }: Props) {
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
       setPhoto({ source: bitmap, width: bitmap.width, height: bitmap.height, label })
-      setFrame(DEFAULT_FRAME)
     } catch {
       setPhotoError('That file could not be read as a photo. Try a JPG or PNG.')
     }
@@ -382,15 +391,9 @@ export default function HalftoneModal({ onClose }: Props) {
             {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
             {photo && (
               <p className="text-white/40 text-xs font-mono mb-3">
-                {photo.width} × {photo.height} · {ratioLabel(photo.width, photo.height)} · {orientation.toUpperCase()} · PRINTS {rect.w.toFixed(2)} × {rect.h.toFixed(2)} IN
+                {photo.width} × {photo.height} · {ratioLabel(photo.width, photo.height)} · FILLS THE {page.w} × {page.h} IN CANVAS · PRINTS {rect.w.toFixed(2)} × {rect.h.toFixed(2)} IN
               </p>
             )}
-            <Slider
-              name="PHOTO SIZE" min={FRAME_SCALE_MIN * 100} max={FRAME_SCALE_MAX * 100} step={0.5} disabled={!photo}
-              value={frame.scale * 100}
-              display={`${rect.w.toFixed(2)} × ${rect.h.toFixed(2)} IN`}
-              onChange={v => setFrame(f => clampFrame({ ...f, scale: v / 100 }, page, aspect))}
-            />
             <Slider
               name="BRIGHTNESS" min={-100} max={100} step={1} value={Math.round(tone.brightness * 100)}
               display={`${Math.round(tone.brightness * 100)}`} disabled={!photo}
@@ -411,7 +414,7 @@ export default function HalftoneModal({ onClose }: Props) {
             </div>
             <p className="text-white/40 text-xs mb-4">
               {photo
-                ? 'The whole photo prints, never cropped. Drag to move it, pinch or scroll to resize it.'
+                ? 'The photo fills the canvas: the largest size that fits, never cropped or stretched. Pick 18 × 24 or 8.5 × 11 above.'
                 : 'Pick one from your galleries or upload one. A horizontal photo gets a landscape page, a vertical one a portrait page.'}
             </p>
             <div className="flex gap-2">
@@ -466,19 +469,13 @@ export default function HalftoneModal({ onClose }: Props) {
               <button className={seg(style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: true }))}>UPPERCASE</button>
               <button className={seg(!style.uppercase)} onClick={() => setStyle(t => ({ ...t, uppercase: false }))}>AS TYPED</button>
             </div>
-            <Slider
-              name="PHOTO SIZE" min={FRAME_SCALE_MIN * 100} max={FRAME_SCALE_MAX * 100} step={0.5}
-              value={frame.scale * 100}
-              display={`${rect.w.toFixed(2)} × ${rect.h.toFixed(2)} IN`}
-              onChange={v => setFrame(f => clampFrame({ ...f, scale: v / 100 }, page, aspect))}
-            />
             {offPage && (
               <p className="text-amber-400 text-xs mb-3" data-testid="halftone-text-offpage">
-                The text runs off the page. Make the photo or the text smaller, or drag the photo to make room.
+                The text is too tall to fit with the photo. Make the text smaller or shorten it.
               </p>
             )}
             <p className="text-white/40 text-xs mb-4">
-              Text prints in solid ink, centred above and below the photo. A line too wide for the page shrinks to fit. Drag the preview to move the photo and its text together.
+              Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room, and a line too wide for the page shrinks to fit.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('photo')} className={ghost}>← BACK</button>

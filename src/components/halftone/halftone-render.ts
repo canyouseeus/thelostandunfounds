@@ -139,6 +139,20 @@ export function frameRect(page: { w: number; h: number }, aspect: number, f: Pho
   return { x: f.cx * page.w - w / 2, y: f.cy * page.h - h / 2, w, h }
 }
 
+/**
+ * The photo sized to the canvas: the largest proportional fit (never cropped
+ * or stretched) in the height left after the text above (`top`) and below
+ * (`bottom`) — both in inches, gaps included — centred in that space.
+ */
+export function fitFrame(page: { w: number; h: number }, aspect: number, top: number, bottom: number): PhotoFrame {
+  const fitW = Math.min(page.w, page.h * aspect)
+  const availH = Math.max(page.h * 0.2, page.h - top - bottom)
+  const w = Math.min(page.w, availH * aspect)
+  const h = w / aspect
+  const y = top + (availH - h) / 2
+  return { scale: w / fitW, cx: 0.5, cy: (y + h / 2) / page.h }
+}
+
 /** Keep the frame's size in range and the whole frame on the page. */
 export function clampFrame(f: PhotoFrame, page: { w: number; h: number }, aspect: number): PhotoFrame {
   const scale = Math.min(FRAME_SCALE_MAX, Math.max(FRAME_SCALE_MIN, f.scale))
