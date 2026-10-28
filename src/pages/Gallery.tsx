@@ -90,13 +90,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         return () => clearTimeout(t);
     }, [isHomepage, user, newsletterBarDismissed]);
 
-    // Lock body scroll while newsletter modal is open
-    useEffect(() => {
-        const isOpen = isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed;
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-    }, [isHomepage, activeGallery, newsletterBarVisible, newsletterBarDismissed]);
-
     const handleNewsletterSuccess = () => {
         setNewsletterCookie();
         setTimeout(() => {

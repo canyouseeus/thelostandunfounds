@@ -306,15 +306,18 @@ export default function Layout({ children }: { children?: ReactNode }) {
       {isRouteLoading && <LoadingOverlay />}
 
       <SageModeOverlay />
+      {/* THE AFFILIATE PROGRAM banner — sits above the nav for homepage visitors.
+          It scrolls away with the page rather than riding in the fixed header:
+          pinned, Instagram's in-app browser smeared copies of it down the screen. */}
+      {showAdBanner && <AffiliateBanner noMargin />}
       {/* data-sage-chrome keeps the header clickable while SAGE MODE is armed,
-          so you can always reach the menu and switch it back off. */}
+          so you can always reach the menu and switch it back off.
+          Sticky under the banner on the homepage, fixed everywhere else. */}
       <div
         ref={fixedHeaderRef}
         data-sage-chrome
-        className="fixed top-0 left-0 w-full bg-black z-[999]"
+        className={`${showAdBanner ? 'sticky' : 'fixed'} top-0 left-0 w-full bg-black z-[999]`}
       >
-        {/* THE AFFILIATE PROGRAM banner — sits above the nav for homepage visitors */}
-        {showAdBanner && <AffiliateBanner noMargin />}
 
         <nav className="w-full backdrop-blur-md">
           <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -425,7 +428,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
       {/* Render Menu Portal */}
       <MenuPortal />
 
-      <main className="pb-6 flex-1" style={{ paddingTop: headerHeight }}>
+      <main className="pb-6 flex-1" style={{ paddingTop: showAdBanner ? 0 : headerHeight }}>
         {children || <Outlet />}
       </main>
       <Footer />
