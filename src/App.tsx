@@ -10,7 +10,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import RootPage from './pages/RootPage'
 import AdminAuthGate from './components/AdminAuthGate'
 import ToolsDashboard from './pages/ToolsDashboard'
-import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
 import ZohoCallback from './pages/ZohoCallback'
 import Affiliate from './pages/Affiliate'
@@ -212,7 +211,6 @@ function App() {
               <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
               <Route path="/tools" element={<Layout />}>
                 <Route index element={<ToolsDashboard />} />
-                <Route path="tiktok-downloader" element={<TikTokDownloader />} />
               </Route>
               <Route path="/:username/profile" element={<Layout />}>
                 <Route index element={<Affiliate />} />

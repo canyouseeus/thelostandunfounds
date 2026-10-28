@@ -8,7 +8,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+// v6 loads its worker relative to its own module URL, which bundling breaks — point it at the bundled worker.
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 interface MapPhoto {
   id: string;

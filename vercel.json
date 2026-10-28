@@ -37,9 +37,6 @@
     },
     "api/**/*.ts": {
       "maxDuration": 60
-    },
-    "api/**/*.js": {
-      "maxDuration": 60
     }
   },
   "crons": [
@@ -232,16 +229,11 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' blob: 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://analytics.ahrefs.com https://va.vercel-scripts.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' blob: https: wss:; media-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:;"
-        }
-      ]
-    },
-    {
-      "source": "/tiktok-downloader/(.*)",
-      "headers": [
+          "value": "default-src 'self'; script-src 'self' blob: 'unsafe-inline' 'wasm-unsafe-eval' https://analytics.ahrefs.com https://va.vercel-scripts.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' blob: https: wss:; media-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:; frame-ancestors 'self' https://*.thelostandunfounds.com; object-src 'none'; base-uri 'self';"
+        },
         {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), interest-cohort=()"
         }
       ]
     }

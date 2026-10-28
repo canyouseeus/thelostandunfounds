@@ -126,18 +126,6 @@ async function registerPlatformSkills() {
     definitionPath: 'skills/subscription-check-skill.ts',
   });
   
-  // Register TikTok downloader workflow skill
-  skillRegistry.registerMetadata({
-    name: 'download-tiktok',
-    description: 'Complete TikTok download workflow: validate URL, check limits, download, upload to Drive',
-    category: 'tools',
-    tags: ['tiktok', 'download', 'gdrive'],
-    aliases: ['@tiktok', '@download'],
-    requiredParams: ['userId', 'url'],
-    optionalParams: ['folderId'],
-    definitionPath: 'skills/tiktok-download-skill.ts',
-  });
-  
   // Register meta-skill for creating new skills
   skillRegistry.registerMetadata({
     name: 'create-skill',
