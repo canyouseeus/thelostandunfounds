@@ -515,11 +515,7 @@ const halftoneTour: Tour = {
     { target: 'halftone-step-text', action: 'click', title: 'Text', body: 'Tap 2 · TEXT.' },
     { target: 'halftone-text-above', title: 'Text Above And Below', body: 'Optional: a name, a date, a place. It prints in solid ink, centred on the photo.' },
     { target: 'halftone-step-screen', action: 'click', title: 'Screen', body: 'Tap 3 · SCREEN.' },
-    { target: 'halftone-dot-shape', title: 'Dot', body: 'CIRCLE, TRIANGLE, or a BOLD 3.' },
-    { target: 'halftone-mode', title: 'Dot Size', body: 'SIZE FOLLOWS TONE grows dots in the dark areas. ONE SIZE keeps them equal and adds more instead.' },
-    { target: 'halftone-mirror', title: 'Film', body: 'MIRRORED if your film goes emulsion side down.' },
-    { target: 'halftone-download', title: 'Download Film', body: 'A true-size vector PDF, sharp at any printer resolution.' },
-    { target: 'halftone-png', title: 'PNG Instead', body: 'A 360 DPI image, if your printer needs one.' },
+    { target: 'halftone-download', title: 'Download Film', body: 'A true-size vector PDF, sharp at any printer resolution. Flip the transfer over when you press it.' },
   ],
 };
 

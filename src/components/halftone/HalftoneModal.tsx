@@ -92,15 +92,17 @@ export default function HalftoneModal({ onClose }: Props) {
   const [textAbove, setTextAbove] = useState('')
   const [textBelow, setTextBelow] = useState('')
   const [style, setStyle] = useState<TextStyle>(DEFAULT_STYLE)
-  const [shape, setShape] = useState<DotShape>('circle')
-  const [mesh, setMesh] = useState(DEFAULT_MESH)
-  const [lpi, setLpi] = useState(recommendedLpi(DEFAULT_MESH))
-  const [angle, setAngle] = useState(DEFAULT_ANGLE)
-  const [dotSize, setDotSize] = useState(1.3)
-  const [mode, setMode] = useState<DotMode>('scale')
+  // The one screen we print: 250 mesh, round dots on a 45° grid, size following tone.
+  const mesh = DEFAULT_MESH
+  const lpi = recommendedLpi(DEFAULT_MESH)
+  const angle = DEFAULT_ANGLE
+  const shape: DotShape = 'circle'
+  const dotSize = 1.3
+  const mode: DotMode = 'scale'
+  const cutoff = 0.04
   const [autoLevels, setAutoLevels] = useState(true)
-  const [cutoff, setCutoff] = useState(0.04)
-  const [mirror, setMirror] = useState(false)
+  // The film is right-reading; the transfer is flipped when it is pressed.
+  const mirror = false
   const [loupe, setLoupe] = useState({ x: 0.5, y: 0.5 })
   const [fontError, setFontError] = useState<string | null>(null)
   const [outlines, setOutlines] = useState<OutlineFonts | null>(null)
@@ -179,12 +181,8 @@ export default function HalftoneModal({ onClose }: Props) {
   )
   const offPage = blocks.some(b => b.offPage)
 
-  // The one shape every dot is a clone of: an equilateral triangle, or Inter Bold's 3 as an outline.
-  const clone = useMemo(() => {
-    if (shape !== 'three') return makeClone(shape, dotSize)
-    if (!outlines) return null
-    return makeClone('three', dotSize, (outlines[700][0] as unknown as OutlineFont).charToGlyph('3'))
-  }, [shape, dotSize, outlines])
+  // The one shape every dot is a clone of: a circle.
+  const clone = useMemo(() => makeClone(shape, dotSize), [shape, dotSize])
 
   // Preview: the adjusted greyscale the dots are cut from, plus the text.
   useEffect(() => {
@@ -246,12 +244,10 @@ export default function HalftoneModal({ onClose }: Props) {
     const ldpi = lpi * LOUPE_PX_PER_CELL
     const Wpx = page.w * ldpi
     const cxRight = loupe.x * Wpx
-    // The loupe point is picked on the right-reading preview; on mirrored film it sits opposite.
-    const cx = mirror ? Wpx - cxRight : cxRight
-    const x0 = Math.round(cx - LOUPE_SIZE / 2)
+    const x0 = Math.round(cxRight - LOUPE_SIZE / 2)
     const y0 = Math.round(loupe.y * page.h * ldpi - LOUPE_SIZE / 2)
     drawFilm(c.getContext('2d')!, job, blocks, ldpi, x0, y0)
-  }, [step, job, page, lpi, loupe, mirror, blocks])
+  }, [step, job, page, lpi, loupe, blocks])
 
   useCanvasGestures(previewCanvas, true, {
     onDrag: (dx, dy) => {
@@ -279,16 +275,8 @@ export default function HalftoneModal({ onClose }: Props) {
     setSize(next)
   }
 
-  const changeMesh = (m: number) => {
-    setMesh(m)
-    if (m >= 60 && m <= 400) setLpi(recommendedLpi(m))
-  }
-
-  const outW = Math.round(page.w * DPI)
-  const outH = Math.round(page.h * DPI)
-  const clones = clone ? Math.round(clone.coverage * 100) : 0
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
-  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : shape === 'circle' ? 'circles' : 'triangles'}-${lpi}lpi-${angle}deg${mirror ? '-mirror' : ''}`
+  const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${mesh}mesh-${lpi}lpi-${angle}deg`
 
   /**
    * The film as a PDF, handed to the system share sheet where there is one
@@ -317,17 +305,15 @@ export default function HalftoneModal({ onClose }: Props) {
     }
   }
 
-  const exportFilm = async (format: 'pdf' | 'png') => {
+  const exportFilm = async () => {
     if (!job) return
     setExportError(null)
     setProgress(0)
     try {
       // Let the button repaint before the work starts.
       await new Promise(r => setTimeout(r, 30))
-      const blob = format === 'pdf'
-        ? await renderFilmPdf(job, blocks, setProgress)
-        : await renderFilmPng(job, DPI, blocks, setProgress)
-      saveBlob(blob, `${filename}${format === 'png' ? `-${DPI}dpi` : ''}.${format}`)
+      const blob = await renderFilmPdf(job, blocks, setProgress)
+      saveBlob(blob, `${filename}.pdf`)
     } catch (e) {
       setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
     } finally {
@@ -351,7 +337,7 @@ export default function HalftoneModal({ onClose }: Props) {
         </button>
         <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">SCREEN GENERATOR</h2>
         <p className="text-white/40 text-xs font-mono mt-1 mb-4">
-          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · {shape === 'three' ? '3s' : shape === 'circle' ? 'CIRCLES' : 'TRIANGLES'}
+          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · CIRCLES
         </p>
         <div className="flex gap-1 mb-4" role="tablist">
           {STEPS.map((s, i) => (
@@ -523,17 +509,10 @@ export default function HalftoneModal({ onClose }: Props) {
 
         {step === 'screen' && (
           <div>
-            <p className={label}>DOT · ONE SHAPE, CLONED</p>
-            <div className="flex gap-1 mb-3" data-tour="halftone-dot-shape">
-              <button className={seg(shape === 'circle')} onClick={() => setShape('circle')} data-testid="halftone-shape-circle">● CIRCLE</button>
-              <button className={seg(shape === 'triangle')} onClick={() => setShape('triangle')}>▲ TRIANGLE</button>
-              <button className={seg(shape === 'three')} onClick={() => setShape('three')} disabled={!outlines}>3 · BOLD 3</button>
-            </div>
-
-            <div data-tour="halftone-mode" className="flex gap-1 mb-3">
-              <button className={seg(mode === 'scale')} onClick={() => setMode('scale')} data-testid="halftone-mode-scale">SIZE FOLLOWS TONE</button>
-              <button className={seg(mode === 'count')} onClick={() => setMode('count')} data-testid="halftone-mode-count">ONE SIZE</button>
-            </div>
+            <p className={label}>THE SCREEN · 250 MESH · 55 LPI · 45°</p>
+            <p className="text-white/60 text-xs mb-3">
+              Round dots, each the same size, bigger in the shadows and smaller in the highlights.
+            </p>
 
             <p className={label}>DOT DETAIL · DRAG THE PREVIEW TO MOVE THE BOX</p>
             <div className="bg-white/5 p-3 mb-3 flex justify-center">
@@ -547,79 +526,9 @@ export default function HalftoneModal({ onClose }: Props) {
               />
             </div>
             <p className="text-white/40 text-xs mb-4">
-              {job
-                ? mode === 'scale'
-                  ? `Every dot is the same ${shape === 'three' ? 'Bold 3' : shape === 'circle' ? 'circle' : 'equilateral triangle'}, whole and upright, scaled by the tone up to ${((dotSize / lpi) * 25.4).toFixed(2)} mm in the blacks. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
-                  : `Every dot is the same ${shape === 'three' ? 'Bold 3' : shape === 'circle' ? 'circle' : 'equilateral triangle'}, ${((dotSize / lpi) * 25.4).toFixed(2)} mm ${shape === 'three' ? 'tall' : 'wide'}. Darker tones get more of them, not bigger ones. The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print.`
-                : 'Building the screen…'}
+              {job ? `The box covers ${(LOUPE_SIZE / (lpi * LOUPE_PX_PER_CELL)).toFixed(2)} in of the print. Highlights under ${Math.round(cutoff * 100)}% print as bare paper.` : 'Building the screen…'}
             </p>
 
-            <Slider
-              name={mode === 'scale' ? 'LARGEST DOT' : 'DOT SIZE'} min={40} max={160} step={1} value={Math.round(dotSize * 100)}
-              display={`${Math.round(dotSize * 100)}% OF SPACING`}
-              onChange={v => setDotSize(v / 100)}
-            />
-            <p className="text-white/40 text-xs -mt-2 mb-3">
-              {mode === 'scale'
-                ? `The size a dot reaches in pure black. Past 100% neighbouring dots overlap, so the shadows close up toward solid.`
-                : `Black in the photo fills every spot, mid-grey half of them, white none. With every spot filled the ink is ${clones}% at this size; past 100% neighbouring dots overlap.`}
-            </p>
-
-            <p className={label}>MESH</p>
-            <div className="flex gap-1 mb-3">
-              {[230, 250, 300].map(m => (
-                <button key={m} className={seg(mesh === m)} onClick={() => changeMesh(m)} data-testid={`halftone-mesh-${m}`}>{m}</button>
-              ))}
-            </div>
-            <div className="flex items-end gap-3 mb-3">
-              <div className="flex-1">
-                <label className={label} htmlFor="halftone-mesh">MESH COUNT</label>
-                <input
-                  id="halftone-mesh" type="number" min={60} max={400} step={10} value={mesh}
-                  onChange={e => changeMesh(Number(e.target.value))}
-                  className="w-full bg-white/5 text-white text-sm p-2 font-mono focus:outline-none focus:bg-white/10"
-                  style={{ borderRadius: 0 }}
-                />
-              </div>
-              <button
-                onClick={() => setLpi(recommendedLpi(mesh))}
-                className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider"
-              >
-                USE {recommendedLpi(mesh)} LPI
-              </button>
-            </div>
-            <p className={label}>LINES PER INCH</p>
-            <div className="flex gap-1 mb-2">
-              {[50, 55, 65].map(v => (
-                <button key={v} className={seg(lpi === v)} onClick={() => setLpi(v)} data-testid={`halftone-lpi-${v}`}>{v}</button>
-              ))}
-            </div>
-            <Slider
-              name="FINE TUNE" min={20} max={85} step={1} value={lpi} display={`${lpi} LPI`}
-              onChange={setLpi}
-            />
-            <p className="text-white/40 text-xs -mt-2 mb-3">
-              Dot spacing. {mesh} mesh holds about {recommendedLpi(mesh)} LPI (mesh ÷ 4.5); finer than that and the dots fall through the mesh.
-            </p>
-            <Slider
-              name="ANGLE" min={0} max={90} step={0.5} value={angle} display={`${angle}°`}
-              onChange={setAngle}
-            />
-            <p className="text-white/40 text-xs -mt-2 mb-3">
-              The grid turns; the shape stays upright.
-            </p>
-            <Slider
-              name="HIGHLIGHT CUTOFF" min={0} max={20} step={1} value={Math.round(cutoff * 100)} display={`${Math.round(cutoff * 100)}%`}
-              onChange={v => setCutoff(v / 100)}
-            />
-            <p className="text-white/40 text-xs -mt-2 mb-3">
-              Tones lighter than this print as bare paper, so near-white areas stay clean.
-            </p>
-            <p className={label}>FILM</p>
-            <div data-tour="halftone-mirror" className="flex gap-1 mb-4">
-              <button className={seg(!mirror)} onClick={() => setMirror(false)}>RIGHT READING</button>
-              <button className={seg(mirror)} onClick={() => setMirror(true)}>MIRRORED</button>
-            </div>
             <div className="bg-white/5 p-3 mb-4" data-testid="halftone-print-notes">
               <p className={label}>PRINTING NOTES</p>
               <ul className="text-white/60 text-xs space-y-1 list-disc pl-4">
@@ -633,7 +542,7 @@ export default function HalftoneModal({ onClose }: Props) {
             <div className="flex gap-2 mb-2">
               <button onClick={() => setStep('text')} disabled={progress !== null} className={ghost}>← BACK</button>
               <button
-                onClick={() => exportFilm('pdf')}
+                onClick={() => exportFilm()}
                 disabled={!job || progress !== null || !photo}
                 className={primary}
                 data-tour="halftone-download"
@@ -651,16 +560,8 @@ export default function HalftoneModal({ onClose }: Props) {
             >
               <ShareIcon className="w-4 h-4" /> SHARE OR EMAIL THE PDF
             </button>
-            <button data-tour="halftone-png"
-              onClick={() => exportFilm('png')}
-              disabled={!job || progress !== null || !photo}
-              className="w-full px-3 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40 mb-2"
-              data-testid="halftone-download-png"
-            >
-              PNG INSTEAD · {DPI} DPI
-            </button>
             <p className="text-white/40 text-xs font-mono">
-              PDF: TRUE SIZE, SHARP AT ANY PRINTER RESOLUTION, TEXT AS OUTLINES · PNG: {outW} × {outH} PX, 1-BIT · BLACK = INK
+              PDF: TRUE SIZE, SHARP AT ANY PRINTER RESOLUTION, TEXT AS OUTLINES · BLACK = INK
             </p>
           </div>
         )}
