@@ -93,11 +93,10 @@ export interface PhotoSource {
 
 export interface TextStyle {
   weight: 400 | 700 | 900
-  /** Font size in inches (shrunk automatically if a line would not fit the page width). */
-  size: number
+  /** Font size in inches, for the text above and the text below. A line too wide for the photo shrinks to fit it. */
+  size: { above: number; below: number }
   /** Letter spacing, in ems. */
   tracking: number
-  uppercase: boolean
 }
 
 /** One drawing command, in the shape opentype.js produces (y grows downward). */
@@ -603,7 +602,8 @@ function lineOutline(fonts: OutlineFont[], line: string, size: number, track: nu
 
 /**
  * Lay out the text above and below the photo frame, as outlines. Each block
- * sits a small gap off the frame, centred on it, and shrinks to fit the page width.
+ * sits a small gap off the frame, centred on it, and is never wider than the
+ * frame (the photo), so the text can't run past the picture.
  */
 export function layoutText(
   fonts: OutlineFont[],
@@ -617,11 +617,13 @@ export function layoutText(
   const capHeight = (fonts[0].tables.os2?.sCapHeight ?? 0.727 * fonts[0].unitsPerEm) / fonts[0].unitsPerEm
   const blocks: TextBlock[] = []
   for (const [raw, side] of [[above, 'above'], [below, 'below']] as const) {
-    const text = style.uppercase ? raw.toUpperCase() : raw
+    // Text is always uppercase on the film.
+    const text = raw.toUpperCase()
     const lines = text.split('\n')
     if (!lines.some(l => l.trim())) continue
-    const natural = Math.max(...lines.map(l => lineOutline(fonts, l, style.size, style.tracking * style.size).width))
-    const size = natural > area.w ? (style.size * area.w) / natural : style.size
+    const asked = style.size[side]
+    const natural = Math.max(...lines.map(l => lineOutline(fonts, l, asked, style.tracking * asked).width))
+    const size = natural > frame.w ? (asked * frame.w) / natural : asked
     const lh = size * LINE_HEIGHT
     const height = lines.length * lh
     const gap = Math.max(0.15, size * 0.35)
