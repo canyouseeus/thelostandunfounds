@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, PhotoIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, PhotoIcon, ShareIcon } from '@heroicons/react/24/outline'
 import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 import GalleryPhotoPicker from './GalleryPhotoPicker'
 import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
@@ -289,6 +289,33 @@ export default function HalftoneModal({ onClose }: Props) {
   const clones = clone ? Math.round(clone.coverage * 100) : 0
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
   const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${shape === 'three' ? '3s' : shape === 'circle' ? 'circles' : 'triangles'}-${lpi}lpi-${angle}deg${mirror ? '-mirror' : ''}`
+
+  /**
+   * The film as a PDF, handed to the system share sheet where there is one
+   * (phones: Mail, Save to Files, AirDrop…), otherwise downloaded.
+   */
+  const shareFilm = async () => {
+    if (!job) return
+    setExportError(null)
+    setProgress(0)
+    try {
+      await new Promise(r => setTimeout(r, 30))
+      const blob = await renderFilmPdf(job, blocks, setProgress)
+      const name = `${filename}.pdf`
+      const file = new File([blob], name, { type: 'application/pdf' })
+      if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: name })
+      } else {
+        saveBlob(blob, name)
+      }
+    } catch (e) {
+      // Cancelling the share sheet is not an error.
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
+    } finally {
+      setProgress(null)
+    }
+  }
 
   const exportFilm = async (format: 'pdf' | 'png') => {
     if (!job) return
@@ -595,6 +622,14 @@ export default function HalftoneModal({ onClose }: Props) {
                 {progress !== null ? `RENDERING ${Math.round(progress * 100)}%` : 'DOWNLOAD FILM (VECTOR PDF)'}
               </button>
             </div>
+            <button
+              onClick={shareFilm}
+              disabled={!job || progress !== null || !photo}
+              className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider disabled:opacity-40 mb-2"
+              data-testid="halftone-share"
+            >
+              <ShareIcon className="w-4 h-4" /> SHARE OR EMAIL THE PDF
+            </button>
             <button data-tour="halftone-png"
               onClick={() => exportFilm('png')}
               disabled={!job || progress !== null || !photo}
