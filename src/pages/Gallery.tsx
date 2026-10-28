@@ -295,7 +295,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Gallery / Shop / Booking toggle — homepage visitor mode only */}
             {isHomepage && (
-                <div className="sticky z-[98] bg-black px-4 md:px-8 pt-2 pb-0" style={{ top: 'var(--nav-height, 64px)' }}>
+                // 1px under the header: flush, iOS rounds the two edges apart
+                // and the photos scrolling beneath show through a hairline seam.
+                <div className="sticky z-[98] bg-black px-4 md:px-8 pt-2 pb-0" style={{ top: 'calc(var(--nav-height, 64px) - 1px)' }}>
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-center gap-8 sm:gap-12 pb-2 mb-0">
                             <button

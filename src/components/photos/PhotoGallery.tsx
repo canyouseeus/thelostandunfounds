@@ -1254,7 +1254,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             <div
                 ref={toolbarRef}
                 className="sticky z-[100] bg-black w-full py-3 mb-6"
-                style={{ top: 'var(--nav-height, 64px)' }}
+                // 1px under the header so iOS can't round a seam open between them
+                style={{ top: 'calc(var(--nav-height, 64px) - 1px)' }}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">
                     {/* Row 1: Tabs */}
