@@ -92,7 +92,7 @@ export default function HalftoneModal({ onClose }: Props) {
   const [textAbove, setTextAbove] = useState('')
   const [textBelow, setTextBelow] = useState('')
   const [style, setStyle] = useState<TextStyle>(DEFAULT_STYLE)
-  const [shape, setShape] = useState<DotShape>('triangle')
+  const [shape, setShape] = useState<DotShape>('circle')
   const [mesh, setMesh] = useState(DEFAULT_MESH)
   const [lpi, setLpi] = useState(recommendedLpi(DEFAULT_MESH))
   const [angle, setAngle] = useState(DEFAULT_ANGLE)
@@ -565,6 +565,12 @@ export default function HalftoneModal({ onClose }: Props) {
                 : `Black in the photo fills every spot, mid-grey half of them, white none. With every spot filled the ink is ${clones}% at this size; past 100% neighbouring dots overlap.`}
             </p>
 
+            <p className={label}>MESH</p>
+            <div className="flex gap-1 mb-3">
+              {[230, 250, 300].map(m => (
+                <button key={m} className={seg(mesh === m)} onClick={() => changeMesh(m)} data-testid={`halftone-mesh-${m}`}>{m}</button>
+              ))}
+            </div>
             <div className="flex items-end gap-3 mb-3">
               <div className="flex-1">
                 <label className={label} htmlFor="halftone-mesh">MESH COUNT</label>
@@ -582,8 +588,14 @@ export default function HalftoneModal({ onClose }: Props) {
                 USE {recommendedLpi(mesh)} LPI
               </button>
             </div>
+            <p className={label}>LINES PER INCH</p>
+            <div className="flex gap-1 mb-2">
+              {[50, 55, 65].map(v => (
+                <button key={v} className={seg(lpi === v)} onClick={() => setLpi(v)} data-testid={`halftone-lpi-${v}`}>{v}</button>
+              ))}
+            </div>
             <Slider
-              name="LINES PER INCH" min={20} max={85} step={1} value={lpi} display={`${lpi} LPI`}
+              name="FINE TUNE" min={20} max={85} step={1} value={lpi} display={`${lpi} LPI`}
               onChange={setLpi}
             />
             <p className="text-white/40 text-xs -mt-2 mb-3">
@@ -607,6 +619,15 @@ export default function HalftoneModal({ onClose }: Props) {
             <div data-tour="halftone-mirror" className="flex gap-1 mb-4">
               <button className={seg(!mirror)} onClick={() => setMirror(false)}>RIGHT READING</button>
               <button className={seg(mirror)} onClick={() => setMirror(true)}>MIRRORED</button>
+            </div>
+            <div className="bg-white/5 p-3 mb-4" data-testid="halftone-print-notes">
+              <p className={label}>PRINTING NOTES</p>
+              <ul className="text-white/60 text-xs space-y-1 list-disc pl-4">
+                <li>Test exposure on a scrap screen first. Halftone dots usually need less exposure than solid lines.</li>
+                <li>Use one coat of emulsion per side, so it stays thin and the dots stay sharp.</li>
+                <li>Wash out with a fine mist, not a pressure washer, so the dots survive.</li>
+                <li>Pull the squeegee for two passes rather than pushing, so the dots don't smear.</li>
+              </ul>
             </div>
             {exportError && <p className="text-red-400 text-xs mb-3">{exportError}</p>}
             <div className="flex gap-2 mb-2">

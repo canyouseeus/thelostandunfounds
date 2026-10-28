@@ -37,8 +37,8 @@ export function recommendedLpi(mesh: number): number {
   return Math.max(5, Math.round(mesh / 4.5 / 5) * 5)
 }
 
-/** Single-colour work runs at 22.5° to keep the dots off the mesh threads (moiré). */
-export const DEFAULT_ANGLE = 22.5
+/** The classic halftone angle: a 45° grid for single-colour work. */
+export const DEFAULT_ANGLE = 45
 export const DEFAULT_MESH = 250
 
 export interface ScreenSettings {
