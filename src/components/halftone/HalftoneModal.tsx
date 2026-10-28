@@ -28,7 +28,7 @@ const LOUPE_SIZE = 320
 const LOUPE_PX_PER_CELL = 14
 
 const DEFAULT_TONE: ToneSettings = { brightness: 0, contrast: 0, invert: false }
-const DEFAULT_STYLE: TextStyle = { weight: 900, size: 1, tracking: 0.1, uppercase: true }
+const DEFAULT_STYLE: TextStyle = { weight: 900, size: { above: 1, below: 1 }, tracking: 0.1, uppercase: true }
 
 interface Props {
   onClose: () => void
@@ -162,11 +162,13 @@ export default function HalftoneModal({ onClose }: Props) {
     // Measure the text against a zero-height frame at the middle of the
     // printable area: how far each block reaches from that line is the room
     // it needs above or below the photo, gap included.
+    // The text may be as wide as the largest photo that fits, centred.
     const area = printArea(page)
     const mid = area.y + area.h / 2
+    const maxW = Math.min(area.w, area.h * aspect)
     let top = 0
     let bottom = 0
-    for (const b of layoutText(fonts, page, { x: area.x, y: mid, w: area.w, h: 0 }, textAbove, textBelow, style)) {
+    for (const b of layoutText(fonts, page, { x: area.x + (area.w - maxW) / 2, y: mid, w: maxW, h: 0 }, textAbove, textBelow, style)) {
       if (b.y1 <= mid + 1e-6) top = mid - b.y0
       else bottom = b.y1 - mid
     }
@@ -271,7 +273,8 @@ export default function HalftoneModal({ onClose }: Props) {
   const changeSize = (next: PrintSize) => {
     // Keep the text the same size relative to the page.
     const ratio = PRINT_SIZES[next].w / PRINT_SIZES[size].w
-    setStyle(t => ({ ...t, size: Math.round(t.size * ratio * 100) / 100 }))
+    const scaled = (s: number) => Math.round(s * ratio * 100) / 100
+    setStyle(t => ({ ...t, size: { above: scaled(t.size.above), below: scaled(t.size.below) } }))
     setSize(next)
   }
 
@@ -479,9 +482,14 @@ export default function HalftoneModal({ onClose }: Props) {
               ))}
             </div>
             <Slider
-              name="TEXT SIZE" min={0.1} max={4} step={0.05} value={style.size}
-              display={`${style.size.toFixed(2)} IN`}
-              onChange={v => setStyle(t => ({ ...t, size: v }))}
+              name="ABOVE · TEXT SIZE" min={0.1} max={4} step={0.05} value={style.size.above}
+              display={`${style.size.above.toFixed(2)} IN`}
+              onChange={v => setStyle(t => ({ ...t, size: { ...t.size, above: v } }))}
+            />
+            <Slider
+              name="BELOW · TEXT SIZE" min={0.1} max={4} step={0.05} value={style.size.below}
+              display={`${style.size.below.toFixed(2)} IN`}
+              onChange={v => setStyle(t => ({ ...t, size: { ...t.size, below: v } }))}
             />
             <Slider
               name="LETTER SPACING" min={0} max={0.5} step={0.01} value={style.tracking}
@@ -498,7 +506,7 @@ export default function HalftoneModal({ onClose }: Props) {
               </p>
             )}
             <p className="text-white/40 text-xs mb-4">
-              Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room, and a line too wide for the page shrinks to fit.
+              Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room. Text is never wider than the photo: a line that would be shrinks to fit it.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('photo')} className={ghost}>← BACK</button>
