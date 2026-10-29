@@ -122,7 +122,7 @@ import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
-import { ADMIN_PANEL_EVENT } from '../components/admin/tour/tours';
+import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { installGlobalListeners, logApiCall } from '../lib/adminErrorLog';
 
 interface DashboardStats {
@@ -306,8 +306,8 @@ export default function Admin() {
   // Set, not toggled, so a step that re-opens the open panel is a no-op.
   useEffect(() => {
     const onPanel = (e: Event) => setActivePanelSection((e as CustomEvent<string | null>).detail ?? null);
-    window.addEventListener(ADMIN_PANEL_EVENT, onPanel);
-    return () => window.removeEventListener(ADMIN_PANEL_EVENT, onPanel);
+    window.addEventListener(TOUR_PANEL_EVENT, onPanel);
+    return () => window.removeEventListener(TOUR_PANEL_EVENT, onPanel);
   }, []);
 
   // Long press on the dashboard calendar opens the master calendar panel —

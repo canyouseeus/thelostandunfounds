@@ -160,7 +160,7 @@ export default function CrewAvailabilityCalendar() {
     };
 
     return (
-        <div className="bg-white/5 p-5 sm:p-6 text-white" style={{ borderRadius: 0 }}>
+        <div data-tour="pg-calendar" className="bg-white/5 p-5 sm:p-6 text-white" style={{ borderRadius: 0 }}>
             <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
                 <div className="text-left">
                     <h2 className="text-lg font-black uppercase tracking-tight">My Calendar</h2>
@@ -218,7 +218,7 @@ export default function CrewAvailabilityCalendar() {
                             const isPending = pendingDate === ymd;
 
                             return (
-                                <button
+                                <button data-tour="pg-cal-day"
                                     key={ymd}
                                     disabled={past || saving}
                                     onClick={() => {
@@ -287,7 +287,7 @@ export default function CrewAvailabilityCalendar() {
                     )}
                 </div>
 
-                <div className="text-left">
+                <div data-tour="pg-cal-blocked" className="text-left">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">
                         Blocked Out Next
                     </h3>

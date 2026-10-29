@@ -43,10 +43,21 @@ export interface TourStep {
   action?: 'click' | 'choose';
 }
 
+/**
+ * Which dashboard a tour belongs to. Admin tours live in the SAGE MODE library;
+ * every other dashboard has its own ? button and first-visit WELCOME pop-up
+ * (see TourHelpButton and WhatsNewModal), because SAGE MODE is admin-only.
+ */
+export type DashboardId = 'admin' | 'member' | 'photographer';
+
 export interface Tour {
   id: string;
   title: string;
   summary: string;
+  /** Defaults to 'admin'. */
+  dashboard?: DashboardId;
+  /** The dashboard's first-visit walkthrough: offered once with WELCOME + GO. */
+  intro?: boolean;
   group: 'new' | 'dashboard' | 'console';
   /** ISO date the feature shipped. Set → announced once on the dashboard. */
   announce?: string;
@@ -536,16 +547,230 @@ const screensFromGalleryTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours];
+/* ── Member dashboard (/dashboard) ────────────────────────────────────── */
+
+const MEMBER = '/dashboard';
+const memberApp = (app: string, title: string, body: string): TourStep => ({
+  route: MEMBER,
+  panel: null,
+  target: `m-dock-${app}`,
+  action: 'click',
+  title,
+  body,
+});
+const inApp = (app: string, step: TourStep): TourStep => ({ panel: app, ...step });
+
+const memberBasicsTour: Tour = {
+  id: 'member-basics',
+  title: 'Your Dashboard',
+  summary: 'Your earnings, your apps and where to get help, in one place.',
+  dashboard: 'member',
+  intro: true,
+  group: 'dashboard',
+  steps: [
+    { route: MEMBER, panel: null, target: 'm-header', title: 'Your Dashboard', body: 'Everything you do on THE LOST+UNFOUNDS lives here.' },
+    { target: 'm-actions', title: 'Settings And Sign Out', body: 'The gear is your account settings. The arrow signs you out.' },
+    { target: 'm-revenue', title: 'Your Earnings', body: 'What you have earned, kept up to date.' },
+    { target: 'm-clock', title: 'Clock And Calendar', body: 'Tap the clock face to change its look. Tap its label for a stopwatch and timer.' },
+    { target: 'm-dock', title: 'Your Apps', body: 'Each of your apps opens from here: Gallery, Writer, Affiliate and Account. You see the ones that are yours.' },
+    { target: 'help-tickets', title: 'Support', body: 'Stuck? GET HELP opens a ticket. The reply comes by email and shows here.' },
+    { target: 'tour-help', title: 'Tutorials', body: 'Tap ? any time for a walkthrough of each app.' },
+  ],
+};
+
+const memberAffiliateTour: Tour = {
+  id: 'member-affiliate',
+  title: 'Affiliate',
+  summary: 'Your link, your earnings, your network, and getting paid.',
+  dashboard: 'member',
+  group: 'dashboard',
+  steps: [
+    memberApp('affiliate', 'Affiliate', 'Tap the Affiliate icon to open it.'),
+    inApp('affiliate', { target: 'm-aff-earnings', action: 'click', title: 'Earnings', body: 'Tap EARNINGS.' }),
+    inApp('affiliate', { target: 'm-aff-quick', action: 'click', title: 'Quick Actions', body: 'Tap QUICK ACTIONS.' }),
+    inApp('affiliate', { target: 'm-aff-copy', title: 'Copy Your Link', body: 'Your link. When someone buys through it, you earn a share of the profit.' }),
+    inApp('affiliate', { target: 'm-aff-back', action: 'click', title: 'Back', body: 'Tap ALL SECTIONS to go back.' }),
+    inApp('affiliate', { target: 'm-aff-network', title: 'Network', body: 'People you brought in, and what their sales earn you.' }),
+    inApp('affiliate', { target: 'm-aff-kingmidas', title: 'King Midas', body: 'The daily leaderboard and its prize pot.' }),
+    inApp('affiliate', { target: 'm-aff-rewards', title: 'Rewards', body: 'Your reward points and store credit.' }),
+    inApp('affiliate', { target: 'm-aff-payouts', action: 'click', title: 'Payouts', body: 'Tap PAYOUTS.' }),
+    inApp('affiliate', { target: 'm-aff-available', action: 'click', title: 'Available To Payout', body: 'What you can be paid now. Tap it.' }),
+    inApp('affiliate', { target: 'm-aff-request-payout', title: 'Request A Payout', body: 'Sends your available balance to you.' }),
+    inApp('affiliate', { target: 'm-aff-stripe', title: 'Stripe Connect', body: 'Connect Stripe once so your payouts can reach your bank.' }),
+    inApp('affiliate', { target: 'm-aff-payout-settings', title: 'Payout Settings', body: 'When and how you get paid. EDIT changes it.' }),
+    inApp('affiliate', { target: 'm-aff-back', action: 'click', title: 'Back', body: 'Tap ALL SECTIONS.' }),
+    inApp('affiliate', { target: 'm-aff-links', action: 'click', title: 'Links', body: 'Tap LINKS.' }),
+    inApp('affiliate', { target: 'm-aff-code', title: 'Your Code', body: 'Your affiliate code. The pencil changes it.' }),
+    inApp('affiliate', { target: 'm-aff-link-generator', title: 'Link Generator', body: 'Paste any page on the site to get your own link to it.' }),
+    inApp('affiliate', { target: 'm-aff-guide', title: 'Affiliate Guide', body: 'How the program works, start to finish.' }),
+  ],
+};
+
+const memberGalleryTour: Tour = {
+  id: 'member-gallery',
+  title: 'Gallery',
+  summary: 'Your galleries: make one, share it, and see your job pay.',
+  dashboard: 'member',
+  group: 'dashboard',
+  steps: [
+    memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.'),
+    inApp('gallery', { target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for shoots you covered.' }),
+    inApp('gallery', { target: 'gallery-row', title: 'A Gallery', body: 'One row per gallery: its link, its photo count, and QR to share it.' }),
+    inApp('gallery', { target: 'gallery-qr-button', title: 'QR Code', body: 'A QR code for the gallery, or a phone wallpaper with the code on it.' }),
+    inApp('gallery', { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' }),
+    inApp('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
+    inApp('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' }),
+    inApp('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
+    inApp('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
+  ],
+};
+
+const memberWriterTour: Tour = {
+  id: 'member-writer',
+  title: 'Writer',
+  summary: 'Your author profile, your blog and your Book Club posts.',
+  dashboard: 'member',
+  group: 'dashboard',
+  steps: [
+    memberApp('writer', 'Writer', 'Tap the Writer icon to open it.'),
+    inApp('writer', { target: 'm-writer-stats', title: 'Your Blog', body: 'Your author name, your blog’s address and how many articles you have.' }),
+    inApp('writer', { target: 'm-writer-public', title: 'View Public Blog', body: 'Your blog as readers see it.' }),
+    inApp('writer', { target: 'm-writer-posts', title: 'My Book Club Posts', body: 'Tap to open your posts and their status.' }),
+  ],
+};
+
+const memberAccountTour: Tour = {
+  id: 'member-account',
+  title: 'Account',
+  summary: 'Your tier, your status and your details.',
+  dashboard: 'member',
+  group: 'dashboard',
+  steps: [
+    memberApp('settings', 'Account', 'Tap the Account icon to open it.'),
+    inApp('settings', { target: 'm-account', title: 'Your Account', body: 'Your tier and status.' }),
+    inApp('settings', { target: 'm-account-manage', title: 'Manage Details', body: 'Change your name, email and other details.' }),
+  ],
+};
+
+/* ── Photographer dashboard (/photographer-dashboard) ─────────────────── */
+
+const PHOTOG = '/photographer-dashboard';
+
+const photographerBasicsTour: Tour = {
+  id: 'photographer-basics',
+  title: 'Your Dashboard',
+  summary: 'Tonight’s live gallery, your pay, your calendar and your galleries, in one place.',
+  dashboard: 'photographer',
+  intro: true,
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-live', title: 'Live Galleries', body: 'For tonight’s event: start a gallery and send photos from your camera roll.' },
+    { target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for shoots you covered, and getting it paid.' },
+    { target: 'pg-calendar', title: 'My Calendar', body: 'Mark the days you can’t work.' },
+    { target: 'pg-revenue', title: 'Your Revenue', body: 'You keep 97% of your gallery sales, less Stripe’s fee. Tap for the details.' },
+    { target: 'pg-galleries', title: 'My Galleries', body: 'Every gallery you have made.' },
+    { target: 'pg-ask', title: 'Ask For Anything', body: 'A question, a problem, or something you want built. It goes straight to the studio.' },
+    { target: 'help-tickets', title: 'Support', body: 'GET HELP opens a ticket. The reply comes by email and shows here.' },
+    { target: 'tour-help', title: 'Tutorials', body: 'Tap ? any time for a walkthrough of each part.' },
+  ],
+};
+
+const photographerLiveTour: Tour = {
+  id: 'photographer-live',
+  title: 'Live Galleries',
+  summary: 'Start a gallery for tonight, go live, and send photos as you shoot.',
+  dashboard: 'photographer',
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY.' },
+    { target: 'pg-live-go', title: 'Go Live', body: 'Guests’ gallery page keeps checking for new photos while it is live. END LIVE when the night is over.', missingNote: 'Start a gallery first. Its buttons appear here.' },
+    { target: 'pg-live-share', title: 'Share', body: 'Copies the gallery link for guests.' },
+    { target: 'pg-live-send', action: 'click', title: 'Send Photos', body: 'Tap SEND PHOTOS.' },
+    { target: 'pg-live-uploader', title: 'Pick Your Shots', body: 'Let the camera app drop shots into your phone’s photos, then choose the keepers. They appear in the gallery straight away.' },
+  ],
+};
+
+const photographerPayTour: Tour = {
+  id: 'photographer-pay',
+  title: 'Getting Paid',
+  summary: 'Job pay, Stripe, and what you keep from gallery sales.',
+  dashboard: 'photographer',
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for each shoot you covered.' },
+    { target: 'pg-stripe-setup', title: 'Set Up Payouts', body: 'Connect Stripe once so your pay reaches your bank.' },
+    { target: 'pg-stripe-dashboard', title: 'Your Stripe', body: 'Your payouts and bank details, in Stripe.' },
+    { target: 'pg-revenue', action: 'click', title: 'Gallery Sales', body: 'Tap to see how gallery sales split.' },
+    { target: 'pg-revenue', title: 'What You Keep', body: '97% of each sale is yours, less Stripe’s fee. Affiliate commissions come out of the studio’s 3%, never yours.' },
+  ],
+};
+
+const photographerCalendarTour: Tour = {
+  id: 'photographer-calendar',
+  title: 'My Calendar',
+  summary: 'Tell the studio which days you can’t work.',
+  dashboard: 'photographer',
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-calendar', title: 'My Calendar', body: 'The studio books around this.' },
+    { target: 'pg-cal-day', title: 'Block A Day', body: 'Tap a day you can’t work and add a reason if you like. Tap it again to free it.' },
+    { target: 'pg-cal-blocked', title: 'Blocked Out Next', body: 'Your next days off, in order.' },
+  ],
+};
+
+const photographerGalleriesTour: Tour = {
+  id: 'photographer-galleries',
+  title: 'My Galleries',
+  summary: 'Make a gallery, price it, link its photos and share it.',
+  dashboard: 'photographer',
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-galleries', title: 'My Galleries', body: 'Every gallery you have made.' },
+    { target: 'gallery-row', title: 'A Gallery', body: 'Its link and photo count, and QR to share it.' },
+    { target: 'gallery-qr-button', title: 'QR Code', body: 'A QR code for the gallery, or a phone wallpaper with the code on it.' },
+    { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' },
+    { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' },
+    { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' },
+    { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' },
+    { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' },
+  ],
+};
+
+const photographerAskTour: Tour = {
+  id: 'photographer-ask',
+  title: 'Ask For Anything',
+  summary: 'Send the studio a question, a problem or an idea.',
+  dashboard: 'photographer',
+  group: 'dashboard',
+  steps: [
+    { route: PHOTOG, target: 'pg-ask', title: 'Ask For Anything', body: 'It goes straight to the studio.' },
+    { target: 'pg-ask-kind', title: 'What Kind', body: 'Pick what it is: a question, a problem, or something you want built.' },
+    { target: 'pg-ask-send', title: 'Send', body: 'Type it and send. Your past requests show underneath.' },
+  ],
+};
+
+export const TOURS: Tour[] = [screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+  memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
+  photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
 export function getTour(id: string): Tour | undefined {
   return TOURS.find(t => t.id === id);
 }
 
-/** Announced tours, newest first. */
-export function announcedTours(): Tour[] {
-  return TOURS.filter(t => t.announce).sort((a, b) => (b.announce! < a.announce! ? -1 : 1));
+export const dashboardOf = (t: Tour): DashboardId => t.dashboard ?? 'admin';
+
+export function toursFor(dashboard: DashboardId): Tour[] {
+  return TOURS.filter(t => dashboardOf(t) === dashboard);
 }
 
-/** Window event that opens (string) or closes (null) a console panel on /admin. */
-export const ADMIN_PANEL_EVENT = 'tlu:admin-panel';
+/** A dashboard's announced tours, newest first. */
+export function announcedTours(dashboard: DashboardId = 'admin'): Tour[] {
+  return toursFor(dashboard).filter(t => t.announce).sort((a, b) => (b.announce! < a.announce! ? -1 : 1));
+}
+
+/**
+ * Window event that opens (string) or closes (null) a panel on whichever
+ * dashboard is mounted. Each dashboard root carries data-tour-root and
+ * data-active-panel, and listens for this.
+ */
+export const TOUR_PANEL_EVENT = 'tlu:tour-panel';

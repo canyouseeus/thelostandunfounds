@@ -169,7 +169,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
     if (notContractor && !loading && payouts.length === 0) return null;
 
     return (
-        <section className="mb-6 bg-white/5 p-6" style={{ borderRadius: 0 }}>
+        <section data-tour="pg-jobpay" className="mb-6 bg-white/5 p-6" style={{ borderRadius: 0 }}>
             <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
                 <div>
                     <h2 className="text-xl font-bold uppercase tracking-tighter text-white">Job Payouts</h2>
@@ -213,7 +213,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
                             account you can switch between in your Stripe dashboard — nothing changes
                             about the accounts you already have.
                         </p>
-                        <button
+                        <button data-tour="pg-stripe-setup"
                             onClick={startStripeSetup}
                             disabled={connecting}
                             className="mt-4 bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"
@@ -230,7 +230,7 @@ export default function JobPayouts({ userId }: { userId: string }) {
 
                 {(!connect || connect.payouts_enabled) && (
                     <>
-                        <button
+                        <button data-tour="pg-stripe-dashboard"
                             onClick={openStripeDashboard}
                             disabled={openingStripe}
                             className="bg-white text-black px-5 py-3 text-sm font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50"

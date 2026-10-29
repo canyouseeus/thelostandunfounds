@@ -33,7 +33,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ADMIN_PANEL_EVENT, getTour, Tour, TourStep } from './tours';
+import { TOUR_PANEL_EVENT, getTour, Tour, TourStep } from './tours';
 
 const SEEN_KEY = 'tlu_tours_seen';
 const PAD = 6;
@@ -93,9 +93,9 @@ function covered(el: HTMLElement): boolean {
   return !!top && !el.contains(top) && !top.contains(el);
 }
 
-/** The console panel open on /admin ('' for none), or null off the dashboard. */
+/** The panel open on the mounted dashboard ('' for none), or null off any dashboard. */
 function openPanel(): string | null {
-  const root = document.querySelector<HTMLElement>('[data-tour-root="admin"]');
+  const root = document.querySelector<HTMLElement>('[data-tour-root]');
   return root ? root.dataset.activePanel ?? '' : null;
 }
 
@@ -238,7 +238,7 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
           const want = step.panel ?? '';
           if (current !== null && current !== want) {
             if (!panelSent) {
-              window.dispatchEvent(new CustomEvent(ADMIN_PANEL_EVENT, { detail: step.panel }));
+              window.dispatchEvent(new CustomEvent(TOUR_PANEL_EVENT, { detail: step.panel }));
               panelSent = true;
             }
             if (elapsed < limit) { raf = requestAnimationFrame(tick); return; }
@@ -258,6 +258,19 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
           // Never turned up. Say why if the step knows; otherwise skip it.
           if (step.missingNote) { arrive(step, null); return; }
           let to = index + dirRef.current;
+          // Jump the whole run of steps that can't be there either — the rest
+          // of an app that failed to load, say — instead of waiting on each in
+          // turn. Stop at any step that could still appear: one that changes
+          // the page or panel first, has no target, explains itself with a
+          // missingNote, or whose target is already on screen.
+          const len = tour.steps.length;
+          while (to >= 0 && to < len) {
+            const n = tour.steps[to];
+            const panelMoves = n.panel !== undefined && openPanel() !== (n.panel ?? '');
+            const routeMoves = !!n.route && window.location.pathname !== n.route;
+            if (!n.target || routeMoves || panelMoves || n.missingNote || findTarget(n.target)) break;
+            to += dirRef.current;
+          }
           // Backing into a missing first step: stay where the reader was.
           if (to < 0) to = shownRef.current ? shownRef.current.index : index + 1;
           if (to >= tour.steps.length) {
