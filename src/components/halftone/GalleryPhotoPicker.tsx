@@ -44,6 +44,37 @@ interface Props {
 
 const row = 'w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-left'
 
+/** Rows read per request when counting a photographer's folders. */
+const SCAN = 1000
+
+/**
+ * A photographer's Drive folders: the collection tags on photos in their own
+ * galleries, counted over those photos only. A folder name is shared by every
+ * photographer who sorted into it, so the count is never taken from the tag as a whole.
+ */
+async function ownFolders(libraryIds: string[]): Promise<Source[]> {
+  if (libraryIds.length === 0) return []
+  const counts = new Map<string, { name: string; count: number }>()
+  for (let from = 0; ; from += SCAN) {
+    const { data, error } = await supabase
+      .from('photo_tags')
+      .select('id, tag_id, tags!inner(name), photos!inner(library_id)')
+      .eq('tags.type', 'collection')
+      .in('photos.library_id', libraryIds)
+      .order('id')
+      .range(from, from + SCAN - 1)
+    if (error) throw error
+    const rows = (data || []) as unknown as { tag_id: string; tags: { name: string } }[]
+    for (const r of rows) {
+      const c = counts.get(r.tag_id) ?? { name: r.tags.name, count: 0 }
+      c.count += 1
+      counts.set(r.tag_id, c)
+    }
+    if (rows.length < SCAN) break
+  }
+  return [...counts].map(([id, c]) => ({ kind: 'tag' as const, id, name: c.name, count: c.count }))
+}
+
 export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, ownerId }: Props) {
   const [sources, setSources] = useState<Source[] | null>(null)
   const [sourceError, setSourceError] = useState<string | null>(null)
@@ -57,29 +88,36 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
   const [opening, setOpening] = useState<string | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
+  // A photographer's own gallery ids: their folder photos are limited to these.
+  const ownLibraryIds = useRef<string[] | null>(null)
 
   // Galleries and folders, with photo counts, once per open.
   useEffect(() => {
     if (!isOpen || sources) return
     void (async () => {
-      const libsQuery = supabase.from('photo_libraries').select('id, name, photos(count)').order('name')
-      const tagsQuery = supabase.from('tags').select('id, name, photo_tags(count)').eq('type', 'collection').order('name')
-      // The Drive folders hold everyone's photos, so a photographer's list leaves them out.
-      const [libs, tags] = await Promise.all([
-        ownerId ? libsQuery.eq('owner_id', ownerId) : libsQuery,
-        ownerId ? null : tagsQuery,
-      ])
-      if (libs.error || tags?.error) {
-        logError(`picker sources: ${libs.error?.message || tags?.error?.message}`)
+      try {
+        const libsQuery = supabase.from('photo_libraries').select('id, name, photos(count)').order('name')
+        const libs = await (ownerId ? libsQuery.eq('owner_id', ownerId) : libsQuery)
+        if (libs.error) throw libs.error
+        const libraryIds = (libs.data || []).map(r => r.id)
+        ownLibraryIds.current = ownerId ? libraryIds : null
+        const count = (r: { photos?: { count: number }[]; photo_tags?: { count: number }[] }) =>
+          (r.photos ?? r.photo_tags ?? [])[0]?.count ?? 0
+        const folders: Source[] = ownerId
+          ? await ownFolders(libraryIds)
+          : await supabase.from('tags').select('id, name, photo_tags(count)').eq('type', 'collection').order('name')
+            .then(({ data, error }) => {
+              if (error) throw error
+              return (data || []).map(r => ({ kind: 'tag' as const, id: r.id, name: r.name, count: count(r) }))
+            })
+        setSources([
+          ...(libs.data || []).map(r => ({ kind: 'library' as const, id: r.id, name: r.name, count: count(r) })),
+          ...folders,
+        ].filter(s => s.count > 0))
+      } catch (e) {
+        logError(`picker sources: ${e instanceof Error ? e.message : String(e)}`)
         setSourceError('Could not load your galleries and folders.')
-        return
       }
-      const count = (r: { photos?: { count: number }[]; photo_tags?: { count: number }[] }) =>
-        (r.photos ?? r.photo_tags ?? [])[0]?.count ?? 0
-      setSources([
-        ...(libs.data || []).map(r => ({ kind: 'library' as const, id: r.id, name: r.name, count: count(r) })),
-        ...(tags?.data || []).map(r => ({ kind: 'tag' as const, id: r.id, name: r.name, count: count(r) })),
-      ].filter(s => s.count > 0))
     })()
   }, [isOpen, sources, ownerId])
 
@@ -113,11 +151,14 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
       rows = (data || []) as GalleryPhoto[]
       fetched = rows.length
     } else {
-      const { data, error: err } = await supabase
+      let folderQuery = supabase
         .from('photo_tags')
         .select('id, photos!inner(id, title, google_drive_file_id, mime_type)')
         .eq('tag_id', source.id)
         .not('photos.google_drive_file_id', 'is', null)
+      // A photographer sees only the photos in their own galleries.
+      if (ownLibraryIds.current) folderQuery = folderQuery.in('photos.library_id', ownLibraryIds.current)
+      const { data, error: err } = await folderQuery
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(from, from + PAGE - 1)
@@ -184,7 +225,7 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
               <>
                 <h2 className="text-lg font-black text-white uppercase tracking-widest pr-12 mb-1">CHOOSE A PHOTO</h2>
                 <p className="text-white/40 text-xs mb-4">
-                  {ownerId ? 'From your galleries. Nothing here gets published.' : 'From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.'}
+                  {ownerId ? 'From your galleries and their Drive folders. Nothing here gets published.' : 'From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.'}
                 </p>
                 <input
                   type="search"

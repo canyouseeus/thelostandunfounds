@@ -333,14 +333,14 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
       onMouseDown={e => { if (e.target === e.currentTarget && progress === null) onClose() }}
       role="dialog"
       aria-modal="true"
-      aria-label="Screen generator"
+      aria-label="Halftone generator"
       data-testid="halftone-modal"
     >
       <div className="bg-[#0A0A0A] w-full max-w-lg max-h-[calc(100vh-7rem)] overflow-y-auto p-5 relative text-left">
         <button onClick={onClose} disabled={progress !== null} className="absolute top-4 right-4 text-white/40 hover:text-white" aria-label="Close">
           <XMarkIcon className="w-6 h-6" />
         </button>
-        <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">SCREEN GENERATOR</h2>
+        <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">HALFTONE GENERATOR</h2>
         <p className="text-white/40 text-xs font-mono mt-1 mb-4">
           {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · CIRCLES
         </p>

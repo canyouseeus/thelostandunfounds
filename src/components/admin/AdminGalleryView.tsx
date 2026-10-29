@@ -16,7 +16,7 @@ import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/ga
 import { LoadingSpinner } from '@/components/Loading';
 import { isAdminUser } from '@/utils/admin';
 
-// Lazy: the screen generator bundles its own typeface; nobody else should download it.
+// Lazy: the halftone generator bundles its own typeface; nobody else should download it.
 const HalftoneModal = lazy(() => import('@/components/halftone/HalftoneModal'));
 
 interface AdminGalleryViewProps {
@@ -1308,12 +1308,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                     <button
                         onClick={() => setIsHalftoneOpen(true)}
                         className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
-                        title="Screen generator — halftone film positives for screen printing"
-                        aria-label="Screen generator"
+                        title="Halftone generator — halftone film positives for screen printing"
+                        aria-label="Halftone generator"
                         data-tour="gallery-screens-button"
                     >
                         <span className="text-xs leading-none" aria-hidden="true">▲</span>
-                        <span>Screens</span>
+                        <span>Halftone</span>
                     </button>
                     {!isPhotographerView && (
                         <button data-tour="gallery-invite"
