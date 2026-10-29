@@ -13,13 +13,14 @@
  */
 
 import { useEffect, useState } from 'react'
-import LiveUploader from '../components/live/LiveUploader'
+import LiveUploader, { UploadTermsNotice } from '../components/live/LiveUploader'
+import TermsGate from '../components/live/TermsGate'
 
 const KEY_PATTERN = /^tlu_live_[A-Za-z0-9_-]{20,}$/
 
 export default function LiveUpload() {
   const [key] = useState(() => decodeURIComponent(window.location.hash.replace(/^#/, '')).trim())
-  const [gallery, setGallery] = useState<{ name: string; live: boolean } | null>(null)
+  const [gallery, setGallery] = useState<{ name: string; live: boolean; termsAccepted: boolean; termsVersion: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -35,10 +36,21 @@ export default function LiveUpload() {
       .then(async res => {
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.error || 'This upload link is not valid.')
-        setGallery({ name: json.name, live: json.live })
+        setGallery({ name: json.name, live: json.live, termsAccepted: Boolean(json.termsAccepted), termsVersion: json.termsVersion })
       })
       .catch(err => setError(err.message))
   }, [key])
+
+  async function agreeToTerms(name?: string) {
+    const res = await fetch('/api/gallery/ingest-terms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ version: gallery?.termsVersion, name }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || 'Could not record your agreement.')
+    setGallery(prev => (prev ? { ...prev, termsAccepted: true, termsVersion: json.termsVersion } : prev))
+  }
 
   return (
     <div className="min-h-screen bg-black text-white px-5 pt-12 pb-24">
@@ -61,7 +73,14 @@ export default function LiveUpload() {
             </p>
 
             <div className="bg-white/5 p-6 mb-8" style={{ borderRadius: 0 }}>
-              <LiveUploader uploadKey={key} />
+              {gallery.termsAccepted ? (
+                <>
+                  <LiveUploader uploadKey={key} />
+                  <UploadTermsNotice />
+                </>
+              ) : (
+                <TermsGate askName onAgree={agreeToTerms} />
+              )}
             </div>
 
             <div className="bg-white/5 p-6" style={{ borderRadius: 0 }}>

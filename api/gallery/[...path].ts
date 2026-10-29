@@ -212,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleBatchDelete(req, res);
         }
 
-        if (route === 'ingest-start' || route === 'ingest-complete' || route === 'ingest-info' || route === 'ingest-chunk') {
+        if (route === 'ingest-start' || route === 'ingest-complete' || route === 'ingest-info' || route === 'ingest-chunk' || route === 'ingest-terms') {
             return await handleIngest(req, res, route);
         }
 
@@ -1238,6 +1238,10 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
  *                   — the same PUT relayed through us, 4MB at a time, for a
  *                   browser that cannot reach Google directly.
  *   ingest-complete { fileId, publish?, slug? }          → { pending } or { photoId }
+ *   ingest-terms    { version, name?, email?, slug? }    → records agreement to the Photographer Terms
+ * Every upload call is refused (403, code 'terms_required') until the caller
+ * has agreed to the current Photographer Terms; ingest-info reports whether
+ * they have. The admin session is exempt. See lib/api-handlers/_terms.ts.
  * Without publish the photo waits in the gallery's live inbox for review
  * (live-inbox); camera-roll uploads send publish: true and go live at once.
  * Auth is an ingest key (Bearer tlu_live_…) or the admin session plus slug —
@@ -1252,6 +1256,7 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
         // A chunk's body is raw bytes, so its gallery and session ride in the query.
         if (route === 'ingest-chunk') {
             const caller = await ingest.resolveIngestCaller(req, supabase, req.query.slug);
+            await ingest.requireTerms(supabase, caller.party);
             const chunk = Buffer.isBuffer(req.body) ? req.body : null;
             if (!chunk || chunk.length === 0) return res.status(400).json({ error: 'Chunk body is required (application/octet-stream).' });
             const result = await ingest.relayChunk(
@@ -1266,8 +1271,19 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
         const caller = await ingest.resolveIngestCaller(req, supabase, body.slug);
 
         if (route === 'ingest-info') {
-            return res.status(200).json({ success: true, ...ingest.describeCaller(caller) });
+            return res.status(200).json({
+                success: true,
+                ...ingest.describeCaller(caller),
+                termsAccepted: await ingest.termsAccepted(supabase, caller.party),
+                termsVersion: ingest.PHOTOGRAPHER_TERMS_VERSION,
+            });
         }
+
+        if (route === 'ingest-terms') {
+            return res.status(200).json({ success: true, ...(await ingest.acceptTerms(supabase, req, caller.party, body)) });
+        }
+
+        await ingest.requireTerms(supabase, caller.party);
 
         if (route === 'ingest-start') {
             const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
@@ -1280,7 +1296,7 @@ async function handleIngest(req: VercelRequest, res: VercelResponse, route: stri
     } catch (err: any) {
         const status = err instanceof ingest.HttpError ? err.status : 500;
         if (status >= 500) console.error(`[${route}] Error:`, err);
-        return res.status(status).json({ error: err.message });
+        return res.status(status).json({ error: err.message, ...(err?.code ? { code: err.code } : {}) });
     }
 }
 
@@ -1399,6 +1415,8 @@ async function handleLivePreview(req: VercelRequest, res: VercelResponse) {
  *   GET                                           → their galleries
  *   POST { action: 'create', name }               → new live gallery + Drive folder
  *   POST { action: 'start' | 'stop', slug }       → live mode on their gallery
+ *   POST { action: 'accept-terms', version }      → agree to the Photographer Terms
+ * GET reports termsAccepted; create is refused until they have agreed.
  * Uploading to it uses ingest-start / ingest-complete with the same session.
  */
 async function handleMyLive(req: VercelRequest, res: VercelResponse) {
@@ -1409,22 +1427,34 @@ async function handleMyLive(req: VercelRequest, res: VercelResponse) {
         if (!photographer) return res.status(401).json({ error: 'Photographers only.' });
         res.setHeader('Cache-Control', 'no-store');
 
+        const party = { userId: photographer.userId };
+
         if (req.method === 'GET') {
-            return res.status(200).json({ success: true, ...(await ingest.listMyGalleries(supabase, photographer)) });
+            return res.status(200).json({
+                success: true,
+                ...(await ingest.listMyGalleries(supabase, photographer)),
+                termsAccepted: await ingest.termsAccepted(supabase, party),
+                termsVersion: ingest.PHOTOGRAPHER_TERMS_VERSION,
+            });
         }
         if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-        const { action, name, slug } = (req.body && typeof req.body === 'object') ? req.body : {};
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { action, name, slug } = body;
+        if (action === 'accept-terms') {
+            return res.status(200).json({ success: true, ...(await ingest.acceptTerms(supabase, req, party, { ...body, name: photographer.name })) });
+        }
         if (action === 'create') {
+            await ingest.requireTerms(supabase, party);
             return res.status(200).json({ success: true, gallery: await ingest.createMyLiveGallery(supabase, photographer, name) });
         }
         if (action === 'start' || action === 'stop') {
             return res.status(200).json({ success: true, ...(await ingest.setMyLiveMode(supabase, photographer, slug, action === 'start')) });
         }
-        return res.status(400).json({ error: 'action must be create, start or stop' });
+        return res.status(400).json({ error: 'action must be create, start, stop or accept-terms' });
     } catch (err: any) {
         const status = err instanceof ingest.HttpError ? err.status : 500;
         if (status >= 500) console.error('[my-live] Error:', err);
-        return res.status(status).json({ error: err.message });
+        return res.status(status).json({ error: err.message, ...(err?.code ? { code: err.code } : {}) });
     }
 }

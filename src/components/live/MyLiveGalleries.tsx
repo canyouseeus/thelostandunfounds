@@ -10,7 +10,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import LiveUploader from './LiveUploader'
+import LiveUploader, { UploadTermsNotice } from './LiveUploader'
+import TermsGate from './TermsGate'
 
 interface Gallery {
   id: string
@@ -43,11 +44,14 @@ export default function MyLiveGalleries() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  // The server's word on it — it refuses uploads until this is true anyway.
+  const [terms, setTerms] = useState<{ accepted: boolean; version: string } | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const data = await myLive<{ galleries: Gallery[] }>()
+      const data = await myLive<{ galleries: Gallery[]; termsAccepted: boolean; termsVersion: string }>()
       setGalleries(data.galleries)
+      setTerms({ accepted: data.termsAccepted, version: data.termsVersion })
     } catch {
       // Not a crew photographer (or signed out): this section has nothing to offer.
       setUnavailable(true)
@@ -55,6 +59,14 @@ export default function MyLiveGalleries() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  async function agreeToTerms() {
+    const result = await myLive<{ termsAccepted: boolean; termsVersion: string }>({
+      method: 'POST',
+      body: JSON.stringify({ action: 'accept-terms', version: terms?.version }),
+    })
+    setTerms({ accepted: result.termsAccepted, version: result.termsVersion })
+  }
 
   async function create() {
     setBusy(true)
@@ -116,6 +128,10 @@ export default function MyLiveGalleries() {
         </div>
       )}
 
+      {!terms?.accepted ? (
+        <TermsGate onAgree={agreeToTerms} />
+      ) : (
+      <>
       <div className="flex flex-wrap gap-2 mb-6">
         <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }}
           placeholder="Event name, e.g. Halloween at Primos" value={name}
@@ -156,6 +172,7 @@ export default function MyLiveGalleries() {
               {open === g.slug && (
                 <div className="mt-4">
                   <LiveUploader slug={g.slug} />
+                  <UploadTermsNotice />
                   <a href={`/gallery/${g.slug}`} target="_blank" rel="noreferrer"
                     className="inline-block mt-4 text-[10px] uppercase tracking-[0.2em] text-white/60 hover:text-white underline underline-offset-4">
                     View gallery
@@ -165,6 +182,8 @@ export default function MyLiveGalleries() {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
     </div>
   )

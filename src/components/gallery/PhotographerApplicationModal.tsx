@@ -11,6 +11,7 @@ import {
     UserIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
+import { PHOTOGRAPHER_TERMS_VERSION } from '../../pages/docs/PhotographerTerms';
 
 interface PhotographerApplicationModalProps {
     isOpen: boolean;
@@ -29,6 +30,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
     const [cameras, setCameras] = useState<string[]>(['']);
     const [location, setLocation] = useState('');
     const [portfolioLink, setPortfolioLink] = useState('');
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     const totalSteps = 4;
 
@@ -70,7 +72,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
             case 2:
                 return cameras.some(c => c.trim().length > 0);
             case 3:
-                return location.trim().length > 0 && isValidInstagramLink(portfolioLink);
+                return location.trim().length > 0 && isValidInstagramLink(portfolioLink) && agreedToTerms;
             default:
                 return false;
         }
@@ -107,7 +109,9 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                     cameras: validCameras,
                     location: location.trim(),
                     portfolio_link: portfolioLink.trim(),
-                    status: 'pending'
+                    status: 'pending',
+                    terms_version: PHOTOGRAPHER_TERMS_VERSION,
+                    terms_accepted_at: new Date().toISOString()
                 });
 
             if (dbError) {
@@ -136,6 +140,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
         setCameras(['']);
         setLocation('');
         setPortfolioLink('');
+        setAgreedToTerms(false);
         setSubmitted(false);
         setError('');
         onClose();
@@ -315,6 +320,21 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                                 className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                             />
                                         </div>
+                                        <label className="flex items-start gap-3 text-sm text-white/70 cursor-pointer text-left">
+                                            <input
+                                                type="checkbox"
+                                                checked={agreedToTerms}
+                                                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                                className="mt-1 accent-white"
+                                            />
+                                            <span>
+                                                I have read and agree to the{' '}
+                                                <a href="/terms/photographers" target="_blank" rel="noreferrer" className="underline hover:text-white">
+                                                    Photographer Terms
+                                                </a>
+                                                , including the license I grant to my uploads and the business's right to edit, hide or delete any content.
+                                            </span>
+                                        </label>
                                     </div>
                                 </div>
                             )}

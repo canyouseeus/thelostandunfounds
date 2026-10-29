@@ -39,6 +39,10 @@ import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supa
 import { verifyAdmin } from './_admin-auth.js';
 import { createClient } from '@supabase/supabase-js';
 import { ingestUploadedPhoto, INGEST_FILE_FIELDS } from './_photo-sync-utils.js';
+import {
+    hasAcceptedPhotographerTerms, recordPhotographerTerms, PHOTOGRAPHER_TERMS_VERSION,
+    TERMS_REQUIRED_MESSAGE, TermsVersionError, type TermsParty,
+} from './_terms.js';
 import { normalizeHandle, normalizeText, reverseGeocode } from '../../scripts/claptrop-namer.js';
 
 export { normalizeHandle };
@@ -49,9 +53,12 @@ const MAX_BATCH = 200;
 
 export class HttpError extends Error {
     status: number;
-    constructor(status: number, message: string) {
+    /** Machine-readable reason, for the client to act on (e.g. 'terms_required'). */
+    code?: string;
+    constructor(status: number, message: string, code?: string) {
         super(message);
         this.status = status;
+        this.code = code;
     }
 }
 
@@ -76,6 +83,11 @@ interface IngestCaller {
      * file then keeps its camera name rather than crediting the wrong person.
      */
     handle: string | null;
+    /**
+     * Who has to have agreed to the Photographer Terms before this caller can
+     * upload. Null for the admin session — the owner is the business.
+     */
+    party: TermsParty | null;
 }
 
 /** The house's own handle — what the owner's uploads are credited to. */
@@ -139,22 +151,60 @@ export async function resolveIngestCaller(
                 .maybeSingle();
             handle = normalizeHandle(shooter?.instagram);
         }
-        return { library: await loadLibrary(supabase, { id: key.library_id }), keyId: key.id, handle };
+        return { library: await loadLibrary(supabase, { id: key.library_id }), keyId: key.id, handle, party: { ingestKeyId: key.id } };
     }
 
     if (typeof slug !== 'string' || !slug) {
         if (!(await verifyAdmin(req)) && !(await verifiedPhotographer(req, supabase))) throw new HttpError(401, 'Unauthorized');
         throw new HttpError(400, 'slug is required.');
     }
-    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null, handle: HOUSE_HANDLE };
+    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null, handle: HOUSE_HANDLE, party: null };
 
     // A photographer may upload to galleries they own, and no others.
     const photographer = await verifiedPhotographer(req, supabase);
     if (!photographer) throw new HttpError(401, 'Unauthorized');
     const library = await loadLibrary(supabase, { slug });
     if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
-    return { library, keyId: null, handle: normalizeHandle(photographer.instagram) };
+    return { library, keyId: null, handle: normalizeHandle(photographer.instagram), party: { userId: photographer.userId } };
 }
+
+// --- The terms gate ---
+//
+// Nothing reaches a gallery from anyone but the owner until they have agreed
+// to the Photographer Terms. Enforced here, on the server, for every upload
+// call — see lib/api-handlers/_terms.ts.
+
+/** Whether the caller may upload: true for the admin, else their agreement on record. */
+export async function termsAccepted(supabase: ServiceSupabaseClient, party: TermsParty | null): Promise<boolean> {
+    if (!party) return true;
+    try {
+        return await hasAcceptedPhotographerTerms(supabase, party);
+    } catch (err: any) {
+        throw new HttpError(500, err?.message || 'Could not check terms acceptance.');
+    }
+}
+
+export async function requireTerms(supabase: ServiceSupabaseClient, party: TermsParty | null): Promise<void> {
+    if (!(await termsAccepted(supabase, party))) throw new HttpError(403, TERMS_REQUIRED_MESSAGE, 'terms_required');
+}
+
+export async function acceptTerms(
+    supabase: ServiceSupabaseClient,
+    req: VercelRequest,
+    party: TermsParty | null,
+    body: { version?: unknown; name?: unknown; email?: unknown },
+) {
+    if (!party) return { termsAccepted: true, termsVersion: PHOTOGRAPHER_TERMS_VERSION };
+    try {
+        await recordPhotographerTerms(supabase, req, party, body);
+    } catch (err: any) {
+        if (err instanceof TermsVersionError) throw new HttpError(409, err.message, 'terms_outdated');
+        throw new HttpError(500, err?.message || 'Could not record terms acceptance.');
+    }
+    return { termsAccepted: true, termsVersion: PHOTOGRAPHER_TERMS_VERSION };
+}
+
+export { PHOTOGRAPHER_TERMS_VERSION };
 
 // --- Photographers: their own live galleries ---
 

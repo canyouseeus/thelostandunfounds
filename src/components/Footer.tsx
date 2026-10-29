@@ -51,6 +51,7 @@ const COLUMNS: { heading: string; links: { to: string; label: string }[] }[] = [
     links: [
       { to: '/privacy', label: 'Privacy Policy' },
       { to: '/terms', label: 'Terms of Use' },
+      { to: '/terms/photographers', label: 'Photographer Terms' },
     ],
   },
 ]

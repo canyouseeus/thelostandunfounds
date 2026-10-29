@@ -29,6 +29,7 @@ import QR from './pages/QR'
 import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import PhotographerTerms from './pages/PhotographerTerms'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import Blog from './pages/Blog'
@@ -207,7 +208,9 @@ function App() {
               <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
               <Route path="/terms" element={<Layout />}>
                 <Route index element={<Terms />} />
+                <Route path="photographers" element={<PhotographerTerms />} />
               </Route>
+              <Route path="/photographer-terms" element={<Navigate to="/terms/photographers" replace />} />
               <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
               <Route path="/tools" element={<Layout />}>
                 <Route index element={<ToolsDashboard />} />
