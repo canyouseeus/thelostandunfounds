@@ -48,10 +48,13 @@ export default function TermsGate({ onAgree, askName = false }: {
         <li>Porn or sex acts, real or simulated</li>
         <li>Adult nudity without the person's signed consent and a checked ID showing they're 18+</li>
         <li>Violence, gore, abuse, harassment, hate or threats</li>
-        <li>Photos of anyone taken or shared without their consent, or in a private setting</li>
+        <li>Secret photos in private places (restrooms, changing rooms, hidden cameras), or intimate photos shared without consent</li>
         <li>Drug use, weapons used to threaten, or anything else illegal</li>
         <li>Work that is not yours or that you do not have the rights to</li>
       </ul>
+      <p className="text-sm text-white/70 mb-4">
+        Candid event and street photos of people in public are fine. Mark any nude photos 18+ when you upload.
+      </p>
       <p className="text-sm text-white/70 mb-4">
         Breaking these rules gets the content deleted, your access removed permanently, and
         illegal material reported to law enforcement. We may edit, hide or delete any upload at any time.

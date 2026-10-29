@@ -204,6 +204,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleBatchLocation(req, res);
         }
 
+        if (route === 'batch-mature') {
+            return await handleBatchMature(req, res);
+        }
+
         if (route === 'batch-move') {
             return await handleBatchMove(req, res);
         }
@@ -1187,6 +1191,28 @@ async function handleBatchLocation(req: VercelRequest, res: VercelResponse) {
     }
 }
 
+/** POST { photoIds, mature: boolean } — admin marks photos 18+ (blurred on public galleries) or clears it. */
+async function handleBatchMature(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { requireAdminUser, batchSetMature } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const { photoIds, mature } = req.body || {};
+        if (!Array.isArray(photoIds) || !photoIds.length || typeof mature !== 'boolean') {
+            return res.status(400).json({ error: 'photoIds and mature (true/false) are required' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const result = await batchSetMature(supabase as any, photoIds, mature);
+        return res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        console.error('[batch-mature] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
 async function handleBatchMove(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     try {
@@ -1237,7 +1263,8 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
  *   ingest-chunk    ?session=<uploadUrl>&slug=, raw body, x-content-range
  *                   — the same PUT relayed through us, 4MB at a time, for a
  *                   browser that cannot reach Google directly.
- *   ingest-complete { fileId, publish?, slug? }          → { pending } or { photoId }
+ *   ingest-complete { fileId, publish?, mature?, slug? } → { pending } or { photoId }
+ *                   mature: true marks the photo 18+ (blurred on the gallery)
  *   ingest-terms    { version, name?, email?, slug? }    → records agreement to the Photographer Terms
  * Every upload call is refused (403, code 'terms_required') until the caller
  * has agreed to the current Photographer Terms; ingest-info reports whether

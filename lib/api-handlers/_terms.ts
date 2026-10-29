@@ -14,7 +14,7 @@ import type { VercelRequest } from '@vercel/node';
 import type { ServiceSupabaseClient } from './_supabase-admin-client.js';
 
 export const PHOTOGRAPHER_TERMS_KEY = 'photographer';
-export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29.2';
+export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29.3';
 
 /** Who is agreeing: a signed-in user, or the holder of a gallery upload link. */
 export type TermsParty = { userId: string } | { ingestKeyId: string };

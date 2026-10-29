@@ -17,7 +17,7 @@ export const PHOTOGRAPHER_TERMS_UPDATED = 'October 29, 2026';
  * Recorded on photographer applications. Uploads are gated server-side on
  * PHOTOGRAPHER_TERMS_VERSION in lib/api-handlers/_terms.ts — bump both together.
  */
-export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29.2';
+export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29.3';
 
 function Section({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
@@ -192,12 +192,23 @@ export default function PhotographerTerms() {
             </li>
             <li>It is artistic, editorial, fashion, body-art or event photography, and not sexually explicit</li>
             <li>It was taken somewhere the person chose to be photographed, never in a private place without their knowledge</li>
+            <li>
+              You mark it 18+ when you upload it (tick "These photos contain nudity"), or tell us so we can mark it.
+              18+ photos are blurred on public galleries until the viewer confirms they are 18 or older
+            </li>
           </List>
           <p>
             You must keep each person's ID check and signed consent for at least 7 years and send them to us within
             48 hours of our asking. If a person withdraws consent, tell us right away and we will take the photos down.
             We may place nude content behind an age or content warning, make it private, or remove it at any time —
             and anything where age or consent is in doubt is removed.
+          </p>
+          <p>
+            <strong className="font-bold text-white">Candid photos are fine.</strong> Photographing people in
+            public places and at events — without asking each person first — is normal event and street
+            photography and is allowed. The consent rules above are about nudity, sexual content and private
+            places, not about ordinary candid shots. Anyone who appears in a photo can still ask us to take it
+            down (section 10).
           </p>
           <p>
             If you are not sure whether something is allowed, do not upload it. We decide what is
@@ -236,8 +247,8 @@ export default function PhotographerTerms() {
             <li>You took it yourself, or you have every right needed to grant the license above</li>
             <li>None of it falls under section 7</li>
             <li>
-              Every identifiable person in it was photographed with their knowledge in a place they could be
-              photographed, and any minor appears with the consent of a parent or guardian and is fully clothed
+              It was taken in public, at an event, or somewhere photography was allowed — candid shots are fine —
+              never secretly in a place where people expect privacy, and any minor in it is fully clothed
             </li>
             <li>Every nude person meets all of the conditions in section 7, and you hold the records to prove it</li>
             <li>

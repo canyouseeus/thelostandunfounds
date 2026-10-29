@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import DownloadEmailModal from '../DownloadEmailModal';
 import PrintOrderModal from './PrintOrderModal';
+import { MatureCover, MATURE_BLUR, useMatureConsent } from './MatureCover';
 
 interface Photo {
     id: string;
@@ -10,6 +11,7 @@ interface Photo {
     thumbnail_url: string;
     google_drive_file_id: string;
     mime_type?: string | null;
+    is_mature?: boolean | null;
     metadata?: { width?: number; height?: number } | null;
 }
 
@@ -42,6 +44,8 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 }) => {
     const [isImageLoading, setIsImageLoading] = useState(true);
     const isUnlocked = isPurchased || isFree;
+    const [matureOk, confirmMature] = useMatureConsent();
+    const hideMature = Boolean(photo?.is_mature) && !matureOk;
     const [downloadEmailOpen, setDownloadEmailOpen] = useState(false);
     const [printModalOpen, setPrintModalOpen] = useState(false);
 
@@ -107,7 +111,12 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         className="flex flex-col items-center justify-center w-full h-full pointer-events-none p-4"
                     >
                         {/* Inner generic wrapper that shrinks to fit the image */}
-                        <div className="relative w-fit h-auto flex items-center justify-center">
+                        <div className="relative w-fit h-auto flex items-center justify-center overflow-hidden">
+                            {hideMature && (
+                                <div className="pointer-events-auto">
+                                    <MatureCover onConfirm={confirmMature} />
+                                </div>
+                            )}
 
                             {/* Brand Overlay (preview protection) - Only if not purchased and image is loaded */}
                             {!isUnlocked && (
@@ -149,7 +158,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                     autoPlay
                                     playsInline
                                     preload="metadata"
-                                    className="max-h-[70vh] w-auto object-contain shadow-2xl pointer-events-auto"
+                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl pointer-events-auto ${hideMature ? MATURE_BLUR : ''}`}
                                     onLoadedMetadata={() => setIsImageLoading(false)}
                                     onContextMenu={(e) => e.preventDefault()}
                                 />
@@ -157,7 +166,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 <img
                                     src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=3000`}
                                     alt={photo.title}
-                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isUnlocked ? 'pointer-events-none' : 'pointer-events-auto'}`}
+                                    className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isUnlocked ? 'pointer-events-none' : 'pointer-events-auto'} ${hideMature ? MATURE_BLUR : ''}`}
                                     onContextMenu={(e) => e.preventDefault()}
                                     draggable={false}
                                     onLoad={() => setIsImageLoading(false)}

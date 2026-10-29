@@ -37,6 +37,8 @@ interface Item {
   state: ItemState
   progress: number
   error?: string
+  /** Marked 18+ when it was chosen. */
+  mature: boolean
 }
 
 class CorsBlocked extends Error {}
@@ -51,6 +53,8 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
 }) {
   const [items, setItems] = useState<Item[]>([])
   const [running, setRunning] = useState(false)
+  // Ticked before choosing: every photo in that batch is marked 18+ and blurred on the gallery.
+  const [mature, setMature] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const relayOnly = useRef(false)
 
@@ -138,7 +142,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
         }
       }
       if (!fileId) fileId = await putRelayed(uploadUrl, item.file, onProgress)
-      await post('ingest-complete', { fileId, publish: true })
+      await post('ingest-complete', { fileId, publish: true, mature: item.mature })
       patch(item.id, { state: 'done', progress: 1 })
     } catch (err: any) {
       patch(item.id, { state: 'failed', error: err?.message || 'Upload failed.' })
@@ -160,7 +164,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
     if (!files || files.length === 0) return
     const added: Item[] = Array.from(files)
       .filter(f => f.type.startsWith('image/') || f.type === '')
-      .map(f => ({ id: `${f.name}-${f.size}-${f.lastModified}-${Math.random()}`, file: f, state: 'queued', progress: 0 }))
+      .map(f => ({ id: `${f.name}-${f.size}-${f.lastModified}-${Math.random()}`, file: f, state: 'queued', progress: 0, mature }))
     setItems(prev => [...added, ...prev])
     if (inputRef.current) inputRef.current.value = ''
     run(added)
@@ -179,6 +183,13 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
     <div className="text-left">
       <input ref={inputRef} type="file" accept="image/*" multiple className="hidden"
         onChange={e => pick(e.target.files)} />
+      <label className="flex items-start gap-3 text-xs text-white/70 cursor-pointer mb-3 normal-case tracking-normal">
+        <input type="checkbox" className="mt-0.5 accent-white" checked={mature}
+          onChange={e => setMature(e.target.checked)} />
+        <span>
+          These photos contain nudity (18+). They'll be blurred on the gallery until a viewer confirms they're 18 or older.
+        </span>
+      </label>
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className={`${btn} bg-white text-black hover:bg-white/10 hover:text-white`}
           style={{ borderRadius: 0 }} onClick={() => inputRef.current?.click()}>
