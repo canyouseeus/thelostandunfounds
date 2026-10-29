@@ -20,6 +20,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
+import { MatureCover, MATURE_BLUR, useMatureConsent } from './MatureCover';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
@@ -52,6 +53,8 @@ interface Photo {
     updated_at?: string;
     price?: number;
     library_id: string;
+    /** Nudity: blurred behind an 18+ confirmation (MatureCover). */
+    is_mature?: boolean | null;
     metadata?: {
         camera_make?: string;
         camera_model?: string;
@@ -112,6 +115,8 @@ const PhotoCard: React.FC<{
 }> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload }) => {
     const [rotation, setRotation] = useState(0);
     const isUnlocked = isPurchased || isFree;
+    const [matureOk, confirmMature] = useMatureConsent();
+    const hideMature = Boolean(photo.is_mature) && !matureOk;
 
     // Dynamic styles based on view mode (Grid vs Single)
     const isSingle = viewMode === 'single';
@@ -145,7 +150,8 @@ const PhotoCard: React.FC<{
                     onClick={handleFlip}
                 >
                     {/* Wrapper to constrain overlays to image bounds */}
-                    <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
+                    <div className={`relative overflow-hidden ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
+                        {hideMature && <MatureCover onConfirm={confirmMature} />}
                         {/* Protection Layer - Intercepts all touch/click events to prevent saving */}
                         {!isUnlocked && (
                             <div
@@ -169,7 +175,7 @@ const PhotoCard: React.FC<{
                                 playsInline
                                 preload="metadata"
                                 onClick={(e) => { e.stopPropagation(); if (isUnlocked) onLightbox(); }}
-                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'} ${hideMature ? MATURE_BLUR : ''}`}
                                 onContextMenu={(e) => e.preventDefault()}
                             />
                         ) : (
@@ -177,7 +183,7 @@ const PhotoCard: React.FC<{
                                 src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=1200`}
                                 alt={photo.title}
                                 onClick={(e) => { e.stopPropagation(); if (isUnlocked) onLightbox(); }}
-                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'}`}
+                                className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isUnlocked ? 'pointer-events-none' : 'cursor-pointer'} ${hideMature ? MATURE_BLUR : ''}`}
                                 draggable={false}
                                 loading="lazy"
                                 onContextMenu={(e) => e.preventDefault()}
@@ -481,12 +487,24 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             if (stopped || error || !data || data.length === 0) return;
             cursor = (data[data.length - 1] as Photo).updated_at || cursor;
             setPhotos(prev => {
-                const have = new Set(prev.map(p => p.google_drive_file_id || p.id));
-                const fresh = (data as Photo[]).filter(p => !have.has(p.google_drive_file_id || p.id));
+                const key = (p: Photo) => p.google_drive_file_id || p.id;
+                const incoming = new Map((data as Photo[]).map(p => [key(p), p]));
+                // A photo already on screen can come back marked 18+ (just after
+                // upload, or by the admin): carry the flag over so it blurs.
+                let changed = false;
+                const current = prev.map(p => {
+                    const next = incoming.get(key(p));
+                    if (!next || Boolean(next.is_mature) === Boolean(p.is_mature)) return p;
+                    changed = true;
+                    return { ...p, is_mature: next.is_mature };
+                });
+                const have = new Set(prev.map(key));
+                const fresh = (data as Photo[]).filter(p => !have.has(key(p)));
                 // "Load more" pages by offset, so these rows shift its next page
                 // down by a few. It drops rows it already has, so the overlap
                 // costs a few duplicate fetches and never a missed photo.
-                return fresh.length === 0 ? prev : [...fresh.reverse(), ...prev];
+                if (fresh.length === 0) return changed ? current : prev;
+                return [...fresh.reverse(), ...current];
             });
         };
 

@@ -48,6 +48,8 @@ interface Photo {
   library_id: string;
   created_at: string;
   status: string;
+  /** Nudity: blurred behind an 18+ confirmation on public galleries. */
+  is_mature?: boolean | null;
   metadata?: {
     camera_make?: string;
     camera_model?: string;
@@ -143,6 +145,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
   // Batch delete (website + Google Drive)
   const [deletingBatch, setDeletingBatch] = useState(false);
+  const [markingMature, setMarkingMature] = useState(false);
   const [batchActionError, setBatchActionError] = useState<string | null>(null);
 
   // Save → offer to create a gallery from the photos just edited
@@ -236,7 +239,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
       let query = supabase
         .from('photos')
         .select(
-          'id, title, thumbnail_url, google_drive_file_id, library_id, created_at, status, metadata, latitude, longitude, location_name',
+          'id, title, thumbnail_url, google_drive_file_id, library_id, created_at, status, metadata, latitude, longitude, location_name, is_mature',
           { count: 'exact' }
         )
         .order('created_at', { ascending: false })
@@ -585,6 +588,31 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
     }
   };
 
+  // 18+: marks the selection, or clears it when every selected photo is already marked.
+  const toggleMatureOnSelection = async () => {
+    if (selectedIds.size === 0 || markingMature) return;
+    const ids = [...selectedIds];
+    const mature = !photos.filter(p => selectedIds.has(p.id)).every(p => p.is_mature);
+    setMarkingMature(true);
+    setBatchActionError(null);
+    try {
+      const res = await fetch('/api/gallery/batch-mature', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: ids, mature }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Failed to update 18+');
+      markEdited(ids);
+      setPhotos(prev => prev.map(p => (selectedIds.has(p.id) ? { ...p, is_mature: mature } : p)));
+      setApplySuccess(true);
+      setTimeout(() => setApplySuccess(false), 2000);
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to update 18+');
+    } finally {
+      setMarkingMature(false);
+    }
+  };
+
   const deleteDrawerPhoto = async () => {
     if (!drawerPhoto) return;
     if (!confirm(`Delete "${drawerPhoto.title}" from the website AND Google Drive? This cannot be undone.`)) return;
@@ -684,6 +712,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
               return (
                 <div
                   key={photo.id}
+                  data-tour="photos-tile"
                   data-photo-id={photo.id}
                   ref={el => {
                     if (el) photoRefs.current.set(photo.id, el);
@@ -715,6 +744,12 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
                   )}
 
                   {isSelected && <div className="absolute inset-0 bg-white/10 pointer-events-none" />}
+
+                  {photo.is_mature && (
+                    <span className="absolute top-1.5 left-1.5 bg-black/80 text-white text-[8px] font-black tracking-[0.15em] px-1.5 py-0.5 pointer-events-none">
+                      18+
+                    </span>
+                  )}
 
                   {!selectionMode && (
                     <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -905,6 +940,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
           ] as const).map(btn => (
             <button
               key={btn.id}
+              data-tour={`photos-tray-${btn.id}`}
               onClick={btn.onClick}
               className={`relative p-2.5 transition-all duration-300 rounded-full group/btn ${
                 btn.active ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -1144,6 +1180,17 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
             >
               <ShareIcon className="w-3.5 h-3.5" />
               Share
+            </button>
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button
+              data-tour="photos-mark-mature"
+              onClick={toggleMatureOnSelection}
+              disabled={markingMature}
+              title="Blur on public galleries until the viewer confirms they're 18+"
+              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white transition-colors disabled:opacity-40 whitespace-nowrap"
+            >
+              <ExclamationCircleIcon className="w-3.5 h-3.5" />
+              {markingMature ? 'Saving…' : photos.some(p => selectedIds.has(p.id)) && photos.filter(p => selectedIds.has(p.id)).every(p => p.is_mature) ? 'Clear 18+' : '18+'}
             </button>
             <div className="w-px h-4 bg-white/20 flex-shrink-0" />
             <button

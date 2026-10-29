@@ -74,6 +74,8 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
             .select('google_drive_file_id, title')
             .eq('library_id', lib.id)
             .not('google_drive_file_id', 'is', null)
+            // 18+ photos stay out of image search.
+            .eq('is_mature', false)
             .order('title', { ascending: true })
             .limit(MAX_IMAGES_PER_LIBRARY);
 
