@@ -530,6 +530,23 @@ const halftoneTour: Tour = {
   ],
 };
 
+const halftoneHistoryTour: Tour = {
+  id: 'halftone-history-presets',
+  title: 'Film History & Presets',
+  summary: 'Every film you make is kept, ready to download or share again. Save your text settings as presets.',
+  group: 'new',
+  announce: '2026-10-29',
+  steps: [
+    openFromDock('gallery', 'Film History & Presets', 'The generator lives in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Open The Generator', body: 'Tap it.' }),
+    { target: 'halftone-step-text', action: 'click', title: 'Text', body: 'Tap 2 · TEXT.' },
+    { target: 'halftone-presets', title: 'Presets', body: 'A preset keeps the text sizes, weight, spacing, canvas, ink and levels. Tap one to apply it. The × deletes it.' },
+    { target: 'halftone-preset-save', title: 'Save A Preset', body: 'Name the settings you have now and tap SAVE. Presets are kept on your account, on every device.' },
+    { target: 'halftone-step-screen', action: 'click', title: 'Screen', body: 'Tap 3 · SCREEN.' },
+    { target: 'halftone-history', title: 'History', body: 'Every film you download or share is kept here, newest first. DOWNLOAD or SHARE gets the same PDF again. Only you see your films.' },
+  ],
+};
+
 const screensFromGalleryTour: Tour = {
   id: 'screens-from-gallery',
   title: 'Screens From Your Galleries & Folders',
@@ -767,7 +784,7 @@ const matureBlurTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

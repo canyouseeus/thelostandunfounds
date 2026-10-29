@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { XMarkIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, PhotoIcon, ShareIcon } from '@heroicons/react/24/outline'
+import { supabase } from '@/lib/supabase'
 import { useCanvasGestures } from '@/hooks/useCanvasGestures'
 import GalleryPhotoPicker from './GalleryPhotoPicker'
 import { loadSiteFont, loadOutlineFonts, type OutlineFonts } from './fonts'
@@ -29,6 +30,59 @@ const LOUPE_PX_PER_CELL = 14
 
 const DEFAULT_TONE: ToneSettings = { brightness: 0, contrast: 0, invert: false }
 const DEFAULT_STYLE: TextStyle = { weight: 900, size: { above: 1, below: 1 }, tracking: 0.1 }
+
+/** Private bucket: each person's films live under their own user id. */
+const FILM_BUCKET = 'halftone-films'
+
+/** A film in the history: one row in halftone_films, its PDF in the bucket. */
+interface FilmRecord {
+  id: string
+  label: string
+  size: string
+  details: string
+  storage_path: string
+  created_at: string
+}
+
+/** The text settings a preset keeps (halftone_presets.settings). */
+interface PresetSettings {
+  size: PrintSize
+  above: number
+  below: number
+  weight: TextStyle['weight']
+  tracking: number
+  invert: boolean
+  autoLevels: boolean
+}
+
+interface Preset {
+  id: string
+  name: string
+  settings: PresetSettings
+}
+
+/** A stored preset, if its settings are still ones this version can apply. */
+function readPreset(row: { id: string; name: string; settings: unknown }): Preset | null {
+  const s = row.settings as Partial<PresetSettings> | null
+  if (!s || !(s.size && s.size in PRINT_SIZES)) return null
+  if (![400, 700, 900].includes(s.weight as number)) return null
+  if (typeof s.above !== 'number' || typeof s.below !== 'number' || typeof s.tracking !== 'number') return null
+  return { id: row.id, name: row.name, settings: { ...s, invert: !!s.invert, autoLevels: s.autoLevels !== false } as PresetSettings }
+}
+
+/** Dates to the owner are Central time. */
+const filmDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+
+/** The PDF to the system share sheet where there is one, otherwise downloaded. */
+async function shareOrSave(blob: Blob, name: string) {
+  const file = new File([blob], name, { type: 'application/pdf' })
+  if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: name })
+  } else {
+    saveBlob(blob, name)
+  }
+}
 
 interface Props {
   onClose: () => void
@@ -111,6 +165,15 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
   const [job, setJob] = useState<ScreenJob | null>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  // History and presets belong to whoever is signed in; RLS shows each person only their own.
+  const [userId, setUserId] = useState<string | null>(null)
+  const [films, setFilms] = useState<FilmRecord[]>([])
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [busyFilm, setBusyFilm] = useState<string | null>(null)
+  const [presets, setPresets] = useState<Preset[]>([])
+  const [presetName, setPresetName] = useState('')
+  const [presetError, setPresetError] = useState<string | null>(null)
+  const [savingPreset, setSavingPreset] = useState(false)
 
   // Auto levels stretch the photo's own darkest and lightest points to solid and paper.
   const levels = useMemo(() => (photo ? measureLevels(photo) : null), [photo])
@@ -139,6 +202,35 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
       .then(setOutlines)
       .catch(() => setFontError('The typeface did not load. Check the connection and reopen this window.'))
   }, [])
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null))
+  }, [])
+
+  const loadFilms = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('halftone_films')
+      .select('id, label, size, details, storage_path, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (error) setHistoryError(`The history did not load: ${error.message}`)
+    else setFilms((data ?? []) as FilmRecord[])
+  }, [])
+
+  const loadPresets = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('halftone_presets')
+      .select('id, name, settings')
+      .order('created_at', { ascending: true })
+    if (error) setPresetError(`Presets did not load: ${error.message}`)
+    else setPresets((data ?? []).map(readPreset).filter((p): p is Preset => p !== null))
+  }, [])
+
+  useEffect(() => {
+    if (!userId) return
+    void loadFilms()
+    void loadPresets()
+  }, [userId, loadFilms, loadPresets])
 
   // Scroll-lock and Escape, taken once on open (see QrWallpaperModal).
   const closeRef = useRef(onClose)
@@ -283,6 +375,93 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
   const baseName = (photo?.label.replace(/\.[^.]+$/, '') || 'screen').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
   const filename = `${baseName}-${orientation === 'landscape' ? PRINT_SIZES[size].h + 'x' + PRINT_SIZES[size].w : size}-${mesh}mesh-${lpi}lpi-${angle}deg`
 
+  const sizeLabel = orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label
+  const settingsLine = `${mesh} MESH · ${lpi} LPI · ${angle}° · CIRCLES · ${tone.invert ? 'WHITE INK' : 'BLACK INK'} · ${autoLevels ? 'AUTO LEVELS' : 'AS SHOT'}`
+
+  /**
+   * Keep the finished film in the history: the PDF in the bucket, then its row.
+   * Runs after the download or share, so a failure here never costs the film.
+   */
+  const recordFilm = async (blob: Blob) => {
+    setHistoryError(null)
+    if (!userId) {
+      setHistoryError('Not saved to the history: you are not signed in.')
+      return
+    }
+    const id = crypto.randomUUID()
+    const path = `${userId}/${id}.pdf`
+    const up = await supabase.storage.from(FILM_BUCKET).upload(path, blob, { contentType: 'application/pdf' })
+    if (up.error) {
+      setHistoryError(`Not saved to the history: ${up.error.message}`)
+      return
+    }
+    const { error } = await supabase.from('halftone_films').insert({
+      id, label: photo?.label ?? baseName, size: sizeLabel, details: settingsLine, storage_path: path,
+    })
+    if (error) {
+      // No row, so nothing points at the PDF: take it back out.
+      await supabase.storage.from(FILM_BUCKET).remove([path])
+      setHistoryError(`Not saved to the history: ${error.message}`)
+      return
+    }
+    void loadFilms()
+  }
+
+  /** A film from the history, fetched from the bucket, downloaded or shared. */
+  const reopenFilm = async (film: FilmRecord, how: 'download' | 'share') => {
+    setHistoryError(null)
+    setBusyFilm(film.id)
+    try {
+      const { data, error } = await supabase.storage.from(FILM_BUCKET).download(film.storage_path)
+      if (error || !data) throw new Error(error?.message ?? 'The file is missing.')
+      const name = `${film.label.replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase() || 'screen'}.pdf`
+      const blob = new Blob([data], { type: 'application/pdf' })
+      if (how === 'share') await shareOrSave(blob, name)
+      else saveBlob(blob, name)
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      setHistoryError(e instanceof Error ? `That film did not open: ${e.message}` : 'That film did not open.')
+    } finally {
+      setBusyFilm(null)
+    }
+  }
+
+  /** The current text settings, saved under a name for this account. */
+  const savePreset = async () => {
+    const name = presetName.trim()
+    if (!name) return
+    setPresetError(null)
+    setSavingPreset(true)
+    const settings: PresetSettings = {
+      size, above: style.size.above, below: style.size.below, weight: style.weight,
+      tracking: style.tracking, invert: tone.invert, autoLevels,
+    }
+    const { error } = await supabase.from('halftone_presets').insert({ name, settings })
+    setSavingPreset(false)
+    if (error) {
+      setPresetError(`The preset was not saved: ${error.message}`)
+      return
+    }
+    setPresetName('')
+    void loadPresets()
+  }
+
+  const applyPreset = (p: Preset) => {
+    const s = p.settings
+    // The preset's sizes are for its own canvas, so they are applied as saved.
+    setSize(s.size)
+    setStyle({ weight: s.weight, size: { above: s.above, below: s.below }, tracking: s.tracking })
+    setTone(t => ({ ...t, invert: s.invert }))
+    setAutoLevels(s.autoLevels)
+  }
+
+  const deletePreset = async (p: Preset) => {
+    setPresetError(null)
+    const { error } = await supabase.from('halftone_presets').delete().eq('id', p.id)
+    if (error) setPresetError(`The preset was not deleted: ${error.message}`)
+    else setPresets(list => list.filter(x => x.id !== p.id))
+  }
+
   /**
    * The film as a PDF, handed to the system share sheet where there is one
    * (phones: Mail, Save to Files, AirDrop…), otherwise downloaded.
@@ -291,23 +470,20 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
     if (!job) return
     setExportError(null)
     setProgress(0)
+    let blob: Blob | null = null
     try {
       await new Promise(r => setTimeout(r, 30))
-      const blob = await renderFilmPdf(job, blocks, setProgress)
-      const name = `${filename}.pdf`
-      const file = new File([blob], name, { type: 'application/pdf' })
-      if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: name })
-      } else {
-        saveBlob(blob, name)
-      }
+      blob = await renderFilmPdf(job, blocks, setProgress)
+      await shareOrSave(blob, `${filename}.pdf`)
     } catch (e) {
-      // Cancelling the share sheet is not an error.
-      if (e instanceof DOMException && e.name === 'AbortError') return
-      setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
+      // Cancelling the share sheet is not an error, and the film is still made.
+      if (!(e instanceof DOMException && e.name === 'AbortError')) {
+        setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
+      }
     } finally {
       setProgress(null)
     }
+    if (blob) void recordFilm(blob)
   }
 
   const exportFilm = async () => {
@@ -319,6 +495,7 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
       await new Promise(r => setTimeout(r, 30))
       const blob = await renderFilmPdf(job, blocks, setProgress)
       saveBlob(blob, `${filename}.pdf`)
+      void recordFilm(blob)
     } catch (e) {
       setExportError(e instanceof Error ? `Export failed: ${e.message}` : 'Export failed.')
     } finally {
@@ -342,7 +519,7 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
         </button>
         <h2 className="text-lg font-bold text-white uppercase tracking-widest pr-8">SCREEN GENERATOR</h2>
         <p className="text-white/40 text-xs font-mono mt-1 mb-4">
-          {orientation === 'landscape' ? `${PRINT_SIZES[size].h} × ${PRINT_SIZES[size].w} IN` : PRINT_SIZES[size].label} · {mesh} MESH · {lpi} LPI · {angle}° · CIRCLES
+          {sizeLabel} · {mesh} MESH · {lpi} LPI · {angle}° · CIRCLES
         </p>
         <div className="flex gap-1 mb-4" role="tablist">
           {STEPS.map((s, i) => (
@@ -504,6 +681,58 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
                 The text is too tall to fit with the photo. Make the text smaller or shorten it.
               </p>
             )}
+            <div className="bg-white/5 p-3 mb-3" data-tour="halftone-presets" data-testid="halftone-presets">
+              <p className={label}>PRESETS · TEXT SIZES, WEIGHT, SPACING, CANVAS, INK, LEVELS</p>
+              {presets.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mb-2" data-tour="halftone-preset-list">
+                  {presets.map(p => (
+                    <div key={p.id} className="flex">
+                      <button
+                        onClick={() => applyPreset(p)}
+                        className="px-3 py-2 bg-white/10 hover:bg-white hover:text-black text-white text-xs font-bold uppercase tracking-wider"
+                        data-testid="halftone-preset-apply"
+                      >
+                        {p.name}
+                      </button>
+                      <button
+                        onClick={() => void deletePreset(p)}
+                        className="px-2 py-2 bg-white/5 hover:bg-white/20 text-white/60 hover:text-white"
+                        aria-label={`Delete preset ${p.name}`}
+                        data-testid="halftone-preset-delete"
+                      >
+                        <XMarkIcon className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/40 text-xs mb-2">{userId ? 'None yet. Name these settings to save them.' : 'Sign in to save presets.'}</p>
+              )}
+              <div className="flex gap-1">
+                <input
+                  value={presetName}
+                  onChange={e => setPresetName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') void savePreset() }}
+                  placeholder="Preset name"
+                  maxLength={40}
+                  disabled={!userId}
+                  aria-label="Preset name"
+                  className="flex-1 min-w-0 bg-white/5 text-white text-sm px-3 py-2 focus:outline-none focus:bg-white/10 disabled:opacity-40"
+                  style={{ borderRadius: 0 }}
+                  data-testid="halftone-preset-name"
+                />
+                <button
+                  onClick={() => void savePreset()}
+                  disabled={!userId || !presetName.trim() || savingPreset}
+                  className={ghost}
+                  data-tour="halftone-preset-save"
+                  data-testid="halftone-preset-save"
+                >
+                  {savingPreset ? 'SAVING…' : 'SAVE'}
+                </button>
+              </div>
+              {presetError && <p className="text-red-400 text-xs mt-2">{presetError}</p>}
+            </div>
             <p className="text-white/40 text-xs mb-4">
               Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room. Text is never wider than the photo: a line that would be wider shrinks to fit it.
             </p>
@@ -567,9 +796,44 @@ export default function HalftoneModal({ onClose, ownerId }: Props) {
             >
               <ShareIcon className="w-4 h-4" /> SHARE OR EMAIL THE PDF
             </button>
-            <p className="text-white/40 text-xs font-mono">
+            <p className="text-white/40 text-xs font-mono mb-4">
               PDF: TRUE SIZE, SHARP AT ANY PRINTER RESOLUTION, TEXT AS OUTLINES · BLACK = INK
             </p>
+
+            <div className="bg-white/5 p-3" data-tour="halftone-history" data-testid="halftone-history">
+              <p className={label}>HISTORY · YOUR FILMS</p>
+              {historyError && <p className="text-red-400 text-xs mb-2">{historyError}</p>}
+              {films.length === 0 ? (
+                <p className="text-white/40 text-xs">
+                  {userId ? 'Every film you download or share is kept here.' : 'Sign in to keep a history of your films.'}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {films.map(f => (
+                    <li key={f.id} className="bg-white/5 p-2" data-testid="halftone-history-row">
+                      <p className="text-white text-xs font-bold uppercase tracking-wider truncate">{f.label}</p>
+                      <p className="text-white/40 text-xs font-mono mb-2">{f.size} · {filmDate(f.created_at)}</p>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => void reopenFilm(f, 'download')}
+                          disabled={busyFilm !== null}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white hover:text-black text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                        >
+                          <ArrowDownTrayIcon className="w-3 h-3" /> DOWNLOAD
+                        </button>
+                        <button
+                          onClick={() => void reopenFilm(f, 'share')}
+                          disabled={busyFilm !== null}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white hover:text-black text-white text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                        >
+                          <ShareIcon className="w-3 h-3" /> SHARE
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
       </div>

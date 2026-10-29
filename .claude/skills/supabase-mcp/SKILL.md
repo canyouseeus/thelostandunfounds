@@ -19,6 +19,12 @@ When you need to create tables, modify columns, or add indexes:
 - Use `supabase-mcp-server_apply_migration` to execute DDL statements.
 - Name your migrations in `snake_case` (e.g., `create_users_table`).
 - Ensure the SQL is idempotent (use `CREATE TABLE IF NOT EXISTS`, `DO $$ BEGIN ... END $$`, etc.).
+- **Never put a `DROP` in the SQL** (`DROP POLICY IF EXISTS` included). The connector asks a
+  confirmation question nobody can see for any `DROP`, and the call dies after 60s with *"The server
+  asked the user a question, and no answer came"*. Guard each `CREATE POLICY` with
+  `IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE …)` inside a `DO $$ … $$` block; change a policy
+  with `ALTER POLICY`; replace a function with `CREATE OR REPLACE` or rename the old one aside.
+  Full pattern: CLAUDE.md → DATABASE PROJECT RULE.
 
 ### 2. Execution (Data Operations)
 To query data or perform one-off updates during development:
