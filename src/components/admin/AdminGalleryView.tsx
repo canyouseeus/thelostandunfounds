@@ -1305,18 +1305,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                             <span>Live</span>
                         </Link>
                     )}
-                    {!isPhotographerView && (
-                        <button
-                            onClick={() => setIsHalftoneOpen(true)}
-                            className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
-                            title="Screen generator — halftone film positives for screen printing"
-                            aria-label="Screen generator"
-                            data-tour="gallery-screens-button"
-                        >
-                            <span className="text-xs leading-none" aria-hidden="true">▲</span>
-                            <span>Screens</span>
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setIsHalftoneOpen(true)}
+                        className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
+                        title="Screen generator — halftone film positives for screen printing"
+                        aria-label="Screen generator"
+                        data-tour="gallery-screens-button"
+                    >
+                        <span className="text-xs leading-none" aria-hidden="true">▲</span>
+                        <span>Screens</span>
+                    </button>
                     {!isPhotographerView && (
                         <button data-tour="gallery-invite"
                             onClick={() => setIsInviteModalOpen(true)}
@@ -1666,7 +1664,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             {isHalftoneOpen && (
                 <Suspense fallback={<span data-tour-loading hidden />}>
-                    <HalftoneModal onClose={() => setIsHalftoneOpen(false)} />
+                    <HalftoneModal
+                        onClose={() => setIsHalftoneOpen(false)}
+                        ownerId={isPhotographerView && user && !isAdminUser(user) ? user.id : undefined}
+                    />
                 </Suspense>
             )}
 

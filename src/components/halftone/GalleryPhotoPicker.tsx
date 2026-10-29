@@ -38,11 +38,13 @@ interface Props {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   onPick: (photo: { blob: Blob; label: string }) => void
+  /** Set for a photographer: they see only the galleries they own, and no Drive folders. */
+  ownerId?: string
 }
 
 const row = 'w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-left'
 
-export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Props) {
+export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, ownerId }: Props) {
   const [sources, setSources] = useState<Source[] | null>(null)
   const [sourceError, setSourceError] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
@@ -60,12 +62,15 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Pro
   useEffect(() => {
     if (!isOpen || sources) return
     void (async () => {
+      const libsQuery = supabase.from('photo_libraries').select('id, name, photos(count)').order('name')
+      const tagsQuery = supabase.from('tags').select('id, name, photo_tags(count)').eq('type', 'collection').order('name')
+      // The Drive folders hold everyone's photos, so a photographer's list leaves them out.
       const [libs, tags] = await Promise.all([
-        supabase.from('photo_libraries').select('id, name, photos(count)').order('name'),
-        supabase.from('tags').select('id, name, photo_tags(count)').eq('type', 'collection').order('name'),
+        ownerId ? libsQuery.eq('owner_id', ownerId) : libsQuery,
+        ownerId ? null : tagsQuery,
       ])
-      if (libs.error || tags.error) {
-        logError(`picker sources: ${libs.error?.message || tags.error?.message}`)
+      if (libs.error || tags?.error) {
+        logError(`picker sources: ${libs.error?.message || tags?.error?.message}`)
         setSourceError('Could not load your galleries and folders.')
         return
       }
@@ -73,10 +78,10 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Pro
         (r.photos ?? r.photo_tags ?? [])[0]?.count ?? 0
       setSources([
         ...(libs.data || []).map(r => ({ kind: 'library' as const, id: r.id, name: r.name, count: count(r) })),
-        ...(tags.data || []).map(r => ({ kind: 'tag' as const, id: r.id, name: r.name, count: count(r) })),
+        ...(tags?.data || []).map(r => ({ kind: 'tag' as const, id: r.id, name: r.name, count: count(r) })),
       ].filter(s => s.count > 0))
     })()
-  }, [isOpen, sources])
+  }, [isOpen, sources, ownerId])
 
   const sections = useMemo(() => {
     const f = filter.trim().toLowerCase()
@@ -178,7 +183,9 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick }: Pro
             {!open ? (
               <>
                 <h2 className="text-lg font-black text-white uppercase tracking-widest pr-12 mb-1">CHOOSE A PHOTO</h2>
-                <p className="text-white/40 text-xs mb-4">From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.</p>
+                <p className="text-white/40 text-xs mb-4">
+                  {ownerId ? 'From your galleries. Nothing here gets published.' : 'From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.'}
+                </p>
                 <input
                   type="search"
                   value={filter}
