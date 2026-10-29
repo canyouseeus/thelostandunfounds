@@ -128,6 +128,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | deployment verification, Vercel status | `dev-parity-guard` (see Deployment Verification Rule below) |
 | page titles, h1, heading case | Page Title Style Rule below |
 | new admin feature, tutorial, walkthrough, tour, onboarding | ADMIN TUTORIAL RULE below, `admin-ops` |
+| public form, contact, signup, ticket, submission, spam, bot, Turnstile, CAPTCHA | TURNSTILE RULE below |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 
@@ -281,6 +282,38 @@ removed — do not recreate them.
   Use the CC field, not BCC — recipients should see it. Never substitute a personal address for it.
   Bulk sends (newsletters, campaigns) are exempt: one CC per subscriber is not a business record.
   Verify the CC actually landed before treating a send as done — a dropped CC fails silently.
+
+## TURNSTILE RULE
+
+Owner rule, 2026-10-29: **every form someone can submit without signing in has Cloudflare
+Turnstile.** That covers contact, support tickets, signups, bookings, submissions, applications,
+and any endpoint that sends email to an address the visitor typed. Without it a bot can make the
+platform mail strangers from our domain, which burns the sending reputation every client email
+depends on. (It happened: SUP-0002, a bot through /contact, 2026-10-28.)
+
+1. **Server:** call `verifyTurnstile(token, clientIp(req.headers), ['<action>'])` from
+   `lib/api-handlers/_turnstile.ts` before doing anything else, and return its `status`/`error`
+   when it fails. Never write another inline siteverify call. It follows Cloudflare's canonical
+   check: `success`, the form's **action**, and a **hostname** we own (`www.` and the apex).
+2. **Every form has its own action**, set on the widget (`action="…"`) and listed in the
+   `TurnstileAction` type: `support`, `contact`, `newsletter`. A token from one form is refused
+   at another.
+3. **It fails closed in production.** A missing `TURNSTILE_SECRET_KEY` is a refusal, not a pass.
+   Never add a "skip if the secret is unset" branch. That branch is how the newsletter check
+   silently never ran.
+4. **Client:** render `react-turnstile` with `VITE_TURNSTILE_SITE_KEY`, send the token as
+   `turnstileToken`, remount the widget after each submit (tokens are single-use). Match
+   `SupportRequestForm.tsx`: production host only, never on `localhost` or `*.vercel.app`.
+5. **Signed-in users may skip it**, but only when the server verified their token. A client-side
+   "logged in" flag is not proof.
+6. A honeypot field is fine as an extra; it is never a substitute. Bots fill only visible fields.
+7. Verify it in production: a submission with no token must come back `403`.
+
+Widget site key `0x4AAAAAACAOHJSfRl-nikjS` (`VITE_TURNSTILE_SITE_KEY`). The server needs the
+widget's **Secret Key** as `TURNSTILE_SECRET_KEY` in Vercel (production). The site key alone
+only draws the checkbox; without the secret nothing checks it. Covered: support tickets and contact
+(`/api/support/tickets`), newsletter signup. **Known gaps, not yet covered:** `/api/booking`,
+`/api/events/notifications` (Submit Event), `/api/blog/submission-confirmation` (Submit Article).
 
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials

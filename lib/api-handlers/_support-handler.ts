@@ -15,6 +15,7 @@ import type { VercelRequest } from '@vercel/node';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { sendTransactionalEmail } from './_resend-email-handler.js';
 import { verifyAdmin } from './_admin-auth.js';
+import { clientIp, verifyTurnstile } from './_turnstile.js';
 
 const SITE = 'https://www.thelostandunfounds.com';
 const SUPPORT_NOTIFY_EMAIL = 'support@thelostandunfounds.com';
@@ -170,6 +171,15 @@ export async function createTicket(req: VercelRequest, supabase: ServiceSupabase
     if (clean(body.website, 200)) return { ok: true };
 
     const user = await optionalUser(req, supabase);
+
+    // Signed-in people have already proved they're people. Everyone else
+    // passes Turnstile: a guest ticket emails whatever address was typed, so
+    // without it a bot can make us mail strangers (TURNSTILE RULE, CLAUDE.md).
+    if (!user) {
+        const check = await verifyTurnstile(body.turnstileToken, clientIp(req.headers), ['support', 'contact']);
+        if (!check.ok) throw new HttpError(check.status, check.error);
+    }
+
     const email = (user?.email || clean(body.email, 254)).toLowerCase();
     const name = clean(body.name, 120) || (user?.user_metadata?.full_name as string) || '';
     const subject = clean(body.subject, MAX_SUBJECT);

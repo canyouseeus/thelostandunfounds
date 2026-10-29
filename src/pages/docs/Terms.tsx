@@ -2,11 +2,13 @@
  * Terms of Service
  */
 
+import { Link } from 'react-router-dom';
+
 export default function Terms() {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-4">Terms of Use</h1>
-      <p className="text-white/60 text-sm mb-8">Last updated: {new Date().toLocaleDateString()}</p>
+      <h1 className="text-3xl font-bold text-white uppercase mb-4">TERMS OF USE</h1>
+      <p className="text-white/60 text-sm mb-8">Last updated: October 29, 2026</p>
 
       <div className="space-y-6 text-white/80">
         <section>
@@ -59,7 +61,34 @@ export default function Terms() {
               <li>You represent that you have the right to publish the content you submit</li>
               <li>Submitted articles are subject to editorial review and we reserve the right to accept, reject, or request modifications</li>
               <li>Published content may be edited for formatting, clarity, or compliance with our guidelines</li>
-              <li>We reserve the right to remove content that violates these terms or our community standards</li>
+              <li>We may hide, unpublish, edit or permanently delete any content on the platform at any time, for any reason, without notice, and we have no obligation to keep a copy</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold text-white mb-3">Photographers and Contributors</h2>
+          <p>
+            If you upload photos or other media, run a gallery, sell through our galleries, or shoot work booked through <strong className="font-bold">THE LOST+UNFOUNDS</strong>, our{' '}
+            <Link to="/terms/photographers" className="underline hover:text-white">Photographer Terms</Link>{' '}
+            also apply to you. They cover the license you grant us, our right to remove content, payouts and conduct on shoots.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold text-white mb-3">Photo Galleries and Purchases</h2>
+          <div className="space-y-3">
+            <ul className="list-disc list-inside ml-4 space-y-1">
+              <li>Gallery previews are watermarked and may not be downloaded, screenshotted for reuse, or copied</li>
+              <li>A purchased photo comes with a personal, non-exclusive license to download, print and share it for non-commercial use, with credit to the photographer or <strong className="font-bold">THE LOST+UNFOUNDS</strong> where practical</li>
+              <li>Commercial use, resale or use in advertising requires a separate written license from us</li>
+              <li>Copyright in every photo stays with the photographer or with us; buying a photo does not transfer copyright</li>
+              <li>Galleries may be changed, closed or removed at any time. Download your purchases promptly; we do not guarantee permanent access</li>
+              <li>
+                If you appear in a photo and want it taken down, email{' '}
+                <a href="mailto:media@thelostandunfounds.com" className="underline hover:text-white">media@thelostandunfounds.com</a>{' '}
+                with a link to the photo. We review every request and decide whether to remove it
+              </li>
             </ul>
           </div>
         </section>
@@ -126,6 +155,9 @@ export default function Terms() {
             <li>Use our services for illegal purposes or to violate any applicable laws</li>
             <li>Violate any copyright, trademark, or intellectual property rights</li>
             <li>Publish content that is defamatory, harassing, threatening, or discriminatory</li>
+            <li>Post pornography or sexually explicit content, nudity of anyone without their consent, or any nudity or sexual content involving a minor</li>
+            <li>Post intimate or private images of anyone without their consent, or images taken where they expected privacy</li>
+            <li>Post content showing or promoting abuse, violence, self-harm, gore, or illegal activity</li>
             <li>Publish content that contains malware, viruses, or harmful code</li>
             <li>Attempt to circumvent usage limits or security measures</li>
             <li>Use automated systems to abuse our services or scrape content</li>
@@ -134,6 +166,18 @@ export default function Terms() {
             <li>Interfere with or disrupt the operation of our platform</li>
             <li>Use our platform to send spam or unsolicited communications</li>
           </ul>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold text-white mb-3">User Content and Enforcement</h2>
+          <p>
+            You are solely responsible for anything you post, upload or submit. We do not review everything before it appears, we are not responsible for content posted by users, and we may remove any of it at any time. Content that breaks these terms is removed and the account behind it is suspended or terminated. Content that appears to involve the sexual exploitation of a minor is reported to the National Center for Missing &amp; Exploited Children (NCMEC), and other illegal content is reported to law enforcement, together with the account and upload records we hold.
+          </p>
+          <p className="mt-3">
+            To report content, email{' '}
+            <a href="mailto:media@thelostandunfounds.com" className="underline hover:text-white">media@thelostandunfounds.com</a>{' '}
+            with a link to it.
+          </p>
         </section>
 
         <section>

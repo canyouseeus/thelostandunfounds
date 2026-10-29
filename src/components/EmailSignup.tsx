@@ -141,6 +141,7 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
           <div className="flex justify-center pt-2">
             <Turnstile
               sitekey={turnstileSiteKey}
+              action="newsletter"
               onSuccess={(token) => {
                 console.log('Turnstile verified successfully');
                 setTurnstileToken(token);

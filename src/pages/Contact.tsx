@@ -51,7 +51,7 @@ export default function Contact() {
           </div>
 
           <div className="lg:col-span-2">
-            <SupportRequestForm defaultCategory="General question" />
+            <SupportRequestForm defaultCategory="General question" turnstileAction="contact" />
           </div>
         </div>
       </div>

@@ -47,6 +47,9 @@ export default function PhotographerDashboard() {
             <div className="mb-6">
                 <h1 className="text-3xl font-bold uppercase tracking-tighter">PHOTOGRAPHER DASHBOARD</h1>
                 <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
+                <a href="/terms/photographers" className="inline-block mt-1 text-xs text-white/40 underline underline-offset-2 hover:text-white">
+                    Photographer Terms
+                </a>
             </div>
 
             {/* Tonight's event first: create a live gallery and send from the camera roll. */}

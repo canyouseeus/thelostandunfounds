@@ -682,6 +682,9 @@ const photographerLiveTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
+    { route: PHOTOG, target: 'pg-terms', title: 'Before You Upload', body: 'Everything you send goes on a public site. Read what can never go on it.' },
+    { target: 'pg-terms-agree', title: 'Agree To The Terms', body: 'Tick the box once you have read the Photographer Terms.' },
+    { target: 'pg-terms-continue', action: 'click', title: 'Agree And Continue', body: 'Tap AGREE AND CONTINUE to unlock live galleries.' },
     { route: PHOTOG, target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY.' },
     { target: 'pg-live-go', title: 'Go Live', body: 'Guests’ gallery page keeps checking for new photos while it is live. END LIVE when the night is over.', missingNote: 'Start a gallery first. Its buttons appear here.' },
     { target: 'pg-live-share', title: 'Share', body: 'Copies the gallery link for guests.' },
