@@ -208,6 +208,8 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
 | `record_field_sale` | `{night, location?, cashApp?, venmo?, applePay?, cash?, saleCount?, notes?}` — a street night as revenue (no affiliate split); queues `owner_pay` for 10% |
 | `owner_pay` | `{fieldSaleId?, amount}` — transfer to the owner's Stripe Connect account; checks the **available** balance, short → `waiting_funds`, retried hourly for 3 days |
+| `send_newsletter` | `{issue, testEmail?, confirm?}` — an issue whose copy is in `lib/newsletters/`; `testEmail` sends one copy, otherwise `confirm: true` sends to every verified subscriber |
+| `crew_announcement` | `{campaign, testEmail?, dryRun?, confirm?, emails?}` — a roster email from `lib/api-handlers/crew/announcements.ts`, from joshua@, CC media@; `testEmail` (owner addresses only) gets one copy per variant; without `confirm: true` it only reports who would get it; each person gets a campaign once |
 
 - Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
   Each calls the same function as the admin-panel route.
@@ -348,8 +350,8 @@ Submit Event's "submitted" notice (event owner only). Admin-only: the blog revie
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials
 2. Inject Getting Started CTA before footer if not present
-3. Send via POST `https://www.thelostandunfounds.com/api/newsletter/send` with `testEmail` for testing
-4. Omit `testEmail` for full send
+3. `/api/newsletter/send` is admin-only (owner session or `ADMIN_SECRET`). From an agent session,
+   put the issue in `lib/newsletters/` and queue `send_newsletter`: `testEmail` first, then `confirm: true`
 
 ## ADMIN TUTORIAL RULE
 

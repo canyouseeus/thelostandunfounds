@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template.js'
 import { delay } from './_zoho-email-utils.js'
+import { verifyAdmin } from './_admin-auth.js'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -269,6 +270,12 @@ async function sendZohoEmail(
   return { success: true }
 }
 
+/**
+ * The route. It mails every verified subscriber, or any list of addresses in
+ * `recipients`, from our domain, so it takes the same proof as every other
+ * admin route: the owner's session or ADMIN_SECRET. It was open to anyone
+ * until this check went in.
+ */
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -278,6 +285,22 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  if (!(await verifyAdmin(req))) {
+    return res.status(403).json({ error: 'Admin access required' })
+  }
+
+  return sendNewsletter(req, res)
+}
+
+/**
+ * The send itself, with no admin check. Only the route above and the
+ * `send_newsletter` admin job (already authorised by CRON_SECRET and an
+ * owner-inserted row) may call it.
+ */
+export async function sendNewsletter(
+  req: VercelRequest,
+  res: VercelResponse
+) {
   const { subject, content, contentHtml, campaignId, testEmail, scheduledFor, recipients } = req.body
 
   // Validate input

@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { processEmailContent } from '../email-template.js'
 import { delay, getZohoAuthContext, sendZohoEmail as sendZohoEmailUtil } from './_zoho-email-utils.js'
+import { verifyAdmin } from './_admin-auth.js'
 
 /**
  * Build recipient HTML with unsubscribe link
@@ -67,6 +68,11 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Re-mails a campaign to any addresses in `emails`; admin only, like send.
+  if (!(await verifyAdmin(req))) {
+    return res.status(403).json({ error: 'Admin access required' })
   }
 
   const { campaignId, emails } = req.body
