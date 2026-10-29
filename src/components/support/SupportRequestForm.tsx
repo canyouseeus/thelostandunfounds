@@ -28,11 +28,13 @@ function turnstileOnThisHost(): boolean {
 interface Props {
     defaultCategory?: string;
     defaultRole?: string;
+    /** Turnstile action; the server accepts only 'support' and 'contact' here. */
+    turnstileAction?: 'support' | 'contact';
     /** Called once the ticket exists, e.g. to refresh a ticket list. */
     onCreated?: () => void;
 }
 
-export default function SupportRequestForm({ defaultCategory, defaultRole, onCreated }: Props) {
+export default function SupportRequestForm({ defaultCategory, defaultRole, turnstileAction = 'support', onCreated }: Props) {
     const { user } = useAuth();
     const [form, setForm] = useState({
         name: '',
@@ -175,6 +177,7 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, onCre
                 <Turnstile
                     key={turnstileKey}
                     sitekey={TURNSTILE_SITE_KEY}
+                    action={turnstileAction}
                     theme="dark"
                     onSuccess={token => setTurnstileToken(token)}
                     onExpire={() => setTurnstileToken(null)}

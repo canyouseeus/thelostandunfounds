@@ -95,7 +95,7 @@ export default async function handler(
   // Turnstile, through the shared check (TURNSTILE RULE, CLAUDE.md). It used to
   // be inline here and skipped itself whenever TURNSTILE_SECRET_KEY was unset —
   // which in Vercel it was — so signups were never actually verified.
-  const turnstile = await verifyTurnstile(turnstileToken, clientIp(req.headers))
+  const turnstile = await verifyTurnstile(turnstileToken, clientIp(req.headers), ['newsletter'])
   if (!turnstile.ok) {
     return res.status(turnstile.status).json({ error: turnstile.error })
   }

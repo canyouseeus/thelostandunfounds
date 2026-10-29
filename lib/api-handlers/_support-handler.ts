@@ -176,7 +176,7 @@ export async function createTicket(req: VercelRequest, supabase: ServiceSupabase
     // passes Turnstile: a guest ticket emails whatever address was typed, so
     // without it a bot can make us mail strangers (TURNSTILE RULE, CLAUDE.md).
     if (!user) {
-        const check = await verifyTurnstile(body.turnstileToken, clientIp(req.headers));
+        const check = await verifyTurnstile(body.turnstileToken, clientIp(req.headers), ['support', 'contact']);
         if (!check.ok) throw new HttpError(check.status, check.error);
     }
 
