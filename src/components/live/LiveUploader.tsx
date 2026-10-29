@@ -223,3 +223,16 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
     </div>
   )
 }
+
+/** Shown under the uploader wherever a photographer (not the owner) sends photos. */
+export function UploadTermsNotice() {
+  return (
+    <p className="mt-3 text-[11px] text-white/40 normal-case tracking-normal">
+      By sending photos you agree to the{' '}
+      <a href="/terms/photographers" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white">
+        Photographer Terms
+      </a>
+      , including our right to edit, hide or delete any upload.
+    </p>
+  )
+}
