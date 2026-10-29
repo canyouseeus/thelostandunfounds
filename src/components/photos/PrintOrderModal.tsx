@@ -191,7 +191,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
     <div className="fixed inset-0 z-[9999] flex items-stretch sm:items-center justify-center sm:px-4" role="dialog" aria-modal="true" aria-label="Order a print">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative bg-black w-full h-[100dvh] sm:h-auto sm:max-w-3xl sm:max-h-[92vh] overflow-y-auto overflow-x-hidden overscroll-contain"
+        className="relative bg-[#0a0a0a] w-full h-[100dvh] sm:h-auto sm:max-w-3xl sm:max-h-[92vh] overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ borderRadius: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -224,7 +224,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                 <ShippingAddressForm value={shipping} onChange={setShipping} />
                 {checkoutError && <p className="text-xs text-red-400">{checkoutError}</p>}
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
+                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 bg-white/10 hover:text-white hover:bg-white/20 transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
                     Back
                   </button>
                   <button type="submit" disabled={checkoutLoading} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 hover:bg-white/90 transition-colors font-semibold text-sm ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`} style={{ borderRadius: 0 }}>
@@ -245,7 +245,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                         <button
                           key={g.key}
                           onClick={() => setSelectedSizeKey(g.key)}
-                          className={`min-w-0 flex flex-col items-center gap-1 px-2 py-3 transition-colors ${active ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                          className={`min-w-0 flex flex-col items-center gap-1 px-2 py-3 transition-colors ${active ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
                           style={{ borderRadius: 0 }}
                         >
                           <span className="text-sm font-black whitespace-nowrap">{g.widthIn}×{g.heightIn}"</span>
