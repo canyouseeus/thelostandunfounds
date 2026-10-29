@@ -122,7 +122,7 @@ const galleryTour: Tour = {
     inPanel('gallery', { target: 'gallery-tab-applications', title: 'Applications', body: 'Photographers asking to join. A red number means some are waiting.' }),
     inPanel('gallery', { target: 'gallery-health', title: 'Health', body: 'Checks that every photo still loads from Google Drive.' }),
     inPanel('gallery', { target: 'gallery-live-link', title: 'Live', body: 'The live event console, for publishing photos during an event.' }),
-    inPanel('gallery', { target: 'gallery-screens-button', title: 'Screens', body: 'The screen generator, for halftone films.' }),
+    inPanel('gallery', { target: 'gallery-screens-button', title: 'Halftone', body: 'The halftone generator, for film positives.' }),
     inPanel('gallery', { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' }),
     inPanel('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
     inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' }),
@@ -500,13 +500,13 @@ const supportTour: Tour = {
 
 const halftoneTour: Tour = {
   id: 'gallery-screen-generator',
-  title: 'Screen Generator',
+  title: 'Halftone Generator',
   summary: 'Turn a photo into a halftone film positive for screen printing, with circles, triangles or 3s and your own text.',
   group: 'new',
   announce: '2026-10-27',
   steps: [
-    openFromDock('gallery', 'Screen Generator', 'The screen generator lives in Gallery. Tap the Gallery icon.'),
-    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
+    openFromDock('gallery', 'Halftone Generator', 'The halftone generator lives in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Halftone', body: 'Tap HALFTONE.' }),
     { target: 'halftone-canvas-size', title: 'Canvas', body: '18 × 24 or 8.5 × 11. The page turns to match the photo.' },
     { target: 'halftone-from-gallery', title: 'Choose A Photo', body: 'FROM A GALLERY browses your galleries and Drive folders full screen. UPLOAD takes one from your device.' },
     { target: 'halftone-preview', title: 'Preview', body: 'The photo fills the canvas you picked, never cropped. Text above or below makes it shrink just enough to fit.' },
@@ -521,13 +521,13 @@ const halftoneTour: Tour = {
 
 const screensFromGalleryTour: Tour = {
   id: 'screens-from-gallery',
-  title: 'Screens From Your Galleries & Folders',
-  summary: 'Pick the screen generator\'s photo from any gallery or Drive folder, full screen.',
+  title: 'Halftone Photos From Your Galleries & Folders',
+  summary: 'Pick the halftone generator\'s photo from any gallery or Drive folder, full screen.',
   group: 'new',
   announce: '2026-10-27',
   steps: [
-    openFromDock('gallery', 'Screens From Your Galleries', 'The screen generator lives in Gallery. Tap the Gallery icon.'),
-    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Screens', body: 'Tap SCREENS.' }),
+    openFromDock('gallery', 'Halftone Photos From Your Galleries', 'The halftone generator lives in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-screens-button', action: 'click', title: 'Halftone', body: 'Tap HALFTONE.' }),
     { target: 'halftone-from-gallery', action: 'click', title: 'From A Gallery', body: 'Tap FROM A GALLERY.' },
     { target: 'halftone-picker-filter', title: 'Find One', body: 'Type part of a name to narrow the list.' },
     { target: 'halftone-picker-galleries', title: 'Galleries', body: 'Your galleries, published or not.' },
