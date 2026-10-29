@@ -66,8 +66,29 @@ not list `cxpyqjxhbvuygnxyukli`, say so and stop — never apply a migration to 
 
 **Test money-path SQL before applying it.** Run it inside `DO $$ … RAISE EXCEPTION … $$` so the
 transaction always rolls back, with `SET LOCAL lock_timeout = '5s'`. Then confirm production is
-unchanged. `apply_migration` hangs on `DROP FUNCTION` (it waits on a confirmation that never shows):
-rename the old function aside instead.
+unchanged.
+
+**No `DROP` of any kind in `apply_migration` or `execute_sql`** — not `DROP POLICY IF EXISTS`, not
+`DROP FUNCTION`, not `DROP TABLE`. The Supabase connector treats any `DROP` as destructive and asks
+for a confirmation that **no one ever sees** (the owner gets no prompt, even with tools set to
+"always allow"), so the call hangs and fails after 60s with *"The server asked the user a question,
+and no answer came"*. It is not a permission or cost problem; do not ask the owner to approve
+anything. Write migrations so they never need a `DROP`:
+
+```sql
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies
+                 WHERE schemaname = 'public' AND tablename = 't' AND policyname = 't_owner_select') THEN
+    CREATE POLICY t_owner_select ON public.t FOR SELECT TO authenticated USING (owner_id = auth.uid());
+  END IF;
+END $$;
+```
+
+To change an existing policy, `ALTER POLICY … USING (…)`. To replace a function, `CREATE OR REPLACE
+FUNCTION`, or rename the old one aside (`ALTER FUNCTION … RENAME TO …_old`). If you see that 60s
+"asked the user a question" error, look for a `DROP` in your SQL first. (First hit: the
+`halftone_films_history` migration, 2026-10-29.)
 
 ## EVIDENCE RULE — every task, no exceptions
 
