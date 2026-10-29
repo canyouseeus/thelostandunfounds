@@ -7,6 +7,7 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
+import { MATURE_BLUR, useMatureConsent } from './MatureCover';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as maplibregl from 'maplibre-gl';
 // v6 loads its worker relative to its own module URL, which bundling breaks — point it at the bundled worker.
@@ -23,6 +24,7 @@ interface MapPhoto {
   longitude: number;
   location_name: string | null;
   library_id: string;
+  is_mature?: boolean | null;
   // Only the two EXIF fields the map popup needs — pulled as flat aliases
   // (metadata->>…) instead of the whole metadata JSONB to keep egress low.
   camera_model?: string | null;
@@ -66,6 +68,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
   const onPhotoClickRef = useRef(onPhotoClick);
 
   const [photos, setPhotos] = useState<MapPhoto[]>([]);
+  const [matureOk] = useMatureConsent();
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [popup, setPopup] = useState<PopupState | null>(null);
@@ -95,7 +98,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
       const [{ data: photoRows }, { data: venueRows }] = await Promise.all([
         supabase
           .from('photos')
-          .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, camera_model:metadata->>camera_model, date_taken:metadata->>date_taken')
+          .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, is_mature, camera_model:metadata->>camera_model, date_taken:metadata->>date_taken')
           .not('latitude', 'is', null)
           .not('longitude', 'is', null),
         supabase
@@ -427,7 +430,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
               <img
                 src={thumbUrl(popup.photo)}
                 alt={popup.photo.title}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${popup.photo.is_mature && !matureOk ? MATURE_BLUR : ''}`}
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               <button

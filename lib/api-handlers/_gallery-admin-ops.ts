@@ -104,6 +104,17 @@ export async function batchSetLocation(
     return { count: photoIds.length };
 }
 
+/** Mark photos as 18+ (nudity) or clear the mark. Public galleries blur 18+ photos. */
+export async function batchSetMature(supabase: ServiceSupabaseClient, photoIds: string[], mature: boolean) {
+    const { error } = await supabase
+        .from('photos')
+        // updated_at too: open galleries poll on it, so a viewer already on the page gets the change.
+        .update({ is_mature: mature, updated_at: new Date().toISOString() })
+        .in('id', photoIds);
+    if (error) throw error;
+    return { count: photoIds.length, is_mature: mature };
+}
+
 export async function batchMovePhotos(supabase: ServiceSupabaseClient, photoIds: string[], targetLibraryId: string) {
     const { data: targetLibrary, error: libError } = await supabase
         .from('photo_libraries')

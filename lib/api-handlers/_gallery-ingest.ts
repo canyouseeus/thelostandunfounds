@@ -588,7 +588,7 @@ export async function relayChunk(
 export async function completeUpload(
     supabase: ServiceSupabaseClient,
     caller: IngestCaller,
-    body: { fileId?: unknown; publish?: unknown },
+    body: { fileId?: unknown; publish?: unknown; mature?: unknown },
 ): Promise<{ fileId: string; fileName: string; pending: boolean; photoId?: string }> {
     const fileId = typeof body.fileId === 'string' ? body.fileId.trim() : '';
     if (!/^[\w-]{10,}$/.test(fileId)) throw new HttpError(400, 'fileId is required.');
@@ -644,6 +644,14 @@ export async function completeUpload(
     // Only automatic sends (a camera pushing every frame) wait in the inbox.
     if (body.publish === true) {
         const photoId = await publishFile(supabase, caller.library, inboxId, fileId, caller.handle ?? caller.library.handle);
+        // The uploader said these contain nudity: blurred behind 18+ from the start.
+        if (body.mature === true && photoId) {
+            // updated_at too: open live galleries poll on it, and must pick up the blur.
+            const { error } = await supabase.from('photos')
+                .update({ is_mature: true, updated_at: new Date().toISOString() })
+                .eq('id', photoId);
+            if (error) throw new HttpError(500, `Photo published but could not be marked 18+: ${error.message}`);
+        }
         return { fileId, fileName: file.name || '', pending: false, photoId };
     }
     return { fileId, fileName: file.name || '', pending: true };

@@ -752,7 +752,22 @@ const photographerAskTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+const matureBlurTour: Tour = {
+  id: 'mature-blur',
+  title: '18+ Blur On Nude Photos',
+  summary: 'Mark nude photos 18+ so public galleries blur them until a viewer confirms their age.',
+  group: 'new',
+  announce: '2026-10-29',
+  steps: [
+    openFromDock('gallery', '18+ Blur', 'Marking photos 18+ happens in Gallery. Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-photos', action: 'click', title: 'All Photos', body: 'Tap ALL PHOTOS.' }),
+    { target: 'photos-tray-select', action: 'click', title: 'Select', body: 'Tap SELECT.' },
+    { target: 'photos-tile', action: 'click', title: 'Pick Photos', body: 'Tap each nude photo to select it.' },
+    { target: 'photos-mark-mature', title: '18+', body: 'Tap 18+. Those photos blur on public galleries until the viewer taps I\'M 18 OR OLDER.\n\nSelect marked photos and tap CLEAR 18+ to undo. Photographers can also tick CONTAINS NUDITY when they upload.' },
+  ],
+};
+
+export const TOURS: Tour[] = [matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
