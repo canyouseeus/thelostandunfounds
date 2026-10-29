@@ -227,8 +227,8 @@ export function buildOnboardingEmail(person: Recipient): {
           ? `You've got ${person.galleries} up already, so keep going. `
           : 'You can post galleries and sell prints and digitals through the platform. '
       }
-      <strong>You keep 100% of your gallery sales.</strong> We take nothing off the top; you just
-      pay Stripe's processing fee, same as you would anywhere. That's separate from job pay,
+      <strong>You keep 97% of your gallery sales.</strong> The house keeps 3%, and your share of
+      Stripe's processing fee comes out of yours. That's separate from job pay,
       where shoots we send you on are the usual 80/20 split. Both land on the same dashboard.
     </p>`;
 

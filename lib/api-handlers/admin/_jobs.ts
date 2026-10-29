@@ -8,6 +8,14 @@ import requestPayout from '../affiliates/request-payout.js'
 import { recordFieldSale } from './field-sales.js'
 import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referral-tie.js'
 import { getZohoAuthContext } from '../_zoho-email-utils.js'
+import { sendNewsletter } from '../_newsletter-send-handler.js'
+import { sendCrewAnnouncement } from '../crew/announcements.js'
+import { ISSUE as NEWSLETTER_2026_10 } from '../../newsletters/2026-10-whats-new.js'
+
+/** Newsletter issues whose copy is in the repo, by the key a job names. */
+const NEWSLETTER_ISSUES: Record<string, { subject: string; content: string; contentHtml: string }> = {
+  '2026-10-whats-new': NEWSLETTER_2026_10,
+}
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -61,7 +69,8 @@ async function availableUsd(): Promise<number> {
 
 /**
  * Run a plain Vercel handler that does its own work and has no admin gate of
- * its own (request-payout). Never used to get past an admin check.
+ * its own (request-payout, and sendNewsletter, the core behind the gated
+ * newsletter route). Never used to get past an admin check.
  */
 async function invokeUngated(
   handler: (req: VercelRequest, res: VercelResponse) => unknown,
@@ -107,6 +116,43 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
       sendAs: (a.sendMailDetails || []).map((d: any) => d.fromAddress).filter(Boolean),
     }))
     return ok({ connectedAs: auth.fromEmail, accounts })
+  },
+
+  /**
+   * { issue, testEmail?, confirm? } — a newsletter issue from lib/newsletters.
+   * testEmail sends that one address a copy. Without it, confirm: true is
+   * required, and the issue goes to every verified subscriber.
+   */
+  async send_newsletter(_supabase, payload) {
+    const issue = NEWSLETTER_ISSUES[payload.issue]
+    if (!issue) return fail(`Unknown issue. Known: ${Object.keys(NEWSLETTER_ISSUES).join(', ')}`, 400)
+    if (!payload.testEmail && payload.confirm !== true) {
+      return fail('Pass testEmail for a test, or confirm: true to send to every subscriber', 400)
+    }
+    const { status, body } = await invokeUngated(sendNewsletter, {
+      subject: issue.subject,
+      content: issue.content,
+      contentHtml: issue.contentHtml,
+      testEmail: payload.testEmail || undefined,
+    })
+    return status < 300 ? ok(body, status) : fail(body?.error || `newsletter send returned ${status}`, status, body)
+  },
+
+  /**
+   * { campaign, testEmail?, dryRun?, confirm?, emails? } — an announcement to
+   * the photographer roster (lib/api-handlers/crew/announcements.ts). Without
+   * confirm: true it reports who would be mailed and sends nothing. Each
+   * person gets a campaign once; a re-run skips them.
+   */
+  async crew_announcement(supabase, payload) {
+    if (!payload.campaign) return fail('campaign is required', 400)
+    return ok(await sendCrewAnnouncement(supabase, {
+      campaign: String(payload.campaign),
+      testEmail: payload.testEmail,
+      dryRun: payload.dryRun === true,
+      confirm: payload.confirm === true,
+      emails: Array.isArray(payload.emails) ? payload.emails : undefined,
+    }))
   },
 
   /** { clientName, clientEmail, clientPhone?, description, eventDate?, lineItems[] } */

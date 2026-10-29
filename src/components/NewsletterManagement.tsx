@@ -6,6 +6,15 @@
 import { useState, useEffect, KeyboardEvent } from 'react';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
+
+/** Send and retry are admin-only on the server; they need the owner's session. */
+async function newsletterAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${session?.access_token || ''}`,
+  };
+}
 import {
   EnvelopeIcon,
   PaperAirplaneIcon,
@@ -340,9 +349,7 @@ export default function NewsletterManagement() {
       setRetrying(campaignId);
       const response = await fetch('/api/newsletter/retry', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await newsletterAuthHeaders(),
         body: JSON.stringify({
           campaignId,
           emails,
@@ -499,9 +506,7 @@ export default function NewsletterManagement() {
       setSending(true);
       const response = await fetch('/api/newsletter/send', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await newsletterAuthHeaders(),
         body: JSON.stringify({
           subject: subject.trim(),
           content: content.trim(),
@@ -561,9 +566,7 @@ export default function NewsletterManagement() {
       setSendingTest(true);
       const response = await fetch('/api/newsletter/send', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await newsletterAuthHeaders(),
         body: JSON.stringify({
           subject: subject.trim(),
           content: content.trim(),

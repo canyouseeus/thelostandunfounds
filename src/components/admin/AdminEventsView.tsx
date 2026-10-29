@@ -529,9 +529,13 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                 </div>
             `;
 
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch('/api/newsletter/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session?.access_token || ''}`,
+                },
                 body: JSON.stringify({
                     subject: announcementDraft.subject,
                     content: announcementDraft.customMessage || `New event: ${event.title}`,
