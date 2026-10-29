@@ -188,7 +188,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
     <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative bg-black/95 border border-white shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto"
+        className="relative bg-[#0a0a0a] max-w-3xl w-full max-h-[92vh] overflow-y-auto"
         style={{ borderRadius: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -223,7 +223,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                 <ShippingAddressForm value={shipping} onChange={setShipping} />
                 {checkoutError && <p className="text-xs text-red-400">{checkoutError}</p>}
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 border border-white/30 hover:text-white hover:border-white transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
+                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 bg-white/10 hover:text-white hover:bg-white/20 transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
                     Back
                   </button>
                   <button type="submit" disabled={checkoutLoading} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 hover:bg-white/90 transition-colors font-semibold text-sm ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`} style={{ borderRadius: 0 }}>
@@ -244,7 +244,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                         <button
                           key={g.key}
                           onClick={() => setSelectedSizeKey(g.key)}
-                          className={`flex flex-col items-center gap-1 px-3 py-3 border transition-colors ${active ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/30 hover:border-white'}`}
+                          className={`flex flex-col items-center gap-1 px-3 py-3 transition-colors ${active ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
                           style={{ borderRadius: 0 }}
                         >
                           <span className="text-sm font-black">{g.widthIn}×{g.heightIn}"</span>
@@ -277,7 +277,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                   <button
                     onClick={handleCardCheckout}
                     disabled={!selectedOption || !orientation || stripeLoading}
-                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-transparent text-white border border-white px-4 py-3 sm:py-2 hover:bg-white hover:text-black transition-colors font-semibold text-sm disabled:opacity-40 ${stripeLoading ? 'pointer-events-none' : ''}`}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-3 sm:py-2 hover:bg-white hover:text-black transition-colors font-semibold text-sm disabled:opacity-40 ${stripeLoading ? 'pointer-events-none' : ''}`}
                     style={{ borderRadius: 0 }}
                   >
                     {stripeLoading ? (

@@ -219,9 +219,9 @@ const PhotoCard: React.FC<{
                                 onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
                                 className="absolute top-2 right-2 z-[45] outline-none"
                             >
-                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
-                                    ? 'bg-white border-white scale-110'
-                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all ${isSelected
+                                    ? 'bg-white scale-110'
+                                    : 'bg-black/40 backdrop-blur-md hover:bg-black/60'
                                     }`}>
                                     {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
                                 </div>
@@ -244,7 +244,7 @@ const PhotoCard: React.FC<{
 
                         {/* Purchased Badge */}
                         {isPurchased && (
-                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
+                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em]">
                                 <CheckCircleIcon className="w-2.5 h-2.5" />
                                 PROPRIETARY
                             </div>
@@ -1251,7 +1251,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     : 'Pick Card or Bitcoin and complete payment.'}
                             </p>
                         </div>
-                        <div className="pt-3 mt-2 border-t border-white/5">
+                        <div className="pt-3 mt-2">
                             <p className="text-[8px] font-black tracking-[0.25em] uppercase text-white/30 leading-relaxed">
                                 Personal use only
                             </p>
@@ -1347,7 +1347,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                             setAuthMessage(undefined);
                                             setAuthModalOpen(true);
                                         }}
-                                        className="inline-block mt-4 px-8 py-3 bg-transparent border border-white text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
+                                        className="inline-block mt-4 px-8 py-3 bg-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
                                     >
                                         Log In
                                     </button>
@@ -1492,7 +1492,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             <button
                                 onClick={loadMorePhotos}
                                 disabled={loadingMore}
-                                className="px-8 py-3 bg-transparent border border-white/30 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-8 py-3 bg-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loadingMore ? 'Loading…' : 'Load More'}
                             </button>
@@ -1731,7 +1731,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 16 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                            className="relative bg-[#0a0a0a] w-full max-w-sm p-8"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
@@ -1761,7 +1761,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 <button
                                     onClick={() => submitPayment('strike')}
                                     disabled={checkoutPending}
-                                    className="w-full py-4 bg-transparent border border-white/30 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:border-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                                    className="w-full py-4 bg-white/10 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/20 transition-colors disabled:opacity-50"
                                 >
                                     Pay with Bitcoin
                                 </button>
@@ -1789,7 +1789,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 16 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-black border border-white/20 w-full max-w-sm p-8 text-center"
+                            className="relative bg-[#0a0a0a] w-full max-w-sm p-8 text-center"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
