@@ -32,6 +32,8 @@ const DEFAULT_STYLE: TextStyle = { weight: 900, size: { above: 1, below: 1 }, tr
 
 interface Props {
   onClose: () => void
+  /** A photographer's id: the photo picker then shows only their own galleries. */
+  ownerId?: string
 }
 
 function saveBlob(blob: Blob, filename: string) {
@@ -80,7 +82,7 @@ function Slider(props: {
   )
 }
 
-export default function HalftoneModal({ onClose }: Props) {
+export default function HalftoneModal({ onClose, ownerId }: Props) {
   const [step, setStep] = useState<Step>('photo')
   const [size, setSize] = useState<PrintSize>('18x24')
   const [photo, setPhoto] = useState<(PhotoSource & { label: string }) | null>(null)
@@ -412,6 +414,7 @@ export default function HalftoneModal({ onClose }: Props) {
             <GalleryPhotoPicker
               isOpen={picking}
               onOpenChange={setPicking}
+              ownerId={ownerId}
               onPick={({ blob, label: name }) => { void loadPhoto(blob, name) }}
             />
             {photoError && <p className="text-red-400 text-xs mb-3">{photoError}</p>}
