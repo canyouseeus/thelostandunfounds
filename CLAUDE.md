@@ -296,24 +296,33 @@ depends on. (It happened: SUP-0002, a bot through /contact, 2026-10-28.)
    when it fails. Never write another inline siteverify call. It follows Cloudflare's canonical
    check: `success`, the form's **action**, and a **hostname** we own (`www.` and the apex).
 2. **Every form has its own action**, set on the widget (`action="…"`) and listed in the
-   `TurnstileAction` type: `support`, `contact`, `newsletter`. A token from one form is refused
-   at another.
+   `TurnstileAction` type: `support`, `contact`, `newsletter`, `booking`. A token from one form
+   is refused at another. On the client use `src/components/TurnstileField.tsx`.
 3. **It fails closed in production.** A missing `TURNSTILE_SECRET_KEY` is a refusal, not a pass.
    Never add a "skip if the secret is unset" branch. That branch is how the newsletter check
    silently never ran.
 4. **Client:** render `react-turnstile` with `VITE_TURNSTILE_SITE_KEY`, send the token as
    `turnstileToken`, remount the widget after each submit (tokens are single-use). Match
    `SupportRequestForm.tsx`: production host only, never on `localhost` or `*.vercel.app`.
-5. **Signed-in users may skip it**, but only when the server verified their token. A client-side
-   "logged in" flag is not proof.
-6. A honeypot field is fine as an extra; it is never a substitute. Bots fill only visible fields.
-7. Verify it in production: a submission with no token must come back `403`.
+5. **Signed-in users may skip it**, but only when the server verified their token
+   (`verifyTurnstileUnlessSignedIn`). A client-side "logged in" flag is not proof. A form that
+   *only* signed-in people can use needs no widget, but its endpoint must check the sign-in
+   itself: the page requiring login protects nothing if the API doesn't.
+6. **An endpoint that emails an address from the request** must either pass Turnstile, send only
+   to the verified signed-in user's own address, or be admin-only. Never trust an `email` field
+   alone.
+7. A honeypot field is fine as an extra; it is never a substitute. Bots fill only visible fields.
+8. Verify it in production: a submission with no token must come back `403`.
 
 Widget site key `0x4AAAAAACAOHJSfRl-nikjS` (`VITE_TURNSTILE_SITE_KEY`). The server needs the
 widget's **Secret Key** as `TURNSTILE_SECRET_KEY` in Vercel (production). The site key alone
-only draws the checkbox; without the secret nothing checks it. Covered: support tickets and contact
-(`/api/support/tickets`), newsletter signup. **Known gaps, not yet covered:** `/api/booking`,
-`/api/events/notifications` (Submit Event), `/api/blog/submission-confirmation` (Submit Article).
+only draws the checkbox; without the secret nothing checks it.
+
+Covered (2026-10-29): Turnstile on support tickets and contact (`/api/support/tickets`), newsletter
+signup, and booking requests (`/api/booking?action=request`: booking page and Express Booking).
+Sign-in required on Submit Article's confirmation (sent only to the author's own address) and on
+Submit Event's "submitted" notice (event owner only). Admin-only: the blog review emails
+(published/approved/rejected/unpublished) and event approved/rejected emails.
 
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials

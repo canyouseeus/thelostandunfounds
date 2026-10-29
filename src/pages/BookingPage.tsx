@@ -19,6 +19,7 @@ import {
     BoltIcon,
 } from '@heroicons/react/24/outline';
 import ExpressBookingModal from '../components/booking/ExpressBookingModal';
+import TurnstileField, { turnstileRequired } from '../components/TurnstileField';
 
 // ── Service data ──────────────────────────────────────────────────────────────
 
@@ -566,6 +567,9 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
     const TOTAL_DETAILS_STEPS = 5;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    // Turnstile (TURNSTILE RULE): single-use, so remounted after every attempt.
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileKey, setTurnstileKey] = useState(0);
     const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
     const [contextOpen, setContextOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
@@ -704,6 +708,10 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        if (turnstileRequired() && !turnstileToken) {
+            setError('Please complete the security check.');
+            return;
+        }
         setSubmitting(true);
         try {
             const res = await fetch('/api/booking?action=request', {
@@ -714,6 +722,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                     notes: [form.notes, form.access_notes && `Access: ${form.access_notes}`]
                         .filter(Boolean).join('\n\n'),
                     retainer: form.event_type === 'Retainer (Monthly)',
+                    turnstileToken,
                 }),
             });
             const rawText = await res.text();
@@ -734,6 +743,8 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
             setError(err?.message || 'Something went wrong. Please try again.');
         } finally {
             setSubmitting(false);
+            setTurnstileToken(null);
+            setTurnstileKey(k => k + 1);
         }
     };
 
@@ -1183,6 +1194,12 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             className="w-full bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:bg-white/10 transition-colors rounded-none mb-6 resize-none"
                                         />
 
+                                        <TurnstileField
+                                            action="booking"
+                                            resetKey={turnstileKey}
+                                            onToken={setTurnstileToken}
+                                            onFailed={() => setError('The security check failed to load. Refresh the page and try again.')}
+                                        />
                                         {error && (
                                             <p className="text-white/80 text-sm mb-4">{error}</p>
                                         )}
@@ -1439,6 +1456,12 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     )
                                 )}
 
+                                <TurnstileField
+                                    action="booking"
+                                    resetKey={turnstileKey}
+                                    onToken={setTurnstileToken}
+                                    onFailed={() => setError('The security check failed to load. Refresh the page and try again.')}
+                                />
                                 {error && (
                                     <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mt-4">{error}</p>
                                 )}
