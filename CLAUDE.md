@@ -332,7 +332,12 @@ Submit Event's "submitted" notice (event owner only). Admin-only: the blog revie
 
 ## ADMIN TUTORIAL RULE
 
-Owner request, 2026-10-26: **every new admin-dashboard feature ships with a walkthrough.**
+Owner request, 2026-10-26, widened 2026-10-29: **every dashboard has walkthroughs, and every new
+dashboard feature ships with one** — admin (`/admin`), member (`/dashboard`) and photographer
+(`/photographer-dashboard`). Set the tour's `dashboard`. Admin tours live in SAGE MODE; the member
+and photographer dashboards have a **?** button (bottom left) and a WELCOME pop-up on a person's
+first visit, running the tour marked `intro`. A new dashboard gets a `data-tour-root`, a
+`WhatsNewModal`, a `TourHelpButton` and an intro tour.
 
 1. Add a tour to `src/components/admin/tour/tours.ts` with `group: 'new'` and `announce` set to
    the ship date. The dashboard then shows a NEW FEATURE pop-up once; **GO** starts the walkthrough

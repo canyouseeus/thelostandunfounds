@@ -58,6 +58,9 @@ import { LoadingSpinner, LoadingOverlay, SkeletonCard } from '../components/Load
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
+import TourHelpButton from '../components/admin/tour/TourHelpButton';
+import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -219,6 +222,12 @@ export default function Affiliate() {
   // Pre-open a section if ?section= is in the URL (e.g. /dashboard?section=affiliate)
   const initialSection = searchParams.get('section') || '';
   const [activeApp, setActiveApp] = useState<string | null>(initialSection || null);
+  // Walkthroughs open and close apps here (see components/admin/tour).
+  useEffect(() => {
+    const onPanel = (e: Event) => setActiveApp((e as CustomEvent<string | null>).detail ?? null);
+    window.addEventListener(TOUR_PANEL_EVENT, onPanel);
+    return () => window.removeEventListener(TOUR_PANEL_EVENT, onPanel);
+  }, []);
 
   const [loading, setLoading] = useState(false);
 
@@ -906,14 +915,16 @@ export default function Affiliate() {
         canonicalPath="/dashboard"
         noIndex={true}
       />
-      <div className="min-h-screen bg-black text-white selection:bg-white/20">
+      <div data-tour-root="member" data-active-panel={activeApp ?? ''} className="min-h-screen bg-black text-white selection:bg-white/20">
+        <WhatsNewModal dashboard="member" />
+        <TourHelpButton dashboard="member" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           {/* Main Grid Layout - 12 Columns */}
           <div className="grid grid-cols-12 gap-6 auto-rows-min">
 
             {/* Header Card */}
-            <div className="col-span-12 bg-[#0a0a0a] p-6 flex flex-col justify-between relative overflow-hidden group">
+            <div data-tour="m-header" className="col-span-12 bg-[#0a0a0a] p-6 flex flex-col justify-between relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
               <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
@@ -934,7 +945,7 @@ export default function Affiliate() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div data-tour="m-actions" className="flex items-center gap-2 shrink-0">
                   <Link
                     to="/settings"
                     className="p-3 hover:bg-white hover:text-black transition-all group/settings"
@@ -964,7 +975,7 @@ export default function Affiliate() {
 
             {/* Revenue & Widgets Row */}
             <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6">
-              <div className="md:col-span-8 lg:col-span-9 space-y-4">
+              <div data-tour="m-revenue" className="md:col-span-8 lg:col-span-9 space-y-4">
                 {userIsAdmin && hasAffiliate && (
                   <div className="flex bg-[#0a0a0a] w-fit">
                     {(['admin', 'affiliate'] as const).map((mode) => (
@@ -1012,7 +1023,7 @@ export default function Affiliate() {
                   />
                 )}
               </div>
-              <div className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
+              <div data-tour="m-clock" className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
                 <ClockWidget size="lg" className="md:flex-1" />
                 <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
               </div>
@@ -1022,14 +1033,14 @@ export default function Affiliate() {
             <div className="col-span-12 flex flex-col items-center pt-8">
               <div className="relative group flex flex-col items-center">
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
-                <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
+                <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
                     { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
                     { id: 'settings', icon: Cog6ToothIcon, title: 'Account', show: true }
                   ].filter(app => app.show).map((app) => (
-                    <button
+                    <button data-tour={`m-dock-${app.id}`}
                       key={app.id}
                       onClick={() => setActiveApp(app.id)}
                       className={cn(
@@ -1107,7 +1118,7 @@ export default function Affiliate() {
               {hasBookClub && activeApp === 'writer' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div data-tour="m-writer-stats" className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-black p-4">
                         <AdminBentoRow
                           label="Author Profile"
@@ -1129,7 +1140,7 @@ export default function Affiliate() {
                     </div>
 
                     <div className="pt-4 flex gap-4">
-                      <Link
+                      <Link data-tour="m-writer-public"
                         to={`/blog/${userSubdomain}`}
                         className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition"
                       >
@@ -1141,6 +1152,7 @@ export default function Affiliate() {
                     <div className="mt-8">
                       <AdminBentoCard
                         title="MY BOOK CLUB POSTS"
+                        tourId="m-writer-posts"
                         className="bg-black/20"
                       >
                         <div className="space-y-0">
@@ -1265,7 +1277,7 @@ export default function Affiliate() {
                       {/* Compact Card Grid ↔ Expanded Card View */}
                       {expandedCard ? (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                          <button
+                          <button data-tour="m-aff-back"
                             onClick={() => setExpandedCard(null)}
                             className="flex items-center gap-2 mb-8 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest transition-colors group"
                           >
@@ -1276,9 +1288,9 @@ export default function Affiliate() {
                           {/* ── EARNINGS ─────────────────────────────────── */}
                           {expandedCard === 'earnings' && (
                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                              <AdminBentoCard title="Quick Actions" icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}>
+                              <AdminBentoCard title="Quick Actions" icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />} tourId="m-aff-quick">
                                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-center p-2">
-                                  <button
+                                  <button data-tour="m-aff-copy"
                                     onClick={copyReferralLink}
                                     className="flex items-center justify-center gap-3 px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all"
                                   >
@@ -1435,10 +1447,10 @@ export default function Affiliate() {
                           {expandedCard === 'payouts' && (
                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <AdminBentoCard title="Available to Payout" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
+                                <AdminBentoCard title="Available to Payout" icon={<CurrencyDollarIcon className="w-4 h-4" />} tourId="m-aff-available">
                                   <div className="mt-2 text-center py-6">
                                     <div className="text-5xl font-black text-green-400 tracking-tighter mb-2">${(dashData.balance?.available_balance || 0).toFixed(2)}</div>
-                                    <button
+                                    <button data-tour="m-aff-request-payout"
                                       onClick={() => { setPayoutAmount(dashData.balance?.available_balance || 0); setPayoutRequestError(null); setShowPayoutRequest(true); }}
                                       className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-all mt-4"
                                     >
@@ -1455,7 +1467,7 @@ export default function Affiliate() {
                                 </AdminBentoCard>
                               </div>
 
-                              <div className="bg-black border-0 rounded-none p-6">
+                              <div data-tour="m-aff-stripe" className="bg-black border-0 rounded-none p-6">
                                 <div className="flex items-center justify-between mb-6">
                                   <h3 className="text-lg font-black text-white uppercase tracking-widest">Stripe Connect</h3>
                                   <button onClick={loadStripeStatus} disabled={stripeLoading} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors disabled:opacity-40">{stripeLoading ? 'Refreshing…' : 'Refresh'}</button>
@@ -1477,7 +1489,7 @@ export default function Affiliate() {
                                 </div>
                               </div>
 
-                              <div className="bg-black border-0 rounded-none p-6">
+                              <div data-tour="m-aff-payout-settings" className="bg-black border-0 rounded-none p-6">
                                 <div className="flex items-center justify-between mb-6">
                                   <h3 className="text-lg font-black text-white uppercase tracking-widest">Payout Settings</h3>
                                   {!editingPayout && <button onClick={() => setEditingPayout(true)} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Edit</button>}
@@ -1515,7 +1527,7 @@ export default function Affiliate() {
                           {/* ── LINKS & GUIDE ─────────────────────────────── */}
                           {expandedCard === 'links' && (
                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                              <div>
+                              <div data-tour="m-aff-code">
                                 <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
                                 <div className="bg-[#0a0a0a] p-6 rounded-none">
                                   <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
@@ -1537,15 +1549,15 @@ export default function Affiliate() {
                                   <div className="text-xs text-white/40 font-medium uppercase tracking-wider mt-3">Share this code to earn {dashData.affiliate.commission_rate}% of the profit on every sale.</div>
                                 </div>
                               </div>
-                              <div>
+                              <div data-tour="m-aff-link-generator">
                                 <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Link Generator</h3>
                                 <DeepLinkGenerator affiliateCode={dashData.affiliate.code} commissionRate={dashData.affiliate.commission_rate ?? 42} />
                               </div>
-                              <div>
+                              <div data-tour="m-aff-standard-links">
                                 <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Standard Links</h3>
                                 <ReferralLink affiliateCode={dashData.affiliate.code} />
                               </div>
-                              <div>
+                              <div data-tour="m-aff-guide">
                                 <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Affiliate Guide</h3>
                                 <AffiliateGuide />
                               </div>
@@ -1556,7 +1568,7 @@ export default function Affiliate() {
                         /* ── COMPACT CARD GRID ─────────────────────────────── */
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                           {/* EARNINGS */}
-                          <button
+                          <button data-tour="m-aff-earnings"
                             onClick={() => setExpandedCard('earnings')}
                             className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
                           >
@@ -1575,7 +1587,7 @@ export default function Affiliate() {
 
                           {/* NETWORK */}
                           {dashData.mlm && (
-                            <button
+                            <button data-tour="m-aff-network"
                               onClick={() => setExpandedCard('network')}
                               className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
                             >
@@ -1594,7 +1606,7 @@ export default function Affiliate() {
                           )}
 
                           {/* KING MIDAS */}
-                          <button
+                          <button data-tour="m-aff-kingmidas"
                             onClick={() => setExpandedCard('kingmidas')}
                             className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
                           >
@@ -1612,7 +1624,7 @@ export default function Affiliate() {
                           </button>
 
                           {/* PAYOUTS */}
-                          <button
+                          <button data-tour="m-aff-payouts"
                             onClick={() => setExpandedCard('payouts')}
                             className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
                           >
@@ -1632,7 +1644,7 @@ export default function Affiliate() {
                           </button>
 
                           {/* REWARDS */}
-                          <button
+                          <button data-tour="m-aff-rewards"
                             onClick={() => setExpandedCard('rewards')}
                             className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
                           >
@@ -1650,7 +1662,7 @@ export default function Affiliate() {
                           </button>
 
                           {/* LINKS */}
-                          <button
+                          <button data-tour="m-aff-links"
                             onClick={() => setExpandedCard('links')}
                             className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10 min-w-0"
                           >
@@ -1806,12 +1818,12 @@ export default function Affiliate() {
               {activeApp === 'settings' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="bg-[#0a0a0a] p-6">
-                    <div className="space-y-4 max-w-2xl">
+                    <div data-tour="m-account" className="space-y-4 max-w-2xl">
                       <AdminBentoRow label="Tier" value={tier || 'Free'} />
                       <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
                       <AdminBentoRow label="Invites" value="0 Available" />
                       <div className="pt-4">
-                        <Link
+                        <Link data-tour="m-account-manage"
                           to="/settings"
                           className="flex items-center justify-between text-xs uppercase font-bold text-white/50 hover:text-white transition bg-black p-4"
                         >

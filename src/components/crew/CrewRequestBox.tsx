@@ -107,7 +107,7 @@ export default function CrewRequestBox() {
     };
 
     return (
-        <div className="bg-white/5 p-5 sm:p-6 text-white" style={{ borderRadius: 0 }}>
+        <div data-tour="pg-ask" className="bg-white/5 p-5 sm:p-6 text-white" style={{ borderRadius: 0 }}>
             <div className="mb-5 text-left">
                 <h2 className="text-lg font-black uppercase tracking-tight">Ask For Anything</h2>
                 <p className="text-xs text-white/40 mt-1">
@@ -116,7 +116,7 @@ export default function CrewRequestBox() {
                 </p>
             </div>
 
-            <div className="flex flex-wrap gap-1 mb-3">
+            <div data-tour="pg-ask-kind" className="flex flex-wrap gap-1 mb-3">
                 {KINDS.map(option => (
                     <button
                         key={option.value}
@@ -144,7 +144,7 @@ export default function CrewRequestBox() {
             />
 
             <div className="flex flex-wrap items-center gap-3 mt-3">
-                <button
+                <button data-tour="pg-ask-send"
                     onClick={send}
                     disabled={sending || !message.trim()}
                     className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/80 transition-colors disabled:opacity-40"

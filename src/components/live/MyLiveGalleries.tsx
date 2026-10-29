@@ -116,7 +116,7 @@ export default function MyLiveGalleries() {
   if (unavailable || galleries === null) return null
 
   return (
-    <div className="mb-6 bg-white/5 p-6 text-left" style={{ borderRadius: 0 }}>
+    <div data-tour="pg-live" className="mb-6 bg-white/5 p-6 text-left" style={{ borderRadius: 0 }}>
       <h2 className="text-xl font-bold uppercase tracking-tighter mb-1">LIVE GALLERIES</h2>
       <p className="text-zinc-400 text-sm mb-6">
         Start a gallery for tonight and send photos from your camera roll — guests see them as they land.
@@ -132,7 +132,7 @@ export default function MyLiveGalleries() {
         <TermsGate onAgree={agreeToTerms} />
       ) : (
       <>
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div data-tour="pg-live-new" className="flex flex-wrap gap-2 mb-6">
         <input className={`${field} flex-1 min-w-[12rem]`} style={{ borderRadius: 0 }}
           placeholder="Event name, e.g. Halloween at Primos" value={name}
           onChange={e => setName(e.target.value)}
@@ -156,21 +156,21 @@ export default function MyLiveGalleries() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className={g.live_mode ? secondary : primary} style={{ borderRadius: 0 }} disabled={busy}
+                  <button data-tour="pg-live-go" className={g.live_mode ? secondary : primary} style={{ borderRadius: 0 }} disabled={busy}
                     onClick={() => toggle(g)}>
                     {g.live_mode ? 'End live' : 'Go live'}
                   </button>
-                  <button className={secondary} style={{ borderRadius: 0 }} onClick={() => share(g.slug, g.name)}>
+                  <button data-tour="pg-live-share" className={secondary} style={{ borderRadius: 0 }} onClick={() => share(g.slug, g.name)}>
                     {copied === g.slug ? 'Link copied' : 'Share gallery'}
                   </button>
-                  <button className={open === g.slug ? primary : secondary} style={{ borderRadius: 0 }}
+                  <button data-tour="pg-live-send" className={open === g.slug ? primary : secondary} style={{ borderRadius: 0 }}
                     onClick={() => setOpen(open === g.slug ? null : g.slug)}>
                     {open === g.slug ? 'Close' : 'Send photos'}
                   </button>
                 </div>
               </div>
               {open === g.slug && (
-                <div className="mt-4">
+                <div data-tour="pg-live-uploader" className="mt-4">
                   <LiveUploader slug={g.slug} />
                   <UploadTermsNotice />
                   <a href={`/gallery/${g.slug}`} target="_blank" rel="noreferrer"

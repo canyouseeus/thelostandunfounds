@@ -38,7 +38,7 @@ export default function TermsGate({ onAgree, askName = false }: {
   }
 
   return (
-    <div className="bg-black p-5 text-left" style={{ borderRadius: 0 }}>
+    <div data-tour="pg-terms" className="bg-black p-5 text-left" style={{ borderRadius: 0 }}>
       <h3 className="text-xs font-black uppercase tracking-[0.25em] mb-3">BEFORE YOU UPLOAD</h3>
       <p className="text-sm text-white/70 mb-3">
         Everything you send goes on a public site. Never upload:
@@ -66,7 +66,7 @@ export default function TermsGate({ onAgree, askName = false }: {
           value={name} onChange={e => setName(e.target.value)} />
       )}
 
-      <label className="flex items-start gap-3 text-sm text-white/80 cursor-pointer mb-4">
+      <label data-tour="pg-terms-agree" className="flex items-start gap-3 text-sm text-white/80 cursor-pointer mb-4">
         <input type="checkbox" className="mt-1 accent-white" checked={checked}
           onChange={e => setChecked(e.target.checked)} />
         <span>
@@ -80,7 +80,7 @@ export default function TermsGate({ onAgree, askName = false }: {
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
-      <button type="button" disabled={!checked || busy || (askName && name.trim().length < 2)} onClick={agree}
+      <button data-tour="pg-terms-continue" type="button" disabled={!checked || busy || (askName && name.trim().length < 2)} onClick={agree}
         className="px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors disabled:opacity-40 bg-white text-black hover:bg-white/10 hover:text-white"
         style={{ borderRadius: 0 }}>
         {busy ? 'Saving…' : 'Agree and continue'}

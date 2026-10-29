@@ -1,6 +1,8 @@
 /**
- * The list of every admin walkthrough — opened from the TUTORIALS tile while
- * SAGE MODE is on, and shown on the /sagemode page.
+ * Lists of walkthroughs. With no `dashboard`, every tour on the site — opened
+ * from the TUTORIALS tile while SAGE MODE is on and shown on /sagemode, so the
+ * owner can run the member and photographer tours too. With a `dashboard`,
+ * just that dashboard's tours, for its ? button.
  *
  * Starting one turns SAGE MODE off first: armed, it intercepts every tap, and
  * the tour needs the page to behave normally.
@@ -8,16 +10,18 @@
 
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { useSageMode } from '../../../contexts/SageModeContext';
-import { TOURS, Tour } from './tours';
+import { dashboardOf, DashboardId, TOURS, Tour } from './tours';
 import { useTour } from './TourContext';
 
-const GROUPS: { id: Tour['group']; label: string }[] = [
-  { id: 'new', label: 'New Features' },
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'console', label: 'Platform Console' },
+const GROUPS: { label: string; match: (t: Tour) => boolean }[] = [
+  { label: 'New Features', match: t => dashboardOf(t) === 'admin' && t.group === 'new' },
+  { label: 'Dashboard', match: t => dashboardOf(t) === 'admin' && t.group === 'dashboard' },
+  { label: 'Platform Console', match: t => dashboardOf(t) === 'admin' && t.group === 'console' },
+  { label: 'Member Dashboard', match: t => dashboardOf(t) === 'member' },
+  { label: 'Photographer Dashboard', match: t => dashboardOf(t) === 'photographer' },
 ];
 
-export function TutorialList({ onStart }: { onStart?: () => void }) {
+export function TutorialList({ onStart, dashboard }: { onStart?: () => void; dashboard?: DashboardId }) {
   const { start, seen } = useTour();
   const { state, toggleSageMode } = useSageMode();
 
@@ -29,12 +33,14 @@ export function TutorialList({ onStart }: { onStart?: () => void }) {
 
   return (
     <div className="space-y-8">
-      {GROUPS.map(group => {
-        const tours = TOURS.filter(t => t.group === group.id);
+      {(dashboard ? [{ label: '', match: (t: Tour) => dashboardOf(t) === dashboard }] : GROUPS).map(group => {
+        const tours = TOURS.filter(group.match);
         if (!tours.length) return null;
         return (
-          <div key={group.id}>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">{group.label}</h3>
+          <div key={group.label}>
+            {group.label && (
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">{group.label}</h3>
+            )}
             <div className="space-y-1">
               {tours.map(t => (
                 <button

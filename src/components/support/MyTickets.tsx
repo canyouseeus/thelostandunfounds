@@ -40,13 +40,13 @@ export default function MyTickets({ role, className = '' }: Props) {
     const shown = showAll(tickets) ? tickets : open.length ? open : tickets.slice(0, 3);
 
     return (
-        <section id="support" className={`bg-white/5 p-4 sm:p-6 text-left ${className}`} style={surface}>
+        <section data-tour="help-tickets" id="support" className={`bg-white/5 p-4 sm:p-6 text-left ${className}`} style={surface}>
             <div className="flex items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
                     <LifebuoyIcon className="w-5 h-5 text-white/60" />
                     <h2 className="text-lg font-black uppercase tracking-widest text-white">Support</h2>
                 </div>
-                <button
+                <button data-tour="help-get-help"
                     onClick={() => setShowForm(!showForm)}
                     className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
                     style={surface}

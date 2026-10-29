@@ -20,6 +20,8 @@ import CrewRequestBox from '../components/crew/CrewRequestBox';
 import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 import MyTickets from '../components/support/MyTickets';
 import MyLiveGalleries from '../components/live/MyLiveGalleries';
+import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
+import TourHelpButton from '../components/admin/tour/TourHelpButton';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -35,7 +37,9 @@ export default function PhotographerDashboard() {
     if (loading) return <LoadingOverlay />;
 
     return (
-        <div className="container mx-auto py-8 text-white px-4">
+        <div data-tour-root="photographer" className="container mx-auto py-8 text-white px-4">
+            <WhatsNewModal dashboard="photographer" />
+            <TourHelpButton dashboard="photographer" />
             {/* Picks up where the email left off. The email carries one button;
                 the steps get explained here, where they can be acted on. */}
             {user && <CrewOnboardingModal userId={user.id} />}
@@ -61,7 +65,7 @@ export default function PhotographerDashboard() {
             </div>
 
             {/* Revenue & Payment Info Banner */}
-            <div className="mb-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-xl p-6">
+            <div data-tour="pg-revenue" className="mb-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-xl p-6">
                 <button
                     onClick={() => setShowRevenueInfo(!showRevenueInfo)}
                     className="w-full flex items-center justify-between text-left"
@@ -170,7 +174,7 @@ export default function PhotographerDashboard() {
                 </p>
             </div>
 
-            <div className="mb-6">
+            <div data-tour="pg-galleries" className="mb-6">
                 <h2 className="text-xl font-bold uppercase tracking-tighter mb-4">MY GALLERIES</h2>
                 <div className="bg-white/5 p-6" style={{ borderRadius: 0 }}>
                     <AdminGalleryView

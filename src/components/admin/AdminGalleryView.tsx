@@ -83,7 +83,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags' | 'downloads'>('photos');
+    // Photographers have no tab bar, so they stay on whatever tab this starts
+    // on. Starting them on 'photos' rendered the photo browser instead of their
+    // own galleries, and they had no way to switch.
+    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags' | 'downloads'>(isPhotographerView ? 'galleries' : 'photos');
     const [applications, setApplications] = useState<any[]>([]);
     const [appsLoading, setAppsLoading] = useState(false);
     const [pendingAppsCount, setPendingAppsCount] = useState(0);
