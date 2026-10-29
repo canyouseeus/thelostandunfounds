@@ -502,7 +502,7 @@ export default function HalftoneModal({ onClose }: Props) {
               </p>
             )}
             <p className="text-white/40 text-xs mb-4">
-              Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room. Text is never wider than the photo: a line that would be shrinks to fit it.
+              Text prints in solid ink, centred above and below the photo. The photo shrinks just enough to make room. Text is never wider than the photo: a line that would be wider shrinks to fit it.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setStep('photo')} className={ghost}>← BACK</button>
