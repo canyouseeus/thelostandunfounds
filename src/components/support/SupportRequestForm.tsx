@@ -8,12 +8,22 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
+import Turnstile from 'react-turnstile';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPPORT_CATEGORIES, SUPPORT_ROLES, supportFetch } from '../../lib/support';
 
 const surface = { borderRadius: 0 } as const;
 const field = 'w-full bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:bg-white/10 focus:outline-none';
 const label = 'block text-[10px] font-black uppercase tracking-widest text-white/50 mb-1.5';
+
+// Turnstile runs on production only, matching the server (lib/api-handlers/_turnstile.ts):
+// the widget's domain list doesn't cover localhost or *.vercel.app previews.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+function turnstileOnThisHost(): boolean {
+    if (import.meta.env.DEV || typeof window === 'undefined') return false;
+    const h = window.location.hostname;
+    return !(h === 'localhost' || h === '127.0.0.1' || h.endsWith('.local') || h.endsWith('.vercel.app'));
+}
 
 interface Props {
     defaultCategory?: string;
@@ -36,6 +46,11 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, onCre
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [created, setCreated] = useState<{ ref: string; key: string } | null>(null);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    // Bumped to remount the widget: a token is single-use.
+    const [turnstileKey, setTurnstileKey] = useState(0);
+    // Signed-in people skip it; the server does the same.
+    const needsTurnstile = !user && !!TURNSTILE_SITE_KEY && turnstileOnThisHost();
 
     const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setForm({ ...form, [k]: e.target.value });
@@ -43,12 +58,16 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, onCre
     async function submit(e: React.FormEvent) {
         e.preventDefault();
         if (sending) return;
+        if (needsTurnstile && !turnstileToken) {
+            setError('Please complete the security check.');
+            return;
+        }
         setSending(true);
         setError(null);
         try {
             const body = await supportFetch<{ ticket?: { ref: string; key: string } }>('tickets', {
                 method: 'POST',
-                body: JSON.stringify({ ...form, page_url: window.location.href }),
+                body: JSON.stringify({ ...form, page_url: window.location.href, turnstileToken }),
             });
             if (body.ticket) setCreated(body.ticket);
             onCreated?.();
@@ -56,6 +75,8 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, onCre
             setError(err.message);
         } finally {
             setSending(false);
+            setTurnstileToken(null);
+            setTurnstileKey(k => k + 1);
         }
     }
 
@@ -150,11 +171,25 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, onCre
                 className="absolute -left-[9999px] w-px h-px opacity-0"
             />
 
+            {needsTurnstile && (
+                <Turnstile
+                    key={turnstileKey}
+                    sitekey={TURNSTILE_SITE_KEY}
+                    theme="dark"
+                    onSuccess={token => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => {
+                        setTurnstileToken(null);
+                        setError('The security check failed to load. Refresh the page, or email support@thelostandunfounds.com.');
+                    }}
+                />
+            )}
+
             {error && <p className="text-sm text-red-400">{error}</p>}
 
             <button
                 type="submit"
-                disabled={sending}
+                disabled={sending || (needsTurnstile && !turnstileToken)}
                 className="px-4 py-2 text-sm font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
                 style={surface}
             >
