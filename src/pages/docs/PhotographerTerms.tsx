@@ -17,7 +17,7 @@ export const PHOTOGRAPHER_TERMS_UPDATED = 'October 29, 2026';
  * Recorded on photographer applications. Uploads are gated server-side on
  * PHOTOGRAPHER_TERMS_VERSION in lib/api-handlers/_terms.ts — bump both together.
  */
-export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29';
+export const PHOTOGRAPHER_TERMS_VERSION = '2026-10-29.2';
 
 function Section({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
@@ -154,17 +154,21 @@ export default function PhotographerTerms() {
           </p>
         </Section>
 
-        <Section n={7} title="Prohibited Content — Zero Tolerance">
+        <Section n={7} title="Prohibited Content and Adult Nudity">
           <p>
             Everything uploaded to {brand} can end up on a public website. You must never upload, send,
             link to or store on the platform any of the following:
           </p>
           <List>
             <li>
-              <strong className="font-bold text-white">Any sexual content involving a minor</strong>, or any
-              image of a minor that is sexualized, exploitative or abusive — real, drawn, edited or AI-generated
+              <strong className="font-bold text-white">Any nudity or sexual content involving anyone under 18</strong>,
+              or any image of a minor that is sexualized, exploitative or abusive — real, drawn, edited or AI-generated
             </li>
-            <li>Nudity, pornography, or sexually explicit or sexually suggestive content of anyone, of any age</li>
+            <li>
+              Pornography or sexually explicit content of anyone: sex acts, real or simulated, or images whose
+              focus is on someone's genitals
+            </li>
+            <li>Nudity of any adult that does not meet every condition below</li>
             <li>
               Intimate or private images of anyone shared without their consent, images taken in a private
               place (restrooms, changing rooms, bedrooms), upskirt or hidden-camera images, or anything taken
@@ -179,6 +183,22 @@ export default function PhotographerTerms() {
             <li>Anything that infringes someone else's copyright, trademark, privacy or publicity rights</li>
             <li>Malware, spam, or files disguised as something they are not</li>
           </List>
+          <p className="font-bold text-white">Adult nudity is allowed only when all of these are true:</p>
+          <List>
+            <li>Every nude person was 18 or older when photographed, and you checked a government-issued photo ID</li>
+            <li>
+              Every nude person knew they were being photographed and gave you signed, written consent to be
+              photographed nude and to the photos being published, shared and sold through the platform
+            </li>
+            <li>It is artistic, editorial, fashion, body-art or event photography, and not sexually explicit</li>
+            <li>It was taken somewhere the person chose to be photographed, never in a private place without their knowledge</li>
+          </List>
+          <p>
+            You must keep each person's ID check and signed consent for at least 7 years and send them to us within
+            48 hours of our asking. If a person withdraws consent, tell us right away and we will take the photos down.
+            We may place nude content behind an age or content warning, make it private, or remove it at any time —
+            and anything where age or consent is in doubt is removed.
+          </p>
           <p>
             If you are not sure whether something is allowed, do not upload it. We decide what is
             allowed, and our decision is final.
@@ -189,6 +209,7 @@ export default function PhotographerTerms() {
           <List>
             <li>The content is removed immediately, without notice</li>
             <li>Your upload access, galleries and account are suspended or permanently terminated</li>
+            <li>Nude content is removed if you cannot produce the age and consent records for it when asked</li>
             <li>Any unpaid payouts connected to the content may be withheld</li>
             <li>
               Content that appears to involve the sexual exploitation of a minor is reported to the National
@@ -215,9 +236,10 @@ export default function PhotographerTerms() {
             <li>You took it yourself, or you have every right needed to grant the license above</li>
             <li>None of it falls under section 7</li>
             <li>
-              Every identifiable person in it was at least 18 years old, or appears with the consent of a parent
-              or guardian, and was photographed with their knowledge in a place they could be photographed
+              Every identifiable person in it was photographed with their knowledge in a place they could be
+              photographed, and any minor appears with the consent of a parent or guardian and is fully clothed
             </li>
+            <li>Every nude person meets all of the conditions in section 7, and you hold the records to prove it</li>
             <li>
               You have any releases or permissions the law or the venue requires for the people, property and
               locations in it, and you will give us a copy if we ask
