@@ -327,6 +327,23 @@ const crmTour: Tour = {
   ],
 };
 
+const prospectsTour: Tour = {
+  id: 'console-prospects',
+  title: 'Prospects',
+  summary: 'Leads the client-hunter agent found each weekday, with a drafted first email for you to read and send.',
+  group: 'console',
+  steps: [
+    openFromDock('prospects', 'Prospects', 'Tap the Prospects icon to open it.'),
+    inPanel('prospects', { target: 'prospects-filters', title: 'To Review And Sent', body: 'TO REVIEW is what the agent found. SENT is what you sent.' }),
+    inPanel('prospects', { target: 'prospects-cap', title: 'Daily Cap', body: 'How many you sent in the last 24 hours. The cap keeps cold mail from hurting your inbox.' }),
+    inPanel('prospects', { target: 'prospect-row', action: 'click', title: 'A Prospect', body: 'Tap one to open it.' }),
+    inPanel('prospects', { target: 'prospect-signal', title: 'Why Them', body: 'Why the agent thinks they need you. SOURCE opens the page that says so.' }),
+    inPanel('prospects', { target: 'prospect-draft', title: 'The Email', body: 'The drafted email. Edit anything.' }),
+    inPanel('prospects', { target: 'prospect-send', title: 'Send', body: 'Sends it from media@, CC media@.' }),
+    inPanel('prospects', { target: 'prospect-pass', title: 'Pass', body: 'Not a fit. The agent will not suggest them again.' }),
+  ],
+};
+
 const invoicesTour: Tour = {
   id: 'console-invoices',
   title: 'Invoices',
@@ -400,7 +417,7 @@ const settingsTour: Tour = {
 const consoleTours: Tour[] = [
   galleryTour, contentRequestsTour, blogTour, newsletterTour, mailTour, usersTour,
   rosterTour, affiliatesTour, submissionsTour, bookingsTour, calendarTour, crmTour,
-  invoicesTour, productsTour, printShopTour, supportConsoleTour, settingsTour,
+  prospectsTour, invoicesTour, productsTour, printShopTour, supportConsoleTour, settingsTour,
 ];
 
 /* ── New features ─────────────────────────────────────────────────────── */
@@ -784,7 +801,16 @@ const matureBlurTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+const clientHunterTour: Tour = {
+  id: 'client-hunter',
+  title: 'Client Hunter',
+  summary: 'An agent now looks for photography and agency clients every weekday and drafts a first email to each. You read it and send it from Prospects.',
+  group: 'new',
+  announce: '2026-10-29',
+  steps: prospectsTour.steps,
+};
+
+export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

@@ -131,6 +131,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | invoice, proposal, quote, estimate, client document | `client-documents` |
 | billing, deposit, payment link, promo code, discount code, checkout | `email-billing` |
 | blocked connector, "requires approval", can't do it from here | `build-the-endpoint` |
+| find clients, prospects, leads, outreach, prospecting, cold email | `client-hunter`, `brand-ethos` |
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
