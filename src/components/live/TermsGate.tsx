@@ -44,8 +44,9 @@ export default function TermsGate({ onAgree, askName = false }: {
         Everything you send goes on a public site. Never upload:
       </p>
       <ul className="list-disc list-outside ml-5 space-y-1 text-sm text-white/70 mb-4">
-        <li>Nudity, sexual or sexually suggestive content of any kind</li>
-        <li>Anything involving a minor in a sexual, abusive or exploitative way</li>
+        <li>Any nudity or sexual content involving anyone under 18</li>
+        <li>Porn or sex acts, real or simulated</li>
+        <li>Adult nudity without the person's signed consent and a checked ID showing they're 18+</li>
         <li>Violence, gore, abuse, harassment, hate or threats</li>
         <li>Photos of anyone taken or shared without their consent, or in a private setting</li>
         <li>Drug use, weapons used to threaten, or anything else illegal</li>

@@ -155,7 +155,7 @@ export default function Terms() {
             <li>Use our services for illegal purposes or to violate any applicable laws</li>
             <li>Violate any copyright, trademark, or intellectual property rights</li>
             <li>Publish content that is defamatory, harassing, threatening, or discriminatory</li>
-            <li>Post nudity or sexual content of any kind, or any content that sexualizes, exploits or endangers a minor</li>
+            <li>Post pornography or sexually explicit content, nudity of anyone without their consent, or any nudity or sexual content involving a minor</li>
             <li>Post intimate or private images of anyone without their consent, or images taken where they expected privacy</li>
             <li>Post content showing or promoting abuse, violence, self-harm, gore, or illegal activity</li>
             <li>Publish content that contains malware, viruses, or harmful code</li>
