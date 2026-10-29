@@ -10,6 +10,7 @@ import {
 import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { verifyTurnstileUnlessSignedIn } from '../../lib/api-handlers/_turnstile.js'
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
 function getSupabase(serviceRole = false) {
@@ -322,6 +323,12 @@ async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse) {
+    // A booking request emails both us and the address typed in, so a guest
+    // must pass Turnstile first (TURNSTILE RULE, CLAUDE.md). A signed-in user,
+    // verified server-side, skips it: the admin calendar books this way.
+    const human = await verifyTurnstileUnlessSignedIn(req, req.body?.turnstileToken, ['booking'])
+    if (!human.result.ok) return res.status(human.result.status).json({ error: human.result.error })
+
     const supabase = getSupabase(true)
     const {
         name,

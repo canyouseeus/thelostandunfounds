@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js';
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js';
+import { verifiedUser } from '../../lib/api-handlers/_turnstile.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,6 +31,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (eventError || !event) {
             return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // This used to check no one: anyone with an event id could send its
+        // owner an "approved" or "rejected" email. Approve and reject are admin
+        // actions; "submitted" comes only from the event's own signed-in owner.
+        if (action === 'approved' || action === 'rejected') {
+            if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
+        } else {
+            const user = await verifiedUser(req);
+            if (!user || user.id !== event.owner_id) return res.status(401).json({ error: 'Unauthorized' });
         }
 
         // Fetch user email

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { conflictsWithBuffer } from '../../../lib/booking-buffer';
+import TurnstileField, { turnstileRequired } from '../TurnstileField';
 
 /**
  * Express booking for a client we already have on file.
@@ -69,6 +70,9 @@ export default function ExpressBookingModal({
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    // Turnstile (TURNSTILE RULE): single-use, so remounted after every attempt.
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileKey, setTurnstileKey] = useState(0);
     const [done, setDone] = useState<{ invoiceNumber?: string; total?: number } | null>(null);
 
     const isAirbnb = eventType === 'Airbnb / Short-Term Rental';
@@ -133,6 +137,10 @@ export default function ExpressBookingModal({
 
     const submit = async () => {
         if (!client || !slot) return;
+        if (turnstileRequired() && !turnstileToken) {
+            setError('Please complete the security check.');
+            return;
+        }
         setSubmitting(true);
         setError('');
         try {
@@ -153,6 +161,7 @@ export default function ExpressBookingModal({
                         access.trim() && `Access: ${access.trim()}`,
                         promoCode && `Promo code: ${promoCode}`,
                     ].filter(Boolean).join('\n\n'),
+                    turnstileToken,
                 }),
             });
             const data = await res.json().catch(() => null);
@@ -162,6 +171,8 @@ export default function ExpressBookingModal({
             setError(e?.message || 'Something went wrong. Please reply to our email.');
         } finally {
             setSubmitting(false);
+            setTurnstileToken(null);
+            setTurnstileKey(k => k + 1);
         }
     };
 
@@ -344,6 +355,12 @@ export default function ExpressBookingModal({
                                     </div>
                                 )}
 
+                                <TurnstileField
+                                    action="booking"
+                                    resetKey={turnstileKey}
+                                    onToken={setTurnstileToken}
+                                    onFailed={() => setError('The security check failed to load. Refresh the page and try again.')}
+                                />
                                 {error && <p className="text-white/80 text-sm mb-4">{error}</p>}
 
                                 <button

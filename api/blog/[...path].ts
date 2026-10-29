@@ -1,4 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { verifiedUser } from '../../lib/api-handlers/_turnstile.js'
+
+// Every route here sends an email to the address in the request body, and none
+// of them used to check who was asking, so anyone could make us mail anyone.
+// Now: the submission confirmation goes only to the signed-in author's own
+// verified address; the review emails (published, approved, rejected,
+// unpublished) are admin actions. TURNSTILE RULE, CLAUDE.md.
+const ADMIN_ROUTES = new Set([
+  'post-published', 'notify',
+  'submission-approved', 'approved',
+  'submission-rejected', 'rejected',
+  'submission-unpublished', 'unpublished',
+])
 
 export default async function handler(
   req: VercelRequest,
@@ -19,6 +33,16 @@ export default async function handler(
 
   // Route to appropriate handler
   try {
+    if (ADMIN_ROUTES.has(route) && !(await verifyAdmin(req))) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    if (route === 'submission-confirmation' || route === 'submitted') {
+      const user = await verifiedUser(req)
+      if (!user?.email) return res.status(401).json({ error: 'Sign in to submit an article.' })
+      // The account's verified address, never one typed into the request.
+      req.body = { ...(req.body || {}), authorEmail: user.email }
+    }
+
     switch (route) {
       case 'post-published':
       case 'notify':

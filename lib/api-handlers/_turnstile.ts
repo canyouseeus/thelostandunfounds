@@ -17,6 +17,9 @@
 // Outside production (local dev, Vercel previews) the check is skipped: the
 // widget's domain list doesn't cover preview URLs, and previews carry no secret.
 
+import type { VercelRequest } from '@vercel/node';
+import { createClient, type User } from '@supabase/supabase-js';
+
 const SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 // The frontend hostnames a production token may come from. TURNSTILE_HOSTNAMES
@@ -24,7 +27,7 @@ const SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const PRODUCTION_HOSTNAMES = ['www.thelostandunfounds.com', 'thelostandunfounds.com'];
 
 /** The `action` each protected form sets on its widget. Server and client import the same names. */
-export type TurnstileAction = 'support' | 'contact' | 'newsletter';
+export type TurnstileAction = 'support' | 'contact' | 'newsletter' | 'booking';
 
 export type TurnstileResult =
     | { ok: true; skipped?: boolean }
@@ -105,4 +108,34 @@ export function clientIp(headers: Record<string, string | string[] | undefined>)
     const fwd = headers['x-forwarded-for'];
     const first = (Array.isArray(fwd) ? fwd[0] : fwd || '').split(',')[0].trim();
     return first || undefined;
+}
+
+/**
+ * The signed-in user behind `Authorization: Bearer <supabase access token>`,
+ * verified with Supabase, or null. A bad or missing token is not an error.
+ * Same-origin /api calls carry the token automatically (src/lib/api-auth.ts).
+ */
+export async function verifiedUser(req: VercelRequest): Promise<User | null> {
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!token || !url || !key) return null;
+    const { data, error } = await createClient(url, key, {
+        auth: { persistSession: false, autoRefreshToken: false },
+    }).auth.getUser(token);
+    return error || !data.user ? null : data.user;
+}
+
+/**
+ * TURNSTILE RULE, point 5: a signed-in user, verified server-side, skips the
+ * widget; everyone else must pass it. Returns the user when there is one.
+ */
+export async function verifyTurnstileUnlessSignedIn(
+    req: VercelRequest,
+    token: unknown,
+    allowedActions: TurnstileAction[],
+): Promise<{ result: TurnstileResult; user: User | null }> {
+    const user = await verifiedUser(req);
+    if (user) return { result: { ok: true }, user };
+    return { result: await verifyTurnstile(token, clientIp(req.headers), allowedActions), user: null };
 }
