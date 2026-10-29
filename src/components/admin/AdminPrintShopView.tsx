@@ -100,6 +100,7 @@ interface ProdigiOrder {
   tracking_number: string | null;
   tracking_url: string | null;
   error_message: string | null;
+  funds_available_at?: string | null;
   created_at: string;
   prodigi_products?: { title: string; sku: string } | null;
 }
@@ -525,7 +526,9 @@ export default function AdminPrintShopView() {
                   </span>
                   <span className="text-white/30 text-[10px] font-mono">×{order.copies}</span>
                   <span className={cn('text-[9px] font-black uppercase tracking-widest', isError ? 'text-red-400' : ORDER_STATUS_COLOR[order.status] || 'text-white/40')}>
-                    {order.status.replace('_', ' ')}
+                    {order.status === 'paid'
+                      ? `Awaiting funds${order.funds_available_at ? ` · ${new Date(order.funds_available_at).toLocaleDateString()}` : ''}`
+                      : order.status.replace('_', ' ')}
                   </span>
                   <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
                     {order.payment_source === 'strike' ? '⚡ Lightning' : 'Card'}

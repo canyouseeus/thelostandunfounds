@@ -6,7 +6,7 @@ import {
     triggerInvoiceCommission,
     jobCostForBooking,
 } from './affiliates/_commission-trigger.js'
-import { createProdigiOrder } from './_prodigi-client.js'
+import { stripeFundsAvailableAt } from './_prodigi-fulfillment.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
 import { accrueCrewPayout, accruePhotoSalePayouts } from './crew/_shared.js'
 
@@ -504,13 +504,12 @@ async function finalizeShopOrder(
 }
 
 /**
- * Submit a paid Prodigi print order to the Prodigi fulfillment API and
- * trigger the affiliate commission (42% of unit_price - unit_cost profit).
+ * Mark a Prodigi print order paid and queue it for fulfillment, then trigger
+ * the affiliate commission (42% of unit_price - unit_cost profit).
  *
- * Idempotent: skips submission if the prodigi_orders row is already past
- * 'paid' (submitted/in_production/shipped/complete), and Prodigi's own
- * idempotencyKey (keyed to the row id) protects against a duplicate
- * createOrder call even if this function somehow runs twice concurrently.
+ * Nothing goes to Prodigi here — the hourly prodigi-orders cron submits it
+ * once Stripe has released this payment. Idempotent: skips a row already
+ * past 'pending_payment'.
  */
 async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Session) {
     const { data: order, error: orderError } = await supabase
@@ -554,58 +553,21 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
         },
     }
 
+    // Queue it rather than submitting now: Prodigi bills the owner's card on
+    // submit, and this payment is not in the Stripe balance until it settles.
+    // /api/cron/prodigi-orders submits once it has (see _prodigi-fulfillment).
+    const fundsAvailableAt = await stripeFundsAvailableAt(session.id)
     await supabase
         .from('prodigi_orders')
-        .update({ status: 'paid', paid_at: new Date().toISOString(), customer_email: customerEmail, recipient })
-        .eq('id', order.id)
-
-    try {
-        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
-        const result = await createProdigiOrder({
-            merchantReference: order.id,
-            idempotencyKey: order.id,
+        .update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            customer_email: customerEmail,
             recipient,
-            items: [
-                {
-                    sku: order.sku,
-                    copies: order.copies || 1,
-                    // fillPrintArea crops to the print area's aspect ratio;
-                    // Prodigi auto-rotates the asset to whichever orientation
-                    // needs the least cropping, so a landscape photo prints
-                    // correctly on a portrait-shaped SKU (and vice versa)
-                    // without us pre-rotating pixels ourselves.
-                    sizing: 'fillPrintArea',
-                    ...(order.order_attributes && Object.keys(order.order_attributes).length > 0
-                        ? { attributes: order.order_attributes }
-                        : {}),
-                    assets: [{ printArea: 'default', url: order.asset_url }],
-                },
-            ],
-            callbackUrl: `${origin.replace(/\/$/, '')}/api/prodigi/webhook`,
-            metadata: { prodigiOrderRowId: order.id, shopOrderId: order.shop_order_id },
+            funds_available_at: fundsAvailableAt,
         })
-
-        await supabase
-            .from('prodigi_orders')
-            .update({
-                status: 'submitted',
-                prodigi_order_id: result?.order?.id || null,
-                prodigi_status: result?.order?.status || null,
-                submitted_at: new Date().toISOString(),
-            })
-            .eq('id', order.id)
-
-        console.log('✅ Prodigi order submitted:', { rowId: order.id, prodigiOrderId: result?.order?.id })
-    } catch (prodigiErr: any) {
-        console.error('❌ Failed to submit Prodigi order:', prodigiErr?.message || prodigiErr)
-        await supabase
-            .from('prodigi_orders')
-            .update({ status: 'error', error_message: prodigiErr?.message || 'Prodigi submission failed' })
-            .eq('id', order.id)
-        // Don't throw — the customer paid, so this needs to surface to admins
-        // for manual retry rather than failing the whole webhook (which would
-        // make Stripe retry indefinitely on our end while charging succeeded).
-    }
+        .eq('id', order.id)
+    console.log('🕒 Prodigi order queued until funds settle:', { rowId: order.id, fundsAvailableAt })
 
     if (customerEmail) {
         const profit = Math.max(0, Number(order.unit_price) - Number(order.unit_cost)) * (order.copies || 1)

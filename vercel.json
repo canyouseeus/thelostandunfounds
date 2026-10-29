@@ -65,6 +65,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/cron/prodigi-orders",
+      "schedule": "20 * * * *"
+    },
+    {
       "path": "/api/cron/crew-onboarding",
       "schedule": "*/15 * * * *"
     },
