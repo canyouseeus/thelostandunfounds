@@ -29,6 +29,7 @@ import QR from './pages/QR'
 import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import ShippingPolicy from './pages/ShippingPolicy'
 import PhotographerTerms from './pages/PhotographerTerms'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
@@ -206,6 +207,10 @@ function App() {
                 <Route index element={<Privacy />} />
               </Route>
               <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+              <Route path="/shipping" element={<Layout />}>
+                <Route index element={<ShippingPolicy />} />
+              </Route>
+              <Route path="/shipping-policy" element={<Navigate to="/shipping" replace />} />
               <Route path="/terms" element={<Layout />}>
                 <Route index element={<Terms />} />
                 <Route path="photographers" element={<PhotographerTerms />} />

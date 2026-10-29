@@ -162,7 +162,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         lnInvoice: result.lnInvoice,
         expirationInSec: result.expirationInSec,
         amount: selectedOption.price,
-        description: `${photo.title} — ${selectedOption.size_label}`,
+        description: `Photo print — ${selectedOption.size_label}`,
       });
     } catch (error: any) {
       setCheckoutError(error.message || 'Failed to start checkout. Please try again.');
@@ -184,33 +184,34 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
     );
   }
 
+  // Phone: a full-screen sheet that scrolls as one column. sm+: a centred
+  // two-column card. min-w-0 on both columns stops any long word from
+  // widening the grid past the viewport.
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[9999] flex items-stretch sm:items-center justify-center sm:px-4" role="dialog" aria-modal="true" aria-label="Order a print">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative bg-black/95 border border-white shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto"
+        className="relative bg-black w-full h-[100dvh] sm:h-auto sm:max-w-3xl sm:max-h-[92vh] overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ borderRadius: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
           type="button"
-          className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10 z-10"
+          className="absolute top-2 right-2 text-white bg-black/60 hover:bg-black flex items-center justify-center w-10 h-10 z-10"
+          style={{ borderRadius: 0 }}
           aria-label="Close"
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
 
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="relative bg-white/5 flex items-center justify-center overflow-hidden aspect-square">
-            <img src={previewUrl} alt={photo.title} className="w-full h-full object-contain" />
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+          <div className="min-w-0 bg-white/5 flex items-center justify-center p-4 sm:p-6">
+            <img src={previewUrl} alt="Print preview" className="max-w-full max-h-[42dvh] sm:max-h-[70vh] w-auto h-auto object-contain" />
           </div>
 
-          <div className="p-5 sm:p-6 space-y-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Order a Print</p>
-              <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight mt-1">{photo.title}</h2>
-            </div>
+          <div className="min-w-0 p-4 sm:p-6 space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <h2 className="text-lg font-black uppercase tracking-widest text-white">Order a Print</h2>
 
             {loading ? (
               <p className="text-white/50 text-sm">Loading print options…</p>
@@ -223,7 +224,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                 <ShippingAddressForm value={shipping} onChange={setShipping} />
                 {checkoutError && <p className="text-xs text-red-400">{checkoutError}</p>}
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 border border-white/30 hover:text-white hover:border-white transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
+                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors font-semibold text-sm" style={{ borderRadius: 0 }}>
                     Back
                   </button>
                   <button type="submit" disabled={checkoutLoading} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 hover:bg-white/90 transition-colors font-semibold text-sm ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`} style={{ borderRadius: 0 }}>
@@ -244,10 +245,10 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                         <button
                           key={g.key}
                           onClick={() => setSelectedSizeKey(g.key)}
-                          className={`flex flex-col items-center gap-1 px-3 py-3 border transition-colors ${active ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/30 hover:border-white'}`}
+                          className={`min-w-0 flex flex-col items-center gap-1 px-2 py-3 transition-colors ${active ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
                           style={{ borderRadius: 0 }}
                         >
-                          <span className="text-sm font-black">{g.widthIn}×{g.heightIn}"</span>
+                          <span className="text-sm font-black whitespace-nowrap">{g.widthIn}×{g.heightIn}"</span>
                           {displayPrice !== undefined && <span className="text-[11px] font-mono opacity-80">${displayPrice.toFixed(0)}</span>}
                         </button>
                       );
@@ -256,9 +257,12 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                 </div>
 
                 {selectedOption && (
-                  <div className="flex items-center gap-3 pt-1">
+                  <div className="flex flex-col gap-1 pt-1">
                     <span className="text-2xl font-bold text-white">${selectedOption.price.toFixed(2)}</span>
-                    <span className="text-white/40 text-xs uppercase tracking-widest">Free preview, ships worldwide</span>
+                    <span className="text-white/40 text-[11px] uppercase tracking-widest leading-relaxed">
+                      Ships US · CA · UK · AU in 1–3 weeks ·{' '}
+                      <a href="/shipping" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Shipping & returns</a>
+                    </span>
                   </div>
                 )}
 
@@ -277,7 +281,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                   <button
                     onClick={handleCardCheckout}
                     disabled={!selectedOption || !orientation || stripeLoading}
-                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-transparent text-white border border-white px-4 py-3 sm:py-2 hover:bg-white hover:text-black transition-colors font-semibold text-sm disabled:opacity-40 ${stripeLoading ? 'pointer-events-none' : ''}`}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-3 sm:py-2 hover:bg-white hover:text-black transition-colors font-semibold text-sm disabled:opacity-40 ${stripeLoading ? 'pointer-events-none' : ''}`}
                     style={{ borderRadius: 0 }}
                   >
                     {stripeLoading ? (
