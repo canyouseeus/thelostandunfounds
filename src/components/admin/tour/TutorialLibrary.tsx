@@ -10,7 +10,7 @@
 
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { useSageMode } from '../../../contexts/SageModeContext';
-import { dashboardOf, DashboardId, TOURS, Tour } from './tours';
+import { dashboardOf, DashboardId, DashboardIds, TOURS, Tour } from './tours';
 import { useTour } from './TourContext';
 
 const GROUPS: { label: string; match: (t: Tour) => boolean }[] = [
@@ -18,10 +18,25 @@ const GROUPS: { label: string; match: (t: Tour) => boolean }[] = [
   { label: 'Dashboard', match: t => dashboardOf(t) === 'admin' && t.group === 'dashboard' },
   { label: 'Platform Console', match: t => dashboardOf(t) === 'admin' && t.group === 'console' },
   { label: 'Member Dashboard', match: t => dashboardOf(t) === 'member' },
-  { label: 'Photographer Dashboard', match: t => dashboardOf(t) === 'photographer' },
+  { label: 'Photographer App', match: t => dashboardOf(t) === 'photographer' },
 ];
 
-export function TutorialList({ onStart, dashboard }: { onStart?: () => void; dashboard?: DashboardId }) {
+const DASHBOARD_LABELS: Record<DashboardId, string> = {
+  admin: 'Admin',
+  member: 'Your Dashboard',
+  photographer: 'Photographer',
+};
+
+/** One dashboard: a plain list. Several (a photographer's /dashboard): a heading each. */
+function groupsFor(dashboard: DashboardIds) {
+  const ids = Array.isArray(dashboard) ? dashboard : [dashboard];
+  return ids.map(id => ({
+    label: ids.length > 1 ? DASHBOARD_LABELS[id] : '',
+    match: (t: Tour) => dashboardOf(t) === id,
+  }));
+}
+
+export function TutorialList({ onStart, dashboard }: { onStart?: () => void; dashboard?: DashboardIds }) {
   const { start, seen } = useTour();
   const { state, toggleSageMode } = useSageMode();
 
@@ -33,7 +48,7 @@ export function TutorialList({ onStart, dashboard }: { onStart?: () => void; das
 
   return (
     <div className="space-y-8">
-      {(dashboard ? [{ label: '', match: (t: Tour) => dashboardOf(t) === dashboard }] : GROUPS).map(group => {
+      {(dashboard ? groupsFor(dashboard) : GROUPS).map(group => {
         const tours = TOURS.filter(group.match);
         if (!tours.length) return null;
         return (

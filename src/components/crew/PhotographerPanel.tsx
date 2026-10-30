@@ -1,62 +1,44 @@
-import AdminGalleryView from '../components/admin/AdminGalleryView';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+/**
+ * The photographer's tools: tonight's live gallery, job pay, the availability
+ * calendar, gallery sales and their galleries.
+ *
+ * Rendered as the PHOTOGRAPHER app on /dashboard for anyone on the crew
+ * roster. It used to be its own page, /photographer-dashboard, which meant a
+ * photographer who was also an affiliate had two dashboards and, landing on
+ * /dashboard, no way to find the second. That URL now redirects here.
+ */
+
+import { useState } from 'react';
 import {
     CurrencyDollarIcon,
     InformationCircleIcon,
     ClockIcon,
-    UsersIcon,
     ChevronDownIcon,
     ChevronUpIcon,
     WalletIcon,
     CreditCardIcon,
     ShareIcon
 } from '@heroicons/react/24/outline';
-import { LoadingOverlay } from '../components/Loading';
-import JobPayouts from '../components/JobPayouts';
-import CrewAvailabilityCalendar from '../components/crew/CrewAvailabilityCalendar';
-import CrewRequestBox from '../components/crew/CrewRequestBox';
-import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
-import MyTickets from '../components/support/MyTickets';
-import MyLiveGalleries from '../components/live/MyLiveGalleries';
-import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
-import TourHelpButton from '../components/admin/tour/TourHelpButton';
+import AdminGalleryView from '../admin/AdminGalleryView';
+import JobPayouts from '../JobPayouts';
+import CrewAvailabilityCalendar from './CrewAvailabilityCalendar';
+import CrewRequestBox from './CrewRequestBox';
+import MyLiveGalleries from '../live/MyLiveGalleries';
 
-export default function PhotographerDashboard() {
-    const { user, loading } = useAuth();
-    const navigate = useNavigate();
+export default function PhotographerPanel({ userId }: { userId: string }) {
     const [showRevenueInfo, setShowRevenueInfo] = useState(false);
 
-    useEffect(() => {
-        if (!loading && !user) {
-            navigate('/');
-        }
-    }, [user, loading, navigate]);
-
-    if (loading) return <LoadingOverlay />;
-
     return (
-        <div data-tour-root="photographer" className="container mx-auto py-8 text-white px-4">
-            <WhatsNewModal dashboard="photographer" />
-            <TourHelpButton dashboard="photographer" />
-            {/* Picks up where the email left off. The email carries one button;
-                the steps get explained here, where they can be acted on. */}
-            {user && <CrewOnboardingModal userId={user.id} />}
-
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold uppercase tracking-tighter">PHOTOGRAPHER DASHBOARD</h1>
-                <p className="text-zinc-400">Your calendar, your job pay, your galleries.</p>
-                <a href="/terms/photographers" className="inline-block mt-1 text-xs text-white/40 underline underline-offset-2 hover:text-white">
-                    Photographer Terms
-                </a>
-            </div>
+        <div className="text-white">
+            <a href="/terms/photographers" className="inline-block mb-6 text-xs text-white/40 underline underline-offset-2 hover:text-white">
+                Photographer Terms
+            </a>
 
             {/* Tonight's event first: create a live gallery and send from the camera roll. */}
             <MyLiveGalleries />
 
             {/* Job pay for shoots covered — separate from gallery sales below. */}
-            {user && <JobPayouts userId={user.id} />}
+            <JobPayouts userId={userId} />
 
             {/* Availability first: it is the thing the studio needs from you,
                 rather than the thing you came to look up. */}
@@ -185,9 +167,6 @@ export default function PhotographerDashboard() {
             </div>
 
             <CrewRequestBox />
-
-            {/* Technical support: open a ticket, follow the ones already open. */}
-            {user && <MyTickets role="photographer" className="mt-6" />}
         </div>
     );
 }

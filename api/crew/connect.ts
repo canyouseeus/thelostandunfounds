@@ -45,7 +45,7 @@ import {
  * during onboarding, that is usually a confirmation screen and nothing else.
  */
 
-const DASHBOARD_PATH = '/photographer-dashboard';
+const DASHBOARD_PATH = '/dashboard?section=photographer';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -149,8 +149,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const link = await getStripe().accountLinks.create({
       account: targetAccountId,
-      refresh_url: `${origin}${DASHBOARD_PATH}?stripe=refresh`,
-      return_url: `${origin}${DASHBOARD_PATH}?stripe=connected`,
+      refresh_url: `${origin}${DASHBOARD_PATH}&stripe=refresh`,
+      return_url: `${origin}${DASHBOARD_PATH}&stripe=connected`,
       type: 'account_onboarding',
       collection_options: { fields: 'currently_due' },
     });

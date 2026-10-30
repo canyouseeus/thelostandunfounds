@@ -93,7 +93,7 @@ const TYPE_COLORS: Record<string, string> = {
 export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhotosBrowseProps) {
   const { session } = useAuth();
   // This component renders under two layouts: /admin (AdminLayout, which mounts
-  // MusicPlayer) and /photographer-dashboard (plain Layout, which does not).
+  // MusicPlayer) and /dashboard (plain Layout, which does not).
   // Only the first has a permanent bottom bar for the console tray to clear.
   const { pathname } = useLocation();
   const hasPlayerBar = pathname.startsWith('/admin');

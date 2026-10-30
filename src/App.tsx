@@ -14,7 +14,6 @@ import AuthCallback from './pages/AuthCallback'
 import ZohoCallback from './pages/ZohoCallback'
 import Affiliate from './pages/Affiliate'
 import Settings from './pages/Settings'
-import PhotographerDashboard from './pages/PhotographerDashboard'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 import Docs from './pages/Docs'
@@ -115,6 +114,14 @@ function AffiliateDashboardRedirect() {
   const { search } = useLocation()
   const params = new URLSearchParams(search)
   if (!params.get('section')) params.set('section', 'affiliate')
+  return <Navigate to={`/dashboard?${params.toString()}`} replace />
+}
+
+function PhotographerDashboardRedirect() {
+  // Keep ?stripe=... from a Stripe Connect return and open the photographer app.
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  params.set('section', 'photographer')
   return <Navigate to={`/dashboard?${params.toString()}`} replace />
 }
 
@@ -236,15 +243,11 @@ function App() {
                   <Affiliate />
                 </Layout>
               } />
-              {/* Contractors' own dashboard — galleries and job payouts. The
-                  component existed and was imported but was never given a
-                  route, so the page had no URL and the payout email linked to
-                  a 404. It guards itself: no session redirects home. */}
-              <Route path="/photographer-dashboard" element={
-                <Layout>
-                  <PhotographerDashboard />
-                </Layout>
-              } />
+              {/* The photographer dashboard is now the PHOTOGRAPHER app on
+                  /dashboard, so a photographer who is also an affiliate has
+                  one dashboard. Old links (payout emails, the onboarding
+                  email, Stripe's return URL) land on it. */}
+              <Route path="/photographer-dashboard" element={<PhotographerDashboardRedirect />} />
               <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/affiliate-dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/become-affiliate" element={<Layout />}>
