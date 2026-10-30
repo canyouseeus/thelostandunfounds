@@ -34,6 +34,7 @@ import {
   DocumentTextIcon,
   UserIcon,
   MagnifyingGlassIcon,
+  ViewfinderCircleIcon,
   FunnelIcon,
   EllipsisVerticalIcon,
   PencilIcon,
@@ -101,6 +102,7 @@ import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminRosterView from '../components/admin/AdminRosterView';
 import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminSupportView from '../components/admin/AdminSupportView';
+import { AdminProspectsView } from '../components/admin/AdminProspectsView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -249,6 +251,14 @@ export default function Admin() {
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   // Support tickets whose last word is the user's: someone is waiting on a reply.
   const [supportWaiting, setSupportWaiting] = useState<number>(0);
+  const [prospectsWaiting, setProspectsWaiting] = useState<number>(0);
+  // Leads the client-hunter agent found that still need a read — the dock badge.
+  useEffect(() => {
+    fetch('/api/admin/prospects?status=new')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.prospects) setProspectsWaiting(d.prospects.filter((p: any) => p.status === 'new').length); })
+      .catch(() => {});
+  }, []);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
   const [newestSubscribers, setNewestSubscribers] = useState<Array<{ email: string; created_at: string }>>([]);
   const [affiliateStats, setAffiliateStats] = useState<{
@@ -2038,6 +2048,7 @@ export default function Admin() {
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'crm', icon: UserGroupIcon, title: 'CRM' },
+                { id: 'prospects', icon: ViewfinderCircleIcon, title: 'Prospects', badge: prospectsWaiting },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
@@ -2121,6 +2132,7 @@ export default function Admin() {
                   bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   crm:         { title: 'CRM',                      icon: <UserGroupIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
+                  prospects:   { title: 'Prospects',                icon: <ViewfinderCircleIcon className="w-5 h-5 text-white/40" />, extra: prospectsWaiting > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{prospectsWaiting} TO REVIEW</span> : null },
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('crm')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">← CRM</button> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
@@ -2236,6 +2248,11 @@ export default function Admin() {
                 {activePanelSection === 'printshop' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Print Shop</div>}>
                     <AdminPrintShopView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'prospects' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Prospects</div>}>
+                    <AdminProspectsView onCountChange={setProspectsWaiting} />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'support' && (

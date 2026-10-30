@@ -158,6 +158,8 @@ export default async function handler(
         return await handleDirectBooking(req, res)
       case 'field-sales':
         return await handleFieldSales(req, res)
+      case 'prospects':
+        return await handleProspects(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
@@ -280,6 +282,14 @@ async function handleDirectBooking(req: VercelRequest, res: VercelResponse) {
  */
 async function handleFieldSales(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/field-sales.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Prospects found by the client-hunter agent — the owner reviews and sends
+ */
+async function handleProspects(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/prospects.js')
   return handler.default(req, res)
 }
 
