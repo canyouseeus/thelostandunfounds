@@ -1281,11 +1281,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             {/* Compact header — title + actions */}
             <div className={`shrink-0 flex items-center gap-3 pb-3 ${hideTitle ? 'justify-start' : 'justify-between'}`}>
-                {!hideTitle && <div className="flex items-center gap-2">
-                    <div className="bg-white p-1.5">
+                {!hideTitle && <div className="flex items-center gap-2 min-w-0">
+                    <div className="bg-white p-1.5 shrink-0">
                         <PhotoIcon className="w-4 h-4 text-black" />
                     </div>
-                    <h2 className="text-sm font-black text-white uppercase tracking-widest">
+                    <h2 className="text-sm font-black text-white uppercase tracking-widest whitespace-nowrap truncate">
                         {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
                     </h2>
                     {!isPhotographerView && pendingAppsCount > 0 && (
@@ -1294,7 +1294,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         </span>
                     )}
                 </div>}
-                <div className="flex flex-wrap items-center gap-2">
+                {/* One row at every width: on a phone the secondary actions drop to
+                    icons so the bar never wraps under the title. */}
+                <div className="flex shrink-0 items-center gap-2">
                     {!isPhotographerView && (
                         // A router Link, not <a href>: a full page load would end a
                         // walkthrough that is stepping through to the live console.
@@ -1305,7 +1307,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                             data-tour="gallery-live-link"
                         >
                             <Radio className="w-3 h-3" />
-                            <span>Live</span>
+                            <span className="hidden sm:inline">Live</span>
                         </Link>
                     )}
                     <button
@@ -1316,7 +1318,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         data-tour="gallery-screens-button"
                     >
                         <span className="text-xs leading-none" aria-hidden="true">▲</span>
-                        <span>Screens</span>
+                        <span className="hidden sm:inline">Screens</span>
                     </button>
                     {!isPhotographerView && (
                         <button data-tour="gallery-invite"
