@@ -26,7 +26,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.97 }}
                         transition={{ duration: 0.2 }}
-                        className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                        className="relative bg-[#0a0a0a] w-full max-w-sm p-8"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
