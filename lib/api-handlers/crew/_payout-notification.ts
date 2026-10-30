@@ -55,7 +55,7 @@ export async function sendContractorPayoutNotification(args: {
       on their normal schedule, so give it a business day or two to show up there.
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
-      <a href="https://www.thelostandunfounds.com/photographer-dashboard" style="${EMAIL_STYLES.button}">VIEW YOUR PAYOUTS</a>
+      <a href="https://www.thelostandunfounds.com/dashboard?section=photographer" style="${EMAIL_STYLES.button}">VIEW YOUR PAYOUTS</a>
     </p>
     <p style="${EMAIL_STYLES.paragraph}">
       From there you can open your own Stripe dashboard to see your balance and when it lands in

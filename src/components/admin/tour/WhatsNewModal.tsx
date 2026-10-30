@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SparklesIcon } from '@heroicons/react/24/outline';
-import { announcedTours, DashboardId, toursFor } from './tours';
+import { announcedTours, DashboardIds, toursFor } from './tours';
 import { useTour } from './TourContext';
 
 const SNOOZE_KEY = 'tlu_whats_new_snoozed';
@@ -17,7 +17,7 @@ function readSnoozed(): string | null {
   try { return sessionStorage.getItem(SNOOZE_KEY); } catch { return null; }
 }
 
-export default function WhatsNewModal({ dashboard = 'admin' }: { dashboard?: DashboardId }) {
+export default function WhatsNewModal({ dashboard = 'admin' }: { dashboard?: DashboardIds }) {
   const { start, activeId, seen, markSeen } = useTour();
   const [snoozed, setSnoozed] = useState<string | null>(readSnoozed);
 

@@ -8,7 +8,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import JobPayouts from '../components/JobPayouts';
+import PhotographerPanel from '../components/crew/PhotographerPanel';
+import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 import { useToast } from '../components/Toast';
 import {
   UserIcon,
@@ -49,7 +50,8 @@ import {
   TagIcon,
   XMarkIcon,
   DocumentCheckIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
@@ -60,7 +62,7 @@ import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
 import TourHelpButton from '../components/admin/tour/TourHelpButton';
-import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
+import { DashboardId, TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -218,6 +220,9 @@ export default function Affiliate() {
 
   // Core state
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  // On the crew roster: gets the PHOTOGRAPHER app. The roster is admin-only
+  // under RLS, so ask the crew route, which checks the verified session.
+  const [isCrew, setIsCrew] = useState(false);
   const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
   // Pre-open a section if ?section= is in the URL (e.g. /dashboard?section=affiliate)
   const initialSection = searchParams.get('section') || '';
@@ -309,7 +314,8 @@ export default function Affiliate() {
   // by the activeApp initial state; ?stripe=... fires after a Stripe Connect redirect).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has('stripe')) {
+    // Photographers come back from Stripe with ?section=photographer; leave that open.
+    if (params.has('stripe') && !params.get('section')) {
       setActiveApp('affiliate');
     }
   }, []);
@@ -322,6 +328,25 @@ export default function Affiliate() {
       }
     };
     checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/crew/setup', {
+          headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+        });
+        if (!res.ok) return;
+        const payload = await res.json();
+        if (!cancelled) setIsCrew(!!payload.onRoster);
+      } catch (err) {
+        console.warn('Error checking crew roster:', err);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [user]);
 
   // Show affiliate signup wizard when ?join=affiliate is in URL and user has no affiliate account
@@ -897,6 +922,8 @@ export default function Affiliate() {
   const hasGallery = userGalleries.length > 0 || userIsAdmin;
   const hasBookClub = !!userSubdomain || userIsAdmin;
   const hasAffiliate = !!affiliateData || userIsAdmin;
+  const hasPhotographer = isCrew || userIsAdmin;
+  const tourDashboards: DashboardId[] = hasPhotographer ? ['member', 'photographer'] : ['member'];
 
   return (
     <>
@@ -916,8 +943,11 @@ export default function Affiliate() {
         noIndex={true}
       />
       <div data-tour-root="member" data-active-panel={activeApp ?? ''} className="min-h-screen bg-black text-white selection:bg-white/20">
-        <WhatsNewModal dashboard="member" />
-        <TourHelpButton dashboard="member" />
+        <WhatsNewModal dashboard={tourDashboards} />
+        <TourHelpButton dashboard={tourDashboards} />
+        {/* Picks up where the crew onboarding email left off. Hides itself
+            for anyone not on the roster, or with nothing left to do. */}
+        <CrewOnboardingModal userId={user.id} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           {/* Main Grid Layout - 12 Columns */}
@@ -1035,6 +1065,7 @@ export default function Affiliate() {
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
                 <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
+                    { id: 'photographer', icon: BriefcaseIcon, title: 'Photographer', show: hasPhotographer },
                     { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
@@ -1061,7 +1092,7 @@ export default function Affiliate() {
 
             {/* Technical support: open a ticket, follow the ones already open. */}
             <div className="col-span-12 pt-4">
-              <MyTickets role={affiliateData ? 'affiliate' : undefined} />
+              <MyTickets role={isCrew ? 'photographer' : affiliateData ? 'affiliate' : undefined} />
             </div>
 
             {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
@@ -1073,6 +1104,7 @@ export default function Affiliate() {
                 <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                   {activeApp && (() => {
                     const meta: Record<string, { title: string; icon: JSX.Element }> = {
+                      photographer: { title: 'Photographer', icon: <BriefcaseIcon className="w-5 h-5 text-white/40" /> },
                       gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
                       writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                       affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
@@ -1098,20 +1130,17 @@ export default function Affiliate() {
                   })()}
 
                   <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
+              {/* Photographer Section */}
+              {hasPhotographer && activeApp === 'photographer' && (
+                <PhotographerPanel userId={user.id} />
+              )}
+
               {/* Gallery Section */}
               {hasGallery && activeApp === 'gallery' && (
-                <>
-                  {/* Job pay for shoots covered. Lives here as well as on the
-                      photographer dashboard because this is where contractors
-                      actually land — the affiliate earnings figure above reads
-                      $0.00 for someone who has been paid for shoots, since
-                      commission and wages are deliberately separate ledgers. */}
-                  {user && <JobPayouts userId={user.id} />}
-                  <AdminGalleryView
-                    onBack={() => setActiveApp(null)}
-                    isPhotographerView={true}
-                  />
-                </>
+                <AdminGalleryView
+                  onBack={() => setActiveApp(null)}
+                  isPhotographerView={true}
+                />
               )}
 
               {/* Writer Section */}

@@ -686,25 +686,28 @@ const memberAccountTour: Tour = {
   ],
 };
 
-/* ── Photographer dashboard (/photographer-dashboard) ─────────────────── */
+/* ── Photographer app (/dashboard, Photographer icon) ──────────────────── */
 
-const PHOTOG = '/photographer-dashboard';
+// Every photographer tour starts by tapping the Photographer icon on
+// /dashboard, so it walks into the panel instead of describing it.
+const openPhotographer = memberApp('photographer', 'Photographer', 'Your photographer tools live here. Tap the Photographer icon.');
+const inPhotog = (step: TourStep): TourStep => inApp('photographer', step);
 
 const photographerBasicsTour: Tour = {
   id: 'photographer-basics',
-  title: 'Your Dashboard',
-  summary: 'Tonight’s live gallery, your pay, your calendar and your galleries, in one place.',
+  title: 'Photographer Tools',
+  summary: 'Tonight’s live gallery, your pay, your calendar and your galleries, under the Photographer icon.',
   dashboard: 'photographer',
   intro: true,
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-live', title: 'Live Galleries', body: 'For tonight’s event: start a gallery and send photos from your camera roll.' },
+    openPhotographer,
+    { target: 'pg-live', title: 'Live Galleries', body: 'For tonight’s event: start a gallery and send photos from your camera roll.' },
     { target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for shoots you covered, and getting it paid.' },
     { target: 'pg-calendar', title: 'My Calendar', body: 'Mark the days you can’t work.' },
     { target: 'pg-revenue', title: 'Your Revenue', body: 'You keep 97% of your gallery sales, less Stripe’s fee. Tap for the details.' },
     { target: 'pg-galleries', title: 'My Galleries', body: 'Every gallery you have made.' },
     { target: 'pg-ask', title: 'Ask For Anything', body: 'A question, a problem, or something you want built. It goes straight to the studio.' },
-    { target: 'help-tickets', title: 'Support', body: 'GET HELP opens a ticket. The reply comes by email and shows here.' },
     { target: 'tour-help', title: 'Tutorials', body: 'Tap ? any time for a walkthrough of each part.' },
   ],
 };
@@ -716,10 +719,11 @@ const photographerLiveTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-terms', title: 'Before You Upload', body: 'Everything you send goes on a public site. Read what can never go on it.' },
+    openPhotographer,
+    { target: 'pg-terms', title: 'Before You Upload', body: 'Everything you send goes on a public site. Read what can never go on it.' },
     { target: 'pg-terms-agree', title: 'Agree To The Terms', body: 'Tick the box once you have read the Photographer Terms.' },
     { target: 'pg-terms-continue', action: 'click', title: 'Agree And Continue', body: 'Tap AGREE AND CONTINUE to unlock live galleries.' },
-    { route: PHOTOG, target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY.' },
+    inPhotog({ target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY.' }),
     { target: 'pg-live-go', title: 'Go Live', body: 'Guests’ gallery page keeps checking for new photos while it is live. END LIVE when the night is over.', missingNote: 'Start a gallery first. Its buttons appear here.' },
     { target: 'pg-live-share', title: 'Share', body: 'Copies the gallery link for guests.' },
     { target: 'pg-live-send', action: 'click', title: 'Send Photos', body: 'Tap SEND PHOTOS.' },
@@ -734,7 +738,8 @@ const photographerPayTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for each shoot you covered.' },
+    openPhotographer,
+    { target: 'pg-jobpay', title: 'Job Pay', body: 'What you are owed for each shoot you covered.' },
     { target: 'pg-stripe-setup', title: 'Set Up Payouts', body: 'Connect Stripe once so your pay reaches your bank.' },
     { target: 'pg-stripe-dashboard', title: 'Your Stripe', body: 'Your payouts and bank details, in Stripe.' },
     { target: 'pg-revenue', action: 'click', title: 'Gallery Sales', body: 'Tap to see how gallery sales split.' },
@@ -749,7 +754,8 @@ const photographerCalendarTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-calendar', title: 'My Calendar', body: 'The studio books around this.' },
+    openPhotographer,
+    { target: 'pg-calendar', title: 'My Calendar', body: 'The studio books around this.' },
     { target: 'pg-cal-day', title: 'Block A Day', body: 'Tap a day you can’t work and add a reason if you like. Tap it again to free it.' },
     { target: 'pg-cal-blocked', title: 'Blocked Out Next', body: 'Your next days off, in order.' },
   ],
@@ -762,7 +768,8 @@ const photographerGalleriesTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-galleries', title: 'My Galleries', body: 'Every gallery you have made.' },
+    openPhotographer,
+    { target: 'pg-galleries', title: 'My Galleries', body: 'Every gallery you have made.' },
     { target: 'gallery-row', title: 'A Gallery', body: 'Its link and photo count, and QR to share it.' },
     { target: 'gallery-qr-button', title: 'QR Code', body: 'A QR code for the gallery, or a phone wallpaper with the code on it.' },
     { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' },
@@ -780,7 +787,8 @@ const photographerAskTour: Tour = {
   dashboard: 'photographer',
   group: 'dashboard',
   steps: [
-    { route: PHOTOG, target: 'pg-ask', title: 'Ask For Anything', body: 'It goes straight to the studio.' },
+    openPhotographer,
+    { target: 'pg-ask', title: 'Ask For Anything', body: 'It goes straight to the studio.' },
     { target: 'pg-ask-kind', title: 'What Kind', body: 'Pick what it is: a question, a problem, or something you want built.' },
     { target: 'pg-ask-send', title: 'Send', body: 'Type it and send. Your past requests show underneath.' },
   ],
@@ -820,12 +828,20 @@ export function getTour(id: string): Tour | undefined {
 
 export const dashboardOf = (t: Tour): DashboardId => t.dashboard ?? 'admin';
 
-export function toursFor(dashboard: DashboardId): Tour[] {
-  return TOURS.filter(t => dashboardOf(t) === dashboard);
+/**
+ * A page can host more than one dashboard's tours: /dashboard carries the
+ * photographer tours as well as the member ones for anyone on the crew roster.
+ * Order matters — the first dashboard's intro is offered first.
+ */
+export type DashboardIds = DashboardId | DashboardId[];
+
+export function toursFor(dashboard: DashboardIds): Tour[] {
+  const ids = Array.isArray(dashboard) ? dashboard : [dashboard];
+  return ids.flatMap(id => TOURS.filter(t => dashboardOf(t) === id));
 }
 
 /** A dashboard's announced tours, newest first. */
-export function announcedTours(dashboard: DashboardId = 'admin'): Tour[] {
+export function announcedTours(dashboard: DashboardIds = 'admin'): Tour[] {
   return toursFor(dashboard).filter(t => t.announce).sort((a, b) => (b.announce! < a.announce! ? -1 : 1));
 }
 
