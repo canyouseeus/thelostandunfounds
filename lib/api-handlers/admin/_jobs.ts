@@ -8,6 +8,7 @@ import requestPayout from '../affiliates/request-payout.js'
 import { recordFieldSale } from './field-sales.js'
 import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referral-tie.js'
 import { getZohoAuthContext } from '../_zoho-email-utils.js'
+import { sendPhotographerInvite } from './photographer-invite.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -153,6 +154,18 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
       return result.sent ? ok(result) : fail(result.error || 'invite not sent', 500, result)
     }
     return fail(`Unknown direct_booking action ${action}`, 400)
+  },
+
+  /**
+   * { email, name?, testEmail? } — the "you're on the roster" invite, same as
+   * Admin → Gallery → Invite Photographer. A real send stores the 7-day
+   * invitation and CCs media@; testEmail previews it at that address only,
+   * storing nothing.
+   */
+  async invite_photographer(supabase, payload) {
+    if (!payload.email) return fail('email is required', 400)
+    const result = await sendPhotographerInvite(supabase, payload as any)
+    return result.sent ? ok(result) : fail(result.error || 'invite not sent', 500, result)
   },
 
   /**
