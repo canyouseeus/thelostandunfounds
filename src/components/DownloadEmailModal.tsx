@@ -46,7 +46,7 @@ const DownloadEmailModal: React.FC<DownloadEmailModalProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.97 }}
                         transition={{ duration: 0.2 }}
-                        className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                        className="relative bg-[#0a0a0a] w-full max-w-sm p-8"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -80,7 +80,7 @@ const DownloadEmailModal: React.FC<DownloadEmailModalProps> = ({
                                 value={email}
                                 onChange={e => { setEmail(e.target.value); if (err) setErr(null); }}
                                 placeholder="you@email.com"
-                                className="w-full bg-black border border-white/20 text-white text-sm px-3 py-3 placeholder-white/20 focus:outline-none focus:border-white/50 mb-2"
+                                className="w-full bg-white/5 text-white text-sm px-3 py-3 placeholder-white/20 focus:outline-none focus:bg-white/10 mb-2"
                             />
                             {err && (
                                 <p className="text-red-400 text-[10px] uppercase tracking-widest mb-2">{err}</p>
