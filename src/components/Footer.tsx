@@ -60,17 +60,15 @@ const COLUMNS: { heading: string; links: { to: string; label: string }[] }[] = [
 export default function Footer() {
   return (
     <footer className="relative z-30 bg-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
-        {/* Brand + columns */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-6">
-          {/* Brand block spans wider so the columns sit to its right on desktop */}
-          <div className="col-span-2">
-            <img
-              src="/logo.png"
-              alt="THE LOST+UNFOUNDS"
-              className="h-14 w-auto mb-4"
-            />
-            <p className="text-white/40 text-xs leading-relaxed max-w-[240px] normal-case">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 md:pt-14 pb-[calc(2rem+env(safe-area-inset-bottom))] md:pb-8">
+        {/* Brand + columns. Mobile: one stacked list of compact sections, each
+            section's links wrapping inline. md+: the multi-column grid. */}
+        <div className="grid grid-cols-1 gap-y-7 md:grid-cols-3 md:gap-x-6 md:gap-y-10 lg:grid-cols-6">
+          {/* Brand block spans wider so the columns sit to its right on desktop.
+              No logo here: the header logo is always on screen, so a second
+              one in the footer was redundant. */}
+          <div className="md:col-span-2">
+            <p className="text-white/40 text-xs leading-relaxed max-w-[280px] md:max-w-[240px] normal-case">
               Austin, TX based editorial and nightlife photography. Revealing
               findings from the frontier and beyond.
             </p>
@@ -78,15 +76,15 @@ export default function Footer() {
 
           {COLUMNS.map((col) => (
             <div key={col.heading}>
-              <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 mb-4">
+              <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 mb-2 md:mb-4">
                 {col.heading}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="flex flex-wrap gap-x-5 gap-y-1 md:block md:space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link.to}>
                     <Link
                       to={link.to}
-                      className="text-white/60 hover:text-white transition-colors text-xs"
+                      className="inline-block py-1 md:py-0 text-white/60 hover:text-white transition-colors text-xs"
                     >
                       {link.label}
                     </Link>
@@ -98,7 +96,7 @@ export default function Footer() {
         </div>
 
         {/* Baseline */}
-        <div className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="mt-10 md:mt-12 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
           <p className="text-white/30 text-[10px] uppercase tracking-widest">
             © {new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
           </p>
