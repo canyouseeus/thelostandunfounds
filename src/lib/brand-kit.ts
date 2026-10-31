@@ -61,7 +61,8 @@ export const GUIDELINES: GuidelineSection[] = [
   {
     title: 'The Mark',
     points: [
-      'SCOT33 is the mark of THE LOST+UNFOUNDS. It always comes with its ring of lettering: THE LOST+UNFOUNDS above, CAN YOU SEE US? below.',
+      'SCOT33 is our mascot, a tiger, and the mark of THE LOST+UNFOUNDS. It always comes with its ring of lettering: THE LOST+UNFOUNDS above, CAN YOU SEE US? below.',
+      'Call him SCOT33, spelled with two 3s. He is a tiger.',
       'Write the name THE LOST+UNFOUNDS: all capitals, a plus sign, no spaces. Never "Lost and Unfounds" or "TLAU" in public copy.',
     ],
   },

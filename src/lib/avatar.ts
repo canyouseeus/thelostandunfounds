@@ -1,13 +1,13 @@
 /**
- * Profile pictures — every signed-in user can set one.
+ * Profile pictures — for photographers, affiliates, writers and the admin.
  *
  * Stored in the public `avatars` bucket under `<user id>/...`, and its URL in
  * user_metadata.custom_avatar_url. Not avatar_url: Supabase rewrites
  * avatar_url from Google on every Google sign-in, which would silently throw
  * away a picture the person chose. Read avatars through avatarUrlFor().
  *
- * Who can SET one: photographers, affiliates and the admin (owner rule,
- * 2026-10-31). The avatars bucket refuses anyone else's upload; the UI asks
+ * Who can SET one: photographers, affiliates, writers and the admin (owner
+ * rule, 2026-10-31). The avatars bucket refuses anyone else's upload; the UI asks
  * canSetProfilePicture() only to decide whether to show the control.
  */
 
@@ -71,7 +71,7 @@ export async function clearProfilePicture(user: AvatarUser): Promise<void> {
   if (previous) await supabase.storage.from(AVATAR_BUCKET).remove([previous]).catch(() => undefined);
 }
 
-/** Whether the signed-in user may set a picture (photographer, affiliate or admin). */
+/** Whether the signed-in user may set a picture (photographer, affiliate, writer or admin). */
 export async function canSetProfilePicture(): Promise<boolean> {
   const { data, error } = await supabase.rpc('can_set_profile_picture');
   return !error && data === true;

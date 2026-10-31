@@ -3,7 +3,7 @@
  *
  * Data lives in portfolios / portfolio_posts / portfolio_clients, written
  * straight from the browser under RLS (owner only; only photographers,
- * affiliates and the admin may create one). Files live in the public
+ * affiliates, writers and the admin may create one). Files live in the public
  * `portfolio-media` bucket under `<user id>/...`.
  *
  * Embeds store only the provider's video id. The iframe URL is built here at

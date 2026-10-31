@@ -1,5 +1,5 @@
 /**
- * PORTFOLIO app on /dashboard — for photographers, affiliates and the admin.
+ * PORTFOLIO app on /dashboard — for photographers, affiliates, writers and the admin.
  *
  * Writes go straight to Supabase under RLS (owner only), files to the public
  * portfolio-media bucket under the user's own folder. See src/lib/portfolio.ts.
@@ -55,7 +55,7 @@ type ComposeKind = 'media' | 'embed' | 'text';
 
 function friendlyDbError(message: string): string {
   if (/portfolios_handle_key|duplicate key/i.test(message)) return 'That handle is taken. Try another.';
-  if (/row-level security/i.test(message)) return 'Portfolios are for photographers and affiliates. Join the affiliate program to get one.';
+  if (/row-level security/i.test(message)) return 'Portfolios are for photographers, affiliates and writers. Join the affiliate program to get one.';
   return message;
 }
 

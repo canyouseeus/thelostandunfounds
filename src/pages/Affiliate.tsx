@@ -927,9 +927,10 @@ export default function Affiliate() {
   const hasBookClub = !!userSubdomain || userIsAdmin;
   const hasAffiliate = !!affiliateData || userIsAdmin;
   const hasPhotographer = isCrew || userIsAdmin;
-  // Portfolios are for photographers and affiliates; the database enforces
-  // the same rule (can_have_portfolio), so this only decides what shows.
-  const hasPortfolio = hasPhotographer || hasAffiliate;
+  // Portfolios and profile pictures: photographers, affiliates, writers and
+  // the admin. The database enforces the same rule (private.can_have_portfolio),
+  // so this only decides what shows.
+  const hasPortfolio = hasPhotographer || hasAffiliate || hasBookClub;
   const tourDashboards: DashboardId[] = hasPhotographer ? ['member', 'photographer'] : ['member'];
 
   return (

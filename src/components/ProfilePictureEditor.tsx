@@ -1,5 +1,5 @@
 /**
- * A round profile picture. Photographers, affiliates and the admin get a
+ * A round profile picture. Photographers, affiliates, writers and the admin get a
  * camera button to change it; everyone else sees the picture only. See
  * src/lib/avatar.ts for where it is stored and who may set one.
  */
