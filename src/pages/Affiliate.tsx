@@ -9,6 +9,9 @@ import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PhotographerPanel from '../components/crew/PhotographerPanel';
+import PortfolioEditor from '../components/portfolio/PortfolioEditor';
+import BrandKit from '../components/brand/BrandKit';
+import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 import { useToast } from '../components/Toast';
 import {
@@ -51,7 +54,9 @@ import {
   XMarkIcon,
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  RectangleStackIcon,
+  SwatchIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
@@ -67,7 +72,6 @@ import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
-import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import SEOHead from '../components/SEOHead';
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount';
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge';
@@ -923,6 +927,10 @@ export default function Affiliate() {
   const hasBookClub = !!userSubdomain || userIsAdmin;
   const hasAffiliate = !!affiliateData || userIsAdmin;
   const hasPhotographer = isCrew || userIsAdmin;
+  // Portfolios and profile pictures: photographers, affiliates, writers and
+  // the admin. The database enforces the same rule (private.can_have_portfolio),
+  // so this only decides what shows.
+  const hasPortfolio = hasPhotographer || hasAffiliate || hasBookClub;
   const tourDashboards: DashboardId[] = hasPhotographer ? ['member', 'photographer'] : ['member'];
 
   return (
@@ -959,12 +967,8 @@ export default function Affiliate() {
 
               <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
-                    <AvatarImage src={user.user_metadata?.avatar_url || '/logo.png'} alt="Profile" />
-                    <AvatarFallback className="bg-white text-black font-black text-2xl">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {/* Tap to change. Circles are the one sanctioned rounded shape (noir-design). */}
+                  <ProfilePictureEditor size="md" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h1 className="text-xl sm:text-3xl font-black uppercase tracking-tighter">My Dashboard</h1>
@@ -1066,6 +1070,8 @@ export default function Affiliate() {
                 <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
                     { id: 'photographer', icon: BriefcaseIcon, title: 'Photographer', show: hasPhotographer },
+                    { id: 'portfolio', icon: RectangleStackIcon, title: 'Portfolio', show: hasPortfolio },
+                    { id: 'brandkit', icon: SwatchIcon, title: 'Brand Kit', show: hasPhotographer },
                     { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
@@ -1105,6 +1111,8 @@ export default function Affiliate() {
                   {activeApp && (() => {
                     const meta: Record<string, { title: string; icon: JSX.Element }> = {
                       photographer: { title: 'Photographer', icon: <BriefcaseIcon className="w-5 h-5 text-white/40" /> },
+                      portfolio: { title: 'Portfolio', icon: <RectangleStackIcon className="w-5 h-5 text-white/40" /> },
+                      brandkit: { title: 'Brand Kit', icon: <SwatchIcon className="w-5 h-5 text-white/40" /> },
                       gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
                       writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                       affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
@@ -1133,6 +1141,20 @@ export default function Affiliate() {
               {/* Photographer Section */}
               {hasPhotographer && activeApp === 'photographer' && (
                 <PhotographerPanel userId={user.id} />
+              )}
+
+              {/* Portfolio Section */}
+              {hasPortfolio && activeApp === 'portfolio' && (
+                <PortfolioEditor
+                  userId={user.id}
+                  suggestedHandle={affiliateData?.code || user.email?.split('@')[0]}
+                  suggestedName={user.user_metadata?.full_name || user.user_metadata?.name || ''}
+                />
+              )}
+
+              {/* Brand Kit Section */}
+              {hasPhotographer && activeApp === 'brandkit' && (
+                <BrandKit userId={user.id} />
               )}
 
               {/* Gallery Section */}
@@ -1848,6 +1870,12 @@ export default function Affiliate() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="bg-[#0a0a0a] p-6">
                     <div data-tour="m-account" className="space-y-4 max-w-2xl">
+                      {hasPortfolio && (
+                        <div className="pb-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 mb-3">Profile Picture</p>
+                          <ProfilePictureEditor size="lg" showActions />
+                        </div>
+                      )}
                       <AdminBentoRow label="Tier" value={tier || 'Free'} />
                       <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
                       <AdminBentoRow label="Invites" value="0 Available" />

@@ -16,9 +16,12 @@ import {
 import { LoadingSpinner } from '../components/Loading';
 import SEOHead from '../components/SEOHead';
 import AuthModal from '../components/auth/AuthModal';
+import ProfilePictureEditor from '../components/ProfilePictureEditor';
+import { useCanSetProfilePicture } from '../lib/avatar';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
+  const canSetPicture = useCanSetProfilePicture(user?.id);
   const { success, error: showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState({
@@ -128,6 +131,14 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Profile picture — photographers, affiliates and the admin (circles: noir-design's avatar exception). */}
+        {canSetPicture && (
+        <div className="bg-white/5 p-6">
+          <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-wide">Profile Picture</h2>
+          <ProfilePictureEditor size="lg" showActions />
+        </div>
+        )}
+
         {/* Notifications */}
         <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
