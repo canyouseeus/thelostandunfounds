@@ -49,8 +49,11 @@ export { normalizeHandle };
 
 export const INGEST_KEY_PREFIX = 'tlu_live_';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-// Phone video runs ~100–400MB a minute in 4K.
-const MAX_VIDEO_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024;
+// Gallery video is short clips, 30 seconds to 2 minutes (owner, 2026-11-01).
+// 1GB covers 2 minutes at any phone setting, 4K included. Anything longer
+// belongs on YouTube: every view streams through our function, so long video
+// here is a bandwidth bill.
+const MAX_VIDEO_UPLOAD_BYTES = 1024 * 1024 * 1024;
 
 function isGalleryMedia(mimeType: string | null | undefined): boolean {
     return Boolean(mimeType && (mimeType.startsWith('image/') || mimeType.startsWith('video/')));
@@ -541,7 +544,7 @@ export async function startUpload(
     const size = Number(body.size);
     if (!Number.isFinite(size) || size <= 0) throw new HttpError(400, 'size (bytes) is required.');
     if (mimeType.startsWith('video/')) {
-        if (size > MAX_VIDEO_UPLOAD_BYTES) throw new HttpError(413, 'That video is larger than 2GB.');
+        if (size > MAX_VIDEO_UPLOAD_BYTES) throw new HttpError(413, 'That video is over 1GB. Gallery clips should be about 2 minutes or less; post longer videos to YouTube.');
     } else if (size > MAX_UPLOAD_BYTES) {
         throw new HttpError(413, 'That file is larger than 200MB.');
     }

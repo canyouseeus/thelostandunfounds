@@ -125,6 +125,10 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
         )}
       </div>
 
+      <p className="mt-2 text-[10px] text-white/40 normal-case tracking-normal">
+        Videos up to 1GB (about 2 minutes). Post longer ones to YouTube.
+      </p>
+
       {items.length > 0 && (
         <ul className="mt-4 space-y-1 max-h-64 overflow-y-auto">
           {items.map(it => (

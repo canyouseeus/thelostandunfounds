@@ -214,7 +214,7 @@ check('a video is accepted (even over the 200MB photo limit)', videoStart.upload
     && sentInit.headers['X-Upload-Content-Type'] === 'video/mp4', sentInit.headers['X-Upload-Content-Type']);
 await rejects('a missing size is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg' }), 400);
 await rejects('over 200MB is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg', size: 201 * 1024 * 1024 }), 413);
-await rejects('a video over 2GB is refused', () => startUpload(supabase, callerA, { fileName: 'a.mov', mimeType: 'video/quicktime', size: 2049 * 1024 * 1024 }), 413);
+await rejects('a video over 1GB is refused', () => startUpload(supabase, callerA, { fileName: 'a.mov', mimeType: 'video/quicktime', size: 1025 * 1024 * 1024 }), 413);
 await rejects('a PDF is refused', () => startUpload(supabase, callerA, { fileName: 'a.pdf', mimeType: 'application/pdf', size: 1000 }), 400);
 
 const started = await startUpload(supabase, callerA, { fileName: '../IMG_0001.JPG', mimeType: 'image/jpeg', size: 12_000_000 }, 'https://www.thelostandunfounds.com');
