@@ -1229,6 +1229,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mx-auto mb-2" />
                                                     <p className="text-white text-xs uppercase font-bold">Click or Drag Photos & Videos Here</p>
                                                     <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
+                                                    <p className="text-white/30 text-[10px] mt-1 normal-case">Videos up to 1GB (about 2 minutes). Post longer ones to YouTube.</p>
                                                 </div>
                                             </div>
 
