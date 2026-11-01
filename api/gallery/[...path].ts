@@ -1078,7 +1078,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
             });
 
             for (const f of (listRes.data.files || [])) {
-                if (!f.mimeType?.startsWith('image/') && f.mimeType !== 'video/quicktime') continue;
+                if (!f.mimeType?.startsWith('image/') && !f.mimeType?.startsWith('video/')) continue;
                 if (!f.id) continue;
 
                 const title = (f.name || '').replace(/\.[^.]+$/, '');

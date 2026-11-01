@@ -49,6 +49,12 @@ export { normalizeHandle };
 
 export const INGEST_KEY_PREFIX = 'tlu_live_';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+// Phone video runs ~100–400MB a minute in 4K.
+const MAX_VIDEO_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024;
+
+function isGalleryMedia(mimeType: string | null | undefined): boolean {
+    return Boolean(mimeType && (mimeType.startsWith('image/') || mimeType.startsWith('video/')));
+}
 const MAX_BATCH = 200;
 
 export class HttpError extends Error {
@@ -531,10 +537,14 @@ export async function startUpload(
     origin?: string,
 ): Promise<{ uploadUrl: string; fileName: string }> {
     const mimeType = typeof body.mimeType === 'string' ? body.mimeType.toLowerCase() : '';
-    if (!mimeType.startsWith('image/')) throw new HttpError(400, 'Only photos can be uploaded to a live gallery.');
+    if (!isGalleryMedia(mimeType)) throw new HttpError(400, 'Only photos and videos can be uploaded to a gallery.');
     const size = Number(body.size);
     if (!Number.isFinite(size) || size <= 0) throw new HttpError(400, 'size (bytes) is required.');
-    if (size > MAX_UPLOAD_BYTES) throw new HttpError(413, 'That file is larger than 200MB.');
+    if (mimeType.startsWith('video/')) {
+        if (size > MAX_VIDEO_UPLOAD_BYTES) throw new HttpError(413, 'That video is larger than 2GB.');
+    } else if (size > MAX_UPLOAD_BYTES) {
+        throw new HttpError(413, 'That file is larger than 200MB.');
+    }
 
     const fileName = safeFileName(typeof body.fileName === 'string' ? body.fileName : '');
     const inboxId = await ensureInbox(supabase, caller.library);
@@ -656,8 +666,8 @@ export async function completeUpload(
     if (file.trashed || !(file.parents || []).includes(inboxId)) {
         throw new HttpError(403, 'That file is not in this gallery\'s live inbox.');
     }
-    if (!file.mimeType?.startsWith('image/')) {
-        throw new HttpError(400, 'Only photos can be added to a live gallery.');
+    if (!isGalleryMedia(file.mimeType)) {
+        throw new HttpError(400, 'Only photos and videos can be added to a gallery.');
     }
 
     const { data: already } = await supabase

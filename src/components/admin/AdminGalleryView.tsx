@@ -571,8 +571,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            // Photos only: the Drive ingest pipeline refuses anything else.
-            const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/') || f.type === '');
+            // Photos and videos only: the Drive ingest pipeline refuses anything else.
+            const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/') || f.type.startsWith('video/') || f.type === '');
             const processedFiles = await Promise.all(selectedFiles.map(async (file) => {
                 let thumbnail: Blob | undefined;
                 let previewUrl = URL.createObjectURL(file);
@@ -1221,13 +1221,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 <input
                                                     type="file"
                                                     multiple
-                                                    accept="image/*"
+                                                    accept="image/*,video/*"
                                                     onChange={handleFileSelect}
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
                                                 <div className="pointer-events-none">
                                                     <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mx-auto mb-2" />
-                                                    <p className="text-white text-xs uppercase font-bold">Click or Drag Photos Here</p>
+                                                    <p className="text-white text-xs uppercase font-bold">Click or Drag Photos & Videos Here</p>
                                                     <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
                                                 </div>
                                             </div>

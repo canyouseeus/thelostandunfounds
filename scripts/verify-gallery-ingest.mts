@@ -209,9 +209,13 @@ ingestDeps.fetch = (async (url: any, init: any) => {
     return new Response(null, { status: 200, headers: { location: 'https://upload.example/session-1' } });
 }) as any;
 
-await rejects('a video is refused', () => startUpload(supabase, callerA, { fileName: 'clip.mp4', mimeType: 'video/mp4', size: 10 }), 400);
+const videoStart = await startUpload(supabase, callerA, { fileName: 'clip.mp4', mimeType: 'video/mp4', size: 900 * 1024 * 1024 });
+check('a video is accepted (even over the 200MB photo limit)', videoStart.uploadUrl === 'https://upload.example/session-1'
+    && sentInit.headers['X-Upload-Content-Type'] === 'video/mp4', sentInit.headers['X-Upload-Content-Type']);
 await rejects('a missing size is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg' }), 400);
 await rejects('over 200MB is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg', size: 201 * 1024 * 1024 }), 413);
+await rejects('a video over 2GB is refused', () => startUpload(supabase, callerA, { fileName: 'a.mov', mimeType: 'video/quicktime', size: 2049 * 1024 * 1024 }), 413);
+await rejects('a PDF is refused', () => startUpload(supabase, callerA, { fileName: 'a.pdf', mimeType: 'application/pdf', size: 1000 }), 400);
 
 const started = await startUpload(supabase, callerA, { fileName: '../IMG_0001.JPG', mimeType: 'image/jpeg', size: 12_000_000 }, 'https://www.thelostandunfounds.com');
 const inboxA = db.gallery_live_inboxes.find(r => r.library_id === 'lib-a')?.drive_folder_id;
@@ -315,6 +319,14 @@ const notReally = await completeUpload(supabase, callerA, { fileId: 'roll-0002-a
 check('only publish: true publishes — anything else waits for review', notReally.pending === true
     && db.photos.length === photosBefore + 1 && db.gallery_ingest_pending.some(r => r.drive_file_id === 'roll-0002-abc'));
 await discardPending(supabase, 'event-a', ['roll-0002-abc']);
+
+// --- video: publishes into the gallery as a video row ---------------------------
+
+putFile('video-0001-abc', [inboxA!], { name: 'IMG_5001.MOV', mimeType: 'video/quicktime' });
+await completeUpload(supabase, { library: callerA.library, keyId: null, handle: null } as any, { fileId: 'video-0001-abc', publish: true });
+const videoRow = db.photos.find(p => p.google_drive_file_id === 'video-0001-abc');
+check('a published video lands in the gallery with its video type', videoRow?.mime_type === 'video/quicktime'
+    && driveFiles['video-0001-abc']?.parents?.includes('folder-a'), `${videoRow?.mime_type} / ${driveFiles['video-0001-abc']?.parents}`);
 
 // --- photographers: their own live galleries ---------------------------------
 

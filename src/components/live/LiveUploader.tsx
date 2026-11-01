@@ -80,7 +80,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
   function pick(files: FileList | null) {
     if (!files || files.length === 0) return
     const added: Item[] = Array.from(files)
-      .filter(f => f.type.startsWith('image/') || f.type === '')
+      .filter(f => f.type.startsWith('image/') || f.type.startsWith('video/') || f.type === '')
       .map(f => ({ id: `${f.name}-${f.size}-${f.lastModified}-${Math.random()}`, file: f, state: 'queued', progress: 0, mature }))
     setItems(prev => [...added, ...prev])
     if (inputRef.current) inputRef.current.value = ''
@@ -98,7 +98,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
 
   return (
     <div className="text-left">
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden"
+      <input ref={inputRef} type="file" accept="image/*,video/*" multiple className="hidden"
         onChange={e => pick(e.target.files)} />
       <label className="flex items-start gap-3 text-xs text-white/70 cursor-pointer mb-3 normal-case tracking-normal">
         <input type="checkbox" className="mt-0.5 accent-white" checked={mature}
@@ -110,7 +110,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className={`${btn} bg-white text-black hover:bg-white/10 hover:text-white`}
           style={{ borderRadius: 0 }} onClick={() => inputRef.current?.click()}>
-          Choose photos
+          Choose photos & videos
         </button>
         {failed > 0 && !running && (
           <button type="button" className={`${btn} bg-white/10 text-white hover:bg-white hover:text-black`}
