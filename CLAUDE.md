@@ -22,6 +22,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Payments | Stripe | Checkout Sessions + webhooks; Connect for affiliate payouts |
 | Shop | Fourthwall | External platform |
 
+## OWNER LOCATION
+
+The owner lives in **Austin, Texas**, on `America/Chicago` time. Give every time to them in
+Central and label it CST or CDT correctly: DST ends the first Sunday of November and starts the
+second Sunday of March. The session clock is UTC. Convert it; don't guess. (Owner, 2026-11-01:
+"I need you to remember where I am.")
+
 ## Where to Find Things
 
 | What you need | Where to look |
