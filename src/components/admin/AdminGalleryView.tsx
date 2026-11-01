@@ -9,7 +9,7 @@ import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { sendToGallery } from '../live/sendToGallery';
+import { sendToGalleryResilient } from '../live/sendToGallery';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen';
@@ -86,6 +86,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadCounts, setUploadCounts] = useState<{ done: number; failed: number; total: number; lastError?: string } | null>(null);
     const [saving, setSaving] = useState(false);
+    // Which gallery is pulling new files in from its Drive folder right now.
+    const [syncingSlug, setSyncingSlug] = useState<string | null>(null);
     // Photographers have no tab bar, so they stay on whatever tab this starts
     // on. Starting them on 'photos' rendered the photo browser instead of their
     // own galleries, and they had no way to switch.
@@ -367,7 +369,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                     while (queue.length) {
                         const item = queue.shift()!;
                         try {
-                            await sendToGallery({
+                            await sendToGalleryResilient({
                                 file: item.file,
                                 slug,
                                 relay,
@@ -511,6 +513,29 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         } finally {
             setLoading(false);
             setSaving(false);
+        }
+    };
+
+    // Pull in photos added straight to the gallery's Drive folder — e.g. from the
+    // Google Drive app, which keeps uploading in the background on a phone,
+    // where a web page cannot. The scheduled sync only runs weekly.
+    const handleSyncFromDrive = async (lib: PhotoLibrary) => {
+        if (syncingSlug) return;
+        setSyncingSlug(lib.slug);
+        try {
+            const res = await fetch('/api/admin/sync-library', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug: lib.slug }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `Sync failed (${res.status})`);
+            await loadGalleryStats();
+            success(`"${lib.name}" synced from Drive — ${data.synced ?? 0} files checked${typeof data.deleted === 'number' && data.deleted > 0 ? `, ${data.deleted} removed` : ''}.`);
+        } catch (err: any) {
+            error(err.message || 'Sync from Drive failed');
+        } finally {
+            setSyncingSlug(null);
         }
     };
 
@@ -1267,7 +1292,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 <div>
                                                     <div className="flex justify-between text-[10px] text-white/60 mb-1">
                                                         <span>
-                                                            {saving ? 'Uploading — keep this page open' : 'Upload finished'}
+                                                            {saving ? 'Uploading — switching apps pauses it; it picks up when you come back' : 'Upload finished'}
                                                             {` · ${uploadCounts.done} of ${uploadCounts.total} done`}
                                                             {uploadCounts.failed > 0 ? ` · ${uploadCounts.failed} failed` : ''}
                                                         </span>
@@ -1549,6 +1574,31 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                                 >
                                                                     <Radio className="w-4 h-4" />
                                                                 </a>
+                                                            )}
+                                                            {!isPhotographerView && lib.google_drive_folder_id && (
+                                                                <a
+                                                                    href={`https://drive.google.com/drive/folders/${encodeURIComponent(lib.google_drive_folder_id)}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="p-2 hover:bg-white/20 text-white/60 hover:text-white"
+                                                                    title="Open this gallery's Google Drive folder — upload there from the Drive app, then SYNC"
+                                                                    aria-label={`Google Drive folder for ${lib.name}`}
+                                                                    data-tour="gallery-drive-folder"
+                                                                >
+                                                                    <CloudIcon className="w-4 h-4" />
+                                                                </a>
+                                                            )}
+                                                            {!isPhotographerView && lib.google_drive_folder_id && (
+                                                                <button
+                                                                    onClick={() => handleSyncFromDrive(lib)}
+                                                                    disabled={syncingSlug !== null}
+                                                                    className="p-2 hover:bg-white/20 text-white/60 hover:text-white disabled:opacity-40"
+                                                                    title="Sync from Drive — pull in photos added to the Drive folder"
+                                                                    aria-label={`Sync ${lib.name} from Google Drive`}
+                                                                    data-tour="gallery-sync-drive"
+                                                                >
+                                                                    <ArrowPathIcon className={`w-4 h-4 ${syncingSlug === lib.slug ? 'animate-spin' : ''}`} />
+                                                                </button>
                                                             )}
                                                             <button
                                                                 onClick={() => setQrLibrary({ slug: lib.slug, name: lib.name })}

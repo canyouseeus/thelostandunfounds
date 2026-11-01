@@ -465,6 +465,30 @@ const liveEventTour: Tour = {
   ],
 };
 
+const driveSyncTour: Tour = {
+  id: 'gallery-drive-sync',
+  title: 'Upload From The Drive App',
+  summary: 'Big batches from your phone: upload in the Google Drive app, which keeps going when you switch apps, then pull them into the gallery with SYNC.',
+  group: 'new',
+  announce: '2026-11-01',
+  steps: [
+    openFromDock('gallery', 'Upload From The Drive App', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+    inPanel('gallery', {
+      target: 'gallery-drive-folder',
+      title: 'Drive Folder',
+      body: 'Opens this gallery\'s folder in Google Drive. Upload your photos there from the Drive app. It keeps uploading when you switch apps.',
+      missingNote: 'This gallery has no Drive folder yet. It gets one on its first upload.',
+    }),
+    inPanel('gallery', {
+      target: 'gallery-sync-drive',
+      title: 'Sync',
+      body: 'When the Drive app is done, tap SYNC. The new photos show up in the gallery.',
+      missingNote: 'This gallery has no Drive folder yet. It gets one on its first upload.',
+    }),
+  ],
+};
+
 const qrWallpaperTour: Tour = {
   id: 'gallery-qr-wallpaper',
   title: 'Gallery QR Codes & Wallpapers',
@@ -818,7 +842,7 @@ const clientHunterTour: Tour = {
   steps: prospectsTour.steps,
 };
 
-export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

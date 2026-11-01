@@ -22,7 +22,7 @@
  */
 
 import { useRef, useState } from 'react'
-import { sendToGallery } from './sendToGallery'
+import { sendToGalleryResilient } from './sendToGallery'
 
 const CONCURRENCY = 2
 
@@ -59,7 +59,7 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
     patch(item.id, { state: 'sending', progress: 0, error: undefined })
     const onProgress = (p: number) => patch(item.id, { progress: p })
     try {
-      await sendToGallery({ file: item.file, slug, uploadKey, mature: item.mature, onProgress, relay: relayOnly.current })
+      await sendToGalleryResilient({ file: item.file, slug, uploadKey, mature: item.mature, onProgress, relay: relayOnly.current })
       patch(item.id, { state: 'done', progress: 1 })
     } catch (err: any) {
       patch(item.id, { state: 'failed', error: err?.message || 'Upload failed.' })
