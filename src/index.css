@@ -36,6 +36,14 @@ input[type=number] {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* White text caret everywhere (owner, 2026-11-01). iOS Safari otherwise draws
+   its system blue. A template may still set its own caretColor inline. */
+input,
+textarea,
+[contenteditable] {
+  caret-color: #fff;
+}
+
 body {
   margin: 0;
   min-width: 320px;
