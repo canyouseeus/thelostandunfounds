@@ -86,6 +86,27 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadCounts, setUploadCounts] = useState<{ done: number; failed: number; total: number; lastError?: string } | null>(null);
     const [saving, setSaving] = useState(false);
+    // Per-file upload state, so the list shows which photos are live and which
+    // failed — the gallery renames them, so the count alone can't tell you.
+    type FileStatus = { state: 'waiting' | 'sending' | 'done' | 'failed'; progress: number; error?: string };
+    const [fileStatus, setFileStatus] = useState<Map<File, FileStatus>>(new Map());
+    // Photos already in the gallery being edited, shown on the edit screen.
+    const [galleryPhotos, setGalleryPhotos] = useState<{ id: string; title: string; google_drive_file_id: string; mime_type: string | null }[]>([]);
+    const loadGalleryPhotos = async (libraryId: string) => {
+        const { data } = await supabase
+            .from('photos')
+            .select('id, title, google_drive_file_id, mime_type')
+            .eq('library_id', libraryId)
+            .order('updated_at', { ascending: false })
+            .limit(500);
+        setGalleryPhotos(data || []);
+    };
+    useEffect(() => {
+        if (isManaged && editingId) loadGalleryPhotos(editingId);
+        else setGalleryPhotos([]);
+    }, [isManaged, editingId]);
+    const markFile = (file: File, status: FileStatus) =>
+        setFileStatus(prev => { const next = new Map(prev); next.set(file, status); return next; });
     // Which gallery is pulling new files in from its Drive folder right now.
     const [syncingSlug, setSyncingSlug] = useState<string | null>(null);
     // Photographers have no tab bar, so they stay on whatever tab this starts
@@ -364,22 +385,27 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 };
                 setUploadProgress(0);
                 setUploadCounts({ done: 0, failed: 0, total });
+                setFileStatus(new Map(queue.map(item => [item.file, { state: 'waiting', progress: 0 } as FileStatus])));
                 const slug = finalLibrary.slug;
                 const worker = async () => {
                     while (queue.length) {
                         const item = queue.shift()!;
+                        markFile(item.file, { state: 'sending', progress: 0 });
                         try {
                             await sendToGalleryResilient({
                                 file: item.file,
                                 slug,
                                 relay,
-                                onProgress: f => { fractions.set(item, f); report(); },
+                                onProgress: f => { fractions.set(item, f); report(); markFile(item.file, { state: 'sending', progress: f }); },
                             });
                             fractions.set(item, 1);
+                            markFile(item.file, { state: 'done', progress: 1 });
+                            if (editingId) void loadGalleryPhotos(finalLibrary.id);
                             setUploadCounts(c => c && { ...c, done: c.done + 1 });
                         } catch (uploadErr: any) {
                             console.error(`Failed to upload ${item.file.name}`, uploadErr);
                             fractions.set(item, 1);
+                            markFile(item.file, { state: 'failed', progress: 0, error: uploadErr?.message });
                             failedUploads.push(item);
                             setUploadCounts(c => c && { ...c, failed: c.failed + 1, lastError: uploadErr?.message });
                         }
@@ -502,6 +528,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             setFilesData([]);
             setUploadCounts(null);
+            setFileStatus(new Map());
             setUploadProgress(0);
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
@@ -679,6 +706,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         });
         setFilesData([]);
         setUploadCounts(null);
+        setFileStatus(new Map());
         setUploadProgress(0);
         setCoverImageFile(null);
         setUploadMode(lib.google_drive_folder_id ? 'drive' : 'upload');
@@ -727,6 +755,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         });
         setFilesData([]);
         setUploadCounts(null);
+        setFileStatus(new Map());
         setUploadProgress(0);
         setInvitedEmails(['media@thelostandunfounds.com']);
         setOriginalInvitedEmails(['media@thelostandunfounds.com']);
@@ -1199,6 +1228,42 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
                                 <hr className="border-none" />
 
+                                {editingId && (
+                                    <div data-tour="gallery-form-photos">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">
+                                            In This Gallery ({galleryPhotos.length})
+                                        </label>
+                                        {galleryPhotos.length === 0 ? (
+                                            <p className="text-[11px] text-white/40">No photos yet.</p>
+                                        ) : (
+                                            <div className="max-h-[260px] overflow-y-auto bg-black/40 p-2 grid grid-cols-4 sm:grid-cols-6 gap-1">
+                                                {galleryPhotos.map(p => (
+                                                    <a
+                                                        key={p.id}
+                                                        href={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=1200`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="relative block aspect-square bg-white/5 overflow-hidden"
+                                                        title={p.title}
+                                                    >
+                                                        {p.mime_type?.startsWith('video/') ? (
+                                                            // The stream route sends a video whole; a tile is not worth that.
+                                                            <span className="absolute inset-0 flex items-center justify-center text-white/60 text-[9px] font-bold uppercase">Video</span>
+                                                        ) : (
+                                                            <img
+                                                                src={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=200`}
+                                                                alt={p.title}
+                                                                loading="lazy"
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        )}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div data-tour="gallery-form-source">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
                                     <div className="flex gap-2 mb-4">
@@ -1274,7 +1339,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="truncate text-[10px]">{item.file.name}</p>
-                                                                <p className="text-[9px] text-white/40 uppercase">{Math.round(item.file.size / 1024)} KB</p>
+                                                                {(() => {
+                                                                    const st = fileStatus.get(item.file);
+                                                                    const size = `${Math.round(item.file.size / 1024)} KB`;
+                                                                    if (!st) return <p className="text-[9px] text-white/40 uppercase">{size}</p>;
+                                                                    if (st.state === 'done') return <p className="text-[9px] uppercase font-bold text-green-400">✓ Live</p>;
+                                                                    if (st.state === 'failed') return <p className="text-[9px] uppercase font-bold text-red-400" title={st.error}>Failed</p>;
+                                                                    if (st.state === 'sending') return <p className="text-[9px] uppercase text-white">Sending {Math.round(st.progress * 100)}%</p>;
+                                                                    return <p className="text-[9px] uppercase text-white/40">Waiting · {size}</p>;
+                                                                })()}
                                                             </div>
                                                             <button
                                                                 type="button"
