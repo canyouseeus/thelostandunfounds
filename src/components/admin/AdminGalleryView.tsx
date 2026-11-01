@@ -9,6 +9,7 @@ import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import { sendToGallery } from '../live/sendToGallery';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen';
@@ -83,6 +84,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadCounts, setUploadCounts] = useState<{ done: number; failed: number; total: number; lastError?: string } | null>(null);
+    const [saving, setSaving] = useState(false);
     // Photographers have no tab bar, so they stay on whatever tab this starts
     // on. Starting them on 'photos' rendered the photo browser instead of their
     // own galleries, and they had no way to switch.
@@ -291,6 +294,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
     const handleSaveGallery = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (saving) return;
+        setSaving(true);
         setLoading(true);
         try {
             let finalLibrary: PhotoLibrary | null = null;
@@ -340,58 +345,46 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             // 2. Handle File Uploads (Only if new files added)
             // Note: If editing, this ADDS to the library. It doesn't replace.
+            // Photos go to the gallery's Google Drive folder through the live
+            // ingest pipeline (photos.google_drive_file_id is NOT NULL, so a
+            // Supabase Storage upload could never become a photo row). A gallery
+            // made without a Drive link gets its own folder on the first upload.
+            let failedUploads: typeof filesData = [];
             if (uploadMode === 'upload' && filesData.length > 0 && finalLibrary) {
-                let completed = 0;
+                const queue = [...filesData];
+                const total = queue.length;
+                const relay = { only: false };
+                const fractions = new Map<typeof filesData[number], number>();
+                const report = () => {
+                    let sum = 0;
+                    fractions.forEach(f => { sum += f; });
+                    setUploadProgress((sum / total) * 100);
+                };
                 setUploadProgress(0);
-
-                for (const item of filesData) {
-                    const { file, thumbnail } = item;
-                    const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-                    const filePath = `${finalLibrary.id}/${cleanName}`;
-                    let thumbUrl = '';
-
-                    // a. Upload Main File
-                    const { error: uploadError } = await supabase.storage
-                        .from('gallery-photos')
-                        .upload(filePath, file);
-
-                    if (uploadError) {
-                        console.error(`Failed to upload ${file.name}`, uploadError);
-                        continue;
+                setUploadCounts({ done: 0, failed: 0, total });
+                const slug = finalLibrary.slug;
+                const worker = async () => {
+                    while (queue.length) {
+                        const item = queue.shift()!;
+                        try {
+                            await sendToGallery({
+                                file: item.file,
+                                slug,
+                                relay,
+                                onProgress: f => { fractions.set(item, f); report(); },
+                            });
+                            fractions.set(item, 1);
+                            setUploadCounts(c => c && { ...c, done: c.done + 1 });
+                        } catch (uploadErr: any) {
+                            console.error(`Failed to upload ${item.file.name}`, uploadErr);
+                            fractions.set(item, 1);
+                            failedUploads.push(item);
+                            setUploadCounts(c => c && { ...c, failed: c.failed + 1, lastError: uploadErr?.message });
+                        }
+                        report();
                     }
-
-                    const { data: { publicUrl: fileUrl } } = supabase.storage
-                        .from('gallery-photos')
-                        .getPublicUrl(filePath);
-
-                    // b. Handle Thumbnail
-                    if (file.type.startsWith('video/') && thumbnail) {
-                        const thumbPath = `${finalLibrary.id}/t_${cleanName}.jpg`;
-                        await supabase.storage
-                            .from('gallery-photos')
-                            .upload(thumbPath, thumbnail);
-
-                        const { data: { publicUrl } } = supabase.storage
-                            .from('gallery-photos')
-                            .getPublicUrl(thumbPath);
-                        thumbUrl = publicUrl;
-                    } else {
-                        thumbUrl = fileUrl; // For images, thumbnail is the image itself (or we could resize server-side later)
-                    }
-
-                    // c. Create Photo Record
-                    await supabase.from('photos').insert({
-                        library_id: finalLibrary.id,
-                        title: file.name.split('.')[0],
-                        storage_path: filePath,
-                        thumbnail_url: thumbUrl,
-                        mime_type: file.type,
-                        status: 'active'
-                    });
-
-                    completed++;
-                    setUploadProgress((completed / filesData.length) * 100);
-                }
+                };
+                await Promise.all(Array.from({ length: Math.min(2, total) }, worker));
             }
 
             // 5. Manage Pricing Options
@@ -427,7 +420,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 }
             }
 
-            success(editingId ? 'Gallery updated successfully' : 'Gallery created successfully');
+            const uploaded = uploadMode === 'upload' ? filesData.length - failedUploads.length : 0;
+            if (failedUploads.length > 0) {
+                error(`${failedUploads.length} of ${filesData.length} photos did not upload. Tap SAVE GALLERY to retry them.`);
+            } else {
+                success(
+                    (editingId ? 'Gallery updated' : 'Gallery created')
+                    + (uploaded > 0 ? ` — ${uploaded} photo${uploaded === 1 ? '' : 's'} uploaded` : ' successfully'),
+                );
+            }
 
             // CRITICAL: Update local state immediately to avoid stale data if user re-opens modal before fetch completes
             if (finalLibrary) {
@@ -486,6 +487,20 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 }
             }
 
+            if (failedUploads.length > 0) {
+                // Stay open on the saved gallery with only the photos that failed,
+                // so SAVE GALLERY retries them instead of creating a second gallery.
+                setEditingId(finalLibrary.id);
+                setModalData(finalLibrary);
+                setOriginalInvitedEmails(invitedEmails);
+                setFilesData(failedUploads);
+                setDeletedPricingIds([]);
+                return;
+            }
+
+            setFilesData([]);
+            setUploadCounts(null);
+            setUploadProgress(0);
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
             setNewEmailInput('');
@@ -495,6 +510,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             error(err.message || 'Failed to save gallery');
         } finally {
             setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -555,7 +571,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const selectedFiles = Array.from(e.target.files);
+            // Photos only: the Drive ingest pipeline refuses anything else.
+            const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/') || f.type === '');
             const processedFiles = await Promise.all(selectedFiles.map(async (file) => {
                 let thumbnail: Blob | undefined;
                 let previewUrl = URL.createObjectURL(file);
@@ -636,6 +653,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             commercial_included: lib.commercial_included ?? false,
         });
         setFilesData([]);
+        setUploadCounts(null);
+        setUploadProgress(0);
         setCoverImageFile(null);
         setUploadMode(lib.google_drive_folder_id ? 'drive' : 'upload');
 
@@ -682,6 +701,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             commercial_included: false,
         });
         setFilesData([]);
+        setUploadCounts(null);
+        setUploadProgress(0);
         setInvitedEmails(['media@thelostandunfounds.com']);
         setOriginalInvitedEmails(['media@thelostandunfounds.com']);
         setNewEmailInput('');
@@ -1200,7 +1221,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 <input
                                                     type="file"
                                                     multiple
-                                                    accept="image/*,video/*"
+                                                    accept="image/*"
                                                     onChange={handleFileSelect}
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
@@ -1241,10 +1262,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 </div>
                                             )}
 
-                                            {uploadProgress > 0 && (
+                                            {uploadCounts && (
                                                 <div>
                                                     <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                                                        <span>Uploading...</span>
+                                                        <span>
+                                                            {saving ? 'Uploading — keep this page open' : 'Upload finished'}
+                                                            {` · ${uploadCounts.done} of ${uploadCounts.total} done`}
+                                                            {uploadCounts.failed > 0 ? ` · ${uploadCounts.failed} failed` : ''}
+                                                        </span>
                                                         <span>{Math.round(uploadProgress)}%</span>
                                                     </div>
                                                     <div className="h-1 bg-white/10 w-full overflow-hidden">
@@ -1253,6 +1278,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             style={{ width: `${uploadProgress}%` }}
                                                         />
                                                     </div>
+                                                    {uploadCounts.lastError && uploadCounts.failed > 0 && (
+                                                        <p className="mt-1 text-[10px] text-red-400">{uploadCounts.lastError}</p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1269,9 +1297,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     </button>
                                     <button data-tour="gallery-form-save"
                                         type="submit"
-                                        className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold"
+                                        disabled={saving}
+                                        className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold disabled:opacity-60"
                                     >
-                                        {editingId ? 'Save Gallery' : 'Create Gallery'}
+                                        {saving
+                                            ? (uploadCounts ? `Uploading ${uploadCounts.done + uploadCounts.failed}/${uploadCounts.total}` : 'Saving…')
+                                            : (editingId ? 'Save Gallery' : 'Create Gallery')}
                                     </button>
                                 </div>
                             </form>

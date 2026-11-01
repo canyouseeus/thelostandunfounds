@@ -11,11 +11,9 @@
  * needed. A web page cannot watch the camera roll on its own — pick a batch,
  * it sends them.
  *
- * Each photo: ingest-start opens a Drive upload session, the bytes go to it,
- * ingest-complete publishes it. The bytes try Google directly
- * first; if the browser is not allowed to (the session URL is cross-origin),
- * they go through /api/gallery/ingest-chunk 4MB at a time instead, and the
- * rest of the batch skips straight to that.
+ * Each photo goes through sendToGallery: ingest-start opens a Drive upload
+ * session, the bytes go to it (directly, or relayed 4MB at a time through
+ * /api/gallery/ingest-chunk), ingest-complete publishes it.
  *
  * Auth is either an ingest key (the photographer's upload link) or, with no
  * key, the signed-in admin session that installApiAuth attaches.
@@ -24,11 +22,9 @@
  */
 
 import { useRef, useState } from 'react'
+import { sendToGallery } from './sendToGallery'
 
 const CONCURRENCY = 2
-// 16 × 256 KiB: a Drive chunk must be a multiple of 256 KiB, and this stays
-// under Vercel's request body limit. Mirrors RELAY_CHUNK_BYTES on the server.
-const RELAY_CHUNK_BYTES = 16 * 256 * 1024
 
 type ItemState = 'queued' | 'sending' | 'done' | 'failed'
 interface Item {
@@ -40,8 +36,6 @@ interface Item {
   /** Marked 18+ when it was chosen. */
   mature: boolean
 }
-
-class CorsBlocked extends Error {}
 
 const btn = 'px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors disabled:opacity-40'
 
@@ -56,93 +50,16 @@ export default function LiveUploader({ uploadKey, slug, onSent }: {
   // Ticked before choosing: every photo in that batch is marked 18+ and blurred on the gallery.
   const [mature, setMature] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const relayOnly = useRef(false)
-
-  const authHeaders = (): Record<string, string> => (uploadKey ? { Authorization: `Bearer ${uploadKey}` } : {})
+  const relayOnly = useRef({ only: false })
 
   const patch = (id: string, change: Partial<Item>) =>
     setItems(prev => prev.map(it => (it.id === id ? { ...it, ...change } : it)))
-
-  async function post<T>(route: string, body: Record<string, unknown>): Promise<T> {
-    const res = await fetch(`/api/gallery/${route}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(slug ? { ...body, slug } : body),
-    })
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`)
-    return json as T
-  }
-
-  function putDirect(url: string, file: File, onProgress: (p: number) => void): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('PUT', url)
-      xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total) }
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const id = JSON.parse(xhr.responseText).id
-            if (id) return resolve(id)
-          } catch { /* fall through */ }
-          return reject(new Error('Google Drive returned no file id.'))
-        }
-        reject(new Error(`Google Drive refused the upload (${xhr.status}).`))
-      }
-      // Status 0 with no response is the browser refusing the cross-origin
-      // request, not Google refusing the file.
-      xhr.onerror = () => reject(xhr.status === 0 ? new CorsBlocked() : new Error('Network error.'))
-      xhr.send(file)
-    })
-  }
-
-  async function putRelayed(url: string, file: File, onProgress: (p: number) => void): Promise<string> {
-    let offset = 0
-    while (offset < file.size) {
-      const end = Math.min(offset + RELAY_CHUNK_BYTES, file.size)
-      const params = new URLSearchParams({ session: url })
-      if (slug) params.set('slug', slug)
-      const res = await fetch(`/api/gallery/ingest-chunk?${params}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'x-content-range': `bytes ${offset}-${end - 1}/${file.size}`,
-          ...authHeaders(),
-        },
-        body: file.slice(offset, end),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`)
-      if (json.done) {
-        onProgress(1)
-        return json.fileId
-      }
-      offset = typeof json.nextOffset === 'number' ? json.nextOffset : end
-      onProgress(offset / file.size)
-    }
-    throw new Error('Upload ended without a file id.')
-  }
 
   async function send(item: Item) {
     patch(item.id, { state: 'sending', progress: 0, error: undefined })
     const onProgress = (p: number) => patch(item.id, { progress: p })
     try {
-      const { uploadUrl } = await post<{ uploadUrl: string }>('ingest-start', {
-        fileName: item.file.name,
-        mimeType: item.file.type || 'image/jpeg',
-        size: item.file.size,
-      })
-      let fileId: string | null = null
-      if (!relayOnly.current) {
-        try {
-          fileId = await putDirect(uploadUrl, item.file, onProgress)
-        } catch (err) {
-          if (!(err instanceof CorsBlocked)) throw err
-          relayOnly.current = true
-        }
-      }
-      if (!fileId) fileId = await putRelayed(uploadUrl, item.file, onProgress)
-      await post('ingest-complete', { fileId, publish: true, mature: item.mature })
+      await sendToGallery({ file: item.file, slug, uploadKey, mature: item.mature, onProgress, relay: relayOnly.current })
       patch(item.id, { state: 'done', progress: 1 })
     } catch (err: any) {
       patch(item.id, { state: 'failed', error: err?.message || 'Upload failed.' })

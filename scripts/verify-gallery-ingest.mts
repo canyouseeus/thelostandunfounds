@@ -359,6 +359,24 @@ await rejects('…but not to someone else\'s', () => resolveIngestCaller(req('Be
 await rejects('an inactive photographer cannot upload', () => resolveIngestCaller(req('Bearer old-session'), supabase, mine.slug), 401);
 await rejects('a signed-in fan cannot upload', () => resolveIngestCaller(req('Bearer fan-session'), supabase, mine.slug), 401);
 
+// --- Direct Upload: a gallery created with no Drive link gets one on first upload ---
+
+db.photo_libraries.push({ id: 'lib-direct', slug: 'direct-upload', name: 'HOLLOW33N 26', google_drive_folder_id: null, owner_id: 'user-eric', live_mode: false });
+const directRow = db.photo_libraries.find(l => l.id === 'lib-direct')!;
+const foldersBefore = createdFolders.length;
+await rejects('another photographer cannot upload to a folderless gallery', () => resolveIngestCaller(req('Bearer itz-session'), supabase, 'direct-upload'), 403);
+check('…and their attempt creates no Drive folder', createdFolders.length === foldersBefore && directRow.google_drive_folder_id === null, String(directRow.google_drive_folder_id));
+const directKey = 'tlu_live_direct-upload-test-key-0000000000000000';
+db.gallery_ingest_keys.push({ id: 'key-direct', library_id: 'lib-direct', key_hash: hashIngestKey(directKey), revoked_at: null });
+await rejects('an upload key never creates a folder (still 409)', () => resolveIngestCaller(req(`Bearer ${directKey}`), supabase, null), 409);
+check('…none was made', createdFolders.length === foldersBefore && directRow.google_drive_folder_id === null);
+const directCaller = await resolveIngestCaller(req('Bearer eric-session'), supabase, 'direct-upload');
+check('the owner\'s first upload creates the gallery\'s Drive folder and saves it',
+    directCaller.library.folderId === `folder-ph-${foldersBefore + 1}` && directRow.google_drive_folder_id === directCaller.library.folderId
+    && createdFolders.at(-1) === 'HOLLOW33N 26', `${directCaller.library.folderId} / ${directRow.google_drive_folder_id}`);
+const directAgain = await resolveIngestCaller(req('Bearer eric-session'), supabase, 'direct-upload');
+check('…later uploads reuse it (one folder, not one per photo)', directAgain.library.folderId === directCaller.library.folderId && createdFolders.length === foldersBefore + 1);
+
 // --- naming: @handle_thelostandunfounds_DATE_location_subject_### -------------
 
 check('handles normalize to @lowercase', normalizeHandle('itzography') === '@itzography' && normalizeHandle('@Four5_Culture') === '@four5_culture'

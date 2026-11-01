@@ -103,7 +103,11 @@ function bearer(req: VercelRequest): string {
     return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 }
 
-async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string; slug?: string }): Promise<IngestLibrary> {
+async function loadLibrary(
+    supabase: ServiceSupabaseClient,
+    match: { id?: string; slug?: string },
+    opts: { createFolder?: boolean } = {},
+): Promise<IngestLibrary> {
     let query = supabase
         .from('photo_libraries')
         .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode, owner_id, photographer_handle');
@@ -112,13 +116,53 @@ async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string
     if (error) throw new HttpError(500, error.message);
     if (!data) throw new HttpError(404, 'Gallery not found.');
 
-    const folderId = data.google_drive_folder_id || data.gdrive_folder_id;
+    let folderId = data.google_drive_folder_id || data.gdrive_folder_id;
+    if (!folderId && opts.createFolder) folderId = await createGalleryFolder(supabase, data);
     if (!folderId) throw new HttpError(409, `Gallery ${data.slug} has no Google Drive folder to publish into.`);
     return {
         id: data.id, slug: data.slug, name: data.name, folderId,
         live_mode: Boolean(data.live_mode), owner_id: data.owner_id ?? null,
         handle: normalizeHandle(data.photographer_handle),
     };
+}
+
+/**
+ * Give a gallery made with Direct Upload (no Drive link) its own Drive folder,
+ * on its first upload. Only for callers already allowed to write to the
+ * gallery — the admin, or the photographer who owns it — never an ingest key.
+ * Lands in CLIENT_GALLERIES_DRIVE_FOLDER_ID like api/admin/gallery-upload.ts.
+ */
+async function createGalleryFolder(
+    supabase: ServiceSupabaseClient,
+    library: { id: string; slug: string; name: string | null },
+): Promise<string> {
+    let folderId: string;
+    try {
+        folderId = await ingestDeps.createFolder(
+            library.name || library.slug,
+            process.env.CLIENT_GALLERIES_DRIVE_FOLDER_ID || undefined,
+        );
+    } catch (err: any) {
+        throw new HttpError(502, `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`);
+    }
+    // Only fill an empty slot: two first uploads racing must end on one folder.
+    const { data: claimed, error } = await supabase
+        .from('photo_libraries')
+        .update({ google_drive_folder_id: folderId })
+        .eq('id', library.id)
+        .is('google_drive_folder_id', null)
+        .select('google_drive_folder_id')
+        .maybeSingle();
+    if (error) throw new HttpError(500, error.message);
+    if (claimed?.google_drive_folder_id) return claimed.google_drive_folder_id;
+    // The other upload won; use its folder. The empty one made here is harmless.
+    const { data: winner } = await supabase
+        .from('photo_libraries')
+        .select('google_drive_folder_id')
+        .eq('id', library.id)
+        .maybeSingle();
+    if (winner?.google_drive_folder_id) return winner.google_drive_folder_id;
+    throw new HttpError(500, 'Could not record the gallery\'s Google Drive folder.');
 }
 
 /**
@@ -158,13 +202,20 @@ export async function resolveIngestCaller(
         if (!(await verifyAdmin(req)) && !(await verifiedPhotographer(req, supabase))) throw new HttpError(401, 'Unauthorized');
         throw new HttpError(400, 'slug is required.');
     }
-    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null, handle: HOUSE_HANDLE, party: null };
+    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }, { createFolder: true }), keyId: null, handle: HOUSE_HANDLE, party: null };
 
     // A photographer may upload to galleries they own, and no others.
     const photographer = await verifiedPhotographer(req, supabase);
     if (!photographer) throw new HttpError(401, 'Unauthorized');
-    const library = await loadLibrary(supabase, { slug });
-    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const { data: owned, error: ownedError } = await supabase
+        .from('photo_libraries')
+        .select('owner_id')
+        .eq('slug', slug)
+        .maybeSingle();
+    if (ownedError) throw new HttpError(500, ownedError.message);
+    if (!owned) throw new HttpError(404, 'Gallery not found.');
+    if (owned.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const library = await loadLibrary(supabase, { slug }, { createFolder: true });
     return { library, keyId: null, handle: normalizeHandle(photographer.instagram), party: { userId: photographer.userId } };
 }
 
