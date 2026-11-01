@@ -21,6 +21,13 @@ const RELAY_CHUNK_BYTES = 16 * 256 * 1024
 
 class CorsBlocked extends Error {}
 
+/** A refusal that retrying cannot fix (bad file, too big, not allowed). */
+export class UploadRefused extends Error {}
+
+// No upload progress for this long means the transfer is dead — usually the
+// phone paused the page when its owner switched apps. Abort and retry.
+const STALL_MS = 45_000
+
 export interface SendOptions {
   file: File
   slug?: string
@@ -41,7 +48,13 @@ export async function sendToGallery({ file, slug, uploadKey, mature = false, onP
       body: JSON.stringify(slug ? { ...body, slug } : body),
     })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`)
+    if (!res.ok) {
+      const message = json.error || `Upload failed (${res.status})`
+      // 4xx from our own API is a decision, not a hiccup: do not retry it.
+      throw res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429
+        ? new UploadRefused(message)
+        : new Error(message)
+    }
     return json as T
   }
 
@@ -49,7 +62,15 @@ export async function sendToGallery({ file, slug, uploadKey, mature = false, onP
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', url)
-      xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total) }
+      let stall: ReturnType<typeof setTimeout> | undefined
+      const arm = () => {
+        clearTimeout(stall)
+        stall = setTimeout(() => xhr.abort(), STALL_MS)
+      }
+      xhr.onabort = () => reject(new Error('Upload stalled.'))
+      xhr.onloadend = () => clearTimeout(stall)
+      xhr.upload.onprogress = e => { arm(); if (e.lengthComputable) onProgress(e.loaded / e.total) }
+      arm()
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
@@ -111,4 +132,39 @@ export async function sendToGallery({ file, slug, uploadKey, mature = false, onP
   if (!fileId) fileId = await putRelayed(uploadUrl)
   await post('ingest-complete', { fileId, publish: true, mature })
   onProgress(1)
+}
+
+function untilVisible(): Promise<void> {
+  if (typeof document === 'undefined' || document.visibilityState === 'visible') return Promise.resolve()
+  return new Promise(resolve => {
+    const onChange = () => {
+      if (document.visibilityState !== 'visible') return
+      document.removeEventListener('visibilitychange', onChange)
+      resolve()
+    }
+    document.addEventListener('visibilitychange', onChange)
+  })
+}
+
+/**
+ * sendToGallery, made to survive switching apps on a phone.
+ *
+ * A web page cannot upload in the background on iPhone: Safari pauses it
+ * seconds after you leave, and the transfer dies. So a photo that fails for
+ * a transient reason (network, stalled transfer, Google 5xx) waits until the
+ * page is on screen again and starts over — it is a ~10MB photo, so starting
+ * over costs little. A refusal from our own API (UploadRefused) is final.
+ */
+export async function sendToGalleryResilient(opts: SendOptions, attempts = 5): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    await untilVisible()
+    try {
+      return await sendToGallery(opts)
+    } catch (err) {
+      if (err instanceof UploadRefused || attempt >= attempts) throw err
+      opts.onProgress?.(0)
+      await untilVisible()
+      await new Promise(r => setTimeout(r, Math.min(1000 * attempt, 5000)))
+    }
+  }
 }
