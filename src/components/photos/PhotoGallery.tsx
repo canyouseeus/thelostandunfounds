@@ -29,6 +29,7 @@ import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
 // pulling the entire library on every (often bot-driven) page view was the
@@ -354,6 +355,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
     // Buyer email (used for order receipts + entitlement lookup)
     const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
+    // On a phone, downloads go to the camera roll through the share sheet.
+    const [saveSheet, setSaveSheet] = useState<SaveItem[] | null>(null);
 
     // Drive-native gallery: true when the API returned 403 (not in invited_emails)
     const [driveAccessDenied, setDriveAccessDenied] = useState(false);
@@ -837,6 +840,19 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         const email = await requestDownloadEmail(toDownload);
         if (!email) return; // user cancelled
         setBuyerEmail(email);
+        // Phones: straight into Photos via the share sheet, not into Files one
+        // download at a time (Safari blocks a burst of downloads anyway).
+        if (canSaveToPhotos()) {
+            setSaveSheet(toDownload.map(photo => {
+                const fileId = photo.google_drive_file_id || photo.id;
+                return {
+                    url: `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`,
+                    filename: photoFilename(photo.title, photo.mime_type, photo.id),
+                    type: photo.mime_type || 'image/jpeg',
+                };
+            }));
+            return;
+        }
         if (toDownload.length === 1) {
             triggerFileDownload(toDownload[0], email);
             return;
@@ -1502,6 +1518,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             </div >
 
             {/* Lightbox */}
+            {saveSheet && <SaveToPhotosSheet items={saveSheet} onClose={() => setSaveSheet(null)} />}
             <PhotoLightbox
                 photo={activePhotoIndex !== null ? photos[activePhotoIndex] : null}
                 onClose={() => setActivePhotoIndex(null)}
