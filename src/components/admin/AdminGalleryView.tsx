@@ -1398,20 +1398,20 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
                                 <div data-tour="gallery-form-source">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
-                                    <div className="flex gap-2 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('drive')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-center gap-2 px-3 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
-                                            <CloudIcon className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
+                                            <CloudIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Update Drive Folder' : 'Link Google Drive'}</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('upload')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-center gap-2 px-3 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
-                                            <ArrowUpTrayIcon className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
+                                            <ArrowUpTrayIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Add More Photos' : 'Direct Upload'}</span>
                                         </button>
                                     </div>
 
