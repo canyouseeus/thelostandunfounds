@@ -48,7 +48,14 @@ export default function GalleryAccess() {
     const [email, setEmail] = useState('');
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(() => {
+        // Sent here by the gallery after a sign-in link that was already used
+        // or had expired (they work once, within the hour).
+        if (typeof window === 'undefined') return null;
+        return new URLSearchParams(window.location.search).get('expired')
+            ? 'That sign-in link was already used or has expired. Tap OPEN MY GALLERY in your invite email, or enter your email below for a new link.'
+            : null;
+    });
     // Single-use: remounted after every attempt.
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [turnstileKey, setTurnstileKey] = useState(0);
