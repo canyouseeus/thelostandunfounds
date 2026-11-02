@@ -346,7 +346,7 @@ const PhotoCard: React.FC<{
 };
 
 const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ librarySlug, inline = false }) => {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [photos, setPhotos] = useState<Photo[]>([]);
@@ -577,14 +577,21 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         fetchDrivePhotos(library.slug);
     }, [library, loading]);
 
-    // Auto-open login modal when landing on a private gallery without being logged in
+    // A private gallery with nobody signed in goes to its access page, where an
+    // invited client gets a sign-in link by email. Never the site's password
+    // modal: clients have no password, and that modal was a dead end (Bandit,
+    // 2026-11-02, re-tapping a used one-time link at midnight). Waits for the
+    // session to finish loading — right after a sign-in link the tokens are
+    // still being read from the URL, and leaving then would throw them away.
     useEffect(() => {
-        if (loading) return;
+        if (loading || authLoading) return;
         if (!library?.is_private) return;
         if (user) return;
-        setAuthMessage('This is a private gallery. Please log in to view your photos.');
-        setAuthModalOpen(true);
-    }, [library, user, loading]);
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        if (/access_token=/.test(hash)) return;
+        const expired = /error_code=otp_expired|error=access_denied/.test(hash);
+        window.location.replace(`/gallery/${encodeURIComponent(library.slug)}/access${expired ? '?expired=1' : ''}`);
+    }, [library, user, loading, authLoading]);
 
     async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
@@ -1404,17 +1411,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         This is a private gallery.
                                     </p>
                                     <p className="text-white/40 text-sm max-w-md mx-auto">
-                                        If you are the owner of this gallery, please log in to view and manage your photos.
+                                        Invited? Get a sign-in link by email — no password needed.
                                     </p>
+                                    <a
+                                        href={`/gallery/${encodeURIComponent(librarySlug)}/access`}
+                                        className="inline-block mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/80 transition-colors"
+                                    >
+                                        Get My Gallery Link
+                                    </a>
                                     <button
                                         onClick={() => {
                                             setAuthTitle(undefined);
                                             setAuthMessage(undefined);
                                             setAuthModalOpen(true);
                                         }}
-                                        className="inline-block mt-4 px-8 py-3 bg-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
+                                        className="block mx-auto mt-3 text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-widest"
                                     >
-                                        Log In
+                                        Owner? Log in
                                     </button>
                                 </>
                             ) : driveAccessDenied ? (
