@@ -4,6 +4,7 @@
  * with the full affiliate dashboard inlined for the affiliate section.
  */
 
+import NumberField from '../components/ui/NumberField';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -1782,13 +1783,9 @@ export default function Affiliate() {
                                 <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
                                   Payout Amount
                                 </label>
-                                <input
-                                  type="number"
-                                  min={payoutSettings?.payment_threshold || 10}
-                                  max={dashData.balance?.available_balance || 0}
-                                  step="0.01"
+                                <NumberField
                                   value={payoutAmount}
-                                  onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                                  onChange={(v) => setPayoutAmount(v === '' ? 0 : v)}
                                   className="w-full px-4 py-3 bg-white/5 rounded-none text-white focus:outline-none transition-colors font-mono text-sm"
                                 />
                                 <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
