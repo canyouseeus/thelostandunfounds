@@ -30,7 +30,7 @@ import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 import { setGalleryPass, withGalleryPass } from '../../lib/galleryPass';
-import { buyerTotal, type BuyerPricing } from '../../lib/buyerPricing';
+import { buyerTotal, galleryTotal, type BuyerPricing } from '../../lib/buyerPricing';
 import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
@@ -78,6 +78,8 @@ interface PhotoLibrary {
     slug: string;
     description: string;
     price: number;
+    // Whole album, for every buyer (owner, 2026-11-02). Checkout charges the same.
+    album_price?: number | null;
     is_private?: boolean;
     owner_id?: string;
     google_drive_folder_id?: string;
@@ -362,6 +364,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Set by BUY WHOLE ALBUM: the server then charges for every photo in it.
     const wholeAlbumRef = useRef(false);
     const [photos, setPhotos] = useState<Photo[]>([]);
+    // Every photo in the album, not just the pages loaded so far — the count
+    // checkout prices "the whole album" against.
+    const [albumTotal, setAlbumTotal] = useState(0);
+    // Whole-album offer: an à la carte buyer's own price (falls back to the
+    // gallery's on the server), else the gallery's album_price for everyone.
+    const albumOffer: { price: number; count: number } | null = galleryRole?.role === 'buyer'
+        ? (galleryRole.pricing?.albumPrice ? { price: Number(galleryRole.pricing.albumPrice), count: galleryRole.pricing.albumCount } : null)
+        : (Number(library?.album_price) > 0 && albumTotal > 0 ? { price: Number(library!.album_price), count: albumTotal } : null);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
@@ -737,9 +747,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             }
 
             libraryIdsRef.current = libraryIds;
-            const { data: photoData, error: photoError } = await supabase
+            const { data: photoData, error: photoError, count: photoTotal } = await supabase
                 .from('photos')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .in('library_id', libraryIds)
                 .order('created_at', { ascending: false })
                 .order('title', { ascending: false })
@@ -758,6 +768,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return true;
             });
             setPhotos(fetchedPhotos);
+            setAlbumTotal(photoTotal ?? fetchedPhotos.length);
             offsetRef.current = (photoData || []).length;
             setHasMore((photoData || []).length === GALLERY_PAGE_SIZE);
 
@@ -892,22 +903,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         if (galleryRole?.role === 'buyer' && galleryRole.pricing) {
             return buyerTotal(wholeAlbumRef.current ? galleryRole.pricing.albumCount : count, galleryRole.pricing);
         }
-        const single = Number(library.price) || 0;
-        const sortedBundles = [...pricingOptions]
-            .filter(o => o.photo_count && o.photo_count > 0)
-            .sort((a, b) => b.photo_count - a.photo_count);
-
-        let amount = 0;
-        let remaining = count;
-        for (const opt of sortedBundles) {
-            const numBundles = Math.floor(remaining / opt.photo_count);
-            if (numBundles > 0) {
-                amount += numBundles * Number(opt.price);
-                remaining %= opt.photo_count;
-            }
-        }
-        amount += remaining * single;
-        return amount;
+        // Everyone else: the same function the server checkout charges with.
+        return galleryTotal(wholeAlbumRef.current && albumOffer ? albumOffer.count : count, {
+            single: Number(library.price) || 0,
+            options: pricingOptions,
+            albumPrice: albumOffer?.price ?? null,
+            albumCount: albumOffer?.count ?? 0,
+        });
     };
 
     // Same-origin anchor with the stream endpoint's attachment disposition —
@@ -1335,10 +1337,10 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         ))}
                                     </div>
                                 )}
-                                {galleryRole?.role === 'buyer' && galleryRole.pricing?.albumPrice ? (
+                                {albumOffer ? (
                                     <div className="pt-2 space-y-2">
                                         <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
-                                            Whole album ({galleryRole.pricing.albumCount}) for ${Number(galleryRole.pricing.albumPrice).toFixed(0)}
+                                            Whole album ({albumOffer.count}) for ${albumOffer.price.toFixed(0)}
                                         </p>
                                         <button
                                             type="button"
@@ -1350,7 +1352,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                             className="px-5 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
                                             data-tour="buy-whole-album"
                                         >
-                                            Buy Whole Album — ${Number(galleryRole.pricing.albumPrice).toFixed(0)}
+                                            Buy Whole Album — ${albumOffer.price.toFixed(0)}
                                         </button>
                                     </div>
                                 ) : null}

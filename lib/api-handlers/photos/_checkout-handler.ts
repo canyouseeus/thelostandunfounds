@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { roleFor, emailList } from '../_gallery-pass.js'
 import { verifiedUser } from '../_turnstile.js'
-import { buyerTotal, cleanBundles } from '../../../src/lib/buyerPricing.js'
+import { buyerTotal, cleanBundles, galleryTotal } from '../../../src/lib/buyerPricing.js'
 
 type PaymentMethod = 'stripe' | 'strike'
 
@@ -86,7 +86,7 @@ export default async function handler(
 
     const { data: library, error: libraryError } = await supabase
       .from('photo_libraries')
-      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, owner_id, user_id')
+      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, owner_id, user_id')
       .eq('id', libraryId)
       .single()
 
@@ -100,6 +100,14 @@ export default async function handler(
       .eq('library_id', libraryId)
       .eq('is_active', true)
       .order('photo_count', { ascending: false })
+
+    // Whole album (owner, 2026-11-02): one price for every photo in the
+    // gallery, for every buyer. Counted from the database, not the page.
+    const albumPrice = Number(library.album_price) > 0 ? Number(library.album_price) : null
+    const allAlbumIds = async (): Promise<string[]> => {
+      const { data: albumPhotos } = await supabase.from('photos').select('id').eq('library_id', library.id)
+      return (albumPhotos || []).map(p => p.id)
+    }
 
     // À la carte (owner, 2026-11-02): a private album sells every photo to the
     // people on its buyer list at buyer_price each. Album owners never pay,
@@ -115,8 +123,7 @@ export default async function handler(
         email = user.email.trim().toLowerCase()
         // Every photo in the album, for "buy the whole album" — from the
         // database, not the page (which may not have loaded them all).
-        const { data: albumPhotos } = await supabase.from('photos').select('id').eq('library_id', library.id)
-        const albumIds = (albumPhotos || []).map(p => p.id)
+        const albumIds = await allAlbumIds()
         if (wholeAlbum === true) {
           photoIds = albumIds
           count = photoIds.length
@@ -124,7 +131,8 @@ export default async function handler(
         buyerAmount = buyerTotal(count, {
           single: buyerPrice,
           bundles: cleanBundles(library.buyer_bundles),
-          albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : null,
+          // Their own whole-album price, else the gallery's.
+          albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : albumPrice,
           albumCount: albumIds.length,
         })
       } else if (role === 'owner') {
@@ -144,17 +152,23 @@ export default async function handler(
     // gallery's per-photo price for the remainder. À la carte buyers use their
     // own bundles and whole-album price (src/lib/buyerPricing.ts).
     let amount = buyerAmount ?? 0
-    let remaining = buyerAmount != null ? 0 : count
-    for (const option of buyerAmount != null ? [] : pricingOptions || []) {
-      if (!option.photo_count || option.photo_count <= 0) continue
-      const numBundles = Math.floor(remaining / option.photo_count)
-      if (numBundles > 0) {
-        amount += numBundles * Number(option.price)
-        remaining %= option.photo_count
+    if (buyerAmount == null) {
+      let albumCount = 0
+      if (albumPrice || wholeAlbum === true) {
+        const albumIds = await allAlbumIds()
+        albumCount = albumIds.length
+        if (wholeAlbum === true) {
+          if (!albumPrice) return res.status(400).json({ error: 'This gallery has no whole-album price.' })
+          photoIds = albumIds
+          count = photoIds.length
+        }
       }
-    }
-    if (remaining > 0) {
-      amount += remaining * singlePrice
+      amount = galleryTotal(count, {
+        single: singlePrice,
+        options: (pricingOptions || []).map(o => ({ photo_count: Number(o.photo_count), price: Number(o.price) })),
+        albumPrice,
+        albumCount,
+      })
     }
 
     if (amount <= 0) {
