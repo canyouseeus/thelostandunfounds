@@ -12,6 +12,11 @@
  * A wrong address is not treated as an error and never says whether it was
  * invited: the link simply does not open the gallery. Saying otherwise would
  * make this an invitee oracle for anyone holding the slug.
+ *
+ * The link is emailed by our server (/api/gallery/access-link), from our own
+ * mail, not by Supabase's built-in mailer: that one allows a few emails an hour
+ * for the whole project, and a client was locked out by it on 2026-11-01.
+ * Turnstile guards the form (TURNSTILE RULE), action 'gallery-access'.
  */
 
 import { useEffect, useState } from 'react';
@@ -19,6 +24,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { EnvelopeIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import TurnstileField, { turnstileRequired } from '../components/TurnstileField';
 
 interface AccessInfo {
     name: string;
@@ -28,7 +34,7 @@ interface AccessInfo {
 
 export default function GalleryAccess() {
     const { slug } = useParams<{ slug: string }>();
-    const { user, signInWithMagicLink } = useAuth();
+    const { user } = useAuth();
 
     const [info, setInfo] = useState<AccessInfo | null>(null);
     const [infoLoading, setInfoLoading] = useState(true);
@@ -38,6 +44,9 @@ export default function GalleryAccess() {
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Single-use: remounted after every attempt.
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileKey, setTurnstileKey] = useState(0);
 
     const galleryUrl = `/gallery/${slug}`;
 
@@ -68,17 +77,31 @@ export default function GalleryAccess() {
             setError('Enter the email address your invite was sent to.');
             return;
         }
-        setError(null);
-        setSending(true);
-        // Return them to the gallery itself, not back to this page.
-        const redirectTo = `${window.location.origin}${galleryUrl}`;
-        const { error: sendError } = await signInWithMagicLink(trimmed, redirectTo);
-        setSending(false);
-        if (sendError) {
-            setError(sendError.message);
+        if (turnstileRequired() && !turnstileToken) {
+            setError('Please complete the security check.');
             return;
         }
-        setSent(true);
+        setError(null);
+        setSending(true);
+        try {
+            const res = await fetch('/api/gallery/access-link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug, email: trimmed, turnstileToken }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setError(data.error || 'We could not send the email just now. Please try again in a minute.');
+                return;
+            }
+            setSent(true);
+        } catch {
+            setError('We could not reach the server. Check your connection and try again.');
+        } finally {
+            setSending(false);
+            setTurnstileToken(null);
+            setTurnstileKey(k => k + 1);
+        }
     };
 
     const heading = info?.name || 'YOUR GALLERY';
@@ -139,7 +162,8 @@ export default function GalleryAccess() {
                         <p className="text-white/50 text-sm leading-relaxed">
                             If <span className="text-white">{email.trim()}</span> is on the invite list
                             for this gallery, a sign-in link is on its way. Open it on this device and
-                            you'll land straight in the gallery — no password needed.
+                            you'll land straight in the gallery — no password needed. It comes from
+                            THE LOST+UNFOUNDS; if it isn't in your inbox, check spam.
                         </p>
                         <button
                             type="button"
@@ -172,6 +196,13 @@ export default function GalleryAccess() {
                                 placeholder="your@email.com"
                             />
                         </div>
+
+                        <TurnstileField
+                            action="gallery-access"
+                            resetKey={turnstileKey}
+                            onToken={setTurnstileToken}
+                            className=""
+                        />
 
                         {error && (
                             <div className="px-4 py-2 bg-red-500/20 text-red-400 text-sm">
