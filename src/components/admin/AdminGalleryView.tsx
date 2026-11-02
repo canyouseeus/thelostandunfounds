@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import { PriceRow, BundleRows, PRICE_GROUP } from './PricingRows';
 import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { Eye, EyeOff, Radio } from 'lucide-react';
@@ -94,6 +95,29 @@ function GalleryThumb({ photo, size = 200 }: {
     );
 }
 
+/** A phone photo (HEIC/JPEG/PNG, any size) as a JPEG no wider or taller than max px. */
+async function shrinkToJpeg(file: File, max: number): Promise<Blob> {
+    const url = URL.createObjectURL(file);
+    try {
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = () => reject(new Error('This photo could not be read. Try a JPEG or PNG.'));
+            i.src = url;
+        });
+        const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+        if (!blob) throw new Error('This photo could not be converted.');
+        return blob;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
 export default function AdminGalleryView({ onBack, isPhotographerView = false, hideTitle = false }: AdminGalleryViewProps) {
     const { user } = useAuth(); // Get authenticated user
     const [stats, setStats] = useState<GalleryStats | null>(null);
@@ -114,6 +138,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [pendingGalleryPhotoIds, setPendingGalleryPhotoIds] = useState<string[]>([]);
     const [uploadMode, setUploadMode] = useState<'drive' | 'upload'>('drive');
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
+    // While an upload runs, photos picked from the file box join its queue
+    // instead of waiting for (and being cleared by) the end of it (owner,
+    // 2026-11-02: 33 photos added during a 153-photo upload were dropped).
+    const liveUploadRef = useRef<((items: { file: File; thumbnail?: Blob; previewUrl: string }[]) => void) | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadCounts, setUploadCounts] = useState<{ done: number; failed: number; total: number; lastError?: string } | null>(null);
@@ -157,8 +185,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         commercial_included: false,
     });
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
-    const [editingPricingIdx, setEditingPricingIdx] = useState<number | null>(null);
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
+    // Price per photo: the gallery's 1-photo pricing option (what checkout and
+    // the gallery page read first), kept in step with photo_libraries.price.
+    const singleOptionIdx = pricingOptions.findIndex(o => o.photo_count === 1);
+    const singlePriceValue = singleOptionIdx >= 0 ? pricingOptions[singleOptionIdx].price : (modalData.price ?? 5);
+    const setSinglePrice = (price: number) => {
+        if (singleOptionIdx >= 0) {
+            setPricingOptions(pricingOptions.map((o, i) => i === singleOptionIdx ? { ...o, price } : o));
+        } else {
+            setPricingOptions([{ id: '', name: 'Single Photo', photo_count: 1, price }, ...pricingOptions]);
+        }
+        if (price > 0) setModalData({ ...modalData, price });
+    };
     const [invitedEmails, setInvitedEmails] = useState<string[]>([]); // Persistent list of invited emails
     // À la carte (owner, 2026-11-02): same album, but these people buy the
     // photos they want at buyerPrice each instead of getting everything free.
@@ -416,16 +455,58 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             if (!finalLibrary) throw new Error('Failed to save library');
 
-            // 2. Handle File Uploads (Only if new files added)
+            // 2. Pricing options — saved before the uploads, so a long upload that
+            // gets interrupted never loses the prices
+            const libraryId = finalLibrary.id;
+
+            // Handle Deletions
+            if (deletedPricingIds.length > 0) {
+                await supabase
+                    .from('gallery_pricing_options')
+                    .delete()
+                    .in('id', deletedPricingIds);
+            }
+
+            // Handle Upserts
+            for (const option of pricingOptions) {
+                // Options with no photos (the old "-1 = full gallery") never priced anything.
+                if (!(option.photo_count > 0)) {
+                    if (option.id) await supabase.from('gallery_pricing_options').update({ is_active: false }).eq('id', option.id);
+                    continue;
+                }
+                const payload = {
+                    library_id: libraryId,
+                    name: option.name?.trim() || (option.photo_count === 1 ? 'Single Photo' : `${option.photo_count} Photos`),
+                    price: option.price,
+                    photo_count: option.photo_count,
+                    is_active: true
+                };
+
+                if (option.id) {
+                    await supabase
+                        .from('gallery_pricing_options')
+                        .update(payload)
+                        .eq('id', option.id);
+                } else {
+                    await supabase
+                        .from('gallery_pricing_options')
+                        .insert(payload);
+                }
+            }
+
+            // 3. Handle File Uploads (Only if new files added)
             // Note: If editing, this ADDS to the library. It doesn't replace.
             // Photos go to the gallery's Google Drive folder through the live
             // ingest pipeline (photos.google_drive_file_id is NOT NULL, so a
             // Supabase Storage upload could never become a photo row). A gallery
             // made without a Drive link gets its own folder on the first upload.
             let failedUploads: typeof filesData = [];
+            let uploadTotal = 0;
+            const queue: typeof filesData = [];
+            let drain = async () => {};
             if (uploadMode === 'upload' && filesData.length > 0 && finalLibrary) {
-                const queue = [...filesData];
-                const total = queue.length;
+                queue.push(...filesData);
+                let total = queue.length;
                 const relay = { only: false };
                 const fractions = new Map<typeof filesData[number], number>();
                 const report = () => {
@@ -462,45 +543,26 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                         report();
                     }
                 };
-                await Promise.all(Array.from({ length: Math.min(2, total) }, worker));
-            }
-
-            // 5. Manage Pricing Options
-            const libraryId = finalLibrary.id;
-
-            // Handle Deletions
-            if (deletedPricingIds.length > 0) {
-                await supabase
-                    .from('gallery_pricing_options')
-                    .delete()
-                    .in('id', deletedPricingIds);
-            }
-
-            // Handle Upserts
-            for (const option of pricingOptions) {
-                const payload = {
-                    library_id: libraryId,
-                    name: option.name,
-                    price: option.price,
-                    photo_count: option.photo_count,
-                    is_active: true
+                // Photos added mid-upload join this queue (see handleFileSelect).
+                liveUploadRef.current = (items) => {
+                    queue.push(...items);
+                    total += items.length;
+                    setUploadCounts(c => c && { ...c, total: c.total + items.length });
+                    items.forEach(i => markFile(i.file, { state: 'waiting', progress: 0 }));
+                    report();
                 };
-
-                if (option.id) {
-                    await supabase
-                        .from('gallery_pricing_options')
-                        .update(payload)
-                        .eq('id', option.id);
-                } else {
-                    await supabase
-                        .from('gallery_pricing_options')
-                        .insert(payload);
-                }
+                // Two at a time, until the queue is empty — including photos
+                // that arrived while the last ones were finishing.
+                drain = async () => {
+                    while (queue.length) await Promise.all(Array.from({ length: Math.min(2, queue.length) }, worker));
+                    uploadTotal = total;
+                };
+                await drain();
             }
 
-            const uploaded = uploadMode === 'upload' ? filesData.length - failedUploads.length : 0;
+            const uploaded = uploadMode === 'upload' ? uploadTotal - failedUploads.length : 0;
             if (failedUploads.length > 0) {
-                error(`${failedUploads.length} of ${filesData.length} photos did not upload. Tap SAVE GALLERY to retry them.`);
+                error(`${failedUploads.length} of ${uploadTotal} photos did not upload. Tap SAVE GALLERY to retry them.`);
             } else {
                 success(
                     (editingId ? 'Gallery updated' : 'Gallery created')
@@ -570,6 +632,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 }
             }
 
+            // Anything picked while the gallery was finishing up goes too.
+            await drain();
+            liveUploadRef.current = null;
+
             if (failedUploads.length > 0) {
                 // Stay open on the saved gallery with only the photos that failed,
                 // so SAVE GALLERY retries them instead of creating a second gallery.
@@ -596,6 +662,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             console.error('Error saving gallery:', err);
             error(err.message || 'Failed to save gallery');
         } finally {
+            liveUploadRef.current = null;
             setLoading(false);
             setSaving(false);
         }
@@ -699,6 +766,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             }));
 
             setFilesData(prev => [...prev, ...processedFiles]);
+            // Mid-upload: send them with the running upload.
+            liveUploadRef.current?.(processedFiles);
+            e.target.value = '';
         }
     };
 
@@ -843,18 +913,23 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         openCreateModal();
     };
 
+    // Cover photo (owner, 2026-11-02: "it's not saving"). The gallery-photos
+    // bucket takes JPEG/PNG/WebP up to 2 MB, and a phone photo is usually a
+    // bigger HEIC, so it is shrunk to a 1600px JPEG here first. Uploads go to
+    // covers/<user id>/ — the only place the storage policy
+    // gallery_covers_owner_insert lets a signed-in person write.
+    const [coverUploading, setCoverUploading] = useState(false);
     const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        const file = e.target.files[0];
-
-        // Optimize: Upload to a 'covers' folder or generally in gallery-photos
-        const filePath = `covers/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file || !user) return;
+        setCoverUploading(true);
         try {
+            const blob = await shrinkToJpeg(file, 1600);
+            const filePath = `covers/${user.id}/${Date.now()}.jpg`;
             const { error: uploadError } = await supabase.storage
                 .from('gallery-photos')
-                .upload(filePath, file);
-
+                .upload(filePath, blob, { contentType: 'image/jpeg' });
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage
@@ -862,10 +937,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 .getPublicUrl(filePath);
 
             setModalData(prev => ({ ...prev, cover_image_url: publicUrl }));
-            success('Cover image uploaded');
-        } catch (err) {
-            console.error(err);
-            error('Failed to upload cover image');
+            success('Cover photo ready — tap SAVE GALLERY to keep it');
+        } catch (err: any) {
+            console.error('[cover] upload failed', err);
+            error(`Cover photo did not upload: ${err?.message || 'unknown error'}`);
+        } finally {
+            setCoverUploading(false);
         }
     };
 
@@ -1018,144 +1095,64 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     </div>
                                 </div>
 
-                                {/* Pricing Options - Full Width */}
-                                <div data-tour="gallery-form-pricing">
-                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Pricing Options & Bundles</label>
-                                    <div className="space-y-2 mb-3">
-                                        {pricingOptions.map((option, idx) => {
-                                            const isEditing = editingPricingIdx === idx;
-                                            return (
-                                                <div key={idx} className="bg-white/5 p-3 rounded-none w-full">
-                                                    {isEditing ? (
-                                                        <div className="flex flex-col gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={option.name}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...pricingOptions];
-                                                                    newOptions[idx].name = e.target.value;
-                                                                    setPricingOptions(newOptions);
-                                                                }}
-                                                                placeholder="Option Name"
-                                                                className="w-full bg-transparent text-sm text-white focus:outline-none pb-1 border-b border-white/10 rounded-none"
-                                                                autoFocus
-                                                            />
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="number"
-                                                                    value={option.photo_count}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...pricingOptions];
-                                                                        const val = parseInt(e.target.value);
-                                                                        newOptions[idx].photo_count = isNaN(val) ? 0 : val;
-                                                                        setPricingOptions(newOptions);
-                                                                    }}
-                                                                    placeholder="Count"
-                                                                    title="Number of photos"
-                                                                    className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                />
-                                                                <div className="flex items-center gap-1 flex-1">
-                                                                    <span className="text-xs text-white/40">$</span>
-                                                                    <input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        value={option.price}
-                                                                        onChange={(e) => {
-                                                                            const newOptions = [...pricingOptions];
-                                                                            const val = parseFloat(e.target.value);
-                                                                            newOptions[idx].price = isNaN(val) ? 0 : val;
-                                                                            setPricingOptions(newOptions);
-                                                                        }}
-                                                                        className="flex-1 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                    />
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setEditingPricingIdx(null)}
-                                                                    className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors flex-shrink-0"
-                                                                    title="Done"
-                                                                >
-                                                                    <CheckCircleIcon className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center gap-2 w-full min-w-0">
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="text-sm font-bold text-white truncate">
-                                                                    {option.name || <span className="text-white/20 italic">No Name</span>}
-                                                                </div>
-                                                                <div className="flex items-center gap-3 mt-0.5">
-                                                                    <span className="text-[10px] text-white/40 font-mono">
-                                                                        {option.photo_count === -1 ? 'ALL' : option.photo_count} photos
-                                                                    </span>
-                                                                    <span className="text-sm font-bold font-mono text-green-400">
-                                                                        ${option.price.toFixed(2)}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex gap-1 flex-shrink-0">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setEditingPricingIdx(idx)}
-                                                                    className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <PencilIcon className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newOptions = pricingOptions.filter((_, i) => i !== idx);
-                                                                        if (option.id) {
-                                                                            setDeletedPricingIds([...deletedPricingIds, option.id]);
-                                                                        }
-                                                                        setPricingOptions(newOptions);
-                                                                        if (editingPricingIdx === idx) setEditingPricingIdx(null);
-                                                                    }}
-                                                                    className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
-                                                                    title="Remove"
-                                                                >
-                                                                    <TrashIcon className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOption = { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 };
-                                                setPricingOptions([...pricingOptions, newOption]);
-                                                setEditingPricingIdx(pricingOptions.length);
+                                {/* Private decides who can buy, so it sits right above Pricing. */}
+                                <label data-tour="gallery-form-private" className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!modalData.is_private}
+                                        onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
+                                        className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-white"
+                                    />
+                                    <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
+                                    <span className="text-[10px] text-white/30 normal-case">Invite only</span>
+                                </label>
+
+                                {/* PRICING — every price on the gallery, in one place (owner, 2026-11-02).
+                                    One row = label left, box right, never wrapping on a phone. */}
+                                <div data-tour="gallery-form-pricing" className="space-y-3">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Pricing</label>
+                                    {/* A private gallery sells only to its à la carte list (album
+                                        owners are free, everyone else is refused), so it shows those
+                                        prices instead. */}
+                                    {!modalData.is_private && (
+                                    <div className="bg-white/5 p-3 space-y-3">
+                                        <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} min={0} />
+                                        <BundleRows
+                                            tour="gallery-form-bundles"
+                                            bundles={pricingOptions.map((o, i) => ({ ...o, i })).filter(o => o.photo_count !== 1)}
+                                            onChange={(i, patch) => setPricingOptions(pricingOptions.map((o, j) => j === i ? { ...o, ...patch } : o))}
+                                            onRemove={(i) => {
+                                                const o = pricingOptions[i];
+                                                if (o?.id) setDeletedPricingIds([...deletedPricingIds, o.id]);
+                                                setPricingOptions(pricingOptions.filter((_, j) => j !== i));
                                             }}
-                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded-none transition-colors uppercase tracking-wider"
-                                        >
-                                            + Add Option
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-3 bg-white/5 p-3" data-tour="gallery-form-album-price">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Whole album $</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="0.01"
-                                            inputMode="decimal"
-                                            value={albumPrice}
-                                            placeholder="—"
-                                            onChange={(e) => setAlbumPrice(e.target.value === '' ? '' : Number(e.target.value) || 0)}
-                                            className="w-24 bg-white/5 rounded-none px-2 py-1 text-sm text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                            aria-label="Whole album price"
+                                            onAdd={() => setPricingOptions([...pricingOptions, { id: '', name: '', photo_count: 3, price: 10 }])}
                                         />
-                                        <span className="text-[10px] text-white/30">blank = not offered</span>
+                                        <PriceRow tour="gallery-form-album-price" label="Whole album" value={albumPrice} onChange={setAlbumPrice} placeholder="Off" />
                                     </div>
-                                    <p className="text-[10px] text-white/30 mt-2">
-                                        Options are "N photos for $X" (1 photo = the per-photo price). Whole album adds a BUY WHOLE ALBUM button to the gallery.
-                                    </p>
+                                    )}
+                                    {modalData.is_private && (
+                                    <div className="bg-white/5 p-3 space-y-3" data-tour="gallery-form-pricing-a-la-carte">
+                                        <p className={PRICE_GROUP}>À la carte buyers</p>
+                                        <p className="text-[10px] text-white/30 -mt-2">Album owners get everything free.</p>
+                                        <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} min={1} />
+                                        <BundleRows
+                                            tour="gallery-a-la-carte-bundles"
+                                            bundles={buyerBundles.map((b, i) => ({ ...b, i }))}
+                                            onChange={(i, patch) => setBuyerBundles(buyerBundles.map((x, j) => j === i ? { ...x, ...patch } : x))}
+                                            onRemove={(i) => setBuyerBundles(buyerBundles.filter((_, j) => j !== i))}
+                                            onAdd={() => setBuyerBundles([...buyerBundles, { photo_count: 4, price: 10 }])}
+                                        />
+                                        <PriceRow
+                                            tour="gallery-a-la-carte-album"
+                                            label="Whole album"
+                                            value={buyerAlbumPrice}
+                                            onChange={setBuyerAlbumPrice}
+                                            placeholder="Off"
+                                        />
+                                    </div>
+                                    )}
+                                    <p className="text-[10px] text-white/30">Per photo 0 = free. Whole album blank = not offered.</p>
                                 </div>
 
                                 <div>
@@ -1249,7 +1246,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     )}
                                 </div>
 
-                                {/* À la carte — same album, buy per photo */}
+                                {/* À la carte — same album, buy per photo. Private galleries only:
+                                    a public gallery already sells to anyone. */}
+                                {modalData.is_private && (
                                 <div data-tour="gallery-form-a-la-carte">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">À La Carte</label>
                                     <p className="text-[10px] text-white/30 mb-3">
@@ -1309,74 +1308,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             + Add
                                         </button>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-3" data-tour="gallery-a-la-carte-price">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Price per photo</span>
-                                        <span className="text-xs text-white/40">$</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="0.01"
-                                            value={buyerPrice}
-                                            onChange={(e) => setBuyerPrice(Number(e.target.value) || 0)}
-                                            className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        />
-                                    </div>
-                                    <div className="mt-3 space-y-2" data-tour="gallery-a-la-carte-bundles">
-                                        {buyerBundles.map((b, idx) => (
-                                            <div key={idx} className="flex items-center gap-2">
-                                                <input
-                                                    type="number"
-                                                    min="2"
-                                                    value={b.photo_count}
-                                                    onChange={(e) => setBuyerBundles(buyerBundles.map((x, i) => i === idx ? { ...x, photo_count: Math.floor(Number(e.target.value) || 0) } : x))}
-                                                    className="w-14 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-mono text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    aria-label="Photos in bundle"
-                                                />
-                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">photos for $</span>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    step="0.01"
-                                                    value={b.price}
-                                                    onChange={(e) => setBuyerBundles(buyerBundles.map((x, i) => i === idx ? { ...x, price: Number(e.target.value) || 0 } : x))}
-                                                    className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    aria-label="Bundle price"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setBuyerBundles(buyerBundles.filter((_, i) => i !== idx))}
-                                                    className="text-white/40 hover:text-red-400 text-xs px-1"
-                                                    aria-label="Remove bundle"
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => setBuyerBundles([...buyerBundles, { photo_count: 4, price: 10 }])}
-                                            className="text-[10px] uppercase font-bold text-white/40 hover:text-white tracking-widest"
-                                        >
-                                            + Add Bundle
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-3" data-tour="gallery-a-la-carte-album">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Their whole album $</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="0.01"
-                                            value={buyerAlbumPrice}
-                                            placeholder={typeof albumPrice === 'number' && albumPrice > 0 ? String(albumPrice) : '—'}
-                                            onChange={(e) => setBuyerAlbumPrice(e.target.value === '' ? '' : Number(e.target.value) || 0)}
-                                            className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        />
-                                        <span className="text-[10px] text-white/30">blank = same as Whole album above</span>
-                                    </div>
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        New buyers get their own invite link when you save.
+                                        New buyers get their own invite link when you save. Their prices are under Pricing above.
                                     </p>
                                 </div>
+                                )}
 
                                 <div>
                                     <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
@@ -1396,15 +1332,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     placeholder="https://... (or upload below)"
                                                 />
                                             </div>
-                                            <div data-tour="gallery-form-private" className="flex items-center gap-2 mb-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={modalData.is_private}
-                                                    onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
-                                                    className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-white"
-                                                />
-                                                <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
-                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -1417,9 +1344,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             <p className="text-[10px] text-white/30 mt-1 pl-6">
                                                 If checked, displays "Eligible for Commercial Use" and assumes license is granted.
                                             </p>
+                                            {coverUploading && <p className="text-[10px] text-white/50 uppercase tracking-widest">Uploading cover…</p>}
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                disabled={coverUploading}
                                                 onChange={handleCoverImageUpload}
                                                 className="block w-full text-xs text-white/60
                                                file:mr-4 file:py-2 file:px-4
@@ -1599,7 +1528,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     </button>
                                     <button data-tour="gallery-form-save"
                                         type="submit"
-                                        disabled={saving}
+                                        disabled={saving || coverUploading}
                                         className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold disabled:opacity-60"
                                     >
                                         {saving
