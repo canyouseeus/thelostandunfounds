@@ -96,6 +96,10 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
   land on `bg-black`: without a border it is invisible against the page.
 - Labels always **UPPERCASE** with `tracking-widest`
 - Icons: `w-3 h-3` for utility, `w-4 h-4` for primary
+- **Text is left-aligned. Never centre it** (owner, 2026-11-02): no `text-center`, `mx-auto` on
+  an icon above text, or `justify-center` on a button label. Buttons use `justify-start text-left
+  px-4`; drop zones and empty states put icon and text flush left. Centring is only for a glyph
+  alone in a fixed box (a badge, a count dot, a play icon on a thumbnail).
 - **A label never wraps.** Wrap the text in `<span className="whitespace-nowrap">`, give the
   icon `shrink-0`, and give the button `px-3`. Bare text beside an icon in a flex button becomes
   its own flex item: on a phone it breaks onto two lines centred on their own while the icon

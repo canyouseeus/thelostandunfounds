@@ -1402,14 +1402,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('drive')}
-                                            className={`flex items-center justify-center gap-2 px-3 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-start gap-2 px-4 py-3 text-left text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
                                             <CloudIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Update Drive Folder' : 'Link Google Drive'}</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('upload')}
-                                            className={`flex items-center justify-center gap-2 px-3 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-start gap-2 px-4 py-3 text-left text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
                                             <ArrowUpTrayIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Add More Photos' : 'Direct Upload'}</span>
                                         </button>
@@ -1439,7 +1439,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </div>
                                     ) : (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                                            <div className="bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
+                                            <div className="bg-white/5 p-6 text-left hover:bg-white/10 transition-colors relative">
                                                 <input
                                                     type="file"
                                                     multiple
@@ -1448,7 +1448,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
                                                 <div className="pointer-events-none">
-                                                    <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mx-auto mb-2" />
+                                                    <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mb-2" />
                                                     <p className="text-white text-xs uppercase font-bold">Click or Drag Photos & Videos Here</p>
                                                     <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
                                                     <p className="text-white/30 text-[10px] mt-1 normal-case">Videos up to 1GB (about 2 minutes). Post longer ones to YouTube.</p>
@@ -1522,14 +1522,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     <button
                                         type="button"
                                         onClick={() => setIsManaged(false)}
-                                        className="flex-1 py-3 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
+                                        className="flex-1 px-4 py-3 text-left text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
                                     >
                                         Cancel
                                     </button>
                                     <button data-tour="gallery-form-save"
                                         type="submit"
                                         disabled={saving || coverUploading}
-                                        className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold disabled:opacity-60"
+                                        className="flex-1 px-4 py-3 text-left bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold disabled:opacity-60"
                                     >
                                         {saving
                                             ? (uploadCounts ? `Uploading ${uploadCounts.done + uploadCounts.failed}/${uploadCounts.total}` : 'Saving…')
