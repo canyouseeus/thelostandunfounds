@@ -138,7 +138,7 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
 
         {/* Cloudflare Turnstile */}
         {requiresTurnstile && (
-          <div className="flex justify-center pt-2">
+          <div className="w-full">
             <Turnstile
               sitekey={turnstileSiteKey}
               action="newsletter"
@@ -167,6 +167,8 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
               }}
               key={turnstileKey}
               theme="dark"
+              size="flexible"
+              appearance="interaction-only"
             />
           </div>
         )}
