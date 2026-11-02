@@ -3,16 +3,17 @@
  * one layout — label left, $ box right, never wrapping on a phone.
  */
 // --- Pricing rows (one layout for every price; label left, box right) --------
+import NumberField from '../ui/NumberField';
+
 export const PRICE_GROUP = 'text-[10px] font-black uppercase tracking-[0.2em] text-white/70';
 const PRICE_LABEL = 'text-[10px] font-black uppercase tracking-[0.2em] text-white/40 whitespace-nowrap';
 const PRICE_INPUT = 'bg-white/5 rounded-none px-2 py-1.5 text-sm text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
-export function PriceRow({ label, value, onChange, placeholder, min = 1, tour }: {
+export function PriceRow({ label, value, onChange, placeholder, tour }: {
     label: string;
     value: number | '';
     onChange: (v: number | '') => void;
     placeholder?: string;
-    min?: number;
     tour?: string;
 }) {
     return (
@@ -20,14 +21,10 @@ export function PriceRow({ label, value, onChange, placeholder, min = 1, tour }:
             <span className={PRICE_LABEL}>{label}</span>
             <div className="flex items-center gap-1">
                 <span className="text-xs text-white/40">$</span>
-                <input
-                    type="number"
-                    min={min}
-                    step="0.01"
-                    inputMode="decimal"
+                <NumberField
                     value={value}
                     placeholder={placeholder}
-                    onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value) || 0)}
+                    onChange={onChange}
                     aria-label={label}
                     className={`w-24 text-right ${PRICE_INPUT}`}
                 />
@@ -50,12 +47,10 @@ export function BundleRows({ bundles, onChange, onRemove, onAdd, tour }: {
             {bundles.map(b => (
                 <div key={b.i} className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <input
-                            type="number"
-                            min="2"
-                            inputMode="numeric"
+                        <NumberField
+                            integer
                             value={b.photo_count}
-                            onChange={(e) => onChange(b.i, { photo_count: Math.floor(Number(e.target.value) || 0) })}
+                            onChange={(v) => onChange(b.i, { photo_count: v === '' ? 0 : v })}
                             aria-label="Photos in bundle"
                             className={`w-12 ${PRICE_INPUT} text-center`}
                         />
@@ -63,13 +58,9 @@ export function BundleRows({ bundles, onChange, onRemove, onAdd, tour }: {
                     </div>
                     <div className="flex items-center gap-1">
                         <span className="text-xs text-white/40">$</span>
-                        <input
-                            type="number"
-                            min="1"
-                            step="0.01"
-                            inputMode="decimal"
+                        <NumberField
                             value={b.price}
-                            onChange={(e) => onChange(b.i, { price: Number(e.target.value) || 0 })}
+                            onChange={(v) => onChange(b.i, { price: v === '' ? 0 : v })}
                             aria-label="Bundle price"
                             className={`w-24 text-right ${PRICE_INPUT}`}
                         />

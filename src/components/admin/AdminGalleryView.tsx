@@ -1116,7 +1116,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         prices instead. */}
                                     {!modalData.is_private && (
                                     <div className="bg-white/5 p-3 space-y-3">
-                                        <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} min={0} />
+                                        <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} />
                                         <BundleRows
                                             tour="gallery-form-bundles"
                                             bundles={pricingOptions.map((o, i) => ({ ...o, i })).filter(o => o.photo_count !== 1)}
@@ -1135,7 +1135,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     <div className="bg-white/5 p-3 space-y-3" data-tour="gallery-form-pricing-a-la-carte">
                                         <p className={PRICE_GROUP}>À la carte buyers</p>
                                         <p className="text-[10px] text-white/30 -mt-2">Album owners get everything free.</p>
-                                        <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} min={1} />
+                                        <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} />
                                         <BundleRows
                                             tour="gallery-a-la-carte-bundles"
                                             bundles={buyerBundles.map((b, i) => ({ ...b, i }))}
