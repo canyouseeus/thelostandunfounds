@@ -51,6 +51,8 @@ interface PhotoLibrary {
     invited_emails?: string; // Comma-separated list of invited client emails
     buyer_emails?: string | null; // À la carte: see the album, buy photos at buyer_price each
     buyer_price?: number | null;
+    buyer_bundles?: { photo_count: number; price: number }[] | null;
+    buyer_album_price?: number | null;
     user_id?: string;
     live_mode?: boolean; // A live event is running — see /admin/live
 }
@@ -163,6 +165,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [originalBuyerEmails, setOriginalBuyerEmails] = useState<string[]>([]);
     const [newBuyerInput, setNewBuyerInput] = useState('');
     const [buyerPrice, setBuyerPrice] = useState<number>(5);
+    // À la carte deals: "N photos for $X", and the whole album for one price.
+    const [buyerBundles, setBuyerBundles] = useState<{ photo_count: number; price: number }[]>([]);
+    const [buyerAlbumPrice, setBuyerAlbumPrice] = useState<number | ''>('');
     const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
     const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
@@ -376,6 +381,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 invited_emails: invitedEmails.map(e => e.trim().toLowerCase()).join(','),
                 buyer_emails: buyerEmails.map(e => e.trim().toLowerCase()).join(',') || null,
                 buyer_price: buyerPrice > 0 ? buyerPrice : 5,
+                buyer_bundles: buyerBundles.filter(b => b.photo_count > 1 && b.price > 0),
+                buyer_album_price: typeof buyerAlbumPrice === 'number' && buyerAlbumPrice > 0 ? buyerAlbumPrice : null,
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
@@ -788,6 +795,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setOriginalBuyerEmails(existingBuyers);
         setNewBuyerInput('');
         setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
+        setBuyerBundles(Array.isArray(lib.buyer_bundles) ? lib.buyer_bundles.map(b => ({ photo_count: Number(b.photo_count), price: Number(b.price) })) : []);
+        setBuyerAlbumPrice(Number(lib.buyer_album_price) > 0 ? Number(lib.buyer_album_price) : '');
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -816,6 +825,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setOriginalBuyerEmails([]);
         setNewBuyerInput('');
         setBuyerPrice(5);
+        setBuyerBundles([]);
+        setBuyerAlbumPrice('');
         setIsManaged(true);
     };
 
@@ -1300,6 +1311,58 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                     </div>
+                                    <div className="mt-3 space-y-2" data-tour="gallery-a-la-carte-bundles">
+                                        {buyerBundles.map((b, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    min="2"
+                                                    value={b.photo_count}
+                                                    onChange={(e) => setBuyerBundles(buyerBundles.map((x, i) => i === idx ? { ...x, photo_count: Math.floor(Number(e.target.value) || 0) } : x))}
+                                                    className="w-14 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-mono text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    aria-label="Photos in bundle"
+                                                />
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">photos for $</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    step="0.01"
+                                                    value={b.price}
+                                                    onChange={(e) => setBuyerBundles(buyerBundles.map((x, i) => i === idx ? { ...x, price: Number(e.target.value) || 0 } : x))}
+                                                    className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    aria-label="Bundle price"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setBuyerBundles(buyerBundles.filter((_, i) => i !== idx))}
+                                                    className="text-white/40 hover:text-red-400 text-xs px-1"
+                                                    aria-label="Remove bundle"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => setBuyerBundles([...buyerBundles, { photo_count: 4, price: 10 }])}
+                                            className="text-[10px] uppercase font-bold text-white/40 hover:text-white tracking-widest"
+                                        >
+                                            + Add Bundle
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3" data-tour="gallery-a-la-carte-album">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Whole album $</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            value={buyerAlbumPrice}
+                                            placeholder="—"
+                                            onChange={(e) => setBuyerAlbumPrice(e.target.value === '' ? '' : Number(e.target.value) || 0)}
+                                            className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                        <span className="text-[10px] text-white/30">blank = not offered</span>
+                                    </div>
                                     <p className="text-[10px] text-white/30 mt-2">
                                         New buyers get their own invite link when you save.
                                     </p>
@@ -1754,12 +1817,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             onCountdownComplete={handleCountdownComplete}
                                                         />
                                                     )}
-                                                    <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors">
-                                                        <div
-                                                            className="flex-1 min-w-0 mr-4 cursor-pointer"
-                                                            onClick={() => openEditModal(lib)}
-                                                            data-tour="gallery-row-open"
-                                                        >
+                                                    {/* The whole card opens the gallery; the icons do their own
+                                                        thing (their row stops the tap). On a phone the icons sit on
+                                                        their own line so the name isn't squeezed out. */}
+                                                    <div
+                                                        className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                                                        onClick={() => openEditModal(lib)}
+                                                        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEditModal(lib); } }}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        aria-label={`Open ${lib.name}`}
+                                                        data-tour="gallery-row-open"
+                                                    >
+                                                        <div className="flex-1 min-w-0 md:mr-4">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 {(lib.published ?? true) ? (
                                                                     <Eye className="w-3 h-3 text-white flex-shrink-0" />
@@ -1780,12 +1850,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
-                                                                <span>/{lib.slug}</span>
+                                                                <span className="truncate">/{lib.slug}</span>
                                                                 <span>•</span>
-                                                                <span>{lib.photo_count || 0} photos</span>
+                                                                <span className="flex-shrink-0">{lib.photo_count || 0} photos</span>
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-1">
+                                                        <div className="flex flex-wrap gap-1 -ml-2 md:ml-0" onClick={(e) => e.stopPropagation()}>
                                                             {!isPhotographerView && (
                                                                 <a
                                                                     href={`/admin/live?slug=${encodeURIComponent(lib.slug)}`}

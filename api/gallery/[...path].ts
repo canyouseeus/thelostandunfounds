@@ -907,17 +907,32 @@ async function handleGalleryPass(req: VercelRequest, res: VercelResponse) {
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
         const { data: library } = await supabase
             .from('photo_libraries')
-            .select('id, invited_emails, buyer_emails, buyer_price, owner_id, user_id')
+            .select('id, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, owner_id, user_id')
             .eq('slug', slug)
             .maybeSingle();
         if (!library) return res.status(200).json({ role: null });
 
         const role = roleFor(library, { email: user.email, userId: user.id, isAdmin: await verifyAdmin(req) });
         if (!role) return res.status(200).json({ role: null });
+        let pricing = null;
+        if (role === 'buyer') {
+            const { cleanBundles } = await import('../../src/lib/buyerPricing.js');
+            const { count } = await supabase
+                .from('photos')
+                .select('id', { count: 'exact', head: true })
+                .eq('library_id', library.id);
+            pricing = {
+                single: Number(library.buyer_price) || 5,
+                bundles: cleanBundles(library.buyer_bundles),
+                albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : null,
+                albumCount: count || 0,
+            };
+        }
         return res.status(200).json({
             role,
             pass: mintPass(library.id, user.email, role),
-            buyerPrice: role === 'buyer' ? Number(library.buyer_price) || 5 : null,
+            buyerPrice: pricing?.single ?? null,
+            pricing,
         });
     } catch (err: any) {
         console.error('[gallery-pass] Error:', err);

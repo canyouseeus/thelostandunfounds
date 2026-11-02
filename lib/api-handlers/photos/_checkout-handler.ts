@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { roleFor, emailList } from '../_gallery-pass.js'
 import { verifiedUser } from '../_turnstile.js'
+import { buyerTotal, cleanBundles } from '../../../src/lib/buyerPricing.js'
 
 type PaymentMethod = 'stripe' | 'strike'
 
@@ -26,8 +27,10 @@ export default async function handler(
   }
 
   try {
-    const { photoIds, email: bodyEmail, paymentMethod = 'strike', returnPath } = req.body as {
+    const { photoIds: bodyPhotoIds, email: bodyEmail, paymentMethod = 'strike', returnPath, wholeAlbum } = req.body as {
       photoIds: string[]
+      /** À la carte "buy the whole album": every photo in it, at buyer_album_price. */
+      wholeAlbum?: boolean
       email: string
       paymentMethod?: PaymentMethod
       returnPath?: string
@@ -38,6 +41,7 @@ export default async function handler(
       req.headers.cookie?.match(/affiliate_ref=([^;]+)/)?.[1] ||
       null
 
+    let photoIds: string[] = Array.isArray(bodyPhotoIds) ? [...new Set(bodyPhotoIds)] : []
     if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
       return res.status(400).json({ error: 'photoIds must be a non-empty array' })
     }
@@ -51,7 +55,7 @@ export default async function handler(
       return res.status(400).json({ error: 'paymentMethod must be "stripe" or "strike"' })
     }
 
-    const count = photoIds.length
+    let count = photoIds.length
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -82,7 +86,7 @@ export default async function handler(
 
     const { data: library, error: libraryError } = await supabase
       .from('photo_libraries')
-      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, owner_id, user_id')
+      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, owner_id, user_id')
       .eq('id', libraryId)
       .single()
 
@@ -102,12 +106,27 @@ export default async function handler(
     // and nobody else can buy from a private album. Checked against the
     // signed-in session, never an address from the request.
     let buyerPrice: number | null = null
+    let buyerAmount: number | null = null
     if (library.is_private || emailList(library.buyer_emails).length > 0) {
       const user = await verifiedUser(req)
       const role = user ? roleFor(library, { email: user.email, userId: user.id }) : null
       if (role === 'buyer' && user?.email) {
         buyerPrice = Number(library.buyer_price) || 5
         email = user.email.trim().toLowerCase()
+        // Every photo in the album, for "buy the whole album" — from the
+        // database, not the page (which may not have loaded them all).
+        const { data: albumPhotos } = await supabase.from('photos').select('id').eq('library_id', library.id)
+        const albumIds = (albumPhotos || []).map(p => p.id)
+        if (wholeAlbum === true) {
+          photoIds = albumIds
+          count = photoIds.length
+        }
+        buyerAmount = buyerTotal(count, {
+          single: buyerPrice,
+          bundles: cleanBundles(library.buyer_bundles),
+          albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : null,
+          albumCount: albumIds.length,
+        })
       } else if (role === 'owner') {
         return res.status(400).json({ error: 'You already have every photo in this album — no purchase needed.' })
       } else if (library.is_private) {
@@ -122,10 +141,11 @@ export default async function handler(
     }
 
     // Bundle math: greedily apply the largest bundles first, fall back to the
-    // gallery's per-photo price for the remainder. À la carte is per photo only.
-    let amount = 0
-    let remaining = count
-    for (const option of buyerPrice != null ? [] : pricingOptions || []) {
+    // gallery's per-photo price for the remainder. À la carte buyers use their
+    // own bundles and whole-album price (src/lib/buyerPricing.ts).
+    let amount = buyerAmount ?? 0
+    let remaining = buyerAmount != null ? 0 : count
+    for (const option of buyerAmount != null ? [] : pricingOptions || []) {
       if (!option.photo_count || option.photo_count <= 0) continue
       const numBundles = Math.floor(remaining / option.photo_count)
       if (numBundles > 0) {
