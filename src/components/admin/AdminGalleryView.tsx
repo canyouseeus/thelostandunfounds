@@ -62,6 +62,33 @@ interface PricingOption {
     is_active?: boolean;
 }
 
+/**
+ * One square thumbnail of a gallery photo; tap opens it full size. Square by
+ * padding, not aspect-ratio (iOS Safari squeezed aspect-ratio tiles in a grid).
+ * A video gets a plain tile: the stream route sends a video whole.
+ */
+function GalleryThumb({ photo, size = 200 }: {
+    photo: { id: string; title: string; google_drive_file_id: string; mime_type: string | null };
+    size?: number;
+}) {
+    const src = (px: number) => `/api/gallery/stream?fileId=${encodeURIComponent(photo.google_drive_file_id)}&size=${px}`;
+    return (
+        <a
+            href={src(1200)}
+            target="_blank"
+            rel="noreferrer"
+            className="relative block w-full h-0 pb-[100%] bg-white/5 overflow-hidden"
+            title={photo.title}
+        >
+            {photo.mime_type?.startsWith('video/') ? (
+                <span className="absolute inset-0 flex items-center justify-center text-white/60 text-[9px] font-bold uppercase">Video</span>
+            ) : (
+                <img src={src(size)} alt={photo.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+            )}
+        </a>
+    );
+}
+
 export default function AdminGalleryView({ onBack, isPhotographerView = false, hideTitle = false }: AdminGalleryViewProps) {
     const { user } = useAuth(); // Get authenticated user
     const [stats, setStats] = useState<GalleryStats | null>(null);
@@ -91,6 +118,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     type FileStatus = { state: 'waiting' | 'sending' | 'done' | 'failed'; progress: number; error?: string };
     const [fileStatus, setFileStatus] = useState<Map<File, FileStatus>>(new Map());
     // Photos already in the gallery being edited, shown on the edit screen.
+    const [showAllPhotos, setShowAllPhotos] = useState(false);
     const [galleryPhotos, setGalleryPhotos] = useState<{ id: string; title: string; google_drive_file_id: string; mime_type: string | null }[]>([]);
     const loadGalleryPhotos = async (libraryId: string) => {
         const { data } = await supabase
@@ -104,6 +132,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     useEffect(() => {
         if (isManaged && editingId) loadGalleryPhotos(editingId);
         else setGalleryPhotos([]);
+        if (!isManaged) setShowAllPhotos(false);
     }, [isManaged, editingId]);
     const markFile = (file: File, status: FileStatus) =>
         setFileStatus(prev => { const next = new Map(prev); next.set(file, status); return next; });
@@ -1236,29 +1265,26 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         {galleryPhotos.length === 0 ? (
                                             <p className="text-[11px] text-white/40">No photos yet.</p>
                                         ) : (
-                                            <div className="max-h-[260px] overflow-y-auto bg-black/40 p-2 grid grid-cols-4 sm:grid-cols-6 gap-1">
-                                                {galleryPhotos.map(p => (
-                                                    <a
-                                                        key={p.id}
-                                                        href={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=1200`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="relative block aspect-square bg-white/5 overflow-hidden"
-                                                        title={p.title}
-                                                    >
-                                                        {p.mime_type?.startsWith('video/') ? (
-                                                            // The stream route sends a video whole; a tile is not worth that.
-                                                            <span className="absolute inset-0 flex items-center justify-center text-white/60 text-[9px] font-bold uppercase">Video</span>
-                                                        ) : (
-                                                            <img
-                                                                src={`/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=200`}
-                                                                alt={p.title}
-                                                                loading="lazy"
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        )}
-                                                    </a>
+                                            // The three newest, and a tile that opens the rest in their
+                                            // own card. Tiles are held square by padding, not
+                                            // aspect-ratio: iOS Safari squeezed aspect-ratio tiles.
+                                            <div className="grid grid-cols-4 gap-1">
+                                                {galleryPhotos.slice(0, 3).map(p => (
+                                                    <GalleryThumb key={p.id} photo={p} />
                                                 ))}
+                                                {galleryPhotos.length > 3 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAllPhotos(true)}
+                                                        className="relative block w-full h-0 pb-[100%] bg-white/5 hover:bg-white/10 transition-colors"
+                                                        data-tour="gallery-form-photos-more"
+                                                    >
+                                                        <span className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                                                            <span className="text-sm font-black">+{galleryPhotos.length - 3}</span>
+                                                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">More</span>
+                                                        </span>
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -1405,6 +1431,23 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     </button>
                                 </div>
                             </form>
+                    </div>
+                </ExpandableScreenContent>
+            </ExpandableScreen>
+
+            {/* Every photo in the gallery being edited, opened from +N MORE. */}
+            <ExpandableScreen isOpen={showAllPhotos && isManaged} onOpenChange={setShowAllPhotos}>
+                <ExpandableScreenContent className="overflow-y-auto">
+                    <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-20 pb-16" data-tour="gallery-all-photos">
+                        <h2 className="text-lg sm:text-xl font-bold text-white uppercase mb-1 pr-10">{modalData.name || 'Gallery'}</h2>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">
+                            {galleryPhotos.length} {galleryPhotos.length === 1 ? 'photo' : 'photos'} · newest first
+                        </p>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1">
+                            {galleryPhotos.map(p => (
+                                <GalleryThumb key={p.id} photo={p} size={400} />
+                            ))}
+                        </div>
                     </div>
                 </ExpandableScreenContent>
             </ExpandableScreen>
@@ -1611,6 +1654,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                         <div
                                                             className="flex-1 min-w-0 mr-4 cursor-pointer"
                                                             onClick={() => openEditModal(lib)}
+                                                            data-tour="gallery-row-open"
                                                         >
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 {(lib.published ?? true) ? (
