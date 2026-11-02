@@ -4,7 +4,7 @@ import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
 import { Eye, EyeOff, Radio } from 'lucide-react';
 import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
@@ -68,30 +68,47 @@ interface PricingOption {
     is_active?: boolean;
 }
 
+type GalleryPhoto = { id: string; title: string; google_drive_file_id: string; mime_type: string | null };
+
+const photoSrc = (photo: GalleryPhoto, px: number) =>
+    `/api/gallery/stream?fileId=${encodeURIComponent(photo.google_drive_file_id)}&size=${px}`;
+
 /**
- * One square thumbnail of a gallery photo; tap opens it full size. Square by
- * padding, not aspect-ratio (iOS Safari squeezed aspect-ratio tiles in a grid).
- * A video gets a plain tile: the stream route sends a video whole.
+ * One square thumbnail of a gallery photo; tap calls onTap (select it, or open
+ * the full photo list). Never a link to the raw image: that left the dashboard
+ * for a bare image on a white page with no way back (owner, 2026-11-02).
+ * Square by padding, not aspect-ratio (iOS Safari squeezed aspect-ratio tiles
+ * in a grid). A video gets a plain tile: the stream route sends a video whole.
  */
-function GalleryThumb({ photo, size = 200 }: {
-    photo: { id: string; title: string; google_drive_file_id: string; mime_type: string | null };
+function GalleryThumb({ photo, size = 200, onTap, selected = false, isCover = false }: {
+    photo: GalleryPhoto;
     size?: number;
+    onTap: () => void;
+    selected?: boolean;
+    isCover?: boolean;
 }) {
-    const src = (px: number) => `/api/gallery/stream?fileId=${encodeURIComponent(photo.google_drive_file_id)}&size=${px}`;
     return (
-        <a
-            href={src(1200)}
-            target="_blank"
-            rel="noreferrer"
+        <button
+            type="button"
+            onClick={onTap}
+            aria-pressed={selected}
             className="relative block w-full h-0 pb-[100%] bg-white/5 overflow-hidden"
             title={photo.title}
         >
             {photo.mime_type?.startsWith('video/') ? (
                 <span className="absolute inset-0 flex items-center justify-center text-white/60 text-[9px] font-bold uppercase">Video</span>
             ) : (
-                <img src={src(size)} alt={photo.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={photoSrc(photo, size)} alt={photo.title} loading="lazy" className={`absolute inset-0 w-full h-full object-cover transition-opacity ${selected ? 'opacity-50' : ''}`} />
             )}
-        </a>
+            {isCover && (
+                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 text-white text-[8px] font-black uppercase tracking-widest">Cover</span>
+            )}
+            {selected && (
+                <span className="absolute top-1 right-1 w-6 h-6 bg-white text-black flex items-center justify-center rounded-full">
+                    <CheckIcon className="w-4 h-4" />
+                </span>
+            )}
+        </button>
     );
 }
 
@@ -152,7 +169,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [fileStatus, setFileStatus] = useState<Map<File, FileStatus>>(new Map());
     // Photos already in the gallery being edited, shown on the edit screen.
     const [showAllPhotos, setShowAllPhotos] = useState(false);
-    const [galleryPhotos, setGalleryPhotos] = useState<{ id: string; title: string; google_drive_file_id: string; mime_type: string | null }[]>([]);
+    const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
     const loadGalleryPhotos = async (libraryId: string) => {
         const { data } = await supabase
             .from('photos')
@@ -162,11 +179,24 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             .limit(500);
         setGalleryPhotos(data || []);
     };
+    // Tapping a photo on the all-photos screen selects it; the bar under the
+    // grid then views it, makes it the cover, or deletes the selection.
+    const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+    const [viewingPhoto, setViewingPhoto] = useState<GalleryPhoto | null>(null);
+    const [photoAction, setPhotoAction] = useState<'cover' | 'delete' | null>(null);
     useEffect(() => {
         if (isManaged && editingId) loadGalleryPhotos(editingId);
         else setGalleryPhotos([]);
         if (!isManaged) setShowAllPhotos(false);
     }, [isManaged, editingId]);
+    useEffect(() => {
+        if (!showAllPhotos) { setSelectedPhotoIds(new Set()); setViewingPhoto(null); }
+    }, [showAllPhotos]);
+    const togglePhoto = (id: string) => setSelectedPhotoIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+    });
     const markFile = (file: File, status: FileStatus) =>
         setFileStatus(prev => { const next = new Map(prev); next.set(file, status); return next; });
     // Which gallery is pulling new files in from its Drive folder right now.
@@ -396,6 +426,75 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             error('Failed to load gallery data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Absolute, so the cover also shows wherever the URL travels (affiliate
+    // product cards read cover_image_url as-is).
+    const coverUrlFor = (photo: GalleryPhoto) => `https://www.thelostandunfounds.com${photoSrc(photo, 1600)}`;
+    const isCoverPhoto = (photo: GalleryPhoto) =>
+        !!modalData.cover_image_url && modalData.cover_image_url.includes(`fileId=${encodeURIComponent(photo.google_drive_file_id)}&`);
+
+    /** Saves the cover straight away, so it sticks even if the form is closed without SAVE. */
+    const saveCover = async (url: string | null) => {
+        if (!editingId) throw new Error('Save the gallery first.');
+        const { data, error: coverError } = await supabase
+            .from('photo_libraries')
+            .update({ cover_image_url: url })
+            .eq('id', editingId)
+            .select('id');
+        if (coverError) throw coverError;
+        // RLS refuses an update by matching no rows, not with an error.
+        if (!data?.length) throw new Error('You can only change the cover of your own gallery.');
+        setModalData(prev => ({ ...prev, cover_image_url: url ?? '' }));
+        setLibraries(prev => prev.map(l => l.id === editingId ? { ...l, cover_image_url: url ?? undefined } : l));
+    };
+
+    const makeSelectedCover = async () => {
+        const photo = galleryPhotos.find(p => selectedPhotoIds.has(p.id));
+        if (!photo || selectedPhotoIds.size !== 1 || photoAction) return;
+        setPhotoAction('cover');
+        try {
+            await saveCover(coverUrlFor(photo));
+            setSelectedPhotoIds(new Set());
+            success('Album cover set');
+        } catch (err: any) {
+            error(err.message || 'Could not set the cover');
+        } finally {
+            setPhotoAction(null);
+        }
+    };
+
+    const deleteSelectedPhotos = async () => {
+        const ids = [...selectedPhotoIds];
+        if (!ids.length || photoAction) return;
+        if (!confirm(`Delete ${ids.length} photo${ids.length === 1 ? '' : 's'} from this gallery and from Google Drive? This cannot be undone.`)) return;
+        setPhotoAction('delete');
+        try {
+            const deleted = galleryPhotos.filter(p => selectedPhotoIds.has(p.id));
+            const { data: { session: authSession } } = await supabase.auth.getSession();
+            const res = await fetch('/api/gallery/batch-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authSession?.access_token || ''}` },
+                body: JSON.stringify({ photoIds: ids }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Could not delete the photos');
+            setGalleryPhotos(prev => prev.filter(p => !selectedPhotoIds.has(p.id)));
+            setLibraries(prev => prev.map(l => l.id === editingId ? { ...l, photo_count: Math.max(0, (l.photo_count || 0) - ids.length) } : l));
+            setSelectedPhotoIds(new Set());
+            setViewingPhoto(null);
+            // A deleted cover would show a broken image: clear it.
+            if (deleted.some(isCoverPhoto)) await saveCover(null).catch(() => {});
+            if (data.driveErrors?.length) {
+                error(`Deleted from the gallery, but ${data.driveErrors.length} file(s) could not be removed from Google Drive.`);
+            } else {
+                success(`Deleted ${ids.length} photo${ids.length === 1 ? '' : 's'}`);
+            }
+        } catch (err: any) {
+            error(err.message || 'Could not delete the photos');
+        } finally {
+            setPhotoAction(null);
         }
     };
 
@@ -1376,7 +1475,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             // aspect-ratio: iOS Safari squeezed aspect-ratio tiles.
                                             <div className="grid grid-cols-4 gap-1">
                                                 {galleryPhotos.slice(0, 3).map(p => (
-                                                    <GalleryThumb key={p.id} photo={p} />
+                                                    <GalleryThumb
+                                                        key={p.id}
+                                                        photo={p}
+                                                        isCover={isCoverPhoto(p)}
+                                                        onTap={() => { setShowAllPhotos(true); setSelectedPhotoIds(new Set([p.id])); }}
+                                                    />
                                                 ))}
                                                 {galleryPhotos.length > 3 && (
                                                     <button
@@ -1547,14 +1651,98 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                     <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-20 pb-16" data-tour="gallery-all-photos">
                         <h2 className="text-lg sm:text-xl font-bold text-white uppercase mb-1 pr-10">{modalData.name || 'Gallery'}</h2>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">
-                            {galleryPhotos.length} {galleryPhotos.length === 1 ? 'photo' : 'photos'} · newest first
+                            {galleryPhotos.length} {galleryPhotos.length === 1 ? 'photo' : 'photos'} · newest first · tap to select
                         </p>
-                        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1">
+                        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1" data-tour="gallery-all-photos-grid">
                             {galleryPhotos.map(p => (
-                                <GalleryThumb key={p.id} photo={p} size={400} />
+                                <GalleryThumb
+                                    key={p.id}
+                                    photo={p}
+                                    size={400}
+                                    selected={selectedPhotoIds.has(p.id)}
+                                    isCover={isCoverPhoto(p)}
+                                    onTap={() => togglePhoto(p.id)}
+                                />
                             ))}
                         </div>
                     </div>
+                    {/* What to do with the selection. Sticky inside the scroller,
+                        so it stays on screen without a fixed layer over the grid. */}
+                    {selectedPhotoIds.size > 0 && (
+                        <div className="sticky bottom-0 z-10 bg-black/90 backdrop-blur-md pb-[env(safe-area-inset-bottom)]" data-tour="gallery-photo-actions">
+                            <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 py-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">
+                                        {selectedPhotoIds.size} selected
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPhotoIds(new Set())}
+                                        className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:text-white"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                {selectedPhotoIds.size === 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewingPhoto(galleryPhotos.find(p => selectedPhotoIds.has(p.id)) || null)}
+                                        className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-white bg-white/10 hover:bg-white/20"
+                                        data-tour="gallery-photo-view"
+                                    >
+                                        View
+                                    </button>
+                                )}
+                                {(() => {
+                                    const only = selectedPhotoIds.size === 1 ? galleryPhotos.find(p => selectedPhotoIds.has(p.id)) : undefined;
+                                    const canCover = !!only && !only.mime_type?.startsWith('video/');
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={makeSelectedCover}
+                                            disabled={!canCover || !!photoAction || (!!only && isCoverPhoto(only))}
+                                            title={selectedPhotoIds.size > 1 ? 'Select one photo to make it the cover' : undefined}
+                                            className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider bg-white text-black hover:bg-white/90 disabled:opacity-40 flex items-center justify-center gap-1 whitespace-nowrap"
+                                            data-tour="gallery-photo-cover"
+                                        >
+                                            <StarIcon className="w-3 h-3" />
+                                            {photoAction === 'cover' ? 'Saving…' : only && isCoverPhoto(only) ? 'Cover' : 'Make Cover'}
+                                        </button>
+                                    );
+                                })()}
+                                <button
+                                    type="button"
+                                    onClick={deleteSelectedPhotos}
+                                    disabled={!!photoAction}
+                                    className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-40 flex items-center justify-center gap-1"
+                                    data-tour="gallery-photo-delete"
+                                >
+                                    <TrashIcon className="w-3 h-3" />
+                                    {photoAction === 'delete' ? 'Deleting…' : 'Delete'}
+                                </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* One photo, full size, on black — in place of opening the bare image file. */}
+                    {viewingPhoto && (
+                        <div className="fixed inset-0 z-20 bg-black flex items-center justify-center" onClick={() => setViewingPhoto(null)}>
+                            <button
+                                type="button"
+                                onClick={() => setViewingPhoto(null)}
+                                className="absolute top-6 right-6 p-2 hover:bg-white/10"
+                                aria-label="Close photo"
+                            >
+                                <XMarkIcon className="w-6 h-6 text-white" />
+                            </button>
+                            {viewingPhoto.mime_type?.startsWith('video/') ? (
+                                <video src={photoSrc(viewingPhoto, 1600)} controls playsInline className="max-w-full max-h-full" onClick={e => e.stopPropagation()} />
+                            ) : (
+                                <img src={photoSrc(viewingPhoto, 1600)} alt={viewingPhoto.title} className="max-w-full max-h-full object-contain" />
+                            )}
+                        </div>
+                    )}
                 </ExpandableScreenContent>
             </ExpandableScreen>
 

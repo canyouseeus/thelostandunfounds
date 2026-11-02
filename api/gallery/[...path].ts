@@ -1348,15 +1348,37 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     try {
         const { requireAdminUser, batchDeletePhotos } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
-        const admin = await requireAdminUser(req);
-        if (!admin) return res.status(403).json({ error: 'Forbidden' });
-
         const { photoIds } = req.body || {};
-        if (!Array.isArray(photoIds) || !photoIds.length) {
+        if (!Array.isArray(photoIds) || !photoIds.length || !photoIds.every(id => typeof id === 'string')) {
             return res.status(400).json({ error: 'photoIds is required' });
         }
 
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        // The admin, or the signed-in owner of every gallery the photos are in
+        // (GALLERY EVERYWHERE RULE: members and photographers delete from their
+        // own galleries). Ownership is read here, never taken from the request.
+        const admin = await requireAdminUser(req);
+        if (!admin) {
+            const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+            const user = await verifiedUser(req);
+            if (!user) return res.status(403).json({ error: 'Forbidden' });
+            const { data: rows, error: rowsError } = await supabase
+                .from('photos')
+                .select('id, library_id')
+                .in('id', photoIds);
+            if (rowsError) throw rowsError;
+            const libIds = [...new Set((rows || []).map(r => r.library_id).filter(Boolean))];
+            const { data: libs, error: libsError } = libIds.length
+                ? await supabase.from('photo_libraries').select('id, owner_id, user_id').in('id', libIds)
+                : { data: [], error: null };
+            if (libsError) throw libsError;
+            const mine = new Set((libs || [])
+                .filter(l => l.owner_id === user.id || l.user_id === user.id)
+                .map(l => l.id));
+            const owns = new Set(photoIds).size === (rows || []).length
+                && (rows || []).every(r => r.library_id && mine.has(r.library_id));
+            if (!owns) return res.status(403).json({ error: 'You can only delete photos from your own galleries.' });
+        }
         const result = await batchDeletePhotos(supabase as any, photoIds);
         return res.status(200).json({ success: true, ...result });
     } catch (err: any) {

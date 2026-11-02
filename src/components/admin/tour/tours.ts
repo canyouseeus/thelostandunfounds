@@ -509,7 +509,7 @@ const galleryPhotosTour: Tour = {
     {
       target: 'gallery-form-photos',
       title: 'In This Gallery',
-      body: 'Its three newest photos. Tap one to see it full size.',
+      body: 'Its three newest photos. Tap one to open every photo with it selected.',
       missingNote: 'This gallery has no photos yet.',
     },
     {
@@ -519,7 +519,7 @@ const galleryPhotosTour: Tour = {
       body: 'Tap MORE to see every photo in the gallery.',
       missingNote: 'This gallery has three photos or fewer, so they all show already.',
     },
-    { target: 'gallery-all-photos', title: 'All Photos', body: 'Every photo, newest first. The X closes it.' },
+    { target: 'gallery-all-photos', title: 'All Photos', body: 'Every photo, newest first. Tap photos to select them. The X closes it.' },
   ],
 };
 
@@ -919,6 +919,63 @@ const albumPriceSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): Tou
   wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY puts it live.' }),
 ];
 
+// Select photos in a gallery: make one the cover, or delete them (owner,
+// 2026-11-02). Same screen on every dashboard that edits galleries.
+const photoActionsSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
+  ...open,
+  wrap({
+    target: 'gallery-row-open',
+    action: 'click',
+    title: 'Open A Gallery',
+    body: 'Tap a gallery to open it.',
+    missingNote: 'No galleries yet. Make one with NEW first.',
+  }),
+  wrap({
+    target: 'gallery-form-photos-more',
+    action: 'click',
+    title: 'More',
+    body: 'Tap MORE to see every photo.',
+    missingNote: 'This gallery has three photos or fewer. Tap one of them under In This Gallery instead.',
+  }),
+  wrap({ target: 'gallery-all-photos-grid', title: 'Select', body: 'Tap a photo to select it. Tap more to select several. Tap again to unselect.' }),
+  wrap({ target: 'gallery-photo-actions', title: 'Selected', body: 'What you can do with the photos you picked. CLEAR unselects them.', missingNote: 'Select a photo first: tap one in the grid.' }),
+  wrap({ target: 'gallery-photo-view', title: 'View', body: 'See the photo full size. Tap it to close.', missingNote: 'VIEW shows when exactly one photo is selected.' }),
+  wrap({ target: 'gallery-photo-cover', title: 'Make Cover', body: 'Makes the selected photo the album cover. It saves straight away.', missingNote: 'Select one photo to make it the cover.' }),
+  wrap({ target: 'gallery-photo-delete', title: 'Delete', body: 'Deletes the selected photos from the gallery and from Google Drive. It asks first.', missingNote: 'Select a photo first.' }),
+];
+
+const galleryPhotoActionsTour: Tour = {
+  id: 'gallery-photo-actions',
+  title: 'Cover And Delete',
+  summary: 'Select photos in a gallery to make one the cover or delete them.',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: photoActionsSteps([
+    openFromDock('gallery', 'Cover And Delete', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+  ], s => inPanel('gallery', s)),
+};
+
+const memberPhotoActionsTour: Tour = {
+  id: 'member-gallery-photo-actions',
+  title: 'Cover And Delete',
+  summary: 'Select photos in a gallery to make one the cover or delete them.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: photoActionsSteps([memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.')], s => inApp('gallery', s)),
+};
+
+const photographerPhotoActionsTour: Tour = {
+  id: 'photographer-gallery-photo-actions',
+  title: 'Cover And Delete',
+  summary: 'Select photos in a gallery to make one the cover or delete them.',
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: photoActionsSteps([openPhotographer], s => s),
+};
+
 const albumPriceTour: Tour = {
   id: 'gallery-album-price',
   title: 'Whole Album Price',
@@ -951,7 +1008,7 @@ const photographerAlbumPriceTour: Tour = {
   steps: albumPriceSteps([openPhotographer], s => s),
 };
 
-export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
