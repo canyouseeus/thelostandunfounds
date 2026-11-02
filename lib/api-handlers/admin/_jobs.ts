@@ -9,6 +9,8 @@ import { recordFieldSale } from './field-sales.js'
 import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referral-tie.js'
 import { getZohoAuthContext } from '../_zoho-email-utils.js'
 import { sendPhotographerInvite } from './photographer-invite.js'
+import { sendGalleryInvites } from '../_gallery-invite.js'
+import { ADMIN_EMAILS } from '../_admin-auth.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -162,6 +164,46 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
    * invitation and CCs media@; testEmail previews it at that address only,
    * storing nothing.
    */
+  /**
+   * { slug | library_id, emails?, testEmail? } — the client gallery invite,
+   * same as Admin → Gallery → edit a gallery → Resend. Without `emails` it
+   * goes to everyone on the gallery's invite list except media@ (which gets
+   * a record copy of each instead). Each invite opens the gallery in one tap.
+   * testEmail (an admin address) previews it there only: [TEST], no record
+   * copy, and its button won't open the gallery (that address isn't invited).
+   */
+  async gallery_invite(supabase, payload) {
+    let query = supabase.from('photo_libraries').select('id, slug, invited_emails')
+    query = payload.library_id ? query.eq('id', payload.library_id) : query.eq('slug', payload.slug || '')
+    const { data: library, error } = await query.maybeSingle()
+    if (error) return fail(error.message, 500)
+    if (!library) return fail('gallery not found (give slug or library_id)', 404)
+
+    const invited = String(library.invited_emails || '')
+      .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+    let emails: string[]
+    let test = false
+    if (payload.testEmail) {
+      const t = String(payload.testEmail).trim().toLowerCase()
+      if (!ADMIN_EMAILS.includes(t)) return fail(`testEmail must be an admin address: ${ADMIN_EMAILS.join(', ')}`, 400)
+      emails = [t]
+      test = true
+    } else if (Array.isArray(payload.emails) && payload.emails.length) {
+      emails = payload.emails.map((e: any) => String(e).trim().toLowerCase())
+      const notInvited = emails.filter((e) => !invited.includes(e))
+      // Only people on the list: an invite to anyone else carries a key that
+      // can't open the gallery, and this must never mail arbitrary addresses.
+      if (notInvited.length) return fail(`not on the invite list: ${notInvited.join(', ')}`, 400)
+    } else {
+      emails = invited.filter((e) => e !== 'media@thelostandunfounds.com')
+    }
+    if (!emails.length) return fail('nobody to invite', 400)
+
+    const { results } = await sendGalleryInvites(supabase, library.id, emails, { test })
+    const out = { gallery: library.slug, test, ...results }
+    return results.failed.length ? fail(`${results.failed.length} invite(s) failed`, 502, out) : ok(out)
+  },
+
   async invite_photographer(supabase, payload) {
     if (!payload.email) return fail('email is required', 400)
     const result = await sendPhotographerInvite(supabase, payload as any)
