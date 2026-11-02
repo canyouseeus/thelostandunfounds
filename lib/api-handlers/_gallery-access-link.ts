@@ -39,6 +39,14 @@ function invitedList(raw: string | null | undefined): string[] {
     return (raw || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 }
 
+/**
+ * Album owners (invited_emails) and à la carte buyers (buyer_emails) both get
+ * into the gallery. What each may download is decided by the stream route.
+ */
+function onEitherList(library: { invited_emails?: string | null; buyer_emails?: string | null }, email: string): boolean {
+    return invitedList(library.invited_emails).includes(email) || invitedList(library.buyer_emails).includes(email);
+}
+
 function escapeHtml(s: string): string {
     return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
@@ -70,12 +78,12 @@ export async function sendGalleryAccessLink(
 
     const { data: library, error } = await supabase
         .from('photo_libraries')
-        .select('name, slug, invited_emails')
+        .select('name, slug, invited_emails, buyer_emails')
         .eq('slug', slug)
         .eq('published', true)
         .maybeSingle();
     if (error || !library) return { sent: false, reason: 'no_gallery' };
-    if (!invitedList(library.invited_emails).includes(email)) return { sent: false, reason: 'not_invited' };
+    if (!onEitherList(library, email)) return { sent: false, reason: 'not_invited' };
 
     let link: string;
     try {
@@ -163,7 +171,7 @@ export async function openWithInviteKey(
 
     const { data: library, error } = await supabase
         .from('photo_libraries')
-        .select('id, slug, invited_emails')
+        .select('id, slug, invited_emails, buyer_emails')
         .eq('slug', slug)
         .eq('published', true)
         .maybeSingle();
@@ -172,7 +180,7 @@ export async function openWithInviteKey(
     const expected = Buffer.from(sign(library.id, email));
     const given = Buffer.from(key.slice(dot + 1));
     if (expected.length !== given.length || !timingSafeEqual(expected, given)) return { ok: false, reason: 'bad_key' };
-    if (!invitedList(library.invited_emails).includes(email)) return { ok: false, reason: 'not_invited' };
+    if (!onEitherList(library, email)) return { ok: false, reason: 'not_invited' };
 
     try {
         return { ok: true, link: await makeLink(supabase, email, `${SITE}/gallery/${encodeURIComponent(library.slug)}`) };

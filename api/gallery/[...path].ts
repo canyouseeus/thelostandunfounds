@@ -180,6 +180,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'pass') {
+            return await handleGalleryPass(req, res);
+        }
         if (route === 'my-downloads') {
             return await handleMyDownloads(req, res);
         }
@@ -374,7 +377,7 @@ async function streamVideoFromDrive(
     res: VercelResponse,
     fileId: string,
     mimeType: string,
-    opts: { download: boolean; filename: string }
+    opts: { download: boolean; filename: string; cache?: string }
 ): Promise<boolean> {
     const token = await getDriveAccessToken();
     if (!token) return false;
@@ -406,7 +409,7 @@ async function streamVideoFromDrive(
     }
     res.setHeader(
         'Cache-Control',
-        opts.download ? 'no-store' : 'public, max-age=31536000, immutable'
+        opts.download ? 'no-store' : (opts.cache || 'public, max-age=31536000, immutable')
     );
     if (opts.download) {
         res.setHeader('Content-Disposition', `attachment; filename="${opts.filename}"`);
@@ -502,7 +505,7 @@ async function fetchViaServiceAccount(fileId: string, targetSize: number): Promi
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
-    const { fileId, size, download, email } = req.query;
+    const { fileId, size, download, email, gp, et } = req.query;
     const isDownload = download === 'true';
 
     try {
@@ -527,20 +530,38 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
         let photoIdForEvent: string | null = null;
         let photoTitle = 'photo';
         let photoMimeType: string | null = null;
+        let photoLibraryId: string | null = null;
         try {
             const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
             const { data: photo } = await supabase
                 .from('photos')
-                .select('id, title, mime_type')
+                .select('id, title, mime_type, library_id')
                 .eq('google_drive_file_id', fileId as string)
                 .single();
             if (photo?.title) photoTitle = photo.title as string;
             if (photo?.id) photoIdForEvent = photo.id as string;
             if (photo?.mime_type) photoMimeType = photo.mime_type as string;
+            if (photo?.library_id) photoLibraryId = photo.library_id as string;
         } catch {
             // Non-fatal — a file with no row still streams as an image below.
         }
         let downloadFilename = buildDownloadFilename(photoTitle, photoMimeType);
+
+        // Who may have the full file (album owner, buyer of this photo, paid
+        // order token), and whether the answer depends on the asker — see
+        // lib/api-handlers/_stream-access.ts.
+        const { streamAccess } = await import('../../lib/api-handlers/_stream-access.js');
+        const access = await streamAccess(createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!), {
+            photoId: photoIdForEvent,
+            libraryId: photoLibraryId,
+            gp,
+            et,
+        });
+        if (isDownload && !access.download) {
+            return res.status(403).json({ error: 'Buy this photo to download it.' });
+        }
+        // Personal answers stay out of the shared CDN cache.
+        const viewCache = access.personal ? 'private, max-age=86400' : 'public, max-age=31536000, immutable';
 
         // Video leaves here entirely: it cannot be resized, cannot be buffered
         // into a response, and needs Range to play at all.
@@ -548,6 +569,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             const served = await streamVideoFromDrive(req, res, fileId as string, photoMimeType, {
                 download: isDownload,
                 filename: downloadFilename,
+                cache: viewCache,
             });
             if (served) return;
             console.error('[stream] video path failed for fileId:', fileId);
@@ -603,7 +625,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
                 return res.send(lh3Buffer);
             }
             res.setHeader('Content-Type', lh3ContentType || 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('Cache-Control', viewCache);
             return res.send(lh3Buffer);
         }
 
@@ -621,7 +643,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
                 return res.send(saResult.buffer);
             }
             res.setHeader('Content-Type', saResult.contentType);
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('Cache-Control', viewCache);
             return res.send(saResult.buffer);
         }
 
@@ -862,6 +884,44 @@ async function handleMyDownloads(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         console.error('[my-downloads] Error:', err);
         return res.status(500).json({ error: 'Could not load your downloads.' });
+    }
+}
+
+/**
+ * GET ?slug= — the signed-in viewer's pass for this gallery: album owner
+ * (free, clean) or à la carte buyer ($buyer_price a photo), from the live
+ * invite lists. The page appends it to stream URLs as &gp= (an <img> or a
+ * download link carries no session). See lib/api-handlers/_gallery-pass.ts.
+ */
+async function handleGalleryPass(req: VercelRequest, res: VercelResponse) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    try {
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+        if (!slug) return res.status(400).json({ error: 'slug is required' });
+        const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+        const { verifyAdmin } = await import('../../lib/api-handlers/_admin-auth.js');
+        const { roleFor, mintPass } = await import('../../lib/api-handlers/_gallery-pass.js');
+        const user = await verifiedUser(req);
+        if (!user?.email) return res.status(200).json({ role: null });
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const { data: library } = await supabase
+            .from('photo_libraries')
+            .select('id, invited_emails, buyer_emails, buyer_price, owner_id, user_id')
+            .eq('slug', slug)
+            .maybeSingle();
+        if (!library) return res.status(200).json({ role: null });
+
+        const role = roleFor(library, { email: user.email, userId: user.id, isAdmin: await verifyAdmin(req) });
+        if (!role) return res.status(200).json({ role: null });
+        return res.status(200).json({
+            role,
+            pass: mintPass(library.id, user.email, role),
+            buyerPrice: role === 'buyer' ? Number(library.buyer_price) || 5 : null,
+        });
+    } catch (err: any) {
+        console.error('[gallery-pass] Error:', err);
+        return res.status(500).json({ error: 'Could not check your access.' });
     }
 }
 

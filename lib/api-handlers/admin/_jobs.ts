@@ -165,7 +165,9 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
    * storing nothing.
    */
   /**
-   * { slug | library_id, emails?, testEmail? } — the client gallery invite,
+   * { slug | library_id, emails?, testEmail? } — the client gallery invite
+   * (album owners, or à la carte buyers listed in emails; each gets the copy
+   * for their list),
    * same as Admin → Gallery → edit a gallery → Resend. Without `emails` it
    * goes to everyone on the gallery's invite list except media@ (which gets
    * a record copy of each instead). Each invite opens the gallery in one tap.
@@ -173,13 +175,17 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
    * copy, and its button won't open the gallery (that address isn't invited).
    */
   async gallery_invite(supabase, payload) {
-    let query = supabase.from('photo_libraries').select('id, slug, invited_emails')
+    let query = supabase.from('photo_libraries').select('id, slug, invited_emails, buyer_emails')
     query = payload.library_id ? query.eq('id', payload.library_id) : query.eq('slug', payload.slug || '')
     const { data: library, error } = await query.maybeSingle()
     if (error) return fail(error.message, 500)
     if (!library) return fail('gallery not found (give slug or library_id)', 404)
 
     const invited = String(library.invited_emails || '')
+      .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+    // À la carte buyers are invited too (they buy per photo); listed emails
+    // may be on either list.
+    const buyers = String(library.buyer_emails || '')
       .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean)
     let emails: string[]
     let test = false
@@ -190,7 +196,7 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
       test = true
     } else if (Array.isArray(payload.emails) && payload.emails.length) {
       emails = payload.emails.map((e: any) => String(e).trim().toLowerCase())
-      const notInvited = emails.filter((e) => !invited.includes(e))
+      const notInvited = emails.filter((e) => !invited.includes(e) && !buyers.includes(e))
       // Only people on the list: an invite to anyone else carries a key that
       // can't open the gallery, and this must never mail arbitrary addresses.
       if (notInvited.length) return fail(`not on the invite list: ${notInvited.join(', ')}`, 400)

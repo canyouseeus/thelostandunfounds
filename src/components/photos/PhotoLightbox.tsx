@@ -4,6 +4,7 @@ import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, Arro
 import DownloadEmailModal from '../DownloadEmailModal';
 import PrintOrderModal from './PrintOrderModal';
 import { MatureCover, MATURE_BLUR, useMatureConsent } from './MatureCover';
+import { withGalleryPass } from '../../lib/galleryPass';
 
 interface Photo {
     id: string;
@@ -51,7 +52,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
     const triggerDownload = (email: string) => {
         const fileId = photo.google_drive_file_id || photo.id;
-        const url = `/api/gallery/stream?fileId=${fileId}&download=true&email=${encodeURIComponent(email)}`;
+        const url = withGalleryPass(`/api/gallery/stream?fileId=${fileId}&download=true&email=${encodeURIComponent(email)}`);
         window.open(url, '_blank');
     };
 

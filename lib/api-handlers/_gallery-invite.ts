@@ -29,7 +29,7 @@ export async function sendGalleryInvites(
     const results: InviteResults = { succeeded: [], failed: [] };
     const { data: library, error: libError } = await supabase
         .from('photo_libraries')
-        .select('id, name, slug')
+        .select('id, name, slug, invited_emails, buyer_emails, buyer_price')
         .eq('id', libraryId)
         .single();
     if (libError || !library) {
@@ -40,13 +40,23 @@ export async function sendGalleryInvites(
     const auth = await getZohoAuthContext();
     console.log(`[Gallery Invite] Starting invitation sequence for library: ${library.name} (${libraryId}). Target emails:`, emails, opts.test ? '(TEST)' : '');
 
+    const owners = (library.invited_emails || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+    const buyers = (library.buyer_emails || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+    const price = `$${(Number(library.buyer_price) || 5).toFixed(2).replace(/\.00$/, '')}`;
+
     for (const email of emails) {
         try {
+            // À la carte: on the buyer list and not an album owner — they see the
+            // whole album and buy the photos they want (owner, 2026-11-02).
+            const aLaCarte = buyers.includes(email.trim().toLowerCase()) && !owners.includes(email.trim().toLowerCase());
+            const intro = aLaCarte
+                ? `Photos from <strong style="color: #ffffff;">${library.name}</strong> are up. Browse the whole album and pick the ones you want — ${price} a photo, full resolution.`
+                : `Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.`;
             const inviteBody = (galleryUrl: string) => `
                 <h1 style="${EMAIL_STYLES.heading1}">YOUR GALLERY IS OPEN</h1>
 
                 <p style="${EMAIL_STYLES.paragraph}">
-                  Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.
+                  ${intro}
                 </p>
 
                 <p style="${EMAIL_STYLES.paragraph}">

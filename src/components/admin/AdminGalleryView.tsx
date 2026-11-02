@@ -49,6 +49,8 @@ interface PhotoLibrary {
     commercial_included?: boolean;
     owner_id?: string;
     invited_emails?: string; // Comma-separated list of invited client emails
+    buyer_emails?: string | null; // À la carte: see the album, buy photos at buyer_price each
+    buyer_price?: number | null;
     user_id?: string;
     live_mode?: boolean; // A live event is running — see /admin/live
 }
@@ -155,6 +157,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [editingPricingIdx, setEditingPricingIdx] = useState<number | null>(null);
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
     const [invitedEmails, setInvitedEmails] = useState<string[]>([]); // Persistent list of invited emails
+    // À la carte (owner, 2026-11-02): same album, but these people buy the
+    // photos they want at buyerPrice each instead of getting everything free.
+    const [buyerEmails, setBuyerEmails] = useState<string[]>([]);
+    const [originalBuyerEmails, setOriginalBuyerEmails] = useState<string[]>([]);
+    const [newBuyerInput, setNewBuyerInput] = useState('');
+    const [buyerPrice, setBuyerPrice] = useState<number>(5);
     const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
     const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
@@ -366,6 +374,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 // photos RLS policy matches them against this list. A capitalised
                 // entry ("Jenna.taylor@...") let the client in to an empty gallery.
                 invited_emails: invitedEmails.map(e => e.trim().toLowerCase()).join(','),
+                buyer_emails: buyerEmails.map(e => e.trim().toLowerCase()).join(',') || null,
+                buyer_price: buyerPrice > 0 ? buyerPrice : 5,
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
@@ -503,7 +513,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             // 6. Handle Invitations - Only send for NEW emails
             console.log('[handleSaveGallery] Checking invites. Current:', invitedEmails, 'Original:', originalInvitedEmails);
-            const newEmails = invitedEmails.filter(e => !originalInvitedEmails.includes(e));
+            // New album owners and new à la carte buyers alike; the invite route
+            // sends each the copy for their list.
+            const newEmails = [
+                ...invitedEmails.filter(e => !originalInvitedEmails.includes(e)),
+                ...buyerEmails.filter(e => !originalBuyerEmails.includes(e) && !invitedEmails.includes(e)),
+            ];
             console.log('[handleSaveGallery] New emails calculated:', newEmails);
             if (newEmails.length > 0 && finalLibrary) {
                 try {
@@ -562,6 +577,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
             setNewEmailInput('');
+            setBuyerEmails([]);
+            setOriginalBuyerEmails([]);
+            setNewBuyerInput('');
             setIsManaged(false);
         } catch (err: any) {
             console.error('Error saving gallery:', err);
@@ -765,6 +783,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setInvitedEmails(existingEmails);
         setOriginalInvitedEmails(existingEmails);
         setNewEmailInput('');
+        const existingBuyers = (lib.buyer_emails || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+        setBuyerEmails(existingBuyers);
+        setOriginalBuyerEmails(existingBuyers);
+        setNewBuyerInput('');
+        setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -789,6 +812,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setInvitedEmails(['media@thelostandunfounds.com']);
         setOriginalInvitedEmails(['media@thelostandunfounds.com']);
         setNewEmailInput('');
+        setBuyerEmails([]);
+        setOriginalBuyerEmails([]);
+        setNewBuyerInput('');
+        setBuyerPrice(5);
         setIsManaged(true);
     };
 
@@ -1199,6 +1226,83 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             ↩ Resend Access Emails to All
                                         </button>
                                     )}
+                                </div>
+
+                                {/* À la carte — same album, buy per photo */}
+                                <div data-tour="gallery-form-a-la-carte">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">À La Carte</label>
+                                    <p className="text-[10px] text-white/30 mb-3">
+                                        They see the whole album behind the watermark and buy the photos they want. Album owners above get everything free.
+                                    </p>
+                                    {buyerEmails.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {buyerEmails.map((email, idx) => (
+                                                <div
+                                                    key={email}
+                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${originalBuyerEmails.includes(email) ? 'bg-white/10 text-white/60' : 'bg-emerald-500/20 text-emerald-400'}`}
+                                                >
+                                                    <span>{email}</span>
+                                                    {!originalBuyerEmails.includes(email) && <span className="text-[9px] uppercase ml-1 opacity-60">new</span>}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setBuyerEmails(buyerEmails.filter((_, i) => i !== idx))}
+                                                        className="ml-1 hover:text-red-400 transition-colors"
+                                                        aria-label={`Remove ${email}`}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="email"
+                                            value={newBuyerInput}
+                                            onChange={(e) => setNewBuyerInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ',') {
+                                                    e.preventDefault();
+                                                    const email = newBuyerInput.trim().replace(',', '').toLowerCase();
+                                                    if (email && email.includes('@') && !buyerEmails.includes(email)) {
+                                                        setBuyerEmails([...buyerEmails, email]);
+                                                        setNewBuyerInput('');
+                                                    }
+                                                }
+                                            }}
+                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none font-mono text-xs"
+                                            placeholder="buyer@example.com"
+                                            data-tour="gallery-a-la-carte-email"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const email = newBuyerInput.trim().toLowerCase();
+                                                if (email && email.includes('@') && !buyerEmails.includes(email)) {
+                                                    setBuyerEmails([...buyerEmails, email]);
+                                                    setNewBuyerInput('');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-white/10 text-white text-xs uppercase font-bold hover:bg-white/20 transition-colors"
+                                        >
+                                            + Add
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3" data-tour="gallery-a-la-carte-price">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Price per photo</span>
+                                        <span className="text-xs text-white/40">$</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            value={buyerPrice}
+                                            onChange={(e) => setBuyerPrice(Number(e.target.value) || 0)}
+                                            className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-white/30 mt-2">
+                                        New buyers get their own invite link when you save.
+                                    </p>
                                 </div>
 
                                 <div>

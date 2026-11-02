@@ -29,6 +29,7 @@ import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import { setGalleryPass, withGalleryPass } from '../../lib/galleryPass';
 import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
@@ -348,7 +349,13 @@ const PhotoCard: React.FC<{
 const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ librarySlug, inline = false }) => {
     const { user, loading: authLoading } = useAuth();
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
-    const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
+    const [rawPricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
+    // The signed-in viewer's role here (GET /api/gallery/pass): an album owner
+    // has every photo free; an à la carte buyer sees the whole album behind the
+    // watermark overlay and buys photos at buyerPrice each (owner, 2026-11-02).
+    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null } | null>(null);
+    // À la carte is per photo: the album's own bundles don't apply to buyers.
+    const pricingOptions = galleryRole?.role === 'buyer' ? [] : rawPricingOptions;
     const [photos, setPhotos] = useState<Photo[]>([]);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
@@ -389,6 +396,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             return next;
         });
     };
+    useEffect(() => {
+        let cancelled = false;
+        setGalleryPass(librarySlug, null);
+        setGalleryRole(null);
+        if (!user) return;
+        (async () => {
+            try {
+                const res = await fetch(`/api/gallery/pass?slug=${encodeURIComponent(librarySlug)}`);
+                const data = res.ok ? await res.json() : null;
+                if (cancelled || !data?.role || !data.pass) return;
+                setGalleryPass(librarySlug, data.pass);
+                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null });
+            } catch { /* no pass: downloads of a private album stay locked */ }
+        })();
+        return () => { cancelled = true; };
+    }, [librarySlug, user?.id]);
+
     useEffect(() => {
         let cancelled = false;
         try { setDownloadedIds(new Set(JSON.parse(localStorage.getItem(downloadedKey) || '[]'))); } catch { setDownloadedIds(new Set()); }
@@ -882,7 +906,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         markDownloaded([photo.id]);
         const fileId = photo.google_drive_file_id || photo.id;
         const a = document.createElement('a');
-        a.href = `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`;
+        a.href = withGalleryPass(`/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`);
         a.download = '';
         a.rel = 'noopener';
         document.body.appendChild(a);
@@ -901,7 +925,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             setSaveSheet(toDownload.map(photo => {
                 const fileId = photo.google_drive_file_id || photo.id;
                 return {
-                    url: `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`,
+                    url: withGalleryPass(`/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`),
                     filename: photoFilename(photo.title, photo.mime_type, photo.id),
                     type: photo.mime_type || 'image/jpeg',
                     photoId: photo.id,
@@ -934,12 +958,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             await downloadPhotos(selectedPhotos);
             return;
         }
-        let email = buyerEmail;
+        // A signed-in à la carte buyer pays as themselves (the server uses
+        // their session address anyway); no need to type it.
+        let email = buyerEmail || (galleryRole?.role === 'buyer' ? user?.email ?? null : null);
         if (!email) {
             email = await requestDownloadEmail(selectedPhotos);
             if (!email) return; // user cancelled
-            setBuyerEmail(email);
         }
+        setBuyerEmail(email);
         setPaymentPickerOpen(true);
     };
 
@@ -1019,6 +1045,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
     // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
     const singlePrice = (() => {
+        if (galleryRole?.role === 'buyer') return galleryRole.buyerPrice || 5;
         const single = pricingOptions.find(o => o.photo_count === 1);
         if (single) return Number(single.price) || 0;
         return library ? Number(library.price) || 0 : 0;
@@ -1027,8 +1054,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // No per-photo price and no paid bundle: the gallery is a free download.
     // The all-public aggregate view carries a placeholder price of 0, so it
     // is excluded — those photos belong to galleries with their own prices.
-    const isFreeGallery = !!library && !isAllPublic && singlePrice <= 0
-        && !pricingOptions.some(o => Number(o.price) > 0);
+    const isFreeGallery = galleryRole?.role === 'owner'
+        || (!!library && !isAllPublic && galleryRole?.role !== 'buyer' && singlePrice <= 0
+            && !pricingOptions.some(o => Number(o.price) > 0));
 
     // ── SEO ────────────────────────────────────────────────────────────────────
     // useMemo must be called unconditionally before any early returns.

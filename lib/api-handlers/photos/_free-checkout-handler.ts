@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { isFreeLibrary } from '../_gallery-pass.js'
 
 export default async function handler(
   req: VercelRequest,
@@ -37,6 +38,29 @@ export default async function handler(
 
     if (photoError || !photos || photos.length !== photoIds.length) {
       return res.status(400).json({ error: 'One or more invalid photo IDs' })
+    }
+
+    // A free order is only for photos that really are free. This route used
+    // to issue an order — and a download token per photo — for ANY photo ids,
+    // paid galleries included, with no price check at all. Every photo's
+    // gallery must be public and free (no per-photo price, no paid bundle).
+    const libraryIds = [...new Set(photos.map(p => p.library_id))]
+    const { data: libraries } = await supabase
+      .from('photo_libraries')
+      .select('id, is_private, price')
+      .in('id', libraryIds)
+    const { data: options } = await supabase
+      .from('gallery_pricing_options')
+      .select('library_id, price, photo_count')
+      .in('library_id', libraryIds)
+      .eq('is_active', true)
+    const allFree = libraryIds.every(id => {
+      const lib = (libraries || []).find(l => l.id === id)
+      if (!lib || lib.is_private) return false
+      return isFreeLibrary(lib, (options || []).filter(o => o.library_id === id))
+    })
+    if (!allFree) {
+      return res.status(403).json({ error: 'These photos are not free.' })
     }
 
     // Create a free order record
