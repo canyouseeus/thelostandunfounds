@@ -522,6 +522,29 @@ const galleryPhotosTour: Tour = {
   ],
 };
 
+const aLaCarteTour: Tour = {
+  id: 'gallery-a-la-carte',
+  title: 'À La Carte',
+  summary: 'Let people into an album to buy the photos they want, while your album owners keep everything free.',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: [
+    openFromDock('gallery', 'À La Carte', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+    inPanel('gallery', {
+      target: 'gallery-row-open',
+      action: 'click',
+      title: 'Open A Gallery',
+      body: 'Tap a gallery\'s name to open it.',
+      missingNote: 'No galleries yet. Make one with NEW first.',
+    }),
+    { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Invited Clients above still get everything free.' },
+    { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
+    { target: 'gallery-a-la-carte-price', title: 'Price', body: 'What each photo costs them.' },
+    { target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new buyer their invite link.' },
+  ],
+};
+
 const qrWallpaperTour: Tour = {
   id: 'gallery-qr-wallpaper',
   title: 'Gallery QR Codes & Wallpapers',
@@ -875,7 +898,7 @@ const clientHunterTour: Tour = {
   steps: prospectsTour.steps,
 };
 
-export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

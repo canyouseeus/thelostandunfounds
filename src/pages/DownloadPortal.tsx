@@ -93,7 +93,7 @@ const DownloadPortal: React.FC = () => {
         setSaveSheet(photos.map((photo: any) => ({
             url: photo.storage_path && photo.thumbnail_url
                 ? photo.thumbnail_url
-                : `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}`,
+                : `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}${photo.download_token ? `&et=${encodeURIComponent(photo.download_token)}` : ''}`,
             filename: photoFilename(photo.title, photo.mime_type, String(photo.id).slice(0, 8)),
             type: photo.mime_type || 'image/jpeg',
         })));
@@ -127,7 +127,9 @@ const DownloadPortal: React.FC = () => {
                         // returned 400 and every photo was skipped, so "Download All"
                         // produced an empty zip.
                         const dlEmail = encodeURIComponent((linkEmail || email).trim().toLowerCase());
-                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}`);
+                        // et: this order's token for the photo — the stream route
+                        // checks it before releasing a private gallery's full file.
+                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}${photo.download_token ? `&et=${encodeURIComponent(photo.download_token)}` : ''}`);
                     }
 
                     if (!response.ok) {
