@@ -180,6 +180,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'my-downloads') {
+            return await handleMyDownloads(req, res);
+        }
         if (route === 'invite-open') {
             return await handleInviteOpen(req, res);
         }
@@ -821,6 +824,44 @@ async function handleInviteOpen(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         console.error('[invite-open] Error:', err);
         return res.status(500).json({ error: 'We could not open the gallery just now. Please try again in a minute.' });
+    }
+}
+
+/**
+ * GET ?slug= — which photos in this gallery the signed-in viewer has
+ * downloaded, from photo_download_events (logged by every download). The
+ * session is verified here; an email in the request is never trusted, or
+ * anyone could see what someone else saved. Anonymous viewers keep their
+ * marks on their own device instead (PhotoGallery).
+ */
+async function handleMyDownloads(req: VercelRequest, res: VercelResponse) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    try {
+        const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+        const user = await verifiedUser(req);
+        const email = user?.email?.trim().toLowerCase();
+        if (!email) return res.status(200).json({ photoIds: [] });
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+        if (!slug) return res.status(400).json({ error: 'slug is required' });
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const { data: library } = await supabase.from('photo_libraries').select('id').eq('slug', slug).maybeSingle();
+        if (!library) return res.status(200).json({ photoIds: [] });
+        const { data: events, error } = await supabase
+            .from('photo_download_events')
+            .select('photo_id, email, photos!inner(library_id)')
+            .eq('photos.library_id', library.id)
+            .ilike('email', email.replace(/[\\%_]/g, c => `\\${c}`))
+            .limit(5000);
+        if (error) throw error;
+        const ids = new Set<string>();
+        for (const e of events || []) {
+            if (e.photo_id && String(e.email || '').trim().toLowerCase() === email) ids.add(e.photo_id as string);
+        }
+        return res.status(200).json({ photoIds: [...ids] });
+    } catch (err: any) {
+        console.error('[my-downloads] Error:', err);
+        return res.status(500).json({ error: 'Could not load your downloads.' });
     }
 }
 

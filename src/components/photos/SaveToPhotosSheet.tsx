@@ -6,10 +6,11 @@
  * camera roll. The share sheet ("Save N Images") puts them straight into
  * Photos.
  *
- * In batches of BATCH: a phone holds ~10 full-size photos in memory comfortably,
- * and iOS only opens the share sheet from a fresh tap — so each batch is
- * fetched first, then the person taps SAVE for it. Fetching after the tap
- * would outlive the tap and the share would be refused.
+ * All at once (owner, 2026-11-01): one SAVE ALL tap. iOS only opens the share
+ * sheet from a fresh tap, so every file is fetched first, then the person taps
+ * SAVE — fetching after the tap would outlive it and the share is refused.
+ * Holding a whole gallery in memory can be too much for an older phone, so if
+ * the share fails (or loading does) there is SAVE IN SETS OF FALLBACK_BATCH.
  *
  * Noir: black, uppercase, square, no borders.
  */
@@ -17,7 +18,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
-const BATCH = 10;
+/** Set size offered when a phone can't take the whole gallery in one go. */
+const FALLBACK_BATCH = 20;
 
 export interface SaveItem {
     /** Same-origin URL that returns the file's bytes. */
@@ -26,6 +28,8 @@ export interface SaveItem {
     filename: string;
     /** MIME type to fall back on when the response doesn't say. */
     type?: string;
+    /** The gallery photo this is, reported back through onSaved. */
+    photoId?: string;
 }
 
 /** True on a phone or tablet whose browser can share files (iOS 15+, Android Chrome). */
@@ -49,21 +53,35 @@ export function photoFilename(title: string | null | undefined, mimeType: string
     return /\.[a-z0-9]{2,4}$/i.test(base) ? base : `${base}.${ext}`;
 }
 
-export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[]; onClose: () => void }) {
-    const batches = Math.ceil(items.length / BATCH);
+export default function SaveToPhotosSheet({ items, onClose, onSaved }: {
+    items: SaveItem[];
+    onClose: () => void;
+    /** Called with the photoIds of each set the phone saved. */
+    onSaved?: (photoIds: string[]) => void;
+}) {
+    // Everything in one set, unless the phone couldn't cope and they chose sets.
+    const [batchSize, setBatchSize] = useState(items.length);
+    const batches = Math.ceil(items.length / batchSize);
     const [batch, setBatch] = useState(0);
     const [files, setFiles] = useState<File[] | null>(null);
+    const [fileIds, setFileIds] = useState<string[]>([]);
     const [fetched, setFetched] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    // "N couldn't load and will be skipped": information, not a failure.
+    const [note, setNote] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [done, setDone] = useState(false);
     // Bumped by TRY AGAIN to re-fetch the same batch.
     const [attempt, setAttempt] = useState(0);
     const cancelled = useRef(false);
 
-    const start = batch * BATCH;
-    const slice = items.slice(start, start + BATCH);
-    const label = slice.length === 1 ? `${start + 1}` : `${start + 1}–${start + slice.length}`;
+    const start = batch * batchSize;
+    const slice = items.slice(start, start + batchSize);
+    const label = slice.length === 1
+        ? (items.length === 1 ? '' : `${start + 1}`)
+        : slice.length === items.length ? `All ${items.length}` : `${start + 1}–${start + slice.length}`;
+    const canSplit = batchSize > FALLBACK_BATCH;
+    const useSets = () => { setBatchSize(FALLBACK_BATCH); setBatch(0); setAttempt(a => a + 1); };
 
     useEffect(() => () => { cancelled.current = true; }, []);
 
@@ -76,6 +94,7 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
         setError(null);
         (async () => {
             const out: File[] = [];
+            const ids: string[] = [];
             let failed = 0;
             for (const item of slice) {
                 try {
@@ -84,6 +103,7 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
                     const blob = await res.blob();
                     const type = blob.type && blob.type !== 'application/octet-stream' ? blob.type : (item.type || 'image/jpeg');
                     out.push(new File([blob], item.filename, { type }));
+                    if (item.photoId) ids.push(item.photoId);
                 } catch {
                     failed++;
                 }
@@ -95,23 +115,29 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
                 setError('These photos could not be loaded. Check your connection and try again.');
                 return;
             }
-            if (failed) setError(`${failed} of these could not be loaded and will be skipped.`);
+            setNote(failed ? `${failed} of these could not be loaded and will be skipped.` : null);
             setFiles(out);
+            setFileIds(ids);
         })();
         return () => { stale = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [batch, done, attempt]);
+    }, [batch, batchSize, done, attempt]);
 
     const save = async () => {
         if (!files || saving) return;
         setSaving(true);
         try {
             await navigator.share({ files });
+            onSaved?.(fileIds);
             if (batch + 1 >= batches) setDone(true);
             else setBatch(b => b + 1);
         } catch (err: any) {
             // AbortError: they closed the share sheet. Stay on this batch.
-            if (err?.name !== 'AbortError') setError('Your phone didn’t open the save sheet. Tap SAVE again.');
+            if (err?.name !== 'AbortError') {
+                setError(canSplit
+                    ? 'Your phone couldn’t save them all at once. Tap SAVE again, or save them in smaller sets.'
+                    : 'Your phone didn’t open the save sheet. Tap SAVE again.');
+            }
         } finally {
             setSaving(false);
         }
@@ -126,7 +152,7 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
                     <div>
                         <p className="text-white text-sm font-black uppercase tracking-[0.2em]">Save to Photos</p>
                         <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">
-                            {items.length} {items.length === 1 ? 'file' : 'files'}{batches > 1 ? ` · ${BATCH} at a time` : ''}
+                            {items.length} {items.length === 1 ? 'file' : 'files'}{batches > 1 ? ` · ${batchSize} at a time` : ''}
                         </p>
                     </div>
                     <button type="button" onClick={onClose} className="p-1 text-white/60 hover:text-white" aria-label="Close">
@@ -163,7 +189,7 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
                                     data-tour="save-to-photos"
                                 >
                                     <ArrowDownTrayIcon className="w-4 h-4" />
-                                    Save {label} to Photos
+                                    Save {label}{label ? ' ' : ''}to Photos
                                 </button>
                             </>
                         ) : error ? (
@@ -175,7 +201,13 @@ export default function SaveToPhotosSheet({ items, onClose }: { items: SaveItem[
                                 Getting {label} ready… {fetched}/{slice.length}
                             </p>
                         )}
+                        {note && !error && <p className="text-white/50 text-[11px] normal-case">{note}</p>}
                         {error && <p className="text-red-400 text-[11px] normal-case">{error}</p>}
+                        {error && canSplit && (
+                            <button type="button" onClick={useSets} className="w-full py-3 bg-white/10 text-white text-[11px] font-black uppercase tracking-[0.2em]" style={{ borderRadius: 0 }}>
+                                Save in sets of {FALLBACK_BATCH} instead
+                            </button>
+                        )}
                         {batches > 1 && (
                             <p className="text-white/30 text-[10px] uppercase tracking-[0.2em]">Set {batch + 1} of {batches}</p>
                         )}
