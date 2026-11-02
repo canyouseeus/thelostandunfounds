@@ -4,7 +4,8 @@
  * mail, with a working link and no CC; everyone else gets no email at all.
  * Run: npx tsx scripts/verify-gallery-access-link.mts
  */
-import { sendGalleryAccessLink, accessLinkDeps } from '../lib/api-handlers/_gallery-access-link.ts';
+process.env.GALLERY_INVITE_SECRET = 'test-secret';
+import { sendGalleryAccessLink, accessLinkDeps, inviteKey, inviteUrl, inviteRecordUrl, openWithInviteKey } from '../lib/api-handlers/_gallery-access-link.ts';
 
 let failures = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -13,8 +14,9 @@ const check = (name: string, ok: boolean, detail = '') => {
 };
 
 const galleries: Record<string, any> = {
-    'mikey-and-bandit': { name: 'THE ADVENTURES OF MIKEY AND BANDIT', slug: 'mikey-and-bandit', invited_emails: 'media@thelostandunfounds.com, Michael@Yahoo.com,banditmanvaz21@icloud.com', published: true },
-    'draft-gallery': { name: 'Draft', slug: 'draft-gallery', invited_emails: 'banditmanvaz21@icloud.com', published: false },
+    'mikey-and-bandit': { id: 'lib-mb', name: 'THE ADVENTURES OF MIKEY AND BANDIT', slug: 'mikey-and-bandit', invited_emails: 'media@thelostandunfounds.com, Michael@Yahoo.com,banditmanvaz21@icloud.com', published: true },
+    'other-gallery': { id: 'lib-other', name: 'Other', slug: 'other-gallery', invited_emails: 'someone@else.com', published: true },
+    'draft-gallery': { id: 'lib-draft', name: 'Draft', slug: 'draft-gallery', invited_emails: 'banditmanvaz21@icloud.com', published: false },
 };
 const users = new Set<string>(['michael@yahoo.com']);
 const created: string[] = [];
@@ -81,6 +83,32 @@ check('a link failure is reported', r.sent === false && r.reason === 'link_faile
 linkFails = false; sendOk = false;
 r = await sendGalleryAccessLink(supabase, { slug: 'mikey-and-bandit', email: 'michael@yahoo.com' });
 check('a send failure is reported', r.sent === false && r.reason === 'send_failed' && r.detail === 'Zoho down');
+
+// --- invite keys: the invite's own button opens the gallery ------------------
+linkFails = false;
+const key = inviteKey('lib-mb', 'banditmanvaz21@icloud.com');
+let o: any = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key });
+check('the invite key opens the gallery (a one-time sign-in link back to it)',
+    o.ok && /token=T-banditmanvaz21@icloud.com/.test(o.link) && /redirect_to=https:\/\/www.thelostandunfounds.com\/gallery\/mikey-and-bandit$/.test(o.link), JSON.stringify(o));
+check('…and the invite URL carries it in the #fragment, never the query',
+    inviteUrl('mikey-and-bandit', 'lib-mb', 'BanditManVaz21@icloud.com').endsWith(`/gallery/mikey-and-bandit/access#k=${key}`));
+check('the record copy for media@ has no key', !inviteRecordUrl('mikey-and-bandit').includes('#k=') && !inviteRecordUrl('mikey-and-bandit').includes(key));
+o = await openWithInviteKey(supabase, { slug: 'other-gallery', key });
+check('a key for one gallery does not open another', !o.ok && o.reason === 'bad_key', JSON.stringify(o));
+const [, sig] = key.split('.');
+o = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key: `${Buffer.from('michael@yahoo.com').toString('base64url')}.${sig}` });
+check('swapping the email in a key does not open it as someone else', !o.ok && o.reason === 'bad_key', JSON.stringify(o));
+o = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key: key.slice(0, -2) + 'xx' });
+check('a tampered key is refused', !o.ok && o.reason === 'bad_key');
+o = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key: 'garbage' });
+check('junk is refused', !o.ok && o.reason === 'bad_key');
+galleries['mikey-and-bandit'].invited_emails = 'media@thelostandunfounds.com, Michael@Yahoo.com';
+o = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key });
+check('removing someone from the invite list revokes their link', !o.ok && o.reason === 'not_invited', JSON.stringify(o));
+process.env.GALLERY_INVITE_SECRET = 'rotated';
+galleries['mikey-and-bandit'].invited_emails += ',banditmanvaz21@icloud.com';
+o = await openWithInviteKey(supabase, { slug: 'mikey-and-bandit', key });
+check('a key made with another secret is refused', !o.ok && o.reason === 'bad_key');
 
 console.log(failures === 0 ? '\nAll checks passed.' : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);

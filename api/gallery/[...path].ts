@@ -180,6 +180,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'invite-open') {
+            return await handleInviteOpen(req, res);
+        }
         if (route === 'access-link') {
             return await handleAccessLink(req, res);
         }
@@ -735,7 +738,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
         const { data: library, error: libError } = await supabase
             .from('photo_libraries')
-            .select('name, slug')
+            .select('id, name, slug')
             .eq('id', libraryId)
             .single();
 
@@ -744,11 +747,10 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        // Point at the access page, not the gallery itself. An invited client has
-        // no session yet, so the bare gallery URL used to drop them on the site's
-        // sign-in modal and ask them to invent a password. /access emails them a
-        // link instead and lands them in the gallery.
-        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}/access`;
+        // Each invite's button carries that person's own key (#k=), so tapping
+        // it signs them in and opens the gallery — receiving the invite already
+        // proves they read that inbox. See _gallery-access-link.ts.
+        const { inviteUrl, inviteRecordUrl } = await import('../../lib/api-handlers/_gallery-access-link.js');
         const auth = await getZohoAuthContext();
 
         const results = {
@@ -761,7 +763,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
 
         for (const email of emails) {
             try {
-                const body = `
+                const inviteBody = (galleryUrl: string) => `
                     <h1 style="${EMAIL_STYLES.heading1}">YOUR GALLERY IS OPEN</h1>
 
                     <p style="${EMAIL_STYLES.paragraph}">
@@ -769,7 +771,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     </p>
 
                     <p style="${EMAIL_STYLES.paragraph}">
-                      Open the link below and enter this email address — <strong style="color: #ffffff;">${email}</strong> — and we'll send you a sign-in link. There's no password to create.
+                      Tap the button below and the gallery opens. There's no password to create.
                     </p>
 
                     <div style="margin: 40px 0;">
@@ -789,14 +791,26 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     </p>
                 `;
 
+                const subject = `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`;
+                // No CC: the client's copy carries their personal key, and a CC
+                // would let whoever reads it open their account.
                 const result = await sendZohoEmail({
                     auth,
                     to: email,
-                    // Business record — client correspondence stays on file.
-                    cc: 'media@thelostandunfounds.com',
-                    subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
-                    htmlContent: generateTransactionalEmail(body)
+                    subject,
+                    htmlContent: generateTransactionalEmail(inviteBody(inviteUrl(library.slug, library.id, email)))
                 });
+                // Business record (EMAIL SENDING RULE): media@ gets its own copy,
+                // with the plain access link instead of the key.
+                if (result.success && email !== 'media@thelostandunfounds.com') {
+                    const record = await sendZohoEmail({
+                        auth,
+                        to: 'media@thelostandunfounds.com',
+                        subject: `${subject} (copy — sent to ${email})`,
+                        htmlContent: generateTransactionalEmail(inviteBody(inviteRecordUrl(library.slug)))
+                    });
+                    if (!record.success) console.error(`[Gallery Invite] Record copy to media@ failed for ${email}:`, record.error);
+                }
                 if (result.success) {
                     results.succeeded.push(email);
                     console.log(`[Gallery Invite] Successfully sent invitation to ${email} for gallery: ${library.name}`);
@@ -864,6 +878,33 @@ async function handleAccessLink(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         console.error('[access-link] Error:', err);
         return res.status(500).json({ error: 'We could not send the email just now. Please try again in a minute.' });
+    }
+}
+
+/**
+ * POST { slug, key } — the invite email's own link. Checks the key (an HMAC of
+ * the gallery and the invited address) and that the address is still invited,
+ * then answers with a one-time sign-in link that lands in the gallery. Sends
+ * no email, so it needs no Turnstile; the key is the proof.
+ */
+async function handleInviteOpen(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY;
+        if (!SUPABASE_URL || !svcKey) return res.status(500).json({ error: 'Server configuration error' });
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { openWithInviteKey } = await import('../../lib/api-handlers/_gallery-access-link.js');
+        const outcome = await openWithInviteKey(createClient(SUPABASE_URL, svcKey), { slug: body.slug, key: body.key });
+        if (outcome.ok) return res.status(200).json({ link: outcome.link });
+        if (outcome.reason === 'link_failed') {
+            console.error('[invite-open] link failed:', outcome.detail);
+            return res.status(502).json({ error: 'We could not open the gallery just now. Please try again in a minute.' });
+        }
+        return res.status(403).json({ error: 'This invite link no longer works. Enter your email below and we\'ll send you a new one.' });
+    } catch (err: any) {
+        console.error('[invite-open] Error:', err);
+        return res.status(500).json({ error: 'We could not open the gallery just now. Please try again in a minute.' });
     }
 }
 

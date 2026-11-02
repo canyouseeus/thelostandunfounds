@@ -17,6 +17,11 @@
  * mail, not by Supabase's built-in mailer: that one allows a few emails an hour
  * for the whole project, and a client was locked out by it on 2026-11-01.
  * Turnstile guards the form (TURNSTILE RULE), action 'gallery-access'.
+ *
+ * Normally nobody types anything: the invite's button carries the client's own
+ * key (#k=, never sent to a server in the URL), and this page trades it at
+ * /api/gallery/invite-open for a one-time sign-in link that lands them in the
+ * gallery. The email form below is the fallback (deleted invite, revoked key).
  */
 
 import { useEffect, useState } from 'react';
@@ -49,6 +54,42 @@ export default function GalleryAccess() {
     const [turnstileKey, setTurnstileKey] = useState(0);
 
     const galleryUrl = `/gallery/${slug}`;
+
+    // The invite's own key, read once and wiped from the address bar so it
+    // isn't left in history or copied along with the URL.
+    const [inviteKey] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const k = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('k');
+        if (k) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return k;
+    });
+    const [opening, setOpening] = useState(Boolean(inviteKey));
+
+    useEffect(() => {
+        if (!inviteKey) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/gallery/invite-open', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug, key: inviteKey }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (cancelled) return;
+                if (res.ok && data.link) {
+                    // Signs them in and lands in the gallery.
+                    window.location.replace(data.link);
+                    return;
+                }
+                setError(data.error || 'This invite link no longer works. Enter your email below and we\'ll send you a new one.');
+            } catch {
+                if (!cancelled) setError('We could not reach the server. Check your connection and try again.');
+            }
+            if (!cancelled) setOpening(false);
+        })();
+        return () => { cancelled = true; };
+    }, [inviteKey, slug]);
 
     useEffect(() => {
         let cancelled = false;
@@ -127,7 +168,9 @@ export default function GalleryAccess() {
                     </h1>
                 </div>
 
-                {notFound ? (
+                {opening ? (
+                    <p className="text-white/50 text-sm text-center">Opening your gallery…</p>
+                ) : notFound ? (
                     <div className="space-y-6 text-center">
                         <p className="text-white/50 text-sm leading-relaxed">
                             This gallery link is no longer active. If you were sent it recently,
@@ -140,7 +183,7 @@ export default function GalleryAccess() {
                             Browse Public Galleries
                         </Link>
                     </div>
-                ) : user ? (
+                ) : user && !error ? (
                     // Already signed in — no reason to email anybody a link.
                     <div className="space-y-6 text-center">
                         <p className="text-white/50 text-sm leading-relaxed">
