@@ -736,93 +736,9 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
         });
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-        const { data: library, error: libError } = await supabase
-            .from('photo_libraries')
-            .select('id, name, slug')
-            .eq('id', libraryId)
-            .single();
-
-        if (libError || !library) {
-            console.error('Library fetch error:', libError);
-            return res.status(404).json({ error: 'Gallery not found' });
-        }
-
-        // Each invite's button carries that person's own key (#k=), so tapping
-        // it signs them in and opens the gallery — receiving the invite already
-        // proves they read that inbox. See _gallery-access-link.ts.
-        const { inviteUrl, inviteRecordUrl } = await import('../../lib/api-handlers/_gallery-access-link.js');
-        const auth = await getZohoAuthContext();
-
-        const results = {
-            succeeded: [] as string[],
-            failed: [] as { email: string; error: string }[]
-        };
-
-        // Send to each email
-        console.log(`[Gallery Invite] Starting invitation sequence for library: ${library.name} (${libraryId}). Target emails:`, emails);
-
-        for (const email of emails) {
-            try {
-                const inviteBody = (galleryUrl: string) => `
-                    <h1 style="${EMAIL_STYLES.heading1}">YOUR GALLERY IS OPEN</h1>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.
-                    </p>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      Tap the button below and the gallery opens. There's no password to create.
-                    </p>
-
-                    <div style="margin: 40px 0;">
-                      <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">OPEN MY GALLERY</a>
-                    </div>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      The gallery stays available — come back and pull anything you need, whenever you need it. There's no expiry on it.
-                    </p>
-
-                    <hr style="${EMAIL_STYLES.divider}">
-
-                    <p style="${EMAIL_STYLES.muted}">
-                      GALLERY: ${library.name}<br>
-                      INVITED: ${email}<br>
-                      Questions? Reply to this email or reach us at media@thelostandunfounds.com.
-                    </p>
-                `;
-
-                const subject = `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`;
-                // No CC: the client's copy carries their personal key, and a CC
-                // would let whoever reads it open their account.
-                const result = await sendZohoEmail({
-                    auth,
-                    to: email,
-                    subject,
-                    htmlContent: generateTransactionalEmail(inviteBody(inviteUrl(library.slug, library.id, email)))
-                });
-                // Business record (EMAIL SENDING RULE): media@ gets its own copy,
-                // with the plain access link instead of the key.
-                if (result.success && email !== 'media@thelostandunfounds.com') {
-                    const record = await sendZohoEmail({
-                        auth,
-                        to: 'media@thelostandunfounds.com',
-                        subject: `${subject} (copy — sent to ${email})`,
-                        htmlContent: generateTransactionalEmail(inviteBody(inviteRecordUrl(library.slug)))
-                    });
-                    if (!record.success) console.error(`[Gallery Invite] Record copy to media@ failed for ${email}:`, record.error);
-                }
-                if (result.success) {
-                    results.succeeded.push(email);
-                    console.log(`[Gallery Invite] Successfully sent invitation to ${email} for gallery: ${library.name}`);
-                } else {
-                    results.failed.push({ email, error: result.error || 'Unknown error' });
-                    console.error(`[Gallery Invite] Zoho rejected invite to ${email}:`, result.error);
-                }
-            } catch (innerErr: any) {
-                console.error(`Failed to send invite to ${email}:`, innerErr);
-                results.failed.push({ email, error: innerErr.message || String(innerErr) });
-            }
-        }
+        const { sendGalleryInvites } = await import('../../lib/api-handlers/_gallery-invite.js');
+        const { library, results } = await sendGalleryInvites(supabase, libraryId, emails);
+        if (!library) return res.status(404).json({ error: 'Gallery not found' });
 
         const hasFailures = results.failed.length > 0;
         // Return 207 Multi-Status if some failed, or 200 if all good (or 200 with stats)

@@ -212,6 +212,7 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `create_payment_link` | `{invoiceNumber}` |
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
 | `invite_photographer` | `{email, name?, testEmail?}` — the "You're on the roster" photographer invite (Admin → Gallery → Invite Photographer); `testEmail` previews it there, stores nothing, no CC |
+| `gallery_invite` | `{slug \| library_id, emails?, testEmail?}` — the client gallery invite (edit a gallery → Resend); each opens the gallery in one tap. No `emails` → everyone invited but media@; media@ gets a record copy of each, never a CC (the link is a login). `testEmail` (admin address) previews it there only |
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
