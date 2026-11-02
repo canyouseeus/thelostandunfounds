@@ -53,6 +53,7 @@ interface PhotoLibrary {
     buyer_price?: number | null;
     buyer_bundles?: { photo_count: number; price: number }[] | null;
     buyer_album_price?: number | null;
+    album_price?: number | null; // Whole album, for every buyer
     user_id?: string;
     live_mode?: boolean; // A live event is running — see /admin/live
 }
@@ -168,6 +169,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     // À la carte deals: "N photos for $X", and the whole album for one price.
     const [buyerBundles, setBuyerBundles] = useState<{ photo_count: number; price: number }[]>([]);
     const [buyerAlbumPrice, setBuyerAlbumPrice] = useState<number | ''>('');
+    // Whole-album price for everyone who buys from this gallery (owner, 2026-11-02).
+    const [albumPrice, setAlbumPrice] = useState<number | ''>('');
     const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
     const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
@@ -383,6 +386,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 buyer_price: buyerPrice > 0 ? buyerPrice : 5,
                 buyer_bundles: buyerBundles.filter(b => b.photo_count > 1 && b.price > 0),
                 buyer_album_price: typeof buyerAlbumPrice === 'number' && buyerAlbumPrice > 0 ? buyerAlbumPrice : null,
+                album_price: typeof albumPrice === 'number' && albumPrice > 0 ? albumPrice : null,
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
@@ -797,6 +801,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
         setBuyerBundles(Array.isArray(lib.buyer_bundles) ? lib.buyer_bundles.map(b => ({ photo_count: Number(b.photo_count), price: Number(b.price) })) : []);
         setBuyerAlbumPrice(Number(lib.buyer_album_price) > 0 ? Number(lib.buyer_album_price) : '');
+        setAlbumPrice(Number(lib.album_price) > 0 ? Number(lib.album_price) : '');
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -827,6 +832,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setBuyerPrice(5);
         setBuyerBundles([]);
         setBuyerAlbumPrice('');
+        setAlbumPrice('');
         setIsManaged(true);
     };
 
@@ -1045,7 +1051,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                                         setPricingOptions(newOptions);
                                                                     }}
                                                                     placeholder="Count"
-                                                                    title="Number of photos (-1 for All)"
+                                                                    title="Number of photos"
                                                                     className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                                 <div className="flex items-center gap-1 flex-1">
@@ -1131,20 +1137,24 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         >
                                             + Add Option
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOption = { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 };
-                                                setPricingOptions([...pricingOptions, newOption]);
-                                                setEditingPricingIdx(pricingOptions.length);
-                                            }}
-                                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 rounded-none transition-colors uppercase tracking-wider"
-                                        >
-                                            + Add Full License
-                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3 bg-white/5 p-3" data-tour="gallery-form-album-price">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Whole album $</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            inputMode="decimal"
+                                            value={albumPrice}
+                                            placeholder="—"
+                                            onChange={(e) => setAlbumPrice(e.target.value === '' ? '' : Number(e.target.value) || 0)}
+                                            className="w-24 bg-white/5 rounded-none px-2 py-1 text-sm text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            aria-label="Whole album price"
+                                        />
+                                        <span className="text-[10px] text-white/30">blank = not offered</span>
                                     </div>
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        Use count "-1" for Full Gallery Buyout options. Name options with "Commercial" to trigger commercial licensing checkout flow.
+                                        Options are "N photos for $X" (1 photo = the per-photo price). Whole album adds a BUY WHOLE ALBUM button to the gallery.
                                     </p>
                                 </div>
 
@@ -1351,17 +1361,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 mt-3" data-tour="gallery-a-la-carte-album">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Whole album $</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Their whole album $</span>
                                         <input
                                             type="number"
                                             min="1"
                                             step="0.01"
                                             value={buyerAlbumPrice}
-                                            placeholder="—"
+                                            placeholder={typeof albumPrice === 'number' && albumPrice > 0 ? String(albumPrice) : '—'}
                                             onChange={(e) => setBuyerAlbumPrice(e.target.value === '' ? '' : Number(e.target.value) || 0)}
                                             className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
-                                        <span className="text-[10px] text-white/30">blank = not offered</span>
+                                        <span className="text-[10px] text-white/30">blank = same as Whole album above</span>
                                     </div>
                                     <p className="text-[10px] text-white/30 mt-2">
                                         New buyers get their own invite link when you save.

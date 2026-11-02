@@ -136,7 +136,8 @@ const galleryTour: Tour = {
     inPanel('gallery', { target: 'gallery-screens-button', title: 'Screens', body: 'The screen generator, for halftone films.' }),
     inPanel('gallery', { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' }),
     inPanel('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
-    inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' }),
+    inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo and a bundle cost. 1 photo is the per-photo price.' }),
+    inPanel('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'Type one price for every photo in the gallery. The gallery then shows a BUY WHOLE ALBUM button. Leave it blank to not offer it.' }),
     inPanel('gallery', { target: 'gallery-form-private', title: 'Private', body: 'Tick it to keep the gallery off the public list. Only clients you invite get in.' }),
     inPanel('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inPanel('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
@@ -542,7 +543,7 @@ const aLaCarteTour: Tour = {
     { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
     { target: 'gallery-a-la-carte-price', title: 'Price', body: 'What each photo costs them.' },
     { target: 'gallery-a-la-carte-bundles', title: 'Bundles', body: 'Deals like 4 photos for $10. ADD BUNDLE makes another.' },
-    { target: 'gallery-a-la-carte-album', title: 'Whole Album', body: 'One price for every photo. Leave it blank to not offer it.' },
+    { target: 'gallery-a-la-carte-album', title: 'Their Whole Album', body: 'Their own price for every photo. Leave it blank and they get the gallery’s Whole Album price.' },
     { target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new buyer their invite link.' },
   ],
 };
@@ -735,7 +736,8 @@ const memberGalleryTour: Tour = {
     inApp('gallery', { target: 'gallery-qr-button', title: 'QR Code', body: 'A QR code for the gallery, or a phone wallpaper with the code on it.' }),
     inApp('gallery', { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' }),
     inApp('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
-    inApp('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' }),
+    inApp('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo and a bundle cost. 1 photo is the per-photo price.' }),
+    inApp('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'Type one price for every photo in the gallery. The gallery then shows a BUY WHOLE ALBUM button. Leave it blank to not offer it.' }),
     inApp('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inApp('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
   ],
@@ -856,7 +858,8 @@ const photographerGalleriesTour: Tour = {
     { target: 'gallery-qr-button', title: 'QR Code', body: 'A QR code for the gallery, or a phone wallpaper with the code on it.' },
     { target: 'gallery-new', action: 'click', title: 'New Gallery', body: 'Tap NEW to start a gallery.' },
     { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' },
-    { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo, a bundle and the whole gallery cost.' },
+    { target: 'gallery-form-pricing', title: 'Pricing', body: 'What a single photo and a bundle cost. 1 photo is the per-photo price.' },
+    { target: 'gallery-form-album-price', title: 'Whole Album', body: 'Type one price for every photo in the gallery. The gallery then shows a BUY WHOLE ALBUM button. Leave it blank to not offer it.' },
     { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' },
     { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' },
   ],
@@ -900,7 +903,54 @@ const clientHunterTour: Tour = {
   steps: prospectsTour.steps,
 };
 
-export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+// Whole album price (owner, 2026-11-02): one field, the same form, on every
+// dashboard that edits galleries — admin, member Gallery app, photographer.
+const albumPriceSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
+  ...open,
+  wrap({
+    target: 'gallery-row-open',
+    action: 'click',
+    title: 'Open A Gallery',
+    body: 'Tap a gallery to open it.',
+    missingNote: 'No galleries yet. Make one with NEW first.',
+  }),
+  wrap({ target: 'gallery-form-album-price', title: 'Whole Album', body: 'Type one price for every photo in the gallery. The gallery then shows a BUY WHOLE ALBUM button. Leave it blank to not offer it.' }),
+  wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY puts it live.' }),
+];
+
+const albumPriceTour: Tour = {
+  id: 'gallery-album-price',
+  title: 'Whole Album Price',
+  summary: 'Set one price for every photo in a gallery.',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: albumPriceSteps([
+    openFromDock('gallery', 'Whole Album Price', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+  ], s => inPanel('gallery', s)),
+};
+
+const memberAlbumPriceTour: Tour = {
+  id: 'member-gallery-album-price',
+  title: 'Whole Album Price',
+  summary: 'Set one price for every photo in a gallery.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: albumPriceSteps([memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.')], s => inApp('gallery', s)),
+};
+
+const photographerAlbumPriceTour: Tour = {
+  id: 'photographer-gallery-album-price',
+  title: 'Whole Album Price',
+  summary: 'Set one price for every photo in a gallery.',
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: albumPriceSteps([openPhotographer], s => s),
+};
+
+export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

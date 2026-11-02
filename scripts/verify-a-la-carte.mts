@@ -8,7 +8,7 @@
 process.env.GALLERY_INVITE_SECRET = 'test-secret';
 import { roleFor, mintPass, verifyPass, isFreeLibrary } from '../lib/api-handlers/_gallery-pass.ts';
 import { streamAccess } from '../lib/api-handlers/_stream-access.ts';
-import { buyerTotal, cleanBundles } from '../src/lib/buyerPricing.ts';
+import { buyerTotal, cleanBundles, galleryTotal } from '../src/lib/buyerPricing.ts';
 
 let failures = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -99,6 +99,19 @@ for (const [n, want] of cases) check(`${n} photo${n === 1 ? '' : 's'} costs $${w
 check('no album price set → no album deal (69 photos = 17×$10 + $5)', buyerTotal(69, { ...P, albumPrice: null }) === 175, String(buyerTotal(69, { ...P, albumPrice: null })));
 check('junk bundles are dropped (1-photo or $0 "bundles" can\'t undercut)', cleanBundles([{ photo_count: 1, price: 0 }, { photo_count: 4, price: 0 }, { photo_count: 'x', price: 3 }, { photo_count: 4, price: 10 }]).length === 1);
 check('nothing selected costs nothing', buyerTotal(0, P) === 0);
+
+// --- whole album for every buyer (HOLLOW33N: $5, 3 for $10, 146 photos, album $75) ---
+const hollow = { single: 5, options: [{ photo_count: 3, price: '10.00' }], albumPrice: 75, albumCount: 146 };
+check('1 photo costs $5', galleryTotal(1, hollow) === 5, String(galleryTotal(1, hollow)));
+check('3 photos cost $10 (bundle)', galleryTotal(3, hollow) === 10, String(galleryTotal(3, hollow)));
+check('7 photos = 2×$10 + $5', galleryTotal(7, hollow) === 25, String(galleryTotal(7, hollow)));
+check('145 photos are not the whole album (48×$10 + $5)', galleryTotal(145, hollow) === 485, String(galleryTotal(145, hollow)));
+check('all 146 photos cost the album price, $75', galleryTotal(146, hollow) === 75, String(galleryTotal(146, hollow)));
+check('no album price → no album deal (146 = 48×$10 + 2×$5)', galleryTotal(146, { ...hollow, albumPrice: null }) === 490, String(galleryTotal(146, { ...hollow, albumPrice: null })));
+check('album count unknown (0) → no album deal', galleryTotal(146, { ...hollow, albumCount: 0 }) === 490);
+const lastNight = { single: 5, options: [{ photo_count: 1, price: 20 }, { photo_count: 3, price: 50 }], albumPrice: null, albumCount: 40 };
+check('a 1-photo option is the per-photo price (LAST NIGHT: 4 = $50 + $20)', galleryTotal(4, lastNight) === 70, String(galleryTotal(4, lastNight)));
+check('junk options (count 0 / -1) are ignored', galleryTotal(2, { ...hollow, options: [{ photo_count: -1, price: 999 }, { photo_count: 0, price: 1 }] }) === 10);
 
 console.log(failures === 0 ? '\nAll checks passed.' : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);

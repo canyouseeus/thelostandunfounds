@@ -48,6 +48,37 @@ export function buyerTotal(count: number, pricing: BuyerPricing): number {
     return round(amount);
 }
 
+/**
+ * What anyone else pays for `count` photos from a gallery: its pricing options
+ * ("N photos for $X", largest first; a 1-photo option is the per-photo price),
+ * the rest at `single` each — and every photo in the album costs albumPrice
+ * when the gallery sets one (owner, 2026-11-02). Shared by the gallery page
+ * and the server checkout.
+ */
+export function galleryTotal(
+    count: number,
+    pricing: { single: number; options: { photo_count: number; price: number | string }[]; albumPrice: number | null; albumCount: number },
+): number {
+    if (count <= 0) return 0;
+    if (pricing.albumPrice && pricing.albumPrice > 0 && pricing.albumCount > 0 && count >= pricing.albumCount) {
+        return round(pricing.albumPrice);
+    }
+    let amount = 0;
+    let remaining = count;
+    const options = pricing.options
+        .filter(o => Number(o.photo_count) > 0)
+        .sort((a, b) => b.photo_count - a.photo_count);
+    for (const o of options) {
+        const n = Math.floor(remaining / o.photo_count);
+        if (n > 0) {
+            amount += n * Number(o.price);
+            remaining %= o.photo_count;
+        }
+    }
+    amount += remaining * pricing.single;
+    return round(amount);
+}
+
 function round(n: number): number {
     return Math.round(n * 100) / 100;
 }
