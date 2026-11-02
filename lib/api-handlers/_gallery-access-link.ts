@@ -21,6 +21,7 @@
  * account, so a copy would hand the business inbox their login.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { sendTransactionalEmail } from './_resend-email-handler.js';
 import { EMAIL_STYLES, renderImageButton } from '../email-template.js';
 
@@ -98,4 +99,84 @@ ${renderImageButton(link, 'btn-open-gallery', 'OPEN MY GALLERY')}
     });
     if (!result?.success) return { sent: false, reason: 'send_failed', detail: (result as any)?.error };
     return { sent: true, provider: (result as any)?.provider };
+}
+
+// --- Invite keys: the invite's own button opens the gallery --------------------
+//
+// Receiving the invite already proves the client reads that inbox, so the
+// invite link carries a key for (gallery, email) and opening it signs them in
+// and lands them in the gallery: no typing, no second email.
+//
+// The key is an HMAC of the gallery id and the address, so it opens one gallery
+// for one address and nothing else. It is checked against the live invite list
+// every time, so removing someone from the gallery revokes their link. It rides
+// in the URL fragment (#k=), which browsers never send to a server, so it never
+// lands in a request log. The secret is GALLERY_INVITE_SECRET, else derived from
+// the service-role key (rotating that key retires every invite link; the
+// email-entry form still works).
+//
+// Never CC an email that carries a key: whoever reads the copy could open the
+// client's account. Record copies use inviteRecordUrl, which has no key.
+
+function inviteSecret(): string {
+    const base = process.env.GALLERY_INVITE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!base) throw new Error('No secret for gallery invite keys.');
+    return `gallery-invite-v1:${base}`;
+}
+
+function sign(libraryId: string, email: string): string {
+    return createHmac('sha256', inviteSecret()).update(`${libraryId}|${email}`).digest('base64url');
+}
+
+export function inviteKey(libraryId: string, email: string): string {
+    const normalized = email.trim().toLowerCase();
+    return `${Buffer.from(normalized).toString('base64url')}.${sign(libraryId, normalized)}`;
+}
+
+/** The link an invite email carries: opens the gallery for this one address. */
+export function inviteUrl(slug: string, libraryId: string, email: string): string {
+    return `${SITE}/gallery/${encodeURIComponent(slug)}/access#k=${inviteKey(libraryId, email)}`;
+}
+
+/** For record copies (media@): the plain access page, no key. */
+export function inviteRecordUrl(slug: string): string {
+    return `${SITE}/gallery/${encodeURIComponent(slug)}/access`;
+}
+
+export type OpenOutcome = { ok: true; link: string } | { ok: false; reason: 'bad_key' | 'no_gallery' | 'not_invited' | 'link_failed'; detail?: string };
+
+export async function openWithInviteKey(
+    supabase: SupabaseClient,
+    input: { slug: unknown; key: unknown },
+): Promise<OpenOutcome> {
+    const slug = typeof input.slug === 'string' ? input.slug.trim() : '';
+    const key = typeof input.key === 'string' ? input.key.trim() : '';
+    const dot = key.indexOf('.');
+    if (!slug || dot < 1 || key.length > 600) return { ok: false, reason: 'bad_key' };
+    let email: string;
+    try {
+        email = Buffer.from(key.slice(0, dot), 'base64url').toString('utf8');
+    } catch {
+        return { ok: false, reason: 'bad_key' };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, reason: 'bad_key' };
+
+    const { data: library, error } = await supabase
+        .from('photo_libraries')
+        .select('id, slug, invited_emails')
+        .eq('slug', slug)
+        .eq('published', true)
+        .maybeSingle();
+    if (error || !library) return { ok: false, reason: 'no_gallery' };
+
+    const expected = Buffer.from(sign(library.id, email));
+    const given = Buffer.from(key.slice(dot + 1));
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) return { ok: false, reason: 'bad_key' };
+    if (!invitedList(library.invited_emails).includes(email)) return { ok: false, reason: 'not_invited' };
+
+    try {
+        return { ok: true, link: await makeLink(supabase, email, `${SITE}/gallery/${encodeURIComponent(library.slug)}`) };
+    } catch (err: any) {
+        return { ok: false, reason: 'link_failed', detail: err?.message };
+    }
 }

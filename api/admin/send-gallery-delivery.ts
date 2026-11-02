@@ -121,10 +121,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       recipients = invited
     }
 
-    // /access rather than the gallery itself: an invited client has no session,
-    // and the bare gallery URL drops them on a sign-in modal asking them to
-    // invent a password. /access mails them a link and lands them inside.
-    const galleryUrl = `${SITE}/gallery/${library.slug}/access`
+    // Each recipient's button carries their own key (#k=), so tapping it signs
+    // them in and opens the gallery. A test send to an address that isn't
+    // invited gets a key that won't open it — the access page's email form is
+    // the fallback. See lib/api-handlers/_gallery-access-link.ts.
+    const { inviteUrl, inviteRecordUrl } = await import('../../lib/api-handlers/_gallery-access-link.js')
+    const galleryUrl = inviteRecordUrl(library.slug)
 
     const count = typeof photoCount === 'number' && photoCount > 0 ? photoCount : null
     const intro = count
@@ -133,19 +135,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const note = typeof message === 'string' && message.trim() ? paragraphs(message) : ''
 
-    const body = `
+    const bodyFor = (openUrl: string) => `
       <h1 style="${EMAIL_STYLES.heading1}">YOUR PHOTOS ARE READY</h1>
 
       <p style="${EMAIL_STYLES.paragraph}">${intro}</p>
 
       ${note}
 
-      ${renderImageButton(galleryUrl, 'btn-open-gallery', 'OPEN MY GALLERY')}
+      ${renderImageButton(openUrl, 'btn-open-gallery', 'OPEN MY GALLERY')}
 
       <p style="${EMAIL_STYLES.paragraph}">
-        Open the link and enter the email address this was sent to — we'll send you a
-        sign-in link, so there's no password to create. Everything is full resolution and
-        yours to download, print and post.
+        Tap the button and the gallery opens — there's no password to create. Everything
+        is full resolution and yours to download, print and post.
       </p>
 
       ${videoNote ? `<p style="${EMAIL_STYLES.paragraph}">${escapeHtml(videoNote)}</p>` : ''}
@@ -186,13 +187,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const results: Array<{ email: string; success: boolean; provider?: string; error?: string }> = []
     for (const to of recipients) {
+      // No CC: this copy carries the recipient's personal key, and a CC would
+      // let whoever reads it open their account.
       const r = await sendTransactionalEmail({
         to,
-        cc: RECORD_CC,
         subject,
-        content: body,
+        content: bodyFor(inviteUrl(library.slug, library.id, to)),
       })
       results.push({ email: to, success: r.success, provider: r.provider, error: r.error })
+      // Business record (EMAIL SENDING RULE): media@ gets its own copy with the
+      // plain access link, as it got the CC before (test sends included).
+      if (r.success && to.toLowerCase() !== RECORD_CC) {
+        const record = await sendTransactionalEmail({
+          to: RECORD_CC,
+          subject: `${subject} (copy — sent to ${to})`,
+          content: bodyFor(galleryUrl),
+        })
+        if (!record.success) console.error(`[send-gallery-delivery] record copy for ${to} failed:`, record.error)
+      }
     }
 
     const failed = results.filter((r) => !r.success)
@@ -201,7 +213,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       test: isTest,
       gallery: library.slug,
       galleryUrl,
-      cc: RECORD_CC,
+      recordCopyTo: RECORD_CC,
       recipients,
       results,
     })
