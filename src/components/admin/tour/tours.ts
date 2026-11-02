@@ -489,6 +489,39 @@ const driveSyncTour: Tour = {
   ],
 };
 
+const galleryPhotosTour: Tour = {
+  id: 'gallery-edit-photos',
+  title: 'See A Gallery\'s Photos',
+  summary: 'Open a gallery to see its newest photos, and tap MORE for all of them.',
+  group: 'new',
+  announce: '2026-11-02',
+  steps: [
+    openFromDock('gallery', 'See A Gallery\'s Photos', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+    inPanel('gallery', {
+      target: 'gallery-row-open',
+      action: 'click',
+      title: 'Open A Gallery',
+      body: 'Tap a gallery\'s name to open it.',
+      missingNote: 'No galleries yet. Make one with NEW first.',
+    }),
+    {
+      target: 'gallery-form-photos',
+      title: 'In This Gallery',
+      body: 'Its three newest photos. Tap one to see it full size.',
+      missingNote: 'This gallery has no photos yet.',
+    },
+    {
+      target: 'gallery-form-photos-more',
+      action: 'click',
+      title: 'More',
+      body: 'Tap MORE to see every photo in the gallery.',
+      missingNote: 'This gallery has three photos or fewer, so they all show already.',
+    },
+    { target: 'gallery-all-photos', title: 'All Photos', body: 'Every photo, newest first. The X closes it.' },
+  ],
+};
+
 const qrWallpaperTour: Tour = {
   id: 'gallery-qr-wallpaper',
   title: 'Gallery QR Codes & Wallpapers',
@@ -842,7 +875,7 @@ const clientHunterTour: Tour = {
   steps: prospectsTour.steps,
 };
 
-export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
