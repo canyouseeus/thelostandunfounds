@@ -11,7 +11,7 @@
 
 import Turnstile from 'react-turnstile';
 
-export type TurnstileAction = 'support' | 'contact' | 'newsletter' | 'booking';
+export type TurnstileAction = 'support' | 'contact' | 'newsletter' | 'booking' | 'gallery-access';
 
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 

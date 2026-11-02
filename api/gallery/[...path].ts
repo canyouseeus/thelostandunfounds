@@ -180,6 +180,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'access-link') {
+            return await handleAccessLink(req, res);
+        }
         if (route === 'access-info') {
             return await handleAccessInfo(req, res);
         }
@@ -831,6 +834,39 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
  * It deliberately does not confirm whether a given email is on the invite list:
  * that would turn this into an invitee oracle for anyone with the slug.
  */
+/**
+ * POST { slug, email, turnstileToken } — email an invited client a sign-in
+ * link to the gallery, from our own mail. See lib/api-handlers/_gallery-access-link.ts.
+ * An address that is not invited gets the same answer as one that is, so this
+ * never reveals the invite list.
+ */
+async function handleAccessLink(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { verifyTurnstile, clientIp } = await import('../../lib/api-handlers/_turnstile.js');
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    const check = await verifyTurnstile(body.turnstileToken, clientIp(req.headers), ['gallery-access']);
+    if (!check.ok) return res.status(check.status).json({ error: check.error });
+
+    try {
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY;
+        if (!SUPABASE_URL || !svcKey) return res.status(500).json({ error: 'Server configuration error' });
+        const { sendGalleryAccessLink } = await import('../../lib/api-handlers/_gallery-access-link.js');
+        const outcome = await sendGalleryAccessLink(createClient(SUPABASE_URL, svcKey), { slug: body.slug, email: body.email });
+
+        if (outcome.sent) return res.status(200).json({ success: true });
+        if (outcome.reason === 'bad_email') return res.status(400).json({ error: 'Enter the email address your invite was sent to.' });
+        if (outcome.reason === 'link_failed' || outcome.reason === 'send_failed') {
+            console.error('[access-link]', outcome.reason, outcome.detail);
+            return res.status(502).json({ error: 'We could not send the email just now. Please try again in a minute.' });
+        }
+        // Not invited, or no such gallery: same answer as a real send.
+        return res.status(200).json({ success: true });
+    } catch (err: any) {
+        console.error('[access-link] Error:', err);
+        return res.status(500).json({ error: 'We could not send the email just now. Please try again in a minute.' });
+    }
+}
+
 async function handleAccessInfo(req: VercelRequest, res: VercelResponse) {
     try {
         const slug = typeof req.query.slug === 'string' ? req.query.slug : null;
