@@ -61,7 +61,7 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, turns
         e.preventDefault();
         if (sending) return;
         if (needsTurnstile && !turnstileToken) {
-            setError('Please complete the security check.');
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
         setSending(true);
@@ -179,6 +179,8 @@ export default function SupportRequestForm({ defaultCategory, defaultRole, turns
                     sitekey={TURNSTILE_SITE_KEY}
                     action={turnstileAction}
                     theme="dark"
+                    size="flexible"
+                    appearance="interaction-only"
                     onSuccess={token => setTurnstileToken(token)}
                     onExpire={() => setTurnstileToken(null)}
                     onError={() => {

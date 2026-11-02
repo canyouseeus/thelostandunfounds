@@ -126,7 +126,7 @@ export default function GalleryAccess() {
             return;
         }
         if (turnstileRequired() && !turnstileToken) {
-            setError('Please complete the security check.');
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
         setError(null);
@@ -179,7 +179,7 @@ export default function GalleryAccess() {
                     <p className="text-white/50 text-sm text-center">Opening your gallery…</p>
                 ) : notFound ? (
                     <div className="space-y-6 text-center">
-                        <p className="text-white/50 text-sm leading-relaxed">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             This gallery link is no longer active. If you were sent it recently,
                             reply to the invite email and we'll re-send it.
                         </p>
@@ -209,7 +209,7 @@ export default function GalleryAccess() {
                         <p className="text-white text-xs font-black uppercase tracking-[0.2em]">
                             Check Your Email
                         </p>
-                        <p className="text-white/50 text-sm leading-relaxed">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             If <span className="text-white">{email.trim()}</span> is on the invite list
                             for this gallery, a sign-in link is on its way. Open it on this device and
                             you'll land straight in the gallery — no password needed. It comes from
@@ -225,7 +225,7 @@ export default function GalleryAccess() {
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="space-y-5">
-                        <p className="text-white/50 text-sm leading-relaxed text-center">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             Enter the email address your invite was sent to. We'll email you a link
                             that opens the gallery — there's no password to create.
                         </p>
@@ -269,7 +269,7 @@ export default function GalleryAccess() {
                             {sending ? 'Sending…' : 'Email Me My Gallery Link'}
                         </button>
 
-                        <p className="text-white/25 text-[10px] leading-relaxed text-center">
+                        <p className="text-white/25 text-[10px] leading-relaxed text-left">
                             Wrong address? Reach us at media@thelostandunfounds.com.
                         </p>
                     </form>
