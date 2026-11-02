@@ -30,6 +30,7 @@ import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 import { setGalleryPass, withGalleryPass } from '../../lib/galleryPass';
+import { buyerTotal, type BuyerPricing } from '../../lib/buyerPricing';
 import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
@@ -353,9 +354,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // The signed-in viewer's role here (GET /api/gallery/pass): an album owner
     // has every photo free; an à la carte buyer sees the whole album behind the
     // watermark overlay and buys photos at buyerPrice each (owner, 2026-11-02).
-    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null } | null>(null);
-    // À la carte is per photo: the album's own bundles don't apply to buyers.
-    const pricingOptions = galleryRole?.role === 'buyer' ? [] : rawPricingOptions;
+    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null; pricing: BuyerPricing | null } | null>(null);
+    // À la carte buyers see their own bundles (e.g. 4 for $10), not the album's.
+    const pricingOptions: PricingOption[] = galleryRole?.role === 'buyer'
+        ? (galleryRole.pricing?.bundles || []).map((b, i) => ({ id: `buyer-${i}`, name: `${b.photo_count} photos`, price: b.price, photo_count: b.photo_count } as PricingOption))
+        : rawPricingOptions;
+    // Set by BUY WHOLE ALBUM: the server then charges for every photo in it.
+    const wholeAlbumRef = useRef(false);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
@@ -407,7 +412,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 const data = res.ok ? await res.json() : null;
                 if (cancelled || !data?.role || !data.pass) return;
                 setGalleryPass(librarySlug, data.pass);
-                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null });
+                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null, pricing: data.pricing ?? null });
             } catch { /* no pass: downloads of a private album stay locked */ }
         })();
         return () => { cancelled = true; };
@@ -851,6 +856,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     }
 
     const handleToggleSelect = (photo: Photo) => {
+        wholeAlbumRef.current = false; // picking by hand is no longer "the whole album"
         setSelectedPhotos(prev => {
             const isSelected = prev.find(p => p.id === photo.id);
             if (isSelected) {
@@ -882,6 +888,10 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // per-photo price + bundle tiers (mirrors the server-side math).
     const computeTotal = (count: number): number => {
         if (count <= 0 || !library) return 0;
+        // À la carte: the same function the server checkout charges with.
+        if (galleryRole?.role === 'buyer' && galleryRole.pricing) {
+            return buyerTotal(wholeAlbumRef.current ? galleryRole.pricing.albumCount : count, galleryRole.pricing);
+        }
         const single = Number(library.price) || 0;
         const sortedBundles = [...pricingOptions]
             .filter(o => o.photo_count && o.photo_count > 0)
@@ -950,8 +960,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
     };
 
-    const handleCheckout = async () => {
-        if (selectedPhotos.length === 0) return;
+    const handleCheckout = async (opts?: { wholeAlbum?: boolean }) => {
+        // BUY WHOLE ALBUM calls this in the same tap that selects every photo,
+        // before the new selection has rendered — so it can't wait on it.
+        const wholeAlbum = opts?.wholeAlbum === true;
+        wholeAlbumRef.current = wholeAlbum;
+        if (!wholeAlbum && selectedPhotos.length === 0) return;
         // A zero-priced gallery has nothing to pay for — the server checkout
         // rejects it outright — so the tray hands out the files directly.
         if (isFreeGallery) {
@@ -982,6 +996,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     photoIds: selectedPhotos.map(p => p.id),
                     email,
                     paymentMethod,
+                    wholeAlbum: wholeAlbumRef.current || undefined,
                     returnPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
                 }),
             });
@@ -1320,6 +1335,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         ))}
                                     </div>
                                 )}
+                                {galleryRole?.role === 'buyer' && galleryRole.pricing?.albumPrice ? (
+                                    <div className="pt-2 space-y-2">
+                                        <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
+                                            Whole album ({galleryRole.pricing.albumCount}) for ${Number(galleryRole.pricing.albumPrice).toFixed(0)}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // Every photo; the server prices it from the database.
+                                                setSelectedPhotos(photos);
+                                                void handleCheckout({ wholeAlbum: true });
+                                            }}
+                                            className="px-5 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
+                                            data-tour="buy-whole-album"
+                                        >
+                                            Buy Whole Album — ${Number(galleryRole.pricing.albumPrice).toFixed(0)}
+                                        </button>
+                                    </div>
+                                ) : null}
                                 <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
                                     Pay with Card or Bitcoin
                                 </p>

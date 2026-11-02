@@ -8,6 +8,7 @@
 process.env.GALLERY_INVITE_SECRET = 'test-secret';
 import { roleFor, mintPass, verifyPass, isFreeLibrary } from '../lib/api-handlers/_gallery-pass.ts';
 import { streamAccess } from '../lib/api-handlers/_stream-access.ts';
+import { buyerTotal, cleanBundles } from '../src/lib/buyerPricing.ts';
 
 let failures = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -90,6 +91,14 @@ r = await A('p-bought', { gp: mintPass('lib-other', 'bandit@icloud.com', 'owner'
 check('an owner pass from another gallery doesn\'t work here', !r.download);
 r = await streamAccess(supabase, { photoId: 'p-pub', libraryId: 'lib-pub' }, now);
 check('public gallery: unchanged (separate change), shared cache OK', r.download && !r.personal);
+
+// --- à la carte prices (Mikey & Bandit: $5, 4 for $10, whole album of 69 for $75) ---
+const P = { single: 5, bundles: cleanBundles([{ photo_count: 4, price: 10 }]), albumPrice: 75, albumCount: 69 };
+const cases: [number, number][] = [[1, 5], [3, 15], [4, 10], [5, 15], [8, 20], [9, 25], [69, 75], [70, 75]];
+for (const [n, want] of cases) check(`${n} photo${n === 1 ? '' : 's'} costs $${want}`, buyerTotal(n, P) === want, `got $${buyerTotal(n, P)}`);
+check('no album price set → no album deal (69 photos = 17×$10 + $5)', buyerTotal(69, { ...P, albumPrice: null }) === 175, String(buyerTotal(69, { ...P, albumPrice: null })));
+check('junk bundles are dropped (1-photo or $0 "bundles" can\'t undercut)', cleanBundles([{ photo_count: 1, price: 0 }, { photo_count: 4, price: 0 }, { photo_count: 'x', price: 3 }, { photo_count: 4, price: 10 }]).length === 1);
+check('nothing selected costs nothing', buyerTotal(0, P) === 0);
 
 console.log(failures === 0 ? '\nAll checks passed.' : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
