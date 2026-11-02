@@ -113,7 +113,9 @@ const PhotoCard: React.FC<{
     onToggleSelect: () => void;
     onLightbox: () => void;
     onDownload?: () => void;
-}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload }) => {
+    /** This viewer has downloaded/saved this photo before. */
+    isDownloaded?: boolean;
+}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload, isDownloaded = false }) => {
     const [rotation, setRotation] = useState(0);
     const isUnlocked = isPurchased || isFree;
     const [matureOk, confirmMature] = useMatureConsent();
@@ -243,6 +245,18 @@ const PhotoCard: React.FC<{
                             </button>
                         )}
 
+                        {/* Downloaded by this viewer */}
+                        {isDownloaded && (
+                            <div
+                                className="absolute bottom-1.5 right-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em]"
+                                title="You've downloaded this"
+                                data-testid="downloaded-badge"
+                            >
+                                <ArrowDownTrayIcon className="w-2.5 h-2.5" />
+                                SAVED
+                            </div>
+                        )}
+
                         {/* Purchased Badge */}
                         {isPurchased && (
                             <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em]">
@@ -357,6 +371,39 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
     // On a phone, downloads go to the camera roll through the share sheet.
     const [saveSheet, setSaveSheet] = useState<SaveItem[] | null>(null);
+
+    // Photos this viewer has downloaded, marked SAVED on the grid. Signed in:
+    // from the download log for their verified email (follows them across
+    // devices). Not signed in: remembered on this device only — an email typed
+    // into the download prompt proves nothing, so the server won't answer for it.
+    const downloadedKey = `gallery_downloaded_${librarySlug}`;
+    const [downloadedIds, setDownloadedIds] = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem(`gallery_downloaded_${librarySlug}`) || '[]')); } catch { return new Set(); }
+    });
+    const markDownloaded = (ids: string[]) => {
+        if (!ids.length) return;
+        setDownloadedIds(prev => {
+            const next = new Set(prev);
+            ids.forEach(id => next.add(id));
+            try { localStorage.setItem(downloadedKey, JSON.stringify([...next])); } catch { /* private mode */ }
+            return next;
+        });
+    };
+    useEffect(() => {
+        let cancelled = false;
+        try { setDownloadedIds(new Set(JSON.parse(localStorage.getItem(downloadedKey) || '[]'))); } catch { setDownloadedIds(new Set()); }
+        if (!user) return;
+        (async () => {
+            try {
+                const res = await fetch(`/api/gallery/my-downloads?slug=${encodeURIComponent(librarySlug)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled && Array.isArray(data.photoIds)) markDownloaded(data.photoIds);
+            } catch { /* marks are a convenience; never block the gallery */ }
+        })();
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [librarySlug, user?.id]);
 
     // Drive-native gallery: true when the API returned 403 (not in invited_emails)
     const [driveAccessDenied, setDriveAccessDenied] = useState(false);
@@ -825,6 +872,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Same-origin anchor with the stream endpoint's attachment disposition —
     // not window.open, which popup blockers eat when fired in a loop.
     const triggerFileDownload = (photo: Photo, email: string) => {
+        markDownloaded([photo.id]);
         const fileId = photo.google_drive_file_id || photo.id;
         const a = document.createElement('a');
         a.href = `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`;
@@ -849,6 +897,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     url: `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`,
                     filename: photoFilename(photo.title, photo.mime_type, photo.id),
                     type: photo.mime_type || 'image/jpeg',
+                    photoId: photo.id,
                 };
             }));
             return;
@@ -1496,6 +1545,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 onToggleSelect={() => handleToggleSelect(photo)}
                                                 onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
                                                 onDownload={() => downloadPhotos([photo])}
+                                                isDownloaded={downloadedIds.has(photo.id)}
                                             />
                                         ))}
                                     </div>
@@ -1518,7 +1568,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             </div >
 
             {/* Lightbox */}
-            {saveSheet && <SaveToPhotosSheet items={saveSheet} onClose={() => setSaveSheet(null)} />}
+            {saveSheet && <SaveToPhotosSheet items={saveSheet} onClose={() => setSaveSheet(null)} onSaved={markDownloaded} />}
             <PhotoLightbox
                 photo={activePhotoIndex !== null ? photos[activePhotoIndex] : null}
                 onClose={() => setActivePhotoIndex(null)}
