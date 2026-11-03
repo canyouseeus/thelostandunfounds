@@ -201,16 +201,13 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
   }, []);
 
   // Lock the page while the tour runs: the reader's finger must not drag the
-  // dashboard out from under the outline. The tour still scrolls each target
-  // into view itself (scrollIntoView ignores overflow: hidden), and the card
-  // keeps its own taps.
+  // dashboard out from under the outline. Done by blocking scroll gestures,
+  // never by setting overflow on <html>/<body>: panels and pop-ups save and
+  // restore that inline style themselves, so one opened during a tour saved
+  // the tour's "hidden" as normal and put it back after the tour ended,
+  // locking the dashboard for good. The tour still scrolls each target into
+  // view itself; only the reader's gestures are stopped.
   useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const prev = { html: html.style.overflow, body: body.style.overflow, overscroll: body.style.overscrollBehavior };
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
     const block = (e: Event) => { if (e.cancelable) e.preventDefault(); };
     const blockKeys = (e: KeyboardEvent) => {
       if ([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
@@ -223,9 +220,6 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
     window.addEventListener('wheel', block, { passive: false });
     window.addEventListener('keydown', blockKeys);
     return () => {
-      html.style.overflow = prev.html;
-      body.style.overflow = prev.body;
-      body.style.overscrollBehavior = prev.overscroll;
       window.removeEventListener('touchmove', block);
       window.removeEventListener('wheel', block);
       window.removeEventListener('keydown', blockKeys);
