@@ -55,33 +55,30 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
 
   return (
     <div className="bg-black/50 border-0 rounded-none p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <UsersIcon className="text-white w-6 h-6" />
-          <h3 className="text-xl font-bold text-white">My Customers (Lifetime)</h3>
-        </div>
-        <span className="text-white/60 text-sm">{customers.length} customers</span>
+      <div className="flex items-center gap-3 mb-6 min-w-0">
+        <UsersIcon className="text-white w-6 h-6 shrink-0" />
+        <h3 className="text-xl font-bold uppercase tracking-tighter text-white">My Customers <span className="text-white/40">(Lifetime)</span></h3>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/5 border-0 rounded-none p-4 text-center">
-          <p className="text-white/60 text-sm mb-1">Total Customers</p>
-          <p className="text-white text-2xl font-bold">{customers.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        <div className="bg-white/5 border-0 rounded-none p-3 sm:p-4 text-left min-w-0">
+          <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.05em] sm:tracking-[0.15em] mb-2 truncate">Customers</p>
+          <p className="text-white text-xl sm:text-2xl font-bold truncate">{customers.length}</p>
         </div>
-        <div className="bg-white/5 border-0 rounded-none p-4 text-center">
-          <p className="text-white/60 text-sm mb-1">Total Purchases</p>
-          <p className="text-white text-2xl font-bold">{totalPurchases}</p>
+        <div className="bg-white/5 border-0 rounded-none p-3 sm:p-4 text-left min-w-0">
+          <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.05em] sm:tracking-[0.15em] mb-2 truncate">Purchases</p>
+          <p className="text-white text-xl sm:text-2xl font-bold truncate">{totalPurchases}</p>
         </div>
-        <div className="bg-white/5 border-0 rounded-none p-4 text-center">
-          <p className="text-white/60 text-sm mb-1">Total Profit Gen.</p>
-          <p className="text-white text-2xl font-bold">${totalProfit.toFixed(0)}</p>
+        <div className="bg-white/5 border-0 rounded-none p-3 sm:p-4 text-left min-w-0">
+          <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.05em] sm:tracking-[0.15em] mb-2 truncate">Profit</p>
+          <p className="text-white text-xl sm:text-2xl font-bold truncate">${totalProfit.toFixed(0)}</p>
         </div>
       </div>
 
       {/* Sort Controls */}
-      <div className="flex gap-2 mb-4">
-        <span className="text-white/60 text-sm self-center">Sort by:</span>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-white/60 text-sm">Sort by:</span>
         <button
           onClick={() => setSortBy('profit')}
           className={`px-3 py-1 text-sm rounded-none transition-colors ${sortBy === 'profit' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
@@ -106,11 +103,38 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
       </div>
 
       {/* Customer Table */}
-      <div className="overflow-x-auto">
+      <div>
         {loading ? (
           <p className="text-white/60 text-center py-8">Loading customers...</p>
         ) : customers.length > 0 ? (
-          <table className="w-full">
+          <>
+          {/* Phone: one block per customer, so a long email never pushes the numbers off-screen. */}
+          <div className="sm:hidden space-y-2">
+            {sortedCustomers.map((customer) => (
+              <div key={customer.id} className="bg-white/5 p-3 text-left" style={{ borderRadius: 0 }}>
+                <p className="text-white text-sm break-all">{customer.email}</p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="min-w-0">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.15em]">First buy</p>
+                    <p className="text-white/80 text-sm mt-1">
+                      {customer.first_purchase_date ? new Date(customer.first_purchase_date).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.15em]">Buys</p>
+                    <p className="text-white/80 text-sm mt-1">{customer.total_purchases}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.15em]">Profit</p>
+                    <p className="text-white text-sm font-medium mt-1">
+                      ${parseFloat(customer.total_profit_generated.toString()).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <table className="hidden sm:table w-full">
             <thead>
               <tr>
                 <th className="text-left text-white/60 text-sm font-medium pb-2">Email</th>
@@ -122,7 +146,7 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
             <tbody>
               {sortedCustomers.map((customer) => (
                 <tr key={customer.id} className="border-0 hover:bg-white/5 transition-colors">
-                  <td className="py-3 text-white text-sm">{customer.email}</td>
+                  <td className="py-3 pr-4 text-white text-sm break-all">{customer.email}</td>
                   <td className="py-3 text-white/80 text-sm text-center">
                     {customer.first_purchase_date ? new Date(customer.first_purchase_date).toLocaleDateString() : 'N/A'}
                   </td>
@@ -134,6 +158,7 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
               ))}
             </tbody>
           </table>
+          </>
         ) : (
           <div className="text-center py-8">
             <UsersIcon className="text-white/20 mx-auto mb-3 w-12 h-12" />
