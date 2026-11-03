@@ -78,10 +78,14 @@ export default function ClientUpload() {
 
     const addFiles = useCallback((files: FileList | null) => {
         if (!files?.length) return;
+        // Copy now. The file input is cleared right after this call, and in
+        // Chromium that empties this same FileList before the queue updater
+        // below runs, so choosing files with the picker queued nothing.
+        const picked = Array.from(files);
         setSendError(null);
         setQueue(prev => {
             const existing = new Set(prev.map(q => `${q.file.name}:${q.file.size}`));
-            const additions = Array.from(files)
+            const additions = picked
                 .filter(f => !existing.has(`${f.name}:${f.size}`))
                 .map(file => ({ file, state: 'queued' as FileState }));
             return [...prev, ...additions];
