@@ -10,7 +10,7 @@ interface CalendarWidgetProps {
     interactive?: boolean;
     viewDate?: Date;
     onMonthChange?: (d: Date) => void;
-    dotsByDate?: Map<string, { bookings: number; events: number; photos: number; blocked: boolean; crewOut?: number }>;
+    dotsByDate?: Map<string, { bookings: number; events: number; photos: number; blocked: boolean; crewOut?: number; bills?: number }>;
     /**
      * 'default' (≈240px column, used in date pickers and sidebars),
      * 'large' (scales up at md/lg breakpoints, for full-width admin master calendar), or
@@ -129,7 +129,7 @@ export function CalendarWidget({
 
                         const ymd = toYMD(new Date(currentYear, viewDate.getMonth(), d));
                         const dots = dotsByDate?.get(ymd);
-                        const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked || (dots.crewOut || 0) > 0);
+                        const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked || (dots.crewOut || 0) > 0 || (dots.bills || 0) > 0);
 
                         return (
                             <div key={d} className={cn("relative flex flex-col items-center justify-start", isLarge ? "h-10 md:h-16 lg:h-20 pt-[3px] md:pt-2" : isFill ? "h-[58px] pt-1" : "h-10 pt-[3px]")}>
@@ -177,7 +177,9 @@ export function CalendarWidget({
                                         {dots!.bookings > 0 && <span className={cn("bg-yellow-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
                                         {dots!.events > 0 && <span className={cn("bg-green-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
                                         {dots!.photos > 0 && <span className={cn("bg-white/60 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
-                                        {dots!.blocked && <span className={cn("bg-red-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
+                                        {/* Red is reserved for money owed: a bill or loan is due this day. */}
+                                        {(dots!.bills || 0) > 0 && <span className={cn("bg-red-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
+                                        {dots!.blocked && <span className={cn("bg-white/25 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
                                         {/* Amber, not red: somebody on the roster is out, which is
                                             not the same as the date being closed to bookings. */}
                                         {(dots!.crewOut || 0) > 0 && <span className={cn("bg-amber-500 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}

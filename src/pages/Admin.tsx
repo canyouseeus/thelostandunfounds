@@ -64,6 +64,7 @@ import {
   EllipsisHorizontalIcon,
   CloudArrowUpIcon,
   Squares2X2Icon,
+  ScaleIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -103,6 +104,7 @@ import AdminRosterView from '../components/admin/AdminRosterView';
 import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminSupportView from '../components/admin/AdminSupportView';
 import { AdminProspectsView } from '../components/admin/AdminProspectsView';
+import MoneyLedgerView from '../components/admin/MoneyLedgerView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -2050,6 +2052,7 @@ export default function Admin() {
                 { id: 'crm', icon: UserGroupIcon, title: 'CRM' },
                 { id: 'prospects', icon: ViewfinderCircleIcon, title: 'Prospects', badge: prospectsWaiting },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
+                { id: 'money', icon: ScaleIcon, title: 'Money In / Out' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
                 { id: 'support', icon: LifebuoyIcon, title: 'Support', badge: supportWaiting },
@@ -2121,6 +2124,7 @@ export default function Admin() {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
+                  money:       { title: 'Money In / Out',           icon: <ScaleIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -2169,6 +2173,11 @@ export default function Admin() {
                 {activePanelSection === 'clientuploads' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Content Requests</div>}>
                     <AdminClientUploadsView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'money' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Money In / Out</div>}>
+                    <MoneyLedgerView />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'blog' && (

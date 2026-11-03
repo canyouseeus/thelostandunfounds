@@ -16,6 +16,7 @@ import { CalendarWidget } from '../ui/calendar-widget';
 import { ExpandableScreen, ExpandableScreenContent } from '../ui/expandable-screen';
 import { DetailSheet } from '../ui/detail-sheet';
 import { NotesApp } from '../ui/notes-app';
+import { type Bill, dueDatesInRange, fetchBills, PRIORITY_TEXT } from '../../lib/bills';
 
 interface CalendarBooking {
     id: string;
@@ -124,6 +125,10 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [monthCursor, setMonthCursor] = useState<Date>(new Date());
     const [monthData, setMonthData] = useState<CalendarRangeResponse | null>(null);
+    // Bills and loans, for the red due-date dots. Admin-gated, so a failure
+    // just leaves the dots off rather than breaking the calendar.
+    const [bills, setBills] = useState<Bill[]>([]);
+    useEffect(() => { fetchBills().then(setBills).catch(() => setBills([])); }, []);
     const [detailData, setDetailData] = useState<CalendarRangeResponse | null>(null);
     const [monthLoading, setMonthLoading] = useState(false);
     const [detailLoading, setDetailLoading] = useState(false);
@@ -199,9 +204,9 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
     }, [monthCursor, viewMode, focusDate, startDate, endDate]);
 
     const activityByDate = useMemo(() => {
-        const m = new Map<string, { bookings: number; events: number; photos: number; blocked: boolean; crewOut: number }>();
+        const m = new Map<string, { bookings: number; events: number; photos: number; blocked: boolean; crewOut: number; bills: number }>();
         const ensure = (d: string) => {
-            if (!m.has(d)) m.set(d, { bookings: 0, events: 0, photos: 0, blocked: false, crewOut: 0 });
+            if (!m.has(d)) m.set(d, { bookings: 0, events: 0, photos: 0, blocked: false, crewOut: 0, bills: 0 });
             return m.get(d)!;
         };
         if (!monthData) return m;
@@ -210,8 +215,10 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
         for (const d of Object.keys(monthData.photos)) ensure(d).photos += monthData.photos[d].length;
         for (const a of monthData.adminBlocked) ensure(a.date).blocked = true;
         for (const c of monthData.crewBlocked || []) ensure(c.date).crewOut++;
+        const { start, end } = monthWindow(monthCursor);
+        for (const b of bills) for (const d of dueDatesInRange(b, start, end)) ensure(d).bills++;
         return m;
-    }, [monthData]);
+    }, [monthData, bills, monthCursor]);
 
     function handleDateClick(date: Date) {
         const ymd = toYMD(date);
@@ -440,6 +447,7 @@ export default function AdminCalendarView({ adminEmail }: { adminEmail?: string 
                     data={detailData}
                     crew={crew}
                     loading={detailLoading}
+                    bills={bills}
                     onPrevDay={() => { const d = new Date(focusDate); d.setDate(d.getDate() - 1); setFocusDate(d); }}
                     onNextDay={() => { const d = new Date(focusDate); d.setDate(d.getDate() + 1); setFocusDate(d); }}
                     onAddNote={addNote}
@@ -469,7 +477,8 @@ function ActivityLegend() {
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" /> Booking</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-green-400 rounded-full" /> Event</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-white/60 rounded-full" /> Upload</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-red-400 rounded-full" /> Blocked</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-red-400 rounded-full" /> Bill Due</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-white/25 rounded-full" /> Blocked</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full" /> Crew Out</span>
         </div>
     );
@@ -639,11 +648,13 @@ function DayView({
     onAddNote,
     onDeleteNote,
     onBookingChange,
+    bills = [],
 }: {
     focusDate: Date;
     data: CalendarRangeResponse | null;
     crew: CrewMember[];
     loading: boolean;
+    bills?: Bill[];
     onPrevDay: () => void;
     onNextDay: () => void;
     onAddNote: (date: string, note: string) => void;
@@ -671,6 +682,7 @@ function DayView({
     const photos = data?.photos[ymd] || [];
     const notes = data?.notes.filter(n => n.date === ymd) || [];
     const crewOut = data?.crewBlocked?.filter(c => c.date === ymd) || [];
+    const billsDue = bills.filter(b => dueDatesInRange(b, ymd, ymd).length > 0);
 
     return (
         <div className="space-y-4">
@@ -692,6 +704,23 @@ function DayView({
             ) : (
                 <div className="space-y-6">
                     <DailyRecap recap={recap} loading={recapLoading} />
+
+                    {billsDue.length > 0 && (
+                        <Section title={`Bills Due (${billsDue.length})`}>
+                            <div className="space-y-1">
+                                {billsDue.map(b => (
+                                    <div key={b.id} className="flex items-center gap-3 bg-red-400/10 px-3 py-2 text-xs">
+                                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full shrink-0" />
+                                        <span className="flex-1 min-w-0 truncate text-white">{b.name}</span>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest ${PRIORITY_TEXT[b.priority]}`}>{b.priority}</span>
+                                        <span className="font-bold tabular-nums text-white">
+                                            {b.amount_cents ? `$${(b.amount_cents / 100).toFixed(2)}` : 'Amount TBD'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Section>
+                    )}
 
                     <Section
                         title={`Bookings (${bookings.length})`}
