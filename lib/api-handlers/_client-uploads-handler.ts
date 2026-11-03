@@ -46,6 +46,7 @@ export interface UploadLinkRow {
     last_upload_at: string | null;
     invited_at: string | null;
     created_at: string;
+    booking_id?: string | null;
 }
 
 export class HttpError extends Error {
@@ -153,6 +154,14 @@ export async function createLink(
         expires_in_days?: number;
         max_files?: number;
         max_file_mb?: number;
+        /** A booking's brand-asset link (see api/booking). */
+        booking_id?: string;
+        /**
+         * Make the Drive folder on the first upload instead of now. Booking
+         * links use this: most bookings never send a file, and a Drive call
+         * plus an empty folder per booking would be waste.
+         */
+        defer_drive?: boolean;
     }
 ) {
     const clientName = (body.client_name || '').trim();
@@ -168,7 +177,7 @@ export async function createLink(
 
     let drive: { id: string; url: string } | null = null;
     let driveError: string | null = null;
-    try {
+    if (!body.defer_drive) try {
         drive = await createDriveFolder(folderName);
     } catch (err: any) {
         // A missing Drive folder must not block the link. Files still land in
@@ -195,6 +204,7 @@ export async function createLink(
             expires_at: expiresAt,
             max_files: body.max_files ?? 100,
             max_file_mb: body.max_file_mb ?? 100,
+            booking_id: body.booking_id || null,
         })
         .select()
         .single();
@@ -334,6 +344,39 @@ export async function recordBatch(
 
     const note = (body.note || '').trim().slice(0, 2000) || null;
     const rows = [];
+
+    // Links made with defer_drive get their folder on the first upload. If
+    // Drive is down, the files still land in Storage and the mirror can be
+    // retried from the dashboard, same as a link whose folder failed.
+    if (!link.drive_folder_id) {
+        try {
+            const folderName = link.project_name ? `${link.client_name} — ${link.project_name}` : `${link.client_name} — Uploads`;
+            const folder = await createDriveFolder(folderName);
+            const { data: claimed, error: saveErr } = await supabase
+                .from('client_upload_links')
+                .update({ drive_folder_id: folder.id, drive_folder_url: folder.url })
+                .eq('id', link.id)
+                .is('drive_folder_id', null)
+                .select('drive_folder_id, drive_folder_url');
+            if (saveErr) throw new Error(saveErr.message);
+            if (claimed && claimed.length) {
+                link.drive_folder_id = folder.id;
+                link.drive_folder_url = folder.url;
+            } else {
+                // Another batch made the folder first: use theirs. Ours stays
+                // empty in Drive, which is harmless.
+                const { data: current } = await supabase
+                    .from('client_upload_links')
+                    .select('drive_folder_id, drive_folder_url')
+                    .eq('id', link.id)
+                    .single();
+                link.drive_folder_id = current?.drive_folder_id || null;
+                link.drive_folder_url = current?.drive_folder_url || null;
+            }
+        } catch (err: any) {
+            console.error('[client-uploads] Deferred Drive folder failed:', err?.message);
+        }
+    }
 
     for (const file of files) {
         let driveId: string | null = null;

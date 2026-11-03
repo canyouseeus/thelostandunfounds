@@ -690,7 +690,7 @@ const memberBasicsTour: Tour = {
     { target: 'm-actions', title: 'Settings And Sign Out', body: 'The gear is your account settings. The arrow signs you out.' },
     { target: 'm-revenue', title: 'Your Earnings', body: 'What you have earned, kept up to date.' },
     { target: 'm-clock', title: 'Clock And Calendar', body: 'Tap the clock face to change its look. Tap its label for a stopwatch and timer.' },
-    { target: 'm-dock', title: 'Your Apps', body: 'Each of your apps opens from here: Gallery, Writer, Affiliate and Account. You see the ones that are yours.' },
+    { target: 'm-dock', title: 'Your Apps', body: 'Each of your apps opens from here: Portfolio, Gallery, Writer, Affiliate and Account. You see the ones that are yours.' },
     { target: 'help-tickets', title: 'Support', body: 'Stuck? GET HELP opens a ticket. The reply comes by email and shows here.' },
     { target: 'tour-help', title: 'Tutorials', body: 'Tap ? any time for a walkthrough of each app.' },
   ],
@@ -1008,7 +1008,75 @@ const photographerAlbumPriceTour: Tour = {
   steps: albumPriceSteps([openPhotographer], s => s),
 };
 
-export const TOURS: Tour[] = [galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+
+/* ── Portfolios, profile pictures, brand kit, booking brand assets (2026-11-03) ── */
+
+const portfolioTour: Tour = {
+  id: 'member-portfolio',
+  title: 'Your Portfolio',
+  summary: 'A public page for your work: photos, videos, YouTube and TikTok, and the brands you have worked with.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-03',
+  steps: [
+    { ...memberApp('portfolio', 'Portfolio', 'Tap the Portfolio icon to open it.'), missingNote: 'Portfolios are for photographers, affiliates and writers. Join the affiliate program to get one.' },
+    inApp('portfolio', { target: 'pf-handle', title: 'Your Address', body: 'Pick the address of your page: /portfolio/your-name.' }),
+    inApp('portfolio', { target: 'pf-create', action: 'click', title: 'Create', body: 'Tap CREATE PORTFOLIO. It stays a draft until you publish it.' }),
+    inApp('portfolio', { target: 'pf-tab-posts', action: 'click', title: 'Posts', body: 'Tap POSTS.' }),
+    inApp('portfolio', { target: 'pf-kind-media', action: 'click', title: 'Photo Or Video', body: 'Tap PHOTO / VIDEO to post your shots. Each file becomes its own post.' }),
+    inApp('portfolio', { target: 'pf-kind-embed', action: 'click', title: 'YouTube Or TikTok', body: 'Tap YOUTUBE / TIKTOK, then paste a link to one video.' }),
+    inApp('portfolio', { target: 'pf-composer', title: 'Caption And Post', body: 'Add a title or caption if you like, then tap POST.' }),
+    inApp('portfolio', { target: 'pf-feed', title: 'Your Feed', body: 'Exactly what visitors see. PIN keeps a post at the top.' }),
+    inApp('portfolio', { target: 'pf-tab-clients', action: 'click', title: 'Worked With', body: 'Tap WORKED WITH.' }),
+    inApp('portfolio', { target: 'pf-client-form', title: 'Brand Logos', body: 'Add each brand you have worked with: its name and logo. They show as a wall at the top of your page.' }),
+    inApp('portfolio', { target: 'pf-tab-profile', action: 'click', title: 'Profile', body: 'Tap PROFILE.' }),
+    inApp('portfolio', { target: 'pf-profile-form', title: 'About You', body: 'Your photo, tagline, bio and links. SAVE PROFILE keeps it.' }),
+    inApp('portfolio', { target: 'pf-publish', title: 'Publish', body: 'PUBLISH puts it online. VIEW opens it the way visitors see it.' }),
+  ],
+};
+
+const profilePictureTour: Tour = {
+  id: 'member-profile-picture',
+  title: 'Profile Picture',
+  summary: 'Set your own profile picture.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-03',
+  steps: [
+    { route: MEMBER, panel: null, target: 'profile-picture', title: 'Profile Picture', body: 'Tap your picture to change it. JPG, PNG, WebP or GIF, up to 5MB.', missingNote: 'Profile pictures are for photographers, affiliates and writers.' },
+  ],
+};
+
+const brandKitTour: Tour = {
+  id: 'photographer-brand-kit',
+  title: 'Brand Kit',
+  summary: 'The studio logo in white and black, how to use it, and a folder for your own logos.',
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-03',
+  steps: [
+    memberApp('brandkit', 'Brand Kit', 'Tap the Brand Kit icon to open it.'),
+    inApp('brandkit', { target: 'bk-tab-studio', action: 'click', title: 'Studio Logos', body: 'Tap STUDIO LOGOS.' }),
+    inApp('brandkit', { target: 'bk-studio-files', title: 'SCOT33', body: 'Our mascot, in white for dark photos and black for light ones. DOWNLOAD saves it.' }),
+    inApp('brandkit', { target: 'bk-guidelines', title: 'How To Use It', body: 'Read this before you post the logo anywhere.' }),
+    inApp('brandkit', { target: 'bk-tab-mine', action: 'click', title: 'My Brand Files', body: 'Tap MY BRAND FILES.' }),
+    inApp('brandkit', { target: 'bk-upload', title: 'Your Logos', body: 'Add your own logos once. Only you can see them, and they are here whenever you need them.' }),
+  ],
+};
+
+const bookingBrandAssetsTour: Tour = {
+  id: 'booking-brand-assets',
+  title: 'Brand Assets From Bookings',
+  summary: 'Clients can now send their logo and brand files when they book. Each booking gets its own upload link.',
+  group: 'new',
+  announce: '2026-11-03',
+  steps: [
+    openFromDock('clientuploads', 'Content Requests', 'Brand assets from bookings land here. Tap the Content Requests icon.'),
+    inPanel('clientuploads', { target: 'cr-files', title: 'A Booking\'s Files', body: 'Every booking gets a link named "Brand assets" with its shoot and date. Tap FILES to see what the client sent. You are emailed when files arrive.', missingNote: 'No booking has sent files yet. Their links show up here when one does.' }),
+  ],
+};
+
+export const TOURS: Tour[] = [bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
