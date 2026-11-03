@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTour } from '../admin/tour/TourContext';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 
@@ -51,6 +52,9 @@ export default function CrewOnboardingModal({ userId }: { userId: string }) {
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A walkthrough points at the dashboard behind this pop-up, so it steps
+  // aside while one runs and comes back when the tour ends.
+  const { activeId: tourRunning } = useTour();
 
   const load = useCallback(async () => {
     try {
@@ -91,7 +95,7 @@ export default function CrewOnboardingModal({ userId }: { userId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, skip]);
 
-  if (!open || !setup) return null;
+  if (!open || !setup || tourRunning) return null;
 
   const steps = setup.steps;
   const step = steps[index];
