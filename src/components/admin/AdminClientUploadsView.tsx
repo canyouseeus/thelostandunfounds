@@ -9,6 +9,13 @@
  *
  * The database columns still say `client_*`; the feature outgrew that name and
  * renaming live columns wasn't worth the migration.
+ *
+ * The same view runs in two places: the admin panel (every request, labelled
+ * with whose it is) and the photographer dashboard (only that photographer's
+ * own). The API does the scoping; this component just renders what it gets.
+ *
+ * Logos get a white copy for the black site background. Tiles show the white
+ * version when there is one; any other PNG/JPG/WebP can be converted by hand.
  */
 
 import { useEffect, useState } from 'react';
@@ -38,6 +45,8 @@ interface UploadLink {
     invited_at: string | null;
     created_at: string;
     upload_url: string;
+    photographer_id: string | null;
+    owner_name: string | null;
 }
 
 interface Upload {
@@ -50,8 +59,13 @@ interface Upload {
     drive_error: string | null;
     uploader_note: string | null;
     preview_url: string | null;
+    white_preview_url: string | null;
+    white_drive_view_url: string | null;
+    white_error: string | null;
     created_at: string;
 }
+
+const CONVERTIBLE = /^image\/(png|jpe?g|webp)$/i;
 
 const surface = { borderRadius: 0 } as const;
 
@@ -70,7 +84,7 @@ async function authFetch(url: string, init: RequestInit = {}) {
     return body;
 }
 
-export default function AdminClientUploadsView() {
+export default function AdminClientUploadsView({ photographerView = false }: { photographerView?: boolean }) {
     const [links, setLinks] = useState<UploadLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -88,6 +102,7 @@ export default function AdminClientUploadsView() {
     const [openLinkId, setOpenLinkId] = useState<string | null>(null);
     const [uploads, setUploads] = useState<Upload[]>([]);
     const [uploadsLoading, setUploadsLoading] = useState(false);
+    const [converting, setConverting] = useState<string | null>(null);
 
     useEffect(() => { loadLinks(); }, []);
 
@@ -207,6 +222,27 @@ export default function AdminClientUploadsView() {
         }
     }
 
+    async function convertToWhite(u: Upload) {
+        if (converting) return;
+        setConverting(u.id);
+        setError(null);
+        try {
+            await authFetch('/api/client-uploads/make-white', {
+                method: 'POST',
+                body: JSON.stringify({ id: u.id }),
+            });
+            flash(`White version made for ${u.file_name}`);
+            if (openLinkId) {
+                const body = await authFetch(`/api/client-uploads/uploads?linkId=${openLinkId}`);
+                setUploads(body.uploads || []);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setConverting(null);
+        }
+    }
+
     // The hand-off block: everything an agent needs to pull the photos and put
     // them into a landing page.
     function briefFor(link: UploadLink): string {
@@ -219,6 +255,7 @@ export default function AdminClientUploadsView() {
         uploads.forEach((u, i) => {
             lines.push(`${i + 1}. ${u.file_name}${u.mime_type ? ` (${u.mime_type})` : ''}`);
             if (u.drive_view_url) lines.push(`   drive: ${u.drive_view_url}`);
+            if (u.white_drive_view_url) lines.push(`   white version: ${u.white_drive_view_url}`);
             if (u.uploader_note && i === 0) lines.push(`   client note: ${u.uploader_note}`);
         });
         lines.push('', 'Use these to build the landing page.');
@@ -325,6 +362,11 @@ export default function AdminClientUploadsView() {
                                         {link.project_name && (
                                             <span className="text-white/40 font-normal"> — {link.project_name}</span>
                                         )}
+                                        {!photographerView && (
+                                            <span className="ml-2 px-2 py-0.5 bg-white/10 text-[9px] font-black uppercase tracking-widest text-white/60">
+                                                {link.owner_name || 'Studio'}
+                                            </span>
+                                        )}
                                         {!link.is_active && (
                                             <span className="ml-2 px-2 py-0.5 bg-white/10 text-[9px] font-black uppercase tracking-widest text-white/60">
                                                 Off
@@ -404,39 +446,66 @@ export default function AdminClientUploadsView() {
                                         <p className="text-white/40 text-sm">Nothing uploaded yet.</p>
                                     ) : (
                                         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                                            {uploads.map(u => (
-                                                <a
-                                                    key={u.id}
-                                                    href={u.drive_view_url || u.preview_url || '#'}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="block bg-white/5 hover:bg-white/10 transition-colors"
-                                                    style={surface}
-                                                    title={u.file_name}
-                                                >
-                                                    {u.preview_url && (u.mime_type || '').startsWith('image/') ? (
-                                                        <img
-                                                            src={u.preview_url}
-                                                            alt={u.file_name}
-                                                            loading="lazy"
-                                                            className="w-full h-24 object-cover"
-                                                            style={surface}
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-24 flex items-center justify-center text-[10px] uppercase tracking-widest text-white/40">
-                                                            {(u.mime_type || 'file').split('/')[1] || 'file'}
+                                            {uploads.map(u => {
+                                                const isImage = (u.mime_type || '').startsWith('image/');
+                                                const thumb = u.white_preview_url || (isImage ? u.preview_url : null);
+                                                return (
+                                                    <div key={u.id} className="bg-white/5" style={surface} title={u.file_name}>
+                                                        <a
+                                                            href={u.white_drive_view_url || u.drive_view_url || u.white_preview_url || u.preview_url || '#'}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="block hover:bg-white/10 transition-colors"
+                                                        >
+                                                            {thumb ? (
+                                                                <div className="w-full h-24 bg-black flex items-center justify-center p-2">
+                                                                    <img
+                                                                        src={thumb}
+                                                                        alt={u.file_name}
+                                                                        loading="lazy"
+                                                                        className={`max-w-full max-h-full ${u.white_preview_url ? 'object-contain' : 'w-full h-full object-cover'}`}
+                                                                        style={surface}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-full h-24 flex items-center justify-center text-[10px] uppercase tracking-widest text-white/40">
+                                                                    {(u.mime_type || 'file').split('/')[1] || 'file'}
+                                                                </div>
+                                                            )}
+                                                            <p className="px-2 py-1.5 text-[10px] text-white/60 truncate">
+                                                                {u.file_name}
+                                                            </p>
+                                                        </a>
+                                                        <div className="px-2 pb-1.5 flex flex-wrap gap-x-2 gap-y-1">
+                                                            {u.white_preview_url && (
+                                                                <a
+                                                                    href={u.drive_view_url || u.preview_url || '#'}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="text-[9px] uppercase tracking-widest text-white/40 hover:text-white"
+                                                                >
+                                                                    Original
+                                                                </a>
+                                                            )}
+                                                            {!u.white_preview_url && CONVERTIBLE.test(u.mime_type || '') && (
+                                                                <button
+                                                                    onClick={() => convertToWhite(u)}
+                                                                    disabled={!!converting}
+                                                                    className="text-[9px] uppercase tracking-widest text-white/60 hover:text-white disabled:text-white/20"
+                                                                >
+                                                                    {converting === u.id ? 'Converting…' : 'Make white'}
+                                                                </button>
+                                                            )}
+                                                            {u.drive_status !== 'mirrored' && (
+                                                                <span className="text-[9px] uppercase tracking-widest text-amber-400">Not in Drive</span>
+                                                            )}
+                                                            {u.white_error && (
+                                                                <span className="text-[9px] uppercase tracking-widest text-amber-400" title={u.white_error}>{u.white_preview_url ? 'White not in Drive' : 'White failed'}</span>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                    <p className="px-2 py-1.5 text-[10px] text-white/60 truncate">
-                                                        {u.file_name}
-                                                    </p>
-                                                    {u.drive_status !== 'mirrored' && (
-                                                        <p className="px-2 pb-1.5 text-[9px] uppercase tracking-widest text-amber-400">
-                                                            Not in Drive
-                                                        </p>
-                                                    )}
-                                                </a>
-                                            ))}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>

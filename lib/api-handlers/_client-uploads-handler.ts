@@ -11,11 +11,21 @@
 // private Supabase bucket via a signed URL (no size cliff, CORS handled), and
 // the server mirrors each file into Drive afterwards. Storage doubles as the
 // recovery copy if a Drive mirror fails.
+//
+// Each photographer runs their own: a request belongs to the photographer who
+// minted it (`photographer_id`, null = the studio's own), its Drive folder sits
+// inside that photographer's parent folder, and the "files arrived" email goes
+// to them. They only ever see their own requests; the admin sees all of them.
+//
+// Logos also get a white-on-transparent copy, because the site background is
+// black and colour logos don't go on it.
 import type { VercelRequest } from '@vercel/node';
 import { randomBytes } from 'crypto';
 import { Readable } from 'stream';
+import sharp from 'sharp';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { sendTransactionalEmail } from './_resend-email-handler.js';
+import { resolveCrewMember } from './crew/_shared.js';
 
 const BUCKET = 'client-uploads';
 const SITE = 'https://www.thelostandunfounds.com';
@@ -47,6 +57,25 @@ export interface UploadLinkRow {
     invited_at: string | null;
     created_at: string;
     booking_id?: string | null;
+    photographer_id: string | null;
+}
+
+interface PhotographerOwner {
+    id: string;
+    name: string;
+    email: string | null;
+    active: boolean;
+    client_uploads_folder_id: string | null;
+    client_uploads_folder_url: string | null;
+}
+
+const OWNER_FIELDS = 'id, name, email, active, client_uploads_folder_id, client_uploads_folder_url';
+
+// Who is calling a management route. The admin sees everything; a photographer
+// is scoped to the requests they own.
+export interface Requester {
+    isAdmin: boolean;
+    photographer: PhotographerOwner | null;
 }
 
 export class HttpError extends Error {
@@ -59,14 +88,48 @@ export class HttpError extends Error {
 
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
-export async function requireAdmin(req: VercelRequest, supabase: ServiceSupabaseClient) {
+// Admin, or an active photographer on the roster. The photographer comes from
+// the verified session, never from the request body, so nobody can act as
+// somebody else.
+export async function requireRequester(req: VercelRequest, supabase: ServiceSupabaseClient): Promise<Requester> {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) throw new HttpError(401, 'Not authorized');
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user || !ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
-        throw new HttpError(401, 'Not authorized');
+    if (!user) throw new HttpError(401, 'Not authorized');
+    if (ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+        return { isAdmin: true, photographer: null };
     }
-    return user;
+
+    const crew = await resolveCrewMember(supabase as any, req, OWNER_FIELDS);
+    const photographer = crew?.photographer as PhotographerOwner | undefined;
+    if (!photographer || !photographer.active) throw new HttpError(403, 'Content requests are for photographers on the roster.');
+    return { isAdmin: false, photographer };
+}
+
+// Load a link the requester is allowed to manage. Someone else's link reads as
+// not found rather than forbidden, so ids can't be probed.
+async function loadOwnedLink(supabase: ServiceSupabaseClient, requester: Requester, id: string): Promise<UploadLinkRow> {
+    const { data, error } = await supabase
+        .from('client_upload_links')
+        .select('*')
+        .eq('id', id || '')
+        .maybeSingle();
+    if (error) throw new HttpError(500, error.message);
+    const link = data as UploadLinkRow | null;
+    if (!link || (!requester.isAdmin && link.photographer_id !== requester.photographer?.id)) {
+        throw new HttpError(404, 'Link not found');
+    }
+    return link;
+}
+
+async function loadOwner(supabase: ServiceSupabaseClient, photographerId: string | null): Promise<PhotographerOwner | null> {
+    if (!photographerId) return null;
+    const { data } = await supabase
+        .from('photographers')
+        .select(OWNER_FIELDS)
+        .eq('id', photographerId)
+        .maybeSingle();
+    return (data as PhotographerOwner | null) || null;
 }
 
 export function uploadUrlFor(token: string): string {
@@ -116,9 +179,9 @@ function parentFolderId(): string | undefined {
     return process.env.CLIENT_UPLOADS_DRIVE_FOLDER_ID || undefined;
 }
 
-async function createDriveFolder(name: string): Promise<{ id: string; url: string }> {
+async function createDriveFolder(name: string, parentOverride?: string | null): Promise<{ id: string; url: string }> {
     const drive = await getDrive();
-    const parent = parentFolderId();
+    const parent = parentOverride || parentFolderId();
     const folder = await drive.files.create({
         requestBody: {
             name,
@@ -131,17 +194,58 @@ async function createDriveFolder(name: string): Promise<{ id: string; url: strin
     return { id, url: `https://drive.google.com/drive/folders/${id}` };
 }
 
-// --- Link management (admin) ---
+// A photographer's own parent folder, made on first use and shared with them
+// as an editor so their clients' files show up in their own Drive. The studio's
+// requests (no photographer) keep using the root parent.
+async function ensureOwnerFolder(
+    supabase: ServiceSupabaseClient,
+    owner: PhotographerOwner | null
+): Promise<string | null> {
+    if (!owner) return null;
+    if (owner.client_uploads_folder_id) return owner.client_uploads_folder_id;
 
-export async function listLinks(supabase: ServiceSupabaseClient) {
-    const { data, error } = await supabase
+    const folder = await createDriveFolder(`${owner.name} — Client Uploads`);
+    if (owner.email) {
+        try {
+            const drive = await getDrive();
+            await drive.permissions.create({
+                fileId: folder.id,
+                sendNotificationEmail: false,
+                requestBody: { type: 'user', role: 'writer', emailAddress: owner.email },
+            });
+        } catch (err: any) {
+            // The folder still works for the studio; sharing can be redone by hand.
+            console.error('[client-uploads] Could not share folder with', owner.email, err?.message);
+        }
+    }
+    await supabase
+        .from('photographers')
+        .update({ client_uploads_folder_id: folder.id, client_uploads_folder_url: folder.url })
+        .eq('id', owner.id);
+    owner.client_uploads_folder_id = folder.id;
+    owner.client_uploads_folder_url = folder.url;
+    return folder.id;
+}
+
+// --- Link management (admin or the owning photographer) ---
+
+export async function listLinks(supabase: ServiceSupabaseClient, requester: Requester) {
+    let query = supabase
         .from('client_upload_links')
-        .select('*')
+        .select('*, photographers(name)')
         .order('created_at', { ascending: false });
+    if (!requester.isAdmin) query = query.eq('photographer_id', requester.photographer!.id);
+    const { data, error } = await query;
     if (error) throw new HttpError(500, error.message);
 
-    const links = (data || []) as UploadLinkRow[];
-    return links.map(link => ({ ...link, upload_url: uploadUrlFor(link.token) }));
+    return (data || []).map((row: any) => {
+        const { photographers, ...link } = row;
+        return {
+            ...(link as UploadLinkRow),
+            owner_name: photographers?.name || null,
+            upload_url: uploadUrlFor(link.token),
+        };
+    });
 }
 
 export async function createLink(
@@ -162,8 +266,11 @@ export async function createLink(
          * plus an empty folder per booking would be waste.
          */
         defer_drive?: boolean;
-    }
+    },
+    // Booking links (api/booking) are the studio's own, so no requester means studio.
+    requester: Requester = { isAdmin: true, photographer: null }
 ) {
+    const owner = requester.photographer;
     const clientName = (body.client_name || '').trim();
     if (!clientName) throw new HttpError(400, 'client_name is required');
 
@@ -178,7 +285,7 @@ export async function createLink(
     let drive: { id: string; url: string } | null = null;
     let driveError: string | null = null;
     if (!body.defer_drive) try {
-        drive = await createDriveFolder(folderName);
+        drive = await createDriveFolder(folderName, await ensureOwnerFolder(supabase, owner));
     } catch (err: any) {
         // A missing Drive folder must not block the link. Files still land in
         // Storage, and the mirror can be retried once Drive is reachable.
@@ -205,6 +312,7 @@ export async function createLink(
             max_files: body.max_files ?? 100,
             max_file_mb: body.max_file_mb ?? 100,
             booking_id: body.booking_id || null,
+            photographer_id: owner?.id || null,
         })
         .select()
         .single();
@@ -213,7 +321,8 @@ export async function createLink(
     return { link: { ...(data as UploadLinkRow), upload_url: uploadUrlFor(token) }, drive_error: driveError };
 }
 
-export async function setLinkActive(supabase: ServiceSupabaseClient, id: string, isActive: boolean) {
+export async function setLinkActive(supabase: ServiceSupabaseClient, requester: Requester, id: string, isActive: boolean) {
+    await loadOwnedLink(supabase, requester, id);
     const { data, error } = await supabase
         .from('client_upload_links')
         .update({ is_active: isActive })
@@ -303,22 +412,175 @@ async function mirrorToDrive(
     link: UploadLinkRow,
     file: { path: string; name: string; type?: string }
 ): Promise<{ id: string; url: string }> {
-    if (!link.drive_folder_id) throw new Error('No Drive folder is attached to this link');
+    const buffer = await downloadFromStorage(supabase, file.path);
+    return uploadToDrive(link, file.name, file.type || 'application/octet-stream', buffer);
+}
 
-    const { data, error } = await supabase.storage.from(BUCKET).download(file.path);
+async function downloadFromStorage(supabase: ServiceSupabaseClient, path: string): Promise<Buffer> {
+    const { data, error } = await supabase.storage.from(BUCKET).download(path);
     if (error || !data) throw new Error(error?.message || 'File missing from storage');
+    return Buffer.from(await data.arrayBuffer());
+}
 
-    const buffer = Buffer.from(await data.arrayBuffer());
+async function uploadToDrive(
+    link: UploadLinkRow,
+    name: string,
+    mimeType: string,
+    buffer: Buffer
+): Promise<{ id: string; url: string }> {
+    if (!link.drive_folder_id) throw new Error('No Drive folder is attached to this link');
     const drive = await getDrive();
     const created = await drive.files.create({
-        requestBody: { name: file.name, parents: [link.drive_folder_id] },
-        media: { mimeType: file.type || 'application/octet-stream', body: Readable.from(buffer) },
+        requestBody: { name, parents: [link.drive_folder_id] },
+        media: { mimeType, body: Readable.from(buffer) },
         fields: 'id,webViewLink',
     });
     return {
         id: created.data.id!,
         url: created.data.webViewLink || `https://drive.google.com/file/d/${created.data.id}/view`,
     };
+}
+
+// --- White logos ---
+//
+// Every logo on the site sits on black, so colour logos are converted to a
+// solid white mark on a transparent background. Two inputs show up:
+//   - a PNG/WebP that already has transparency: keep the shape, paint it white;
+//   - a flat JPG/PNG with a background: the background colour (read off the
+//     border) goes transparent and everything that differs from it goes white,
+//     so dark-on-light and light-on-dark both come out right.
+
+const CONVERTIBLE = /^image\/(png|jpe?g|webp)$/i;
+const LOGO_NAME = /logo|brand|mark|icon|wordmark|monogram/i;
+
+function whiteNameFor(name: string): string {
+    return `${name.replace(/\.[^.]+$/, '')}-white.png`;
+}
+
+async function hasTransparency(buffer: Buffer): Promise<boolean> {
+    const { data, info } = await sharp(buffer, { failOn: 'none' })
+        .resize({ width: 256, height: 256, fit: 'inside', withoutEnlargement: true })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+    let clear = 0;
+    for (let i = 3; i < data.length; i += info.channels) if (data[i] < 250) clear++;
+    return clear / (info.width * info.height) > 0.01;
+}
+
+export async function makeWhiteLogo(buffer: Buffer): Promise<Buffer> {
+    const { data, info } = await sharp(buffer, { failOn: 'none' })
+        .rotate()
+        .resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+    const { width, height, channels } = info;
+    const lum = (i: number) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+
+    let transparent = 0;
+    for (let i = 3; i < data.length; i += channels) if (data[i] < 250) transparent++;
+    const keepAlpha = transparent / (width * height) > 0.01;
+
+    // Background luminance from the opaque border pixels.
+    let bgSum = 0;
+    let bgCount = 0;
+    if (!keepAlpha) {
+        for (let x = 0; x < width; x++) {
+            for (const y of [0, height - 1]) { bgSum += lum((y * width + x) * channels); bgCount++; }
+        }
+        for (let y = 0; y < height; y++) {
+            for (const x of [0, width - 1]) { bgSum += lum((y * width + x) * channels); bgCount++; }
+        }
+    }
+    const bg = bgCount ? bgSum / bgCount : 255;
+    // Distance at which a pixel counts as fully "ink". Halfway to the far end of
+    // the range, so a mid-tone colour (red, blue) comes out solid white and only
+    // anti-aliased edges stay soft.
+    const solidAt = Math.max(24, Math.max(bg, 255 - bg) * 0.5);
+
+    const out = Buffer.alloc(width * height * 4);
+    for (let p = 0; p < width * height; p++) {
+        const i = p * channels;
+        const alpha = keepAlpha
+            ? data[i + 3]
+            : Math.min(255, Math.round((Math.abs(lum(i) - bg) / solidAt) * 255));
+        out[p * 4] = 255;
+        out[p * 4 + 1] = 255;
+        out[p * 4 + 2] = 255;
+        out[p * 4 + 3] = alpha;
+    }
+
+    const png = await sharp(out, { raw: { width, height, channels: 4 } }).png().toBuffer();
+    try {
+        return await sharp(png).trim().png().toBuffer();
+    } catch {
+        // trim() refuses an image that is entirely background; keep it untrimmed.
+        return png;
+    }
+}
+
+// Should this upload get a white copy without being asked? Images that already
+// have transparency (almost always a logo) or are named like one. Anything else
+// can be converted from the dashboard.
+async function looksLikeLogo(name: string, mime: string | undefined, buffer: Buffer): Promise<boolean> {
+    if (!mime || !CONVERTIBLE.test(mime)) return false;
+    if (LOGO_NAME.test(name)) return true;
+    try {
+        return await hasTransparency(buffer);
+    } catch {
+        return false;
+    }
+}
+
+// Write the white copy next to the original in Storage and in the Drive folder.
+async function storeWhiteVersion(
+    supabase: ServiceSupabaseClient,
+    link: UploadLinkRow,
+    original: { path: string; name: string },
+    buffer: Buffer
+) {
+    const white = await makeWhiteLogo(buffer);
+    const slash = original.path.lastIndexOf('/');
+    const path = `${original.path.slice(0, slash)}/white/${whiteNameFor(original.path.slice(slash + 1))}`;
+    const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, white, { contentType: 'image/png', upsert: true });
+    if (error) throw new Error(error.message);
+
+    let drive: { id: string; url: string } | null = null;
+    try {
+        drive = await uploadToDrive(link, whiteNameFor(original.name), 'image/png', white);
+    } catch (err: any) {
+        console.error('[client-uploads] White logo Drive copy failed:', original.name, err?.message);
+    }
+    return {
+        white_storage_path: path,
+        white_drive_file_id: drive?.id || null,
+        white_drive_view_url: drive?.url || null,
+        white_error: drive ? null : 'White version is in storage but did not reach Drive',
+    };
+}
+
+// Dashboard button: make (or remake) the white copy for one upload.
+export async function makeWhite(supabase: ServiceSupabaseClient, requester: Requester, uploadId: string) {
+    const { data: row, error } = await supabase
+        .from('client_uploads')
+        .select('*')
+        .eq('id', uploadId || '')
+        .maybeSingle();
+    if (error) throw new HttpError(500, error.message);
+    if (!row) throw new HttpError(404, 'Upload not found');
+    const link = await loadOwnedLink(supabase, requester, row.link_id);
+    if (!row.mime_type || !CONVERTIBLE.test(row.mime_type)) {
+        throw new HttpError(400, 'Only PNG, JPG and WebP images can be converted.');
+    }
+
+    const buffer = await downloadFromStorage(supabase, row.storage_path);
+    const fields = await storeWhiteVersion(supabase, link, { path: row.storage_path, name: row.file_name }, buffer);
+    await supabase.from('client_uploads').update(fields).eq('id', row.id);
+    return { ok: true, ...fields };
 }
 
 export async function recordBatch(
@@ -351,7 +613,7 @@ export async function recordBatch(
     if (!link.drive_folder_id) {
         try {
             const folderName = link.project_name ? `${link.client_name} — ${link.project_name}` : `${link.client_name} — Uploads`;
-            const folder = await createDriveFolder(folderName);
+            const folder = await createDriveFolder(folderName, await ensureOwnerFolder(supabase, await loadOwner(supabase, link.photographer_id)));
             const { data: claimed, error: saveErr } = await supabase
                 .from('client_upload_links')
                 .update({ drive_folder_id: folder.id, drive_folder_url: folder.url })
@@ -383,12 +645,10 @@ export async function recordBatch(
         let driveUrl: string | null = null;
         let status = 'pending';
         let driveError: string | null = null;
+        let buffer: Buffer | null = null;
         try {
-            const mirrored = await mirrorToDrive(supabase, link, {
-                path: file.path!,
-                name: file.name!,
-                type: file.type,
-            });
+            buffer = await downloadFromStorage(supabase, file.path!);
+            const mirrored = await uploadToDrive(link, file.name!, file.type || 'application/octet-stream', buffer);
             driveId = mirrored.id;
             driveUrl = mirrored.url;
             status = 'mirrored';
@@ -398,7 +658,20 @@ export async function recordBatch(
             console.error('[client-uploads] Drive mirror failed:', file.name, driveError);
         }
 
+        // A failed conversion never fails the upload — the original is safe and
+        // the white copy can be made again from the dashboard.
+        let white: Record<string, string | null> = {};
+        if (buffer && await looksLikeLogo(file.name!, file.type, buffer)) {
+            try {
+                white = await storeWhiteVersion(supabase, link, { path: file.path!, name: file.name! }, buffer);
+            } catch (err: any) {
+                white = { white_error: err?.message || 'White version failed' };
+                console.error('[client-uploads] White logo failed:', file.name, white.white_error);
+            }
+        }
+
         rows.push({
+            ...white,
             link_id: link.id,
             batch_id: body.batch_id || null,
             file_name: file.name!,
@@ -428,7 +701,7 @@ export async function recordBatch(
     // make a successful upload look failed to the client.
     let emailed = false;
     try {
-        emailed = await notifyAdminOfUploads(link, inserted as any[], note);
+        emailed = await notifyOwnerOfUploads(link, await loadOwner(supabase, link.photographer_id), inserted as any[], note);
     } catch (err: any) {
         console.error('[client-uploads] Admin notification failed:', err?.message);
     }
@@ -447,13 +720,19 @@ function escapeHtml(value: string): string {
         .replace(/"/g, '&quot;');
 }
 
-async function notifyAdminOfUploads(
+// The studio's own requests notify the admin inbox. A photographer's requests
+// notify that photographer, with media@ on CC as the business record.
+async function notifyOwnerOfUploads(
     link: UploadLinkRow,
+    owner: PhotographerOwner | null,
     uploads: Array<{ file_name: string; drive_view_url: string | null; drive_status: string }>,
     note: string | null
 ): Promise<boolean> {
     const label = link.project_name ? `${link.client_name} — ${link.project_name}` : link.client_name;
-    const folderUrl = link.drive_folder_url || `${SITE}/admin`;
+    const dashboardUrl = owner
+        ? `${SITE}/dashboard?section=contentrequests&link=${link.id}`
+        : `${SITE}/admin?panel=clientuploads&link=${link.id}`;
+    const folderUrl = link.drive_folder_url || dashboardUrl;
     const failed = uploads.filter(u => u.drive_status === 'failed');
 
     const fileList = uploads
@@ -475,14 +754,14 @@ async function notifyAdminOfUploads(
           <a href="${folderUrl}" style="display:inline-block;padding:14px 28px;background-color:#ffffff;color:#000000;text-decoration:none;font-weight:bold;font-size:16px;">OPEN THE DRIVE FOLDER</a>
         </p>
         <p style="margin:0 0 24px 0;">
-          <a href="${SITE}/admin?panel=clientuploads&link=${link.id}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
+          <a href="${dashboardUrl}" style="color:rgba(255,255,255,0.9);text-decoration:underline;">Review them in the dashboard →</a>
         </p>
         <ul style="color:#ffffff;font-size:15px;line-height:1.6;padding-left:20px;margin:0 0 24px 0;">${fileList}</ul>
         ${failed.length ? `<p style="color:#ffffff;font-size:15px;line-height:1.6;">${failed.length} file(s) did not reach Drive. They are safe in storage — retry the mirror from the dashboard.</p>` : ''}
     `;
 
     const result = await sendTransactionalEmail({
-        to: ADMIN_NOTIFY_EMAIL,
+        to: owner?.email ? [owner.email, MEDIA_EMAIL] : ADMIN_NOTIFY_EMAIL,
         subject: `New uploads received — ${label} (${uploads.length} file${uploads.length === 1 ? '' : 's'})`,
         content,
     });
@@ -494,17 +773,10 @@ async function notifyAdminOfUploads(
 
 export async function sendInvite(
     supabase: ServiceSupabaseClient,
+    requester: Requester,
     body: { id?: string; email?: string; message?: string }
 ) {
-    const { data, error } = await supabase
-        .from('client_upload_links')
-        .select('*')
-        .eq('id', body.id || '')
-        .maybeSingle();
-    if (error) throw new HttpError(500, error.message);
-    if (!data) throw new HttpError(404, 'Link not found');
-
-    const link = data as UploadLinkRow;
+    const link = await loadOwnedLink(supabase, requester, body.id || '');
     const to = (body.email || link.client_email || '').trim();
     if (!to) throw new HttpError(400, 'No client email on file — add one first.');
 
@@ -546,7 +818,8 @@ export async function sendInvite(
 
 // --- Admin: browse what came in ---
 
-export async function listUploads(supabase: ServiceSupabaseClient, linkId: string) {
+export async function listUploads(supabase: ServiceSupabaseClient, requester: Requester, linkId: string) {
+    await loadOwnedLink(supabase, requester, linkId);
     const { data, error } = await supabase
         .from('client_uploads')
         .select('*')
@@ -562,28 +835,29 @@ export async function listUploads(supabase: ServiceSupabaseClient, linkId: strin
             const { data: signed } = await supabase.storage
                 .from(BUCKET)
                 .createSignedUrl(u.storage_path, 3600);
-            return { ...u, preview_url: signed?.signedUrl || null };
+            const { data: whiteSigned } = u.white_storage_path
+                ? await supabase.storage.from(BUCKET).createSignedUrl(u.white_storage_path, 3600)
+                : { data: null };
+            return {
+                ...u,
+                preview_url: signed?.signedUrl || null,
+                white_preview_url: whiteSigned?.signedUrl || null,
+            };
         })
     );
     return withPreviews;
 }
 
 // Retry the Drive mirror for everything that failed on a link.
-export async function retryMirror(supabase: ServiceSupabaseClient, linkId: string) {
-    const { data: linkData, error: linkErr } = await supabase
-        .from('client_upload_links')
-        .select('*')
-        .eq('id', linkId)
-        .maybeSingle();
-    if (linkErr) throw new HttpError(500, linkErr.message);
-    if (!linkData) throw new HttpError(404, 'Link not found');
-    const link = linkData as UploadLinkRow;
+export async function retryMirror(supabase: ServiceSupabaseClient, requester: Requester, linkId: string) {
+    const link = await loadOwnedLink(supabase, requester, linkId);
 
     if (!link.drive_folder_id) {
         const folderName = link.project_name
             ? `${link.client_name} — ${link.project_name}`
             : `${link.client_name} — Uploads`;
-        const folder = await createDriveFolder(folderName);
+        const owner = await loadOwner(supabase, link.photographer_id);
+        const folder = await createDriveFolder(folderName, await ensureOwnerFolder(supabase, owner));
         link.drive_folder_id = folder.id;
         await supabase
             .from('client_upload_links')

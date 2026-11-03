@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import PhotographerPanel from '../components/crew/PhotographerPanel';
 import PortfolioEditor from '../components/portfolio/PortfolioEditor';
 import BrandKit from '../components/brand/BrandKit';
+import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 import { useToast } from '../components/Toast';
@@ -57,7 +58,8 @@ import {
   ArrowRightOnRectangleIcon,
   BriefcaseIcon,
   RectangleStackIcon,
-  SwatchIcon
+  SwatchIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
@@ -1073,6 +1075,7 @@ export default function Affiliate() {
                     { id: 'photographer', icon: BriefcaseIcon, title: 'Photographer', show: hasPhotographer },
                     { id: 'portfolio', icon: RectangleStackIcon, title: 'Portfolio', show: hasPortfolio },
                     { id: 'brandkit', icon: SwatchIcon, title: 'Brand Kit', show: hasPhotographer },
+                    { id: 'contentrequests', icon: CloudArrowUpIcon, title: 'Content Requests', show: hasPhotographer },
                     { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
@@ -1114,6 +1117,7 @@ export default function Affiliate() {
                       photographer: { title: 'Photographer', icon: <BriefcaseIcon className="w-5 h-5 text-white/40" /> },
                       portfolio: { title: 'Portfolio', icon: <RectangleStackIcon className="w-5 h-5 text-white/40" /> },
                       brandkit: { title: 'Brand Kit', icon: <SwatchIcon className="w-5 h-5 text-white/40" /> },
+                      contentrequests: { title: 'Content Requests', icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                       gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
                       writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                       affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
@@ -1156,6 +1160,12 @@ export default function Affiliate() {
               {/* Brand Kit Section */}
               {hasPhotographer && activeApp === 'brandkit' && (
                 <BrandKit userId={user.id} />
+              )}
+
+              {/* Content Requests — this photographer's own clients' logos and
+                  files. The API scopes it to them; the studio sees all of it. */}
+              {hasPhotographer && activeApp === 'contentrequests' && (
+                <AdminClientUploadsView photographerView />
               )}
 
               {/* Gallery Section */}
