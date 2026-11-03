@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import { avatarUrlFor } from '../lib/avatar';
 
 type NavLinksProps = {
     user: any;
@@ -158,10 +159,19 @@ export default function NavLinks({
                         </div>
                     </button>
 
-                    <div className="menu-item user-info">
-                        <div className="text-white/60 text-xs mb-1">Logged in as:</div>
-                        <div className="text-white text-sm font-medium">
-                            {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
+                    <div className="menu-item user-info flex items-center gap-3">
+                        {avatarUrlFor(user) ? (
+                            <img src={avatarUrlFor(user)!} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                        ) : (
+                            <span className="w-8 h-8 rounded-full bg-white text-black font-black text-sm flex items-center justify-center shrink-0">
+                                {(user.email || '?').charAt(0).toUpperCase()}
+                            </span>
+                        )}
+                        <div className="min-w-0">
+                            <div className="text-white/60 text-xs mb-1">Logged in as:</div>
+                            <div className="text-white text-sm font-medium truncate">
+                                {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
+                            </div>
                         </div>
                     </div>
                 </>

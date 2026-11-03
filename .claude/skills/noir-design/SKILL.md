@@ -60,6 +60,10 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 - **Hover States**: Invert colors on hover (Black text on White background).
 - **Animations**: Use "mechanical" animations (blinking cursors, sliding toasts) rather than soft fades.
 
+### 5. Mascot
+- **SCOT33 is the mascot, a tiger** (owner-confirmed 2026-10-31). He is the main mark; see
+  `brand-ethos` → Mascot for the files and the rules. Never call him a bear.
+
 ## Common CSS Classes
 - `.noir-card`: `background: rgba(255, 255, 255, 0.05); border-radius: 0;`
 - `.noir-button`: `background: rgba(255, 255, 255, 0.1); color: white; border-radius: 0; padding: 0.5rem 1rem;`

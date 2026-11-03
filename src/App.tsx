@@ -74,6 +74,7 @@ import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
 import Capabilities from './pages/Capabilities'
 import Leads from './pages/Leads'
+import Portfolio from './pages/Portfolio'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import { lazy, Suspense } from 'react'
@@ -226,6 +227,10 @@ function App() {
               <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
               <Route path="/tools" element={<Layout />}>
                 <Route index element={<ToolsDashboard />} />
+              </Route>
+              {/* Public portfolios for photographers and affiliates. */}
+              <Route path="/portfolio/:handle" element={<Layout />}>
+                <Route index element={<Portfolio />} />
               </Route>
               <Route path="/:username/profile" element={<Layout />}>
                 <Route index element={<Affiliate />} />

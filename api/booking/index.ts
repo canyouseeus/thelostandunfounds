@@ -11,6 +11,8 @@ import { BUFFER_MINUTES, findBufferConflict } from '../../lib/booking-buffer.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 import { verifyTurnstileUnlessSignedIn } from '../../lib/api-handlers/_turnstile.js'
+import { createLink as createUploadLink } from '../../lib/api-handlers/_client-uploads-handler.js'
+import { renderButton } from '../../lib/email-template.js'
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
 function getSupabase(serviceRole = false) {
@@ -448,6 +450,32 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         return res.status(500).json({ error: 'Failed to submit booking request', details: error.message })
     }
 
+    // Brand assets (owner request, 2026-10-31): every booking gets its own
+    // no-login upload link (the client-upload system: Storage, then a Drive
+    // folder, then an email to the studio). The booking page uploads any files
+    // picked on the form through it straight away; the confirmation screen and
+    // email carry it for anything sent later. The Drive folder is made on the
+    // first upload, since most bookings never send one. Best-effort: a booking
+    // that saved is never failed by this.
+    let brandAssets: { token: string; url: string } | null = null
+    try {
+        const clientName = (business_name?.trim() || name.trim()).slice(0, 120)
+        const { link } = await createUploadLink(supabase as any, {
+            client_name: clientName,
+            client_email: email.toLowerCase().trim(),
+            project_name: `Brand assets — ${event_type.trim()} ${event_date}`,
+            intro: 'Logos, brand guides, fonts, colours, reference shots — anything we should match. A transparent PNG or a vector file (AI, EPS, PDF) is ideal for a logo.',
+            expires_in_days: 120,
+            max_files: 40,
+            max_file_mb: 100,
+            booking_id: data.id as string,
+            defer_drive: true,
+        })
+        brandAssets = { token: link.token, url: link.upload_url }
+    } catch (linkErr: any) {
+        console.warn('[BookingRequest] brand-asset link failed:', linkErr?.message)
+    }
+
     // Fixed-price photo shoots are quoted immediately: the client sees an
     // invoice with a Stripe deposit link as soon as they book, rather than
     // waiting for someone to raise it by hand. Consultation-style work
@@ -559,9 +587,9 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     try {
         if (isTest) {
             notify = { sent: false, error: 'test booking — notifications suppressed' }
-            return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote })
+            return res.status(200).json({ success: true, test: true, bookingId: data.id, notify, quote, brandAssets })
         }
-        await sendBookingNotification(data.id as string, supabase)
+        await sendBookingNotification(data.id as string, supabase, brandAssets?.url)
         notify = { sent: true }
     } catch (notifyErr: any) {
         // Non-fatal — booking is saved, admin just didn't get the email.
@@ -570,10 +598,10 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         notify = { sent: false, error: msg }
     }
 
-    return res.status(200).json({ success: true, bookingId: data.id, notify, quote })
+    return res.status(200).json({ success: true, bookingId: data.id, notify, quote, brandAssets })
 }
 
-async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>) {
+async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>, brandAssetsUrl?: string) {
     const { data: booking, error } = await supabase
         .from('bookings')
         .select('*')
@@ -590,7 +618,7 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
     if (booking.email) {
         const clientSubject = `We got your booking request — TLAU`
         try {
-            await sendTransactionalEmail({ to: booking.email, subject: clientSubject, content: buildClientConfirmationBody(booking) })
+            await sendTransactionalEmail({ to: booking.email, subject: clientSubject, content: buildClientConfirmationBody(booking, brandAssetsUrl) })
         } catch (err) {
             // Don't let a client-send failure abort the admin flow
             console.warn('[BookingNotify] client confirmation failed:', (err as any)?.message)
@@ -847,7 +875,7 @@ function buildAdminSummaryBody(booking: any): string {
     `
 }
 
-function buildClientConfirmationBody(booking: any): string {
+function buildClientConfirmationBody(booking: any, brandAssetsUrl?: string): string {
     const firstName = (booking.name || '').split(' ')[0] || 'there'
     const label = 'color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;'
     const value = 'color:#fff;font-size:14px;padding:8px 0;vertical-align:top;'
@@ -874,6 +902,12 @@ function buildClientConfirmationBody(booking: any): string {
             confirm scope, I'll send a contract and a payment link. We accept
             <b>Bitcoin (Strike)</b>, Apple Pay, Cashapp, and Venmo.
         </p>
+        ${brandAssetsUrl ? `
+        <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px 0;">Your brand assets</p>
+        <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+            Got a logo, brand guide or fonts we should match? Send them here any time before the shoot. No account needed.
+        </p>
+        ${renderButton(brandAssetsUrl, 'UPLOAD BRAND ASSETS')}` : ''}
         <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:24px 0 8px 0;">
             If anything needs to change on your end, just reply to this email.
         </p>

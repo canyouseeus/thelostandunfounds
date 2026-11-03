@@ -17,7 +17,7 @@ import {
     ExclamationTriangleIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { supabase } from '../lib/supabase';
+import { sendFilesToUploadLink } from '../lib/clientUploadSend';
 
 interface LinkMeta {
     client_name: string;
@@ -99,55 +99,15 @@ export default function ClientUpload() {
 
         try {
             const pending = queue.filter(q => q.state !== 'done');
-
-            const signRes = await fetch('/api/client-uploads/sign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token,
-                    files: pending.map(q => ({ name: q.file.name, size: q.file.size, type: q.file.type })),
-                }),
+            const { received } = await sendFilesToUploadLink(token, pending.map(q => q.file), {
+                note,
+                onStart: () => setQueue(prev => prev.map(q => (q.state === 'done' ? q : { ...q, state: 'uploading' }))),
+                onFile: r => setQueue(prev =>
+                    prev.map(q => (q.file === r.file ? { ...q, state: r.ok ? 'done' : 'error', error: r.error, path: r.path } : q)),
+                ),
             });
-            const signed = await signRes.json();
-            if (!signRes.ok) throw new Error(signed?.error || 'Upload could not be started.');
 
-            setQueue(prev => prev.map(q => (q.state === 'done' ? q : { ...q, state: 'uploading' })));
-
-            const uploaded: Array<{ path: string; name: string; size: number; type: string }> = [];
-            for (const [index, item] of pending.entries()) {
-                const target = signed.files[index];
-                const { error } = await supabase.storage
-                    .from(signed.bucket)
-                    .uploadToSignedUrl(target.path, target.token, item.file);
-
-                setQueue(prev =>
-                    prev.map(q =>
-                        q.file === item.file
-                            ? { ...q, state: error ? 'error' : 'done', error: error?.message, path: target.path }
-                            : q
-                    )
-                );
-                if (!error) {
-                    uploaded.push({
-                        path: target.path,
-                        name: target.name,
-                        size: item.file.size,
-                        type: item.file.type,
-                    });
-                }
-            }
-
-            if (!uploaded.length) throw new Error('None of the files finished uploading. Please try again.');
-
-            const recordRes = await fetch('/api/client-uploads/record', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, batch_id: signed.batch_id, note, files: uploaded }),
-            });
-            const recorded = await recordRes.json();
-            if (!recordRes.ok) throw new Error(recorded?.error || 'Upload finished but could not be filed.');
-
-            setSent(recorded.received);
+            setSent(received);
         } catch (err: any) {
             setSendError(err?.message || 'Something went wrong. Please try again.');
         } finally {
