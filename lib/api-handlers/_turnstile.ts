@@ -27,7 +27,7 @@ const SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const PRODUCTION_HOSTNAMES = ['www.thelostandunfounds.com', 'thelostandunfounds.com'];
 
 /** The `action` each protected form sets on its widget. Server and client import the same names. */
-export type TurnstileAction = 'support' | 'contact' | 'newsletter' | 'booking';
+export type TurnstileAction = 'support' | 'contact' | 'newsletter' | 'booking' | 'gallery-access';
 
 export type TurnstileResult =
     | { ok: true; skipped?: boolean }

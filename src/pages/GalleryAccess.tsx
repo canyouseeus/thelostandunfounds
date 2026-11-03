@@ -12,6 +12,16 @@
  * A wrong address is not treated as an error and never says whether it was
  * invited: the link simply does not open the gallery. Saying otherwise would
  * make this an invitee oracle for anyone holding the slug.
+ *
+ * The link is emailed by our server (/api/gallery/access-link), from our own
+ * mail, not by Supabase's built-in mailer: that one allows a few emails an hour
+ * for the whole project, and a client was locked out by it on 2026-11-01.
+ * Turnstile guards the form (TURNSTILE RULE), action 'gallery-access'.
+ *
+ * Normally nobody types anything: the invite's button carries the client's own
+ * key (#k=, never sent to a server in the URL), and this page trades it at
+ * /api/gallery/invite-open for a one-time sign-in link that lands them in the
+ * gallery. The email form below is the fallback (deleted invite, revoked key).
  */
 
 import { useEffect, useState } from 'react';
@@ -19,6 +29,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { EnvelopeIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import TurnstileField, { turnstileRequired } from '../components/TurnstileField';
 
 interface AccessInfo {
     name: string;
@@ -28,7 +39,7 @@ interface AccessInfo {
 
 export default function GalleryAccess() {
     const { slug } = useParams<{ slug: string }>();
-    const { user, signInWithMagicLink } = useAuth();
+    const { user } = useAuth();
 
     const [info, setInfo] = useState<AccessInfo | null>(null);
     const [infoLoading, setInfoLoading] = useState(true);
@@ -37,9 +48,55 @@ export default function GalleryAccess() {
     const [email, setEmail] = useState('');
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(() => {
+        // Sent here by the gallery after a sign-in link that was already used
+        // or had expired (they work once, within the hour).
+        if (typeof window === 'undefined') return null;
+        return new URLSearchParams(window.location.search).get('expired')
+            ? 'That sign-in link was already used or has expired. Tap OPEN MY GALLERY in your invite email, or enter your email below for a new link.'
+            : null;
+    });
+    // Single-use: remounted after every attempt.
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileKey, setTurnstileKey] = useState(0);
 
     const galleryUrl = `/gallery/${slug}`;
+
+    // The invite's own key, read once and wiped from the address bar so it
+    // isn't left in history or copied along with the URL.
+    const [inviteKey] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const k = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('k');
+        if (k) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return k;
+    });
+    const [opening, setOpening] = useState(Boolean(inviteKey));
+
+    useEffect(() => {
+        if (!inviteKey) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/gallery/invite-open', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug, key: inviteKey }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (cancelled) return;
+                if (res.ok && data.link) {
+                    // Signs them in and lands in the gallery.
+                    window.location.replace(data.link);
+                    return;
+                }
+                setError(data.error || 'This invite link no longer works. Enter your email below and we\'ll send you a new one.');
+            } catch {
+                if (!cancelled) setError('We could not reach the server. Check your connection and try again.');
+            }
+            if (!cancelled) setOpening(false);
+        })();
+        return () => { cancelled = true; };
+    }, [inviteKey, slug]);
 
     useEffect(() => {
         let cancelled = false;
@@ -68,17 +125,31 @@ export default function GalleryAccess() {
             setError('Enter the email address your invite was sent to.');
             return;
         }
-        setError(null);
-        setSending(true);
-        // Return them to the gallery itself, not back to this page.
-        const redirectTo = `${window.location.origin}${galleryUrl}`;
-        const { error: sendError } = await signInWithMagicLink(trimmed, redirectTo);
-        setSending(false);
-        if (sendError) {
-            setError(sendError.message);
+        if (turnstileRequired() && !turnstileToken) {
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
-        setSent(true);
+        setError(null);
+        setSending(true);
+        try {
+            const res = await fetch('/api/gallery/access-link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug, email: trimmed, turnstileToken }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setError(data.error || 'We could not send the email just now. Please try again in a minute.');
+                return;
+            }
+            setSent(true);
+        } catch {
+            setError('We could not reach the server. Check your connection and try again.');
+        } finally {
+            setSending(false);
+            setTurnstileToken(null);
+            setTurnstileKey(k => k + 1);
+        }
     };
 
     const heading = info?.name || 'YOUR GALLERY';
@@ -104,9 +175,11 @@ export default function GalleryAccess() {
                     </h1>
                 </div>
 
-                {notFound ? (
+                {opening ? (
+                    <p className="text-white/50 text-sm text-center">Opening your gallery…</p>
+                ) : notFound ? (
                     <div className="space-y-6 text-center">
-                        <p className="text-white/50 text-sm leading-relaxed">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             This gallery link is no longer active. If you were sent it recently,
                             reply to the invite email and we'll re-send it.
                         </p>
@@ -117,7 +190,7 @@ export default function GalleryAccess() {
                             Browse Public Galleries
                         </Link>
                     </div>
-                ) : user ? (
+                ) : user && !error ? (
                     // Already signed in — no reason to email anybody a link.
                     <div className="space-y-6 text-center">
                         <p className="text-white/50 text-sm leading-relaxed">
@@ -136,10 +209,11 @@ export default function GalleryAccess() {
                         <p className="text-white text-xs font-black uppercase tracking-[0.2em]">
                             Check Your Email
                         </p>
-                        <p className="text-white/50 text-sm leading-relaxed">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             If <span className="text-white">{email.trim()}</span> is on the invite list
                             for this gallery, a sign-in link is on its way. Open it on this device and
-                            you'll land straight in the gallery — no password needed.
+                            you'll land straight in the gallery — no password needed. It comes from
+                            THE LOST+UNFOUNDS; if it isn't in your inbox, check spam.
                         </p>
                         <button
                             type="button"
@@ -151,7 +225,7 @@ export default function GalleryAccess() {
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="space-y-5">
-                        <p className="text-white/50 text-sm leading-relaxed text-center">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
                             Enter the email address your invite was sent to. We'll email you a link
                             that opens the gallery — there's no password to create.
                         </p>
@@ -173,6 +247,13 @@ export default function GalleryAccess() {
                             />
                         </div>
 
+                        <TurnstileField
+                            action="gallery-access"
+                            resetKey={turnstileKey}
+                            onToken={setTurnstileToken}
+                            className=""
+                        />
+
                         {error && (
                             <div className="px-4 py-2 bg-red-500/20 text-red-400 text-sm">
                                 {error}
@@ -188,7 +269,7 @@ export default function GalleryAccess() {
                             {sending ? 'Sending…' : 'Email Me My Gallery Link'}
                         </button>
 
-                        <p className="text-white/25 text-[10px] leading-relaxed text-center">
+                        <p className="text-white/25 text-[10px] leading-relaxed text-left">
                             Wrong address? Reach us at media@thelostandunfounds.com.
                         </p>
                     </form>

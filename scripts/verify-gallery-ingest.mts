@@ -209,9 +209,13 @@ ingestDeps.fetch = (async (url: any, init: any) => {
     return new Response(null, { status: 200, headers: { location: 'https://upload.example/session-1' } });
 }) as any;
 
-await rejects('a video is refused', () => startUpload(supabase, callerA, { fileName: 'clip.mp4', mimeType: 'video/mp4', size: 10 }), 400);
+const videoStart = await startUpload(supabase, callerA, { fileName: 'clip.mp4', mimeType: 'video/mp4', size: 900 * 1024 * 1024 });
+check('a video is accepted (even over the 200MB photo limit)', videoStart.uploadUrl === 'https://upload.example/session-1'
+    && sentInit.headers['X-Upload-Content-Type'] === 'video/mp4', sentInit.headers['X-Upload-Content-Type']);
 await rejects('a missing size is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg' }), 400);
 await rejects('over 200MB is refused', () => startUpload(supabase, callerA, { fileName: 'a.jpg', mimeType: 'image/jpeg', size: 201 * 1024 * 1024 }), 413);
+await rejects('a video over 1GB is refused', () => startUpload(supabase, callerA, { fileName: 'a.mov', mimeType: 'video/quicktime', size: 1025 * 1024 * 1024 }), 413);
+await rejects('a PDF is refused', () => startUpload(supabase, callerA, { fileName: 'a.pdf', mimeType: 'application/pdf', size: 1000 }), 400);
 
 const started = await startUpload(supabase, callerA, { fileName: '../IMG_0001.JPG', mimeType: 'image/jpeg', size: 12_000_000 }, 'https://www.thelostandunfounds.com');
 const inboxA = db.gallery_live_inboxes.find(r => r.library_id === 'lib-a')?.drive_folder_id;
@@ -316,6 +320,14 @@ check('only publish: true publishes — anything else waits for review', notReal
     && db.photos.length === photosBefore + 1 && db.gallery_ingest_pending.some(r => r.drive_file_id === 'roll-0002-abc'));
 await discardPending(supabase, 'event-a', ['roll-0002-abc']);
 
+// --- video: publishes into the gallery as a video row ---------------------------
+
+putFile('video-0001-abc', [inboxA!], { name: 'IMG_5001.MOV', mimeType: 'video/quicktime' });
+await completeUpload(supabase, { library: callerA.library, keyId: null, handle: null } as any, { fileId: 'video-0001-abc', publish: true });
+const videoRow = db.photos.find(p => p.google_drive_file_id === 'video-0001-abc');
+check('a published video lands in the gallery with its video type', videoRow?.mime_type === 'video/quicktime'
+    && driveFiles['video-0001-abc']?.parents?.includes('folder-a'), `${videoRow?.mime_type} / ${driveFiles['video-0001-abc']?.parents}`);
+
 // --- photographers: their own live galleries ---------------------------------
 
 const TOKENS: Record<string, string> = { 'eric-session': 'user-eric', 'old-session': 'user-old', 'fan-session': 'user-fan', 'itz-session': 'user-itz' };
@@ -358,6 +370,24 @@ check('…credited to their own handle', ericCaller.handle === '@four5_culture',
 await rejects('…but not to someone else\'s', () => resolveIngestCaller(req('Bearer eric-session'), supabase, 'event-a'), 403);
 await rejects('an inactive photographer cannot upload', () => resolveIngestCaller(req('Bearer old-session'), supabase, mine.slug), 401);
 await rejects('a signed-in fan cannot upload', () => resolveIngestCaller(req('Bearer fan-session'), supabase, mine.slug), 401);
+
+// --- Direct Upload: a gallery created with no Drive link gets one on first upload ---
+
+db.photo_libraries.push({ id: 'lib-direct', slug: 'direct-upload', name: 'HOLLOW33N 26', google_drive_folder_id: null, owner_id: 'user-eric', live_mode: false });
+const directRow = db.photo_libraries.find(l => l.id === 'lib-direct')!;
+const foldersBefore = createdFolders.length;
+await rejects('another photographer cannot upload to a folderless gallery', () => resolveIngestCaller(req('Bearer itz-session'), supabase, 'direct-upload'), 403);
+check('…and their attempt creates no Drive folder', createdFolders.length === foldersBefore && directRow.google_drive_folder_id === null, String(directRow.google_drive_folder_id));
+const directKey = 'tlu_live_direct-upload-test-key-0000000000000000';
+db.gallery_ingest_keys.push({ id: 'key-direct', library_id: 'lib-direct', key_hash: hashIngestKey(directKey), revoked_at: null });
+await rejects('an upload key never creates a folder (still 409)', () => resolveIngestCaller(req(`Bearer ${directKey}`), supabase, null), 409);
+check('…none was made', createdFolders.length === foldersBefore && directRow.google_drive_folder_id === null);
+const directCaller = await resolveIngestCaller(req('Bearer eric-session'), supabase, 'direct-upload');
+check('the owner\'s first upload creates the gallery\'s Drive folder and saves it',
+    directCaller.library.folderId === `folder-ph-${foldersBefore + 1}` && directRow.google_drive_folder_id === directCaller.library.folderId
+    && createdFolders.at(-1) === 'HOLLOW33N 26', `${directCaller.library.folderId} / ${directRow.google_drive_folder_id}`);
+const directAgain = await resolveIngestCaller(req('Bearer eric-session'), supabase, 'direct-upload');
+check('…later uploads reuse it (one folder, not one per photo)', directAgain.library.folderId === directCaller.library.folderId && createdFolders.length === foldersBefore + 1);
 
 // --- naming: @handle_thelostandunfounds_DATE_location_subject_### -------------
 

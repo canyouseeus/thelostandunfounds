@@ -1,6 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { roleFor, emailList } from '../_gallery-pass.js'
+import { verifiedUser } from '../_turnstile.js'
+import { buyerTotal, cleanBundles, galleryTotal } from '../../../src/lib/buyerPricing.js'
 
 type PaymentMethod = 'stripe' | 'strike'
 
@@ -24,8 +27,10 @@ export default async function handler(
   }
 
   try {
-    const { photoIds, email, paymentMethod = 'strike', returnPath } = req.body as {
+    const { photoIds: bodyPhotoIds, email: bodyEmail, paymentMethod = 'strike', returnPath, wholeAlbum } = req.body as {
       photoIds: string[]
+      /** À la carte "buy the whole album": every photo in it, at buyer_album_price. */
+      wholeAlbum?: boolean
       email: string
       paymentMethod?: PaymentMethod
       returnPath?: string
@@ -36,9 +41,13 @@ export default async function handler(
       req.headers.cookie?.match(/affiliate_ref=([^;]+)/)?.[1] ||
       null
 
+    let photoIds: string[] = Array.isArray(bodyPhotoIds) ? [...new Set(bodyPhotoIds)] : []
     if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
       return res.status(400).json({ error: 'photoIds must be a non-empty array' })
     }
+    // The buyer's address. For an à la carte buyer it is replaced by their
+    // signed-in address below, so the purchase is tied to who they really are.
+    let email = typeof bodyEmail === 'string' ? bodyEmail.trim() : ''
     if (!email) {
       return res.status(400).json({ error: 'email is required' })
     }
@@ -46,7 +55,7 @@ export default async function handler(
       return res.status(400).json({ error: 'paymentMethod must be "stripe" or "strike"' })
     }
 
-    const count = photoIds.length
+    let count = photoIds.length
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -77,7 +86,7 @@ export default async function handler(
 
     const { data: library, error: libraryError } = await supabase
       .from('photo_libraries')
-      .select('id, name, price')
+      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, owner_id, user_id')
       .eq('id', libraryId)
       .single()
 
@@ -92,26 +101,74 @@ export default async function handler(
       .eq('is_active', true)
       .order('photo_count', { ascending: false })
 
-    const singlePrice = Number(library.price) || 0
+    // Whole album (owner, 2026-11-02): one price for every photo in the
+    // gallery, for every buyer. Counted from the database, not the page.
+    const albumPrice = Number(library.album_price) > 0 ? Number(library.album_price) : null
+    const allAlbumIds = async (): Promise<string[]> => {
+      const { data: albumPhotos } = await supabase.from('photos').select('id').eq('library_id', library.id)
+      return (albumPhotos || []).map(p => p.id)
+    }
+
+    // À la carte (owner, 2026-11-02): a private album sells every photo to the
+    // people on its buyer list at buyer_price each. Album owners never pay,
+    // and nobody else can buy from a private album. Checked against the
+    // signed-in session, never an address from the request.
+    let buyerPrice: number | null = null
+    let buyerAmount: number | null = null
+    if (library.is_private || emailList(library.buyer_emails).length > 0) {
+      const user = await verifiedUser(req)
+      const role = user ? roleFor(library, { email: user.email, userId: user.id }) : null
+      if (role === 'buyer' && user?.email) {
+        buyerPrice = Number(library.buyer_price) || 5
+        email = user.email.trim().toLowerCase()
+        // Every photo in the album, for "buy the whole album" — from the
+        // database, not the page (which may not have loaded them all).
+        const albumIds = await allAlbumIds()
+        if (wholeAlbum === true) {
+          photoIds = albumIds
+          count = photoIds.length
+        }
+        buyerAmount = buyerTotal(count, {
+          single: buyerPrice,
+          bundles: cleanBundles(library.buyer_bundles),
+          // Their own whole-album price, else the gallery's.
+          albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : albumPrice,
+          albumCount: albumIds.length,
+        })
+      } else if (role === 'owner') {
+        return res.status(400).json({ error: 'You already have every photo in this album — no purchase needed.' })
+      } else if (library.is_private) {
+        return res.status(403).json({ error: 'Sign in with the email your invite was sent to.' })
+      }
+    }
+
+    const singlePrice = buyerPrice ?? (Number(library.price) || 0)
     if (singlePrice <= 0) {
       console.error('[Checkout] Gallery has no price set:', libraryId)
       return res.status(500).json({ error: 'This gallery is not available for purchase' })
     }
 
     // Bundle math: greedily apply the largest bundles first, fall back to the
-    // gallery's per-photo price for the remainder.
-    let amount = 0
-    let remaining = count
-    for (const option of pricingOptions || []) {
-      if (!option.photo_count || option.photo_count <= 0) continue
-      const numBundles = Math.floor(remaining / option.photo_count)
-      if (numBundles > 0) {
-        amount += numBundles * Number(option.price)
-        remaining %= option.photo_count
+    // gallery's per-photo price for the remainder. À la carte buyers use their
+    // own bundles and whole-album price (src/lib/buyerPricing.ts).
+    let amount = buyerAmount ?? 0
+    if (buyerAmount == null) {
+      let albumCount = 0
+      if (albumPrice || wholeAlbum === true) {
+        const albumIds = await allAlbumIds()
+        albumCount = albumIds.length
+        if (wholeAlbum === true) {
+          if (!albumPrice) return res.status(400).json({ error: 'This gallery has no whole-album price.' })
+          photoIds = albumIds
+          count = photoIds.length
+        }
       }
-    }
-    if (remaining > 0) {
-      amount += remaining * singlePrice
+      amount = galleryTotal(count, {
+        single: singlePrice,
+        options: (pricingOptions || []).map(o => ({ photo_count: Number(o.photo_count), price: Number(o.price) })),
+        albumPrice,
+        albumCount,
+      })
     }
 
     if (amount <= 0) {

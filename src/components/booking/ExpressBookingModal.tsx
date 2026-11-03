@@ -138,7 +138,7 @@ export default function ExpressBookingModal({
     const submit = async () => {
         if (!client || !slot) return;
         if (turnstileRequired() && !turnstileToken) {
-            setError('Please complete the security check.');
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
         setSubmitting(true);

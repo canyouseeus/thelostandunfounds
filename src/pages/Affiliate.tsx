@@ -4,6 +4,7 @@
  * with the full affiliate dashboard inlined for the affiliate section.
  */
 
+import NumberField from '../components/ui/NumberField';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -1057,7 +1058,7 @@ export default function Affiliate() {
                   />
                 )}
               </div>
-              <div data-tour="m-clock" className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
+              <div data-tour="m-clock" data-header-widgets-anchor className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
                 <ClockWidget size="lg" className="md:flex-1" />
                 <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
               </div>
@@ -1804,13 +1805,9 @@ export default function Affiliate() {
                                 <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
                                   Payout Amount
                                 </label>
-                                <input
-                                  type="number"
-                                  min={payoutSettings?.payment_threshold || 10}
-                                  max={dashData.balance?.available_balance || 0}
-                                  step="0.01"
+                                <NumberField
                                   value={payoutAmount}
-                                  onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                                  onChange={(v) => setPayoutAmount(v === '' ? 0 : v)}
                                   className="w-full px-4 py-3 bg-white/5 rounded-none text-white focus:outline-none transition-colors font-mono text-sm"
                                 />
                                 <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">

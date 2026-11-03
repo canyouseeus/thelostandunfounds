@@ -104,6 +104,8 @@ export default async function handler(
     'new-blog-contributor-notification',
     'reset-password',
     'affiliate-stripe-reminders',
+    // Checks its own auth: the admin, or the signed-in owner of the gallery
+    // (the /setup onboarding wizard syncs a photographer's new gallery).
     'sync-library',
   ])
   if (!PUBLIC_ROUTES.has(fullRoute) && !(await verifyAdmin(req))) {

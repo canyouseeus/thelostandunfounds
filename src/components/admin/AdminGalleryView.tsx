@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom';
+import { PriceRow, BundleRows, PRICE_GROUP } from './PricingRows';
 import RetrogradeRenameTool from './RetrogradeRenameTool';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon, QrCodeIcon, CheckIcon, StarIcon } from '@heroicons/react/24/outline';
 import { Eye, EyeOff, Radio } from 'lucide-react';
 import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import { sendToGalleryResilient } from '../live/sendToGallery';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen';
@@ -48,6 +50,11 @@ interface PhotoLibrary {
     commercial_included?: boolean;
     owner_id?: string;
     invited_emails?: string; // Comma-separated list of invited client emails
+    buyer_emails?: string | null; // À la carte: see the album, buy photos at buyer_price each
+    buyer_price?: number | null;
+    buyer_bundles?: { photo_count: number; price: number }[] | null;
+    buyer_album_price?: number | null;
+    album_price?: number | null; // Whole album, for every buyer
     user_id?: string;
     live_mode?: boolean; // A live event is running — see /admin/live
 }
@@ -59,6 +66,73 @@ interface PricingOption {
     price: number;
     photo_count: number; // 1 = single, -1 = all, >1 = bundle
     is_active?: boolean;
+}
+
+type GalleryPhoto = { id: string; title: string; google_drive_file_id: string; mime_type: string | null };
+
+const photoSrc = (photo: GalleryPhoto, px: number) =>
+    `/api/gallery/stream?fileId=${encodeURIComponent(photo.google_drive_file_id)}&size=${px}`;
+
+/**
+ * One square thumbnail of a gallery photo; tap calls onTap (select it, or open
+ * the full photo list). Never a link to the raw image: that left the dashboard
+ * for a bare image on a white page with no way back (owner, 2026-11-02).
+ * Square by padding, not aspect-ratio (iOS Safari squeezed aspect-ratio tiles
+ * in a grid). A video gets a plain tile: the stream route sends a video whole.
+ */
+function GalleryThumb({ photo, size = 200, onTap, selected = false, isCover = false }: {
+    photo: GalleryPhoto;
+    size?: number;
+    onTap: () => void;
+    selected?: boolean;
+    isCover?: boolean;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onTap}
+            aria-pressed={selected}
+            className="relative block w-full h-0 pb-[100%] bg-white/5 overflow-hidden"
+            title={photo.title}
+        >
+            {photo.mime_type?.startsWith('video/') ? (
+                <span className="absolute inset-0 flex items-center justify-center text-white/60 text-[9px] font-bold uppercase">Video</span>
+            ) : (
+                <img src={photoSrc(photo, size)} alt={photo.title} loading="lazy" className={`absolute inset-0 w-full h-full object-cover transition-opacity ${selected ? 'opacity-50' : ''}`} />
+            )}
+            {isCover && (
+                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 text-white text-[8px] font-black uppercase tracking-widest">Cover</span>
+            )}
+            {selected && (
+                <span className="absolute top-1 right-1 w-6 h-6 bg-white text-black flex items-center justify-center rounded-full">
+                    <CheckIcon className="w-4 h-4" />
+                </span>
+            )}
+        </button>
+    );
+}
+
+/** A phone photo (HEIC/JPEG/PNG, any size) as a JPEG no wider or taller than max px. */
+async function shrinkToJpeg(file: File, max: number): Promise<Blob> {
+    const url = URL.createObjectURL(file);
+    try {
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = () => reject(new Error('This photo could not be read. Try a JPEG or PNG.'));
+            i.src = url;
+        });
+        const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+        if (!blob) throw new Error('This photo could not be converted.');
+        return blob;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
 }
 
 export default function AdminGalleryView({ onBack, isPhotographerView = false, hideTitle = false }: AdminGalleryViewProps) {
@@ -81,8 +155,52 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [pendingGalleryPhotoIds, setPendingGalleryPhotoIds] = useState<string[]>([]);
     const [uploadMode, setUploadMode] = useState<'drive' | 'upload'>('drive');
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
+    // While an upload runs, photos picked from the file box join its queue
+    // instead of waiting for (and being cleared by) the end of it (owner,
+    // 2026-11-02: 33 photos added during a 153-photo upload were dropped).
+    const liveUploadRef = useRef<((items: { file: File; thumbnail?: Blob; previewUrl: string }[]) => void) | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadCounts, setUploadCounts] = useState<{ done: number; failed: number; total: number; lastError?: string } | null>(null);
+    const [saving, setSaving] = useState(false);
+    // Per-file upload state, so the list shows which photos are live and which
+    // failed — the gallery renames them, so the count alone can't tell you.
+    type FileStatus = { state: 'waiting' | 'sending' | 'done' | 'failed'; progress: number; error?: string };
+    const [fileStatus, setFileStatus] = useState<Map<File, FileStatus>>(new Map());
+    // Photos already in the gallery being edited, shown on the edit screen.
+    const [showAllPhotos, setShowAllPhotos] = useState(false);
+    const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
+    const loadGalleryPhotos = async (libraryId: string) => {
+        const { data } = await supabase
+            .from('photos')
+            .select('id, title, google_drive_file_id, mime_type')
+            .eq('library_id', libraryId)
+            .order('updated_at', { ascending: false })
+            .limit(500);
+        setGalleryPhotos(data || []);
+    };
+    // Tapping a photo on the all-photos screen selects it; the bar under the
+    // grid then views it, makes it the cover, or deletes the selection.
+    const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+    const [viewingPhoto, setViewingPhoto] = useState<GalleryPhoto | null>(null);
+    const [photoAction, setPhotoAction] = useState<'cover' | 'delete' | null>(null);
+    useEffect(() => {
+        if (isManaged && editingId) loadGalleryPhotos(editingId);
+        else setGalleryPhotos([]);
+        if (!isManaged) setShowAllPhotos(false);
+    }, [isManaged, editingId]);
+    useEffect(() => {
+        if (!showAllPhotos) { setSelectedPhotoIds(new Set()); setViewingPhoto(null); }
+    }, [showAllPhotos]);
+    const togglePhoto = (id: string) => setSelectedPhotoIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+    });
+    const markFile = (file: File, status: FileStatus) =>
+        setFileStatus(prev => { const next = new Map(prev); next.set(file, status); return next; });
+    // Which gallery is pulling new files in from its Drive folder right now.
+    const [syncingSlug, setSyncingSlug] = useState<string | null>(null);
     // Photographers have no tab bar, so they stay on whatever tab this starts
     // on. Starting them on 'photos' rendered the photo browser instead of their
     // own galleries, and they had no way to switch.
@@ -97,9 +215,31 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         commercial_included: false,
     });
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
-    const [editingPricingIdx, setEditingPricingIdx] = useState<number | null>(null);
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
+    // Price per photo: the gallery's 1-photo pricing option (what checkout and
+    // the gallery page read first), kept in step with photo_libraries.price.
+    const singleOptionIdx = pricingOptions.findIndex(o => o.photo_count === 1);
+    const singlePriceValue = singleOptionIdx >= 0 ? pricingOptions[singleOptionIdx].price : (modalData.price ?? 5);
+    const setSinglePrice = (price: number) => {
+        if (singleOptionIdx >= 0) {
+            setPricingOptions(pricingOptions.map((o, i) => i === singleOptionIdx ? { ...o, price } : o));
+        } else {
+            setPricingOptions([{ id: '', name: 'Single Photo', photo_count: 1, price }, ...pricingOptions]);
+        }
+        if (price > 0) setModalData({ ...modalData, price });
+    };
     const [invitedEmails, setInvitedEmails] = useState<string[]>([]); // Persistent list of invited emails
+    // À la carte (owner, 2026-11-02): same album, but these people buy the
+    // photos they want at buyerPrice each instead of getting everything free.
+    const [buyerEmails, setBuyerEmails] = useState<string[]>([]);
+    const [originalBuyerEmails, setOriginalBuyerEmails] = useState<string[]>([]);
+    const [newBuyerInput, setNewBuyerInput] = useState('');
+    const [buyerPrice, setBuyerPrice] = useState<number>(5);
+    // À la carte deals: "N photos for $X", and the whole album for one price.
+    const [buyerBundles, setBuyerBundles] = useState<{ photo_count: number; price: number }[]>([]);
+    const [buyerAlbumPrice, setBuyerAlbumPrice] = useState<number | ''>('');
+    // Whole-album price for everyone who buys from this gallery (owner, 2026-11-02).
+    const [albumPrice, setAlbumPrice] = useState<number | ''>('');
     const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
     const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
@@ -289,8 +429,79 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         }
     };
 
+    // Absolute, so the cover also shows wherever the URL travels (affiliate
+    // product cards read cover_image_url as-is).
+    const coverUrlFor = (photo: GalleryPhoto) => `https://www.thelostandunfounds.com${photoSrc(photo, 1600)}`;
+    const isCoverPhoto = (photo: GalleryPhoto) =>
+        !!modalData.cover_image_url && modalData.cover_image_url.includes(`fileId=${encodeURIComponent(photo.google_drive_file_id)}&`);
+
+    /** Saves the cover straight away, so it sticks even if the form is closed without SAVE. */
+    const saveCover = async (url: string | null) => {
+        if (!editingId) throw new Error('Save the gallery first.');
+        const { data, error: coverError } = await supabase
+            .from('photo_libraries')
+            .update({ cover_image_url: url })
+            .eq('id', editingId)
+            .select('id');
+        if (coverError) throw coverError;
+        // RLS refuses an update by matching no rows, not with an error.
+        if (!data?.length) throw new Error('You can only change the cover of your own gallery.');
+        setModalData(prev => ({ ...prev, cover_image_url: url ?? '' }));
+        setLibraries(prev => prev.map(l => l.id === editingId ? { ...l, cover_image_url: url ?? undefined } : l));
+    };
+
+    const makeSelectedCover = async () => {
+        const photo = galleryPhotos.find(p => selectedPhotoIds.has(p.id));
+        if (!photo || selectedPhotoIds.size !== 1 || photoAction) return;
+        setPhotoAction('cover');
+        try {
+            await saveCover(coverUrlFor(photo));
+            setSelectedPhotoIds(new Set());
+            success('Album cover set');
+        } catch (err: any) {
+            error(err.message || 'Could not set the cover');
+        } finally {
+            setPhotoAction(null);
+        }
+    };
+
+    const deleteSelectedPhotos = async () => {
+        const ids = [...selectedPhotoIds];
+        if (!ids.length || photoAction) return;
+        if (!confirm(`Delete ${ids.length} photo${ids.length === 1 ? '' : 's'} from this gallery and from Google Drive? This cannot be undone.`)) return;
+        setPhotoAction('delete');
+        try {
+            const deleted = galleryPhotos.filter(p => selectedPhotoIds.has(p.id));
+            const { data: { session: authSession } } = await supabase.auth.getSession();
+            const res = await fetch('/api/gallery/batch-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authSession?.access_token || ''}` },
+                body: JSON.stringify({ photoIds: ids }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Could not delete the photos');
+            setGalleryPhotos(prev => prev.filter(p => !selectedPhotoIds.has(p.id)));
+            setLibraries(prev => prev.map(l => l.id === editingId ? { ...l, photo_count: Math.max(0, (l.photo_count || 0) - ids.length) } : l));
+            setSelectedPhotoIds(new Set());
+            setViewingPhoto(null);
+            // A deleted cover would show a broken image: clear it.
+            if (deleted.some(isCoverPhoto)) await saveCover(null).catch(() => {});
+            if (data.driveErrors?.length) {
+                error(`Deleted from the gallery, but ${data.driveErrors.length} file(s) could not be removed from Google Drive.`);
+            } else {
+                success(`Deleted ${ids.length} photo${ids.length === 1 ? '' : 's'}`);
+            }
+        } catch (err: any) {
+            error(err.message || 'Could not delete the photos');
+        } finally {
+            setPhotoAction(null);
+        }
+    };
+
     const handleSaveGallery = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (saving) return;
+        setSaving(true);
         setLoading(true);
         try {
             let finalLibrary: PhotoLibrary | null = null;
@@ -309,6 +520,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 // photos RLS policy matches them against this list. A capitalised
                 // entry ("Jenna.taylor@...") let the client in to an empty gallery.
                 invited_emails: invitedEmails.map(e => e.trim().toLowerCase()).join(','),
+                buyer_emails: buyerEmails.map(e => e.trim().toLowerCase()).join(',') || null,
+                buyer_price: buyerPrice > 0 ? buyerPrice : 5,
+                buyer_bundles: buyerBundles.filter(b => b.photo_count > 1 && b.price > 0),
+                buyer_album_price: typeof buyerAlbumPrice === 'number' && buyerAlbumPrice > 0 ? buyerAlbumPrice : null,
+                album_price: typeof albumPrice === 'number' && albumPrice > 0 ? albumPrice : null,
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
@@ -338,63 +554,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             if (!finalLibrary) throw new Error('Failed to save library');
 
-            // 2. Handle File Uploads (Only if new files added)
-            // Note: If editing, this ADDS to the library. It doesn't replace.
-            if (uploadMode === 'upload' && filesData.length > 0 && finalLibrary) {
-                let completed = 0;
-                setUploadProgress(0);
-
-                for (const item of filesData) {
-                    const { file, thumbnail } = item;
-                    const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-                    const filePath = `${finalLibrary.id}/${cleanName}`;
-                    let thumbUrl = '';
-
-                    // a. Upload Main File
-                    const { error: uploadError } = await supabase.storage
-                        .from('gallery-photos')
-                        .upload(filePath, file);
-
-                    if (uploadError) {
-                        console.error(`Failed to upload ${file.name}`, uploadError);
-                        continue;
-                    }
-
-                    const { data: { publicUrl: fileUrl } } = supabase.storage
-                        .from('gallery-photos')
-                        .getPublicUrl(filePath);
-
-                    // b. Handle Thumbnail
-                    if (file.type.startsWith('video/') && thumbnail) {
-                        const thumbPath = `${finalLibrary.id}/t_${cleanName}.jpg`;
-                        await supabase.storage
-                            .from('gallery-photos')
-                            .upload(thumbPath, thumbnail);
-
-                        const { data: { publicUrl } } = supabase.storage
-                            .from('gallery-photos')
-                            .getPublicUrl(thumbPath);
-                        thumbUrl = publicUrl;
-                    } else {
-                        thumbUrl = fileUrl; // For images, thumbnail is the image itself (or we could resize server-side later)
-                    }
-
-                    // c. Create Photo Record
-                    await supabase.from('photos').insert({
-                        library_id: finalLibrary.id,
-                        title: file.name.split('.')[0],
-                        storage_path: filePath,
-                        thumbnail_url: thumbUrl,
-                        mime_type: file.type,
-                        status: 'active'
-                    });
-
-                    completed++;
-                    setUploadProgress((completed / filesData.length) * 100);
-                }
-            }
-
-            // 5. Manage Pricing Options
+            // 2. Pricing options — saved before the uploads, so a long upload that
+            // gets interrupted never loses the prices
             const libraryId = finalLibrary.id;
 
             // Handle Deletions
@@ -407,9 +568,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             // Handle Upserts
             for (const option of pricingOptions) {
+                // Options with no photos (the old "-1 = full gallery") never priced anything.
+                if (!(option.photo_count > 0)) {
+                    if (option.id) await supabase.from('gallery_pricing_options').update({ is_active: false }).eq('id', option.id);
+                    continue;
+                }
                 const payload = {
                     library_id: libraryId,
-                    name: option.name,
+                    name: option.name?.trim() || (option.photo_count === 1 ? 'Single Photo' : `${option.photo_count} Photos`),
                     price: option.price,
                     photo_count: option.photo_count,
                     is_active: true
@@ -427,7 +593,81 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 }
             }
 
-            success(editingId ? 'Gallery updated successfully' : 'Gallery created successfully');
+            // 3. Handle File Uploads (Only if new files added)
+            // Note: If editing, this ADDS to the library. It doesn't replace.
+            // Photos go to the gallery's Google Drive folder through the live
+            // ingest pipeline (photos.google_drive_file_id is NOT NULL, so a
+            // Supabase Storage upload could never become a photo row). A gallery
+            // made without a Drive link gets its own folder on the first upload.
+            let failedUploads: typeof filesData = [];
+            let uploadTotal = 0;
+            const queue: typeof filesData = [];
+            let drain = async () => {};
+            if (uploadMode === 'upload' && filesData.length > 0 && finalLibrary) {
+                queue.push(...filesData);
+                let total = queue.length;
+                const relay = { only: false };
+                const fractions = new Map<typeof filesData[number], number>();
+                const report = () => {
+                    let sum = 0;
+                    fractions.forEach(f => { sum += f; });
+                    setUploadProgress((sum / total) * 100);
+                };
+                setUploadProgress(0);
+                setUploadCounts({ done: 0, failed: 0, total });
+                setFileStatus(new Map(queue.map(item => [item.file, { state: 'waiting', progress: 0 } as FileStatus])));
+                const slug = finalLibrary.slug;
+                const worker = async () => {
+                    while (queue.length) {
+                        const item = queue.shift()!;
+                        markFile(item.file, { state: 'sending', progress: 0 });
+                        try {
+                            await sendToGalleryResilient({
+                                file: item.file,
+                                slug,
+                                relay,
+                                onProgress: f => { fractions.set(item, f); report(); markFile(item.file, { state: 'sending', progress: f }); },
+                            });
+                            fractions.set(item, 1);
+                            markFile(item.file, { state: 'done', progress: 1 });
+                            if (editingId) void loadGalleryPhotos(finalLibrary.id);
+                            setUploadCounts(c => c && { ...c, done: c.done + 1 });
+                        } catch (uploadErr: any) {
+                            console.error(`Failed to upload ${item.file.name}`, uploadErr);
+                            fractions.set(item, 1);
+                            markFile(item.file, { state: 'failed', progress: 0, error: uploadErr?.message });
+                            failedUploads.push(item);
+                            setUploadCounts(c => c && { ...c, failed: c.failed + 1, lastError: uploadErr?.message });
+                        }
+                        report();
+                    }
+                };
+                // Photos added mid-upload join this queue (see handleFileSelect).
+                liveUploadRef.current = (items) => {
+                    queue.push(...items);
+                    total += items.length;
+                    setUploadCounts(c => c && { ...c, total: c.total + items.length });
+                    items.forEach(i => markFile(i.file, { state: 'waiting', progress: 0 }));
+                    report();
+                };
+                // Two at a time, until the queue is empty — including photos
+                // that arrived while the last ones were finishing.
+                drain = async () => {
+                    while (queue.length) await Promise.all(Array.from({ length: Math.min(2, queue.length) }, worker));
+                    uploadTotal = total;
+                };
+                await drain();
+            }
+
+            const uploaded = uploadMode === 'upload' ? uploadTotal - failedUploads.length : 0;
+            if (failedUploads.length > 0) {
+                error(`${failedUploads.length} of ${uploadTotal} photos did not upload. Tap SAVE GALLERY to retry them.`);
+            } else {
+                success(
+                    (editingId ? 'Gallery updated' : 'Gallery created')
+                    + (uploaded > 0 ? ` — ${uploaded} photo${uploaded === 1 ? '' : 's'} uploaded` : ' successfully'),
+                );
+            }
 
             // CRITICAL: Update local state immediately to avoid stale data if user re-opens modal before fetch completes
             if (finalLibrary) {
@@ -445,7 +685,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
             // 6. Handle Invitations - Only send for NEW emails
             console.log('[handleSaveGallery] Checking invites. Current:', invitedEmails, 'Original:', originalInvitedEmails);
-            const newEmails = invitedEmails.filter(e => !originalInvitedEmails.includes(e));
+            // New album owners and new à la carte buyers alike; the invite route
+            // sends each the copy for their list.
+            const newEmails = [
+                ...invitedEmails.filter(e => !originalInvitedEmails.includes(e)),
+                ...buyerEmails.filter(e => !originalBuyerEmails.includes(e) && !invitedEmails.includes(e)),
+            ];
             console.log('[handleSaveGallery] New emails calculated:', newEmails);
             if (newEmails.length > 0 && finalLibrary) {
                 try {
@@ -486,15 +731,62 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 }
             }
 
+            // Anything picked while the gallery was finishing up goes too.
+            await drain();
+            liveUploadRef.current = null;
+
+            if (failedUploads.length > 0) {
+                // Stay open on the saved gallery with only the photos that failed,
+                // so SAVE GALLERY retries them instead of creating a second gallery.
+                setEditingId(finalLibrary.id);
+                setModalData(finalLibrary);
+                setOriginalInvitedEmails(invitedEmails);
+                setFilesData(failedUploads);
+                setDeletedPricingIds([]);
+                return;
+            }
+
+            setFilesData([]);
+            setUploadCounts(null);
+            setFileStatus(new Map());
+            setUploadProgress(0);
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
             setNewEmailInput('');
+            setBuyerEmails([]);
+            setOriginalBuyerEmails([]);
+            setNewBuyerInput('');
             setIsManaged(false);
         } catch (err: any) {
             console.error('Error saving gallery:', err);
             error(err.message || 'Failed to save gallery');
         } finally {
+            liveUploadRef.current = null;
             setLoading(false);
+            setSaving(false);
+        }
+    };
+
+    // Pull in photos added straight to the gallery's Drive folder — e.g. from the
+    // Google Drive app, which keeps uploading in the background on a phone,
+    // where a web page cannot. The scheduled sync only runs weekly.
+    const handleSyncFromDrive = async (lib: PhotoLibrary) => {
+        if (syncingSlug) return;
+        setSyncingSlug(lib.slug);
+        try {
+            const res = await fetch('/api/admin/sync-library', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug: lib.slug }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `Sync failed (${res.status})`);
+            await loadGalleryStats();
+            success(`"${lib.name}" synced from Drive — ${data.synced ?? 0} files checked${typeof data.deleted === 'number' && data.deleted > 0 ? `, ${data.deleted} removed` : ''}.`);
+        } catch (err: any) {
+            error(err.message || 'Sync from Drive failed');
+        } finally {
+            setSyncingSlug(null);
         }
     };
 
@@ -555,7 +847,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const selectedFiles = Array.from(e.target.files);
+            // Photos and videos only: the Drive ingest pipeline refuses anything else.
+            const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/') || f.type.startsWith('video/') || f.type === '');
             const processedFiles = await Promise.all(selectedFiles.map(async (file) => {
                 let thumbnail: Blob | undefined;
                 let previewUrl = URL.createObjectURL(file);
@@ -572,6 +865,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             }));
 
             setFilesData(prev => [...prev, ...processedFiles]);
+            // Mid-upload: send them with the running upload.
+            liveUploadRef.current?.(processedFiles);
+            e.target.value = '';
         }
     };
 
@@ -636,6 +932,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             commercial_included: lib.commercial_included ?? false,
         });
         setFilesData([]);
+        setUploadCounts(null);
+        setFileStatus(new Map());
+        setUploadProgress(0);
         setCoverImageFile(null);
         setUploadMode(lib.google_drive_folder_id ? 'drive' : 'upload');
 
@@ -664,6 +963,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setInvitedEmails(existingEmails);
         setOriginalInvitedEmails(existingEmails);
         setNewEmailInput('');
+        const existingBuyers = (lib.buyer_emails || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+        setBuyerEmails(existingBuyers);
+        setOriginalBuyerEmails(existingBuyers);
+        setNewBuyerInput('');
+        setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
+        setBuyerBundles(Array.isArray(lib.buyer_bundles) ? lib.buyer_bundles.map(b => ({ photo_count: Number(b.photo_count), price: Number(b.price) })) : []);
+        setBuyerAlbumPrice(Number(lib.buyer_album_price) > 0 ? Number(lib.buyer_album_price) : '');
+        setAlbumPrice(Number(lib.album_price) > 0 ? Number(lib.album_price) : '');
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -682,9 +989,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             commercial_included: false,
         });
         setFilesData([]);
+        setUploadCounts(null);
+        setFileStatus(new Map());
+        setUploadProgress(0);
         setInvitedEmails(['media@thelostandunfounds.com']);
         setOriginalInvitedEmails(['media@thelostandunfounds.com']);
         setNewEmailInput('');
+        setBuyerEmails([]);
+        setOriginalBuyerEmails([]);
+        setNewBuyerInput('');
+        setBuyerPrice(5);
+        setBuyerBundles([]);
+        setBuyerAlbumPrice('');
+        setAlbumPrice('');
         setIsManaged(true);
     };
 
@@ -695,18 +1012,23 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         openCreateModal();
     };
 
+    // Cover photo (owner, 2026-11-02: "it's not saving"). The gallery-photos
+    // bucket takes JPEG/PNG/WebP up to 2 MB, and a phone photo is usually a
+    // bigger HEIC, so it is shrunk to a 1600px JPEG here first. Uploads go to
+    // covers/<user id>/ — the only place the storage policy
+    // gallery_covers_owner_insert lets a signed-in person write.
+    const [coverUploading, setCoverUploading] = useState(false);
     const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        const file = e.target.files[0];
-
-        // Optimize: Upload to a 'covers' folder or generally in gallery-photos
-        const filePath = `covers/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file || !user) return;
+        setCoverUploading(true);
         try {
+            const blob = await shrinkToJpeg(file, 1600);
+            const filePath = `covers/${user.id}/${Date.now()}.jpg`;
             const { error: uploadError } = await supabase.storage
                 .from('gallery-photos')
-                .upload(filePath, file);
-
+                .upload(filePath, blob, { contentType: 'image/jpeg' });
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage
@@ -714,10 +1036,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 .getPublicUrl(filePath);
 
             setModalData(prev => ({ ...prev, cover_image_url: publicUrl }));
-            success('Cover image uploaded');
-        } catch (err) {
-            console.error(err);
-            error('Failed to upload cover image');
+            success('Cover photo ready — tap SAVE GALLERY to keep it');
+        } catch (err: any) {
+            console.error('[cover] upload failed', err);
+            error(`Cover photo did not upload: ${err?.message || 'unknown error'}`);
+        } finally {
+            setCoverUploading(false);
         }
     };
 
@@ -870,140 +1194,64 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     </div>
                                 </div>
 
-                                {/* Pricing Options - Full Width */}
-                                <div data-tour="gallery-form-pricing">
-                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Pricing Options & Bundles</label>
-                                    <div className="space-y-2 mb-3">
-                                        {pricingOptions.map((option, idx) => {
-                                            const isEditing = editingPricingIdx === idx;
-                                            return (
-                                                <div key={idx} className="bg-white/5 p-3 rounded-none w-full">
-                                                    {isEditing ? (
-                                                        <div className="flex flex-col gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={option.name}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...pricingOptions];
-                                                                    newOptions[idx].name = e.target.value;
-                                                                    setPricingOptions(newOptions);
-                                                                }}
-                                                                placeholder="Option Name"
-                                                                className="w-full bg-transparent text-sm text-white focus:outline-none pb-1 border-b border-white/10 rounded-none"
-                                                                autoFocus
-                                                            />
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="number"
-                                                                    value={option.photo_count}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...pricingOptions];
-                                                                        const val = parseInt(e.target.value);
-                                                                        newOptions[idx].photo_count = isNaN(val) ? 0 : val;
-                                                                        setPricingOptions(newOptions);
-                                                                    }}
-                                                                    placeholder="Count"
-                                                                    title="Number of photos (-1 for All)"
-                                                                    className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                />
-                                                                <div className="flex items-center gap-1 flex-1">
-                                                                    <span className="text-xs text-white/40">$</span>
-                                                                    <input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        value={option.price}
-                                                                        onChange={(e) => {
-                                                                            const newOptions = [...pricingOptions];
-                                                                            const val = parseFloat(e.target.value);
-                                                                            newOptions[idx].price = isNaN(val) ? 0 : val;
-                                                                            setPricingOptions(newOptions);
-                                                                        }}
-                                                                        className="flex-1 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                    />
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setEditingPricingIdx(null)}
-                                                                    className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors flex-shrink-0"
-                                                                    title="Done"
-                                                                >
-                                                                    <CheckCircleIcon className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center gap-2 w-full min-w-0">
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="text-sm font-bold text-white truncate">
-                                                                    {option.name || <span className="text-white/20 italic">No Name</span>}
-                                                                </div>
-                                                                <div className="flex items-center gap-3 mt-0.5">
-                                                                    <span className="text-[10px] text-white/40 font-mono">
-                                                                        {option.photo_count === -1 ? 'ALL' : option.photo_count} photos
-                                                                    </span>
-                                                                    <span className="text-sm font-bold font-mono text-green-400">
-                                                                        ${option.price.toFixed(2)}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex gap-1 flex-shrink-0">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setEditingPricingIdx(idx)}
-                                                                    className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <PencilIcon className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newOptions = pricingOptions.filter((_, i) => i !== idx);
-                                                                        if (option.id) {
-                                                                            setDeletedPricingIds([...deletedPricingIds, option.id]);
-                                                                        }
-                                                                        setPricingOptions(newOptions);
-                                                                        if (editingPricingIdx === idx) setEditingPricingIdx(null);
-                                                                    }}
-                                                                    className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
-                                                                    title="Remove"
-                                                                >
-                                                                    <TrashIcon className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOption = { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 };
-                                                setPricingOptions([...pricingOptions, newOption]);
-                                                setEditingPricingIdx(pricingOptions.length);
+                                {/* Private decides who can buy, so it sits right above Pricing. */}
+                                <label data-tour="gallery-form-private" className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!modalData.is_private}
+                                        onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
+                                        className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-white"
+                                    />
+                                    <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
+                                    <span className="text-[10px] text-white/30 normal-case">Invite only</span>
+                                </label>
+
+                                {/* PRICING — every price on the gallery, in one place (owner, 2026-11-02).
+                                    One row = label left, box right, never wrapping on a phone. */}
+                                <div data-tour="gallery-form-pricing" className="space-y-3">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Pricing</label>
+                                    {/* A private gallery sells only to its à la carte list (album
+                                        owners are free, everyone else is refused), so it shows those
+                                        prices instead. */}
+                                    {!modalData.is_private && (
+                                    <div className="bg-white/5 p-3 space-y-3">
+                                        <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} />
+                                        <BundleRows
+                                            tour="gallery-form-bundles"
+                                            bundles={pricingOptions.map((o, i) => ({ ...o, i })).filter(o => o.photo_count !== 1)}
+                                            onChange={(i, patch) => setPricingOptions(pricingOptions.map((o, j) => j === i ? { ...o, ...patch } : o))}
+                                            onRemove={(i) => {
+                                                const o = pricingOptions[i];
+                                                if (o?.id) setDeletedPricingIds([...deletedPricingIds, o.id]);
+                                                setPricingOptions(pricingOptions.filter((_, j) => j !== i));
                                             }}
-                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded-none transition-colors uppercase tracking-wider"
-                                        >
-                                            + Add Option
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newOption = { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 };
-                                                setPricingOptions([...pricingOptions, newOption]);
-                                                setEditingPricingIdx(pricingOptions.length);
-                                            }}
-                                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 rounded-none transition-colors uppercase tracking-wider"
-                                        >
-                                            + Add Full License
-                                        </button>
+                                            onAdd={() => setPricingOptions([...pricingOptions, { id: '', name: '', photo_count: 3, price: 10 }])}
+                                        />
+                                        <PriceRow tour="gallery-form-album-price" label="Whole album" value={albumPrice} onChange={setAlbumPrice} placeholder="Off" />
                                     </div>
-                                    <p className="text-[10px] text-white/30 mt-2">
-                                        Use count "-1" for Full Gallery Buyout options. Name options with "Commercial" to trigger commercial licensing checkout flow.
-                                    </p>
+                                    )}
+                                    {modalData.is_private && (
+                                    <div className="bg-white/5 p-3 space-y-3" data-tour="gallery-form-pricing-a-la-carte">
+                                        <p className={PRICE_GROUP}>À la carte buyers</p>
+                                        <p className="text-[10px] text-white/30 -mt-2">Album owners get everything free.</p>
+                                        <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} />
+                                        <BundleRows
+                                            tour="gallery-a-la-carte-bundles"
+                                            bundles={buyerBundles.map((b, i) => ({ ...b, i }))}
+                                            onChange={(i, patch) => setBuyerBundles(buyerBundles.map((x, j) => j === i ? { ...x, ...patch } : x))}
+                                            onRemove={(i) => setBuyerBundles(buyerBundles.filter((_, j) => j !== i))}
+                                            onAdd={() => setBuyerBundles([...buyerBundles, { photo_count: 4, price: 10 }])}
+                                        />
+                                        <PriceRow
+                                            tour="gallery-a-la-carte-album"
+                                            label="Whole album"
+                                            value={buyerAlbumPrice}
+                                            onChange={setBuyerAlbumPrice}
+                                            placeholder="Off"
+                                        />
+                                    </div>
+                                    )}
+                                    <p className="text-[10px] text-white/30">Per photo 0 = free. Whole album blank = not offered.</p>
                                 </div>
 
                                 <div>
@@ -1097,6 +1345,74 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     )}
                                 </div>
 
+                                {/* À la carte — same album, buy per photo. Private galleries only:
+                                    a public gallery already sells to anyone. */}
+                                {modalData.is_private && (
+                                <div data-tour="gallery-form-a-la-carte">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">À La Carte</label>
+                                    <p className="text-[10px] text-white/30 mb-3">
+                                        They see the whole album behind the watermark and buy the photos they want. Album owners above get everything free.
+                                    </p>
+                                    {buyerEmails.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {buyerEmails.map((email, idx) => (
+                                                <div
+                                                    key={email}
+                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${originalBuyerEmails.includes(email) ? 'bg-white/10 text-white/60' : 'bg-emerald-500/20 text-emerald-400'}`}
+                                                >
+                                                    <span>{email}</span>
+                                                    {!originalBuyerEmails.includes(email) && <span className="text-[9px] uppercase ml-1 opacity-60">new</span>}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setBuyerEmails(buyerEmails.filter((_, i) => i !== idx))}
+                                                        className="ml-1 hover:text-red-400 transition-colors"
+                                                        aria-label={`Remove ${email}`}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="email"
+                                            value={newBuyerInput}
+                                            onChange={(e) => setNewBuyerInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ',') {
+                                                    e.preventDefault();
+                                                    const email = newBuyerInput.trim().replace(',', '').toLowerCase();
+                                                    if (email && email.includes('@') && !buyerEmails.includes(email)) {
+                                                        setBuyerEmails([...buyerEmails, email]);
+                                                        setNewBuyerInput('');
+                                                    }
+                                                }
+                                            }}
+                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none font-mono text-xs"
+                                            placeholder="buyer@example.com"
+                                            data-tour="gallery-a-la-carte-email"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const email = newBuyerInput.trim().toLowerCase();
+                                                if (email && email.includes('@') && !buyerEmails.includes(email)) {
+                                                    setBuyerEmails([...buyerEmails, email]);
+                                                    setNewBuyerInput('');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-white/10 text-white text-xs uppercase font-bold hover:bg-white/20 transition-colors"
+                                        >
+                                            + Add
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-white/30 mt-2">
+                                        New buyers get their own invite link when you save. Their prices are under Pricing above.
+                                    </p>
+                                </div>
+                                )}
+
                                 <div>
                                     <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
                                     <div className="flex items-start gap-4">
@@ -1115,15 +1431,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     placeholder="https://... (or upload below)"
                                                 />
                                             </div>
-                                            <div data-tour="gallery-form-private" className="flex items-center gap-2 mb-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={modalData.is_private}
-                                                    onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
-                                                    className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-white"
-                                                />
-                                                <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
-                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -1136,9 +1443,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             <p className="text-[10px] text-white/30 mt-1 pl-6">
                                                 If checked, displays "Eligible for Commercial Use" and assumes license is granted.
                                             </p>
+                                            {coverUploading && <p className="text-[10px] text-white/50 uppercase tracking-widest">Uploading cover…</p>}
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                disabled={coverUploading}
                                                 onChange={handleCoverImageUpload}
                                                 className="block w-full text-xs text-white/60
                                                file:mr-4 file:py-2 file:px-4
@@ -1153,22 +1462,60 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
                                 <hr className="border-none" />
 
+                                {editingId && (
+                                    <div data-tour="gallery-form-photos">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">
+                                            In This Gallery ({galleryPhotos.length})
+                                        </label>
+                                        {galleryPhotos.length === 0 ? (
+                                            <p className="text-[11px] text-white/40">No photos yet.</p>
+                                        ) : (
+                                            // The three newest, and a tile that opens the rest in their
+                                            // own card. Tiles are held square by padding, not
+                                            // aspect-ratio: iOS Safari squeezed aspect-ratio tiles.
+                                            <div className="grid grid-cols-4 gap-1">
+                                                {galleryPhotos.slice(0, 3).map(p => (
+                                                    <GalleryThumb
+                                                        key={p.id}
+                                                        photo={p}
+                                                        isCover={isCoverPhoto(p)}
+                                                        onTap={() => { setShowAllPhotos(true); setSelectedPhotoIds(new Set([p.id])); }}
+                                                    />
+                                                ))}
+                                                {galleryPhotos.length > 3 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAllPhotos(true)}
+                                                        className="relative block w-full h-0 pb-[100%] bg-white/5 hover:bg-white/10 transition-colors"
+                                                        data-tour="gallery-form-photos-more"
+                                                    >
+                                                        <span className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                                                            <span className="text-sm font-black">+{galleryPhotos.length - 3}</span>
+                                                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">More</span>
+                                                        </span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div data-tour="gallery-form-source">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
-                                    <div className="flex gap-2 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('drive')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-start gap-2 px-4 py-3 text-left text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
-                                            <CloudIcon className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
+                                            <CloudIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Update Drive Folder' : 'Link Google Drive'}</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('upload')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            className={`flex items-center justify-start gap-2 px-4 py-3 text-left text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
-                                            <ArrowUpTrayIcon className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
+                                            <ArrowUpTrayIcon className="w-4 h-4 shrink-0" /> <span className="whitespace-nowrap">{editingId ? 'Add More Photos' : 'Direct Upload'}</span>
                                         </button>
                                     </div>
 
@@ -1196,7 +1543,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </div>
                                     ) : (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                                            <div className="bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
+                                            <div className="bg-white/5 p-6 text-left hover:bg-white/10 transition-colors relative">
                                                 <input
                                                     type="file"
                                                     multiple
@@ -1205,9 +1552,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
                                                 <div className="pointer-events-none">
-                                                    <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mx-auto mb-2" />
-                                                    <p className="text-white text-xs uppercase font-bold">Click or Drag Photos Here</p>
+                                                    <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mb-2" />
+                                                    <p className="text-white text-xs uppercase font-bold">Click or Drag Photos & Videos Here</p>
                                                     <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
+                                                    <p className="text-white/30 text-[10px] mt-1 normal-case">Videos up to 1GB (about 2 minutes). Post longer ones to YouTube.</p>
                                                 </div>
                                             </div>
 
@@ -1227,7 +1575,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="truncate text-[10px]">{item.file.name}</p>
-                                                                <p className="text-[9px] text-white/40 uppercase">{Math.round(item.file.size / 1024)} KB</p>
+                                                                {(() => {
+                                                                    const st = fileStatus.get(item.file);
+                                                                    const size = `${Math.round(item.file.size / 1024)} KB`;
+                                                                    if (!st) return <p className="text-[9px] text-white/40 uppercase">{size}</p>;
+                                                                    if (st.state === 'done') return <p className="text-[9px] uppercase font-bold text-green-400">✓ Live</p>;
+                                                                    if (st.state === 'failed') return <p className="text-[9px] uppercase font-bold text-red-400" title={st.error}>Failed</p>;
+                                                                    if (st.state === 'sending') return <p className="text-[9px] uppercase text-white">Sending {Math.round(st.progress * 100)}%</p>;
+                                                                    return <p className="text-[9px] uppercase text-white/40">Waiting · {size}</p>;
+                                                                })()}
                                                             </div>
                                                             <button
                                                                 type="button"
@@ -1241,10 +1597,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 </div>
                                             )}
 
-                                            {uploadProgress > 0 && (
+                                            {uploadCounts && (
                                                 <div>
                                                     <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                                                        <span>Uploading...</span>
+                                                        <span>
+                                                            {saving ? 'Uploading — switching apps pauses it; it picks up when you come back' : 'Upload finished'}
+                                                            {` · ${uploadCounts.done} of ${uploadCounts.total} done`}
+                                                            {uploadCounts.failed > 0 ? ` · ${uploadCounts.failed} failed` : ''}
+                                                        </span>
                                                         <span>{Math.round(uploadProgress)}%</span>
                                                     </div>
                                                     <div className="h-1 bg-white/10 w-full overflow-hidden">
@@ -1253,6 +1613,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             style={{ width: `${uploadProgress}%` }}
                                                         />
                                                     </div>
+                                                    {uploadCounts.lastError && uploadCounts.failed > 0 && (
+                                                        <p className="mt-1 text-[10px] text-red-400">{uploadCounts.lastError}</p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1263,19 +1626,123 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     <button
                                         type="button"
                                         onClick={() => setIsManaged(false)}
-                                        className="flex-1 py-3 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
+                                        className="flex-1 px-4 py-3 text-left text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
                                     >
                                         Cancel
                                     </button>
                                     <button data-tour="gallery-form-save"
                                         type="submit"
-                                        className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold"
+                                        disabled={saving || coverUploading}
+                                        className="flex-1 px-4 py-3 text-left bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold disabled:opacity-60"
                                     >
-                                        {editingId ? 'Save Gallery' : 'Create Gallery'}
+                                        {saving
+                                            ? (uploadCounts ? `Uploading ${uploadCounts.done + uploadCounts.failed}/${uploadCounts.total}` : 'Saving…')
+                                            : (editingId ? 'Save Gallery' : 'Create Gallery')}
                                     </button>
                                 </div>
                             </form>
                     </div>
+                </ExpandableScreenContent>
+            </ExpandableScreen>
+
+            {/* Every photo in the gallery being edited, opened from +N MORE. */}
+            <ExpandableScreen isOpen={showAllPhotos && isManaged} onOpenChange={setShowAllPhotos}>
+                <ExpandableScreenContent className="overflow-y-auto">
+                    <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-20 pb-16" data-tour="gallery-all-photos">
+                        <h2 className="text-lg sm:text-xl font-bold text-white uppercase mb-1 pr-10">{modalData.name || 'Gallery'}</h2>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">
+                            {galleryPhotos.length} {galleryPhotos.length === 1 ? 'photo' : 'photos'} · newest first · tap to select
+                        </p>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1" data-tour="gallery-all-photos-grid">
+                            {galleryPhotos.map(p => (
+                                <GalleryThumb
+                                    key={p.id}
+                                    photo={p}
+                                    size={400}
+                                    selected={selectedPhotoIds.has(p.id)}
+                                    isCover={isCoverPhoto(p)}
+                                    onTap={() => togglePhoto(p.id)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    {/* What to do with the selection. Sticky inside the scroller,
+                        so it stays on screen without a fixed layer over the grid. */}
+                    {selectedPhotoIds.size > 0 && (
+                        <div className="sticky bottom-0 z-10 bg-black/90 backdrop-blur-md pb-[env(safe-area-inset-bottom)]" data-tour="gallery-photo-actions">
+                            <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 py-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">
+                                        {selectedPhotoIds.size} selected
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPhotoIds(new Set())}
+                                        className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:text-white"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                {selectedPhotoIds.size === 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewingPhoto(galleryPhotos.find(p => selectedPhotoIds.has(p.id)) || null)}
+                                        className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-white bg-white/10 hover:bg-white/20"
+                                        data-tour="gallery-photo-view"
+                                    >
+                                        View
+                                    </button>
+                                )}
+                                {(() => {
+                                    const only = selectedPhotoIds.size === 1 ? galleryPhotos.find(p => selectedPhotoIds.has(p.id)) : undefined;
+                                    const canCover = !!only && !only.mime_type?.startsWith('video/');
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={makeSelectedCover}
+                                            disabled={!canCover || !!photoAction || (!!only && isCoverPhoto(only))}
+                                            title={selectedPhotoIds.size > 1 ? 'Select one photo to make it the cover' : undefined}
+                                            className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider bg-white text-black hover:bg-white/90 disabled:opacity-40 flex items-center justify-center gap-1 whitespace-nowrap"
+                                            data-tour="gallery-photo-cover"
+                                        >
+                                            <StarIcon className="w-3 h-3" />
+                                            {photoAction === 'cover' ? 'Saving…' : only && isCoverPhoto(only) ? 'Cover' : 'Make Cover'}
+                                        </button>
+                                    );
+                                })()}
+                                <button
+                                    type="button"
+                                    onClick={deleteSelectedPhotos}
+                                    disabled={!!photoAction}
+                                    className="flex-1 px-3 py-3 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-40 flex items-center justify-center gap-1"
+                                    data-tour="gallery-photo-delete"
+                                >
+                                    <TrashIcon className="w-3 h-3" />
+                                    {photoAction === 'delete' ? 'Deleting…' : 'Delete'}
+                                </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* One photo, full size, on black — in place of opening the bare image file. */}
+                    {viewingPhoto && (
+                        <div className="fixed inset-0 z-20 bg-black flex items-center justify-center" onClick={() => setViewingPhoto(null)}>
+                            <button
+                                type="button"
+                                onClick={() => setViewingPhoto(null)}
+                                className="absolute top-6 right-6 p-2 hover:bg-white/10"
+                                aria-label="Close photo"
+                            >
+                                <XMarkIcon className="w-6 h-6 text-white" />
+                            </button>
+                            {viewingPhoto.mime_type?.startsWith('video/') ? (
+                                <video src={photoSrc(viewingPhoto, 1600)} controls playsInline className="max-w-full max-h-full" onClick={e => e.stopPropagation()} />
+                            ) : (
+                                <img src={photoSrc(viewingPhoto, 1600)} alt={viewingPhoto.title} className="max-w-full max-h-full object-contain" />
+                            )}
+                        </div>
+                    )}
                 </ExpandableScreenContent>
             </ExpandableScreen>
 
@@ -1477,11 +1944,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                             onCountdownComplete={handleCountdownComplete}
                                                         />
                                                     )}
-                                                    <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors">
-                                                        <div
-                                                            className="flex-1 min-w-0 mr-4 cursor-pointer"
-                                                            onClick={() => openEditModal(lib)}
-                                                        >
+                                                    {/* The whole card opens the gallery; the icons do their own
+                                                        thing (their row stops the tap). On a phone the icons sit on
+                                                        their own line so the name isn't squeezed out. */}
+                                                    <div
+                                                        className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                                                        onClick={() => openEditModal(lib)}
+                                                        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEditModal(lib); } }}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        aria-label={`Open ${lib.name}`}
+                                                        data-tour="gallery-row-open"
+                                                    >
+                                                        <div className="flex-1 min-w-0 md:mr-4">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 {(lib.published ?? true) ? (
                                                                     <Eye className="w-3 h-3 text-white flex-shrink-0" />
@@ -1502,12 +1977,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
-                                                                <span>/{lib.slug}</span>
+                                                                <span className="truncate">/{lib.slug}</span>
                                                                 <span>•</span>
-                                                                <span>{lib.photo_count || 0} photos</span>
+                                                                <span className="flex-shrink-0">{lib.photo_count || 0} photos</span>
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-1">
+                                                        <div className="flex flex-wrap gap-1 -ml-2 md:ml-0" onClick={(e) => e.stopPropagation()}>
                                                             {!isPhotographerView && (
                                                                 <a
                                                                     href={`/admin/live?slug=${encodeURIComponent(lib.slug)}`}
@@ -1517,6 +1992,31 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                                 >
                                                                     <Radio className="w-4 h-4" />
                                                                 </a>
+                                                            )}
+                                                            {!isPhotographerView && lib.google_drive_folder_id && (
+                                                                <a
+                                                                    href={`https://drive.google.com/drive/folders/${encodeURIComponent(lib.google_drive_folder_id)}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="p-2 hover:bg-white/20 text-white/60 hover:text-white"
+                                                                    title="Open this gallery's Google Drive folder — upload there from the Drive app, then SYNC"
+                                                                    aria-label={`Google Drive folder for ${lib.name}`}
+                                                                    data-tour="gallery-drive-folder"
+                                                                >
+                                                                    <CloudIcon className="w-4 h-4" />
+                                                                </a>
+                                                            )}
+                                                            {!isPhotographerView && lib.google_drive_folder_id && (
+                                                                <button
+                                                                    onClick={() => handleSyncFromDrive(lib)}
+                                                                    disabled={syncingSlug !== null}
+                                                                    className="p-2 hover:bg-white/20 text-white/60 hover:text-white disabled:opacity-40"
+                                                                    title="Sync from Drive — pull in photos added to the Drive folder"
+                                                                    aria-label={`Sync ${lib.name} from Google Drive`}
+                                                                    data-tour="gallery-sync-drive"
+                                                                >
+                                                                    <ArrowPathIcon className={`w-4 h-4 ${syncingSlug === lib.slug ? 'animate-spin' : ''}`} />
+                                                                </button>
                                                             )}
                                                             <button
                                                                 onClick={() => setQrLibrary({ slug: lib.slug, name: lib.name })}

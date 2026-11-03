@@ -22,6 +22,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Payments | Stripe | Checkout Sessions + webhooks; Connect for affiliate payouts |
 | Shop | Fourthwall | External platform |
 
+## OWNER LOCATION
+
+The owner lives in **Austin, Texas**, on `America/Chicago` time. Give every time to them in
+Central and label it CST or CDT correctly: DST ends the first Sunday of November and starts the
+second Sunday of March. The session clock is UTC. Convert it; don't guess. (Owner, 2026-11-01:
+"I need you to remember where I am.")
+
 ## Where to Find Things
 
 | What you need | Where to look |
@@ -134,7 +141,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | find clients, prospects, leads, outreach, prospecting, cold email | `client-hunter`, `brand-ethos` |
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
-| gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
+| gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting`, GALLERY EVERYWHERE RULE below |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
 | modal, overlay, z-index, popup | `modal-z-index-manager` |
 | database, migration, RLS, schema, Supabase, SQL | `supabase-mcp`, `infra-ops`, `verify-schema` |
@@ -205,6 +212,7 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `create_payment_link` | `{invoiceNumber}` |
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
 | `invite_photographer` | `{email, name?, testEmail?}` — the "You're on the roster" photographer invite (Admin → Gallery → Invite Photographer); `testEmail` previews it there, stores nothing, no CC |
+| `gallery_invite` | `{slug \| library_id, emails?, testEmail?}` — the client gallery invite (edit a gallery → Resend); each opens the gallery in one tap. `emails` may be album owners or à la carte buyers (each gets their list's copy). No `emails` → everyone invited but media@; media@ gets a record copy of each, never a CC (the link is a login). `testEmail` (admin address) previews it there only |
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
@@ -374,6 +382,20 @@ first visit, running the tour marked `intro`. A new dashboard gets a `data-tour-
    only reach by typing its URL.
 4. Changing an existing tool? Update its tour so the steps still match what is on screen. All tours
    are listed under TUTORIALS (SAGE MODE on → TUTORIALS, or the `/sagemode` page).
+
+## GALLERY EVERYWHERE RULE
+
+Owner rule, 2026-11-02: **a gallery change ships to every dashboard that has galleries, by
+default** — admin (`/admin` → Gallery), member (`/dashboard` → Gallery app) and photographer
+(`/dashboard` → Photographer → My Galleries). Only admin-only *tools* (sync, Drive, applications,
+tags) stay admin-only.
+
+- All three render the same `src/components/admin/AdminGalleryView.tsx` (`isPhotographerView` for
+  member and photographer). Put a gallery feature in that form, never in an admin-only copy, and
+  never behind `!isPhotographerView` unless it is an admin-only tool.
+- The tour goes on all three dashboards too: a step in each gallery tour and a `group: 'new'` tour
+  per `dashboard` (see `albumPriceTour` and its member/photographer twins in `tours.ts`).
+- Pricing math lives once, in `src/lib/buyerPricing.ts`, shared by the gallery page and checkout.
 
 ## DASHBOARD CLOCK RULE
 Clock face click → cycles formats (Analog → Digital 12h → 24h). Top label click → cycles modes (Clock → Stopwatch → Timer). Use `e.stopPropagation()` on clock face clicks.

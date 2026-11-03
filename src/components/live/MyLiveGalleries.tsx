@@ -21,7 +21,7 @@ interface Gallery {
   created_at: string
 }
 
-const btn = 'px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors disabled:opacity-40'
+const btn = 'py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors disabled:opacity-40'
 const primary = `${btn} bg-white text-black hover:bg-white/10 hover:text-white`
 const secondary = `${btn} bg-white/10 text-white hover:bg-white hover:text-black`
 const field = 'w-full bg-white/5 text-white px-4 py-3 text-sm focus:outline-none focus:bg-white/10'
@@ -137,7 +137,7 @@ export default function MyLiveGalleries() {
           placeholder="Event name, e.g. Halloween at Primos" value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && name.trim().length >= 2 && !busy) create() }} />
-        <button className={primary} style={{ borderRadius: 0 }} disabled={busy || name.trim().length < 2} onClick={create}>
+        <button className={`${primary} px-4`} style={{ borderRadius: 0 }} disabled={busy || name.trim().length < 2} onClick={create}>
           New live gallery
         </button>
       </div>
@@ -148,22 +148,24 @@ export default function MyLiveGalleries() {
         <div className="space-y-2">
           {galleries.map(g => (
             <div key={g.id} className="bg-black p-4" style={{ borderRadius: 0 }}>
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Phone: name on top, GO LIVE full width, then SHARE | SEND as an even pair.
+                  Wider screens: name left, the three buttons in one row on the right. */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-black uppercase tracking-[0.15em] truncate">{g.name}</p>
                   <p className={`text-[10px] font-black uppercase tracking-[0.25em] mt-1 ${g.live_mode ? 'text-green-400' : 'text-white/40'}`}>
                     {g.live_mode ? '● Live' : 'Not live'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button data-tour="pg-live-go" className={g.live_mode ? secondary : primary} style={{ borderRadius: 0 }} disabled={busy}
+                <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:shrink-0">
+                  <button data-tour="pg-live-go" className={`${g.live_mode ? secondary : primary} col-span-2 whitespace-nowrap px-4`} style={{ borderRadius: 0 }} disabled={busy}
                     onClick={() => toggle(g)}>
                     {g.live_mode ? 'End live' : 'Go live'}
                   </button>
-                  <button data-tour="pg-live-share" className={secondary} style={{ borderRadius: 0 }} onClick={() => share(g.slug, g.name)}>
+                  <button data-tour="pg-live-share" className={`${secondary} whitespace-nowrap px-2 sm:px-4`} style={{ borderRadius: 0 }} onClick={() => share(g.slug, g.name)}>
                     {copied === g.slug ? 'Link copied' : 'Share gallery'}
                   </button>
-                  <button data-tour="pg-live-send" className={open === g.slug ? primary : secondary} style={{ borderRadius: 0 }}
+                  <button data-tour="pg-live-send" className={`${open === g.slug ? primary : secondary} whitespace-nowrap px-2 sm:px-4`} style={{ borderRadius: 0 }}
                     onClick={() => setOpen(open === g.slug ? null : g.slug)}>
                     {open === g.slug ? 'Close' : 'Send photos'}
                   </button>

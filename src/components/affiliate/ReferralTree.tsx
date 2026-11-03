@@ -168,7 +168,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
           {/* MLM Earnings Info */}
           <div className="bg-white/10 border-0 rounded-none p-4">
             <h4 className="text-white font-medium mb-2">💰 MLM Earnings</h4>
-            <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
+            <ul className="text-white/80 text-sm space-y-1 list-disc list-outside pl-5 text-left">
               <li>Level 1: Earn 2% of their sales profits</li>
               <li>Level 2: Earn 1% of their sales profits</li>
               <li>All ties are permanent (lifetime earnings!)</li>

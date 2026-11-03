@@ -16,6 +16,7 @@ import SEOHead from '../components/SEOHead';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
 import TipModal from '../components/TipModal';
+import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from '../components/photos/SaveToPhotosSheet';
 
 const DownloadPortal: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
@@ -85,6 +86,19 @@ const DownloadPortal: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [linkEmail]);
 
+    // Phones: the share sheet saves straight into Photos; a ZIP lands in Files.
+    const [saveSheet, setSaveSheet] = useState<SaveItem[] | null>(null);
+    const saveToPhotos = () => {
+        const dlEmail = encodeURIComponent((linkEmail || email).trim().toLowerCase());
+        setSaveSheet(photos.map((photo: any) => ({
+            url: photo.storage_path && photo.thumbnail_url
+                ? photo.thumbnail_url
+                : `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}${photo.download_token ? `&et=${encodeURIComponent(photo.download_token)}` : ''}`,
+            filename: photoFilename(photo.title, photo.mime_type, String(photo.id).slice(0, 8)),
+            type: photo.mime_type || 'image/jpeg',
+        })));
+    };
+
     const downloadAll = async () => {
         if (!photos.length) return;
 
@@ -113,7 +127,9 @@ const DownloadPortal: React.FC = () => {
                         // returned 400 and every photo was skipped, so "Download All"
                         // produced an empty zip.
                         const dlEmail = encodeURIComponent((linkEmail || email).trim().toLowerCase());
-                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}`);
+                        // et: this order's token for the photo — the stream route
+                        // checks it before releasing a private gallery's full file.
+                        response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${dlEmail}${photo.download_token ? `&et=${encodeURIComponent(photo.download_token)}` : ''}`);
                     }
 
                     if (!response.ok) {
@@ -257,6 +273,17 @@ const DownloadPortal: React.FC = () => {
                                 </p>
                             </div>
                         ) : (
+                            <>
+                            {canSaveToPhotos() && (
+                                <button
+                                    onClick={saveToPhotos}
+                                    className="w-full bg-white text-black h-14 text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-3"
+                                    style={{ borderRadius: 0 }}
+                                >
+                                    <ArrowDownTrayIcon className="w-4 h-4" />
+                                    Save All to Photos
+                                </button>
+                            )}
                             <button
                                 onClick={downloadAll}
                                 className="w-full bg-white text-black h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
@@ -264,7 +291,9 @@ const DownloadPortal: React.FC = () => {
                                 <ArrowDownTrayIcon className="w-4 h-4" />
                                 Download All (.ZIP)
                             </button>
+                            </>
                         )}
+                        {saveSheet && <SaveToPhotosSheet items={saveSheet} onClose={() => setSaveSheet(null)} />}
 
                         <button
                             onClick={() => navigate('/')}
