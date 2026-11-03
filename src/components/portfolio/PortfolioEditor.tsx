@@ -412,11 +412,11 @@ function PostsTab({ userId, portfolio, posts, onChange, notify, fail }: {
         {posts.length === 0 ? (
           <p className="text-white/40 text-sm">No posts yet. Your first one shows up here exactly as visitors will see it.</p>
         ) : (
-          <div className="columns-1 sm:columns-2 gap-4">
+          <div className="max-w-2xl space-y-6">
             {posts.map(p => (
-              <div key={p.id} className="break-inside-avoid mb-4">
+              <div key={p.id}>
                 <PostCard post={p} />
-                <div className="flex gap-1 -mt-4 mb-4 bg-[#0a0a0a] p-1">
+                <div className="flex gap-1 bg-[#0a0a0a] p-1">
                   <button onClick={() => togglePin(p)} className={cn(secondary, 'flex-1 justify-center', p.pinned && 'bg-white text-black')} style={sq} title={p.pinned ? 'Unpin' : 'Pin to the top'}>
                     <StarIcon className="w-3 h-3" /> {p.pinned ? 'Pinned' : 'Pin'}
                   </button>

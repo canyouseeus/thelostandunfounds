@@ -1,9 +1,9 @@
 /**
  * Public portfolio — /portfolio/:handle
  *
- * A photographer's or affiliate's own page, Tumblr-style: one masonry feed of
- * photos, videos, YouTube/TikTok embeds and text posts, with the brands they
- * have worked with up top. Read under RLS: anyone sees a published portfolio,
+ * A photographer's or affiliate's own page, Tumblr-style: one centred column
+ * of posts, newest first, each full width — photos, videos, YouTube/TikTok
+ * embeds and text posts — with the brands they have worked with up top. Read under RLS: anyone sees a published portfolio,
  * the owner also sees their own draft (with a PREVIEW banner).
  */
 
@@ -66,7 +66,7 @@ export function PostMedia({ post, onOpenPhoto }: { post: PortfolioPost; onOpenPh
 export function PostCard({ post, onOpenPhoto }: { post: PortfolioPost; onOpenPhoto?: (url: string) => void }) {
   const isText = post.kind === 'text';
   return (
-    <article className="break-inside-avoid mb-4 bg-white/5" style={{ borderRadius: 0 }}>
+    <article className="bg-white/5" style={{ borderRadius: 0 }}>
       {!isText && <PostMedia post={post} onOpenPhoto={onOpenPhoto} />}
       {(post.title || post.caption || post.pinned) && (
         <div className={isText ? 'p-6' : 'p-4'}>
@@ -97,7 +97,7 @@ export function WorkedWith({ clients }: { clients: PortfolioClient[] }) {
   return (
     <section className="mb-10">
       <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-4 text-left">Worked With</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {clients.map(c => {
           const tile = (
             <div className="aspect-[3/2] bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center p-4 group" title={c.name}>
@@ -175,7 +175,7 @@ export default function Portfolio() {
   if (loading) {
     return (
       <div className={shell}>
-        <p className="max-w-6xl mx-auto text-white/40 text-xs uppercase tracking-[0.3em]">Loading…</p>
+        <p className="max-w-2xl mx-auto text-white/40 text-xs uppercase tracking-[0.3em]">Loading…</p>
       </div>
     );
   }
@@ -184,7 +184,7 @@ export default function Portfolio() {
     return (
       <div className={shell}>
         <SEOHead title="Portfolio Not Found" description="This portfolio does not exist." canonicalPath={portfolioPath(handle)} noIndex />
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-black uppercase tracking-widest mb-4 text-left">PORTFOLIO NOT FOUND</h1>
           <p className="text-white/60 text-left">{error || 'Nobody has published a portfolio at this address.'}</p>
           <Link to="/" className="inline-block mt-8 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white">Home</Link>
@@ -210,7 +210,8 @@ export default function Portfolio() {
         ogImage={ogImage}
         noIndex={!portfolio.published}
       />
-      <div className="max-w-6xl mx-auto">
+      {/* One column, like a Tumblr feed: header, bio, logos and posts share its width. */}
+      <div className="max-w-2xl mx-auto">
         {isOwner && !portfolio.published && (
           <div className="bg-white/10 px-4 py-3 mb-8 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Preview — only you can see this. Publish it from your dashboard.</p>
@@ -230,7 +231,7 @@ export default function Portfolio() {
             </div>
           )}
           <div className="min-w-0 flex-1 text-left">
-            <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight leading-none break-words">{name}</h1>
+            <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight leading-none break-words">{name}</h1>
             {portfolio.tagline && <p className="text-white/70 text-base sm:text-lg mt-3">{portfolio.tagline}</p>}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-[10px] font-black uppercase tracking-widest text-white/40">
               {portfolio.location && (
@@ -257,7 +258,7 @@ export default function Portfolio() {
         {posts.length === 0 ? (
           <p className="text-white/40 text-sm text-left">Nothing posted yet.</p>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+          <div className="space-y-6">
             {posts.map(post => <PostCard key={post.id} post={post} onOpenPhoto={setLightbox} />)}
           </div>
         )}
