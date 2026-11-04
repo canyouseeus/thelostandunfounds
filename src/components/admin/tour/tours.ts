@@ -139,6 +139,8 @@ const galleryTour: Tour = {
     inPanel('gallery', { target: 'gallery-form-private', title: 'Private', body: 'Tick it to keep the gallery off the public list. Only people you invite get in, and its prices switch to À La Carte.' }),
     inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' }),
     inPanel('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' }),
+    inPanel('gallery', { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' }),
+    inPanel('gallery', { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' }),
     inPanel('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inPanel('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
   ],
@@ -526,7 +528,7 @@ const galleryPhotosTour: Tour = {
 const aLaCarteTour: Tour = {
   id: 'gallery-a-la-carte',
   title: 'À La Carte',
-  summary: 'Let people into an album to buy the photos they want, while your album owners keep everything free.',
+  summary: 'Let people into an album, public or private, to buy the photos they want, while your album owners keep everything free.',
   group: 'new',
   announce: '2026-11-02',
   steps: [
@@ -539,11 +541,10 @@ const aLaCarteTour: Tour = {
       body: 'Tap a gallery to open it.',
       missingNote: 'No galleries yet. Make one with NEW first.',
     }),
-    { target: 'gallery-form-private', title: 'Private', body: 'À la carte is for private galleries. Tick PRIVATE GALLERY if it isn’t.' },
-    { target: 'gallery-a-la-carte-price', title: 'Price Per Photo', body: 'What each photo costs them.', missingNote: 'Tick PRIVATE GALLERY first.' },
+    { target: 'gallery-a-la-carte-price', title: 'Price Per Photo', body: 'What each photo costs them.' },
     { target: 'gallery-a-la-carte-bundles', title: 'Bundles', body: 'Deals like 4 photos for $10. ADD BUNDLE makes another.' },
     { target: 'gallery-a-la-carte-album', title: 'Whole Album', body: 'Their price for every photo. Blank = not offered.' },
-    { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Invited Clients still get everything free.' },
+    { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Album Owners still get everything free.' },
     { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
     { target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new buyer their invite link.' },
   ],
@@ -739,6 +740,8 @@ const memberGalleryTour: Tour = {
     inApp('gallery', { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' }),
     inApp('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' }),
     inApp('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' }),
+    inApp('gallery', { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' }),
+    inApp('gallery', { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' }),
     inApp('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inApp('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
   ],
@@ -861,6 +864,8 @@ const photographerGalleriesTour: Tour = {
     { target: 'gallery-form-name', title: 'Name And Link', body: 'Name it. The slug is its address: /gallery/your-slug.' },
     { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' },
     { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' },
+    { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' },
+    { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' },
     { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' },
     { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' },
   ],
@@ -976,6 +981,57 @@ const photographerPhotoActionsTour: Tour = {
   steps: photoActionsSteps([openPhotographer], s => s),
 };
 
+// Album Owners vs À La Carte (owner, 2026-11-04): an invite to a public gallery
+// used to land on the free owner list with no other choice. Both lists now show
+// on every gallery. Same screen on every dashboard that edits galleries.
+const inviteListsSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
+  ...open,
+  wrap({
+    target: 'gallery-row-open',
+    action: 'click',
+    title: 'Open A Gallery',
+    body: 'Tap a gallery to open it.',
+    missingNote: 'No galleries yet. Make one with NEW first.',
+  }),
+  wrap({ target: 'gallery-form-owners', title: 'Album Owners', body: 'Everyone here downloads every photo free, with no watermark. Only add the people the photos belong to.' }),
+  wrap({ target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite goes here, on public galleries too. They see the whole album and pay for the photos they want.' }),
+  wrap({ target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-price', title: 'Their Price', body: 'What each photo costs them, under Pricing.' }),
+  wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new person their invite link.' }),
+];
+
+const inviteListsTour: Tour = {
+  id: 'gallery-invite-lists',
+  title: 'Owners Or Buyers',
+  summary: 'Every gallery now has two invite lists: Album Owners get everything free, À La Carte buyers pay per photo.',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: inviteListsSteps([
+    openFromDock('gallery', 'Owners Or Buyers', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+  ], s => inPanel('gallery', s)),
+};
+
+const memberInviteListsTour: Tour = {
+  id: 'member-gallery-invite-lists',
+  title: 'Owners Or Buyers',
+  summary: 'Every gallery now has two invite lists: Album Owners get everything free, À La Carte buyers pay per photo.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: inviteListsSteps([memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.')], s => inApp('gallery', s)),
+};
+
+const photographerInviteListsTour: Tour = {
+  id: 'photographer-gallery-invite-lists',
+  title: 'Owners Or Buyers',
+  summary: 'Every gallery now has two invite lists: Album Owners get everything free, À La Carte buyers pay per photo.',
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: inviteListsSteps([openPhotographer], s => s),
+};
+
 const albumPriceTour: Tour = {
   id: 'gallery-album-price',
   title: 'Whole Album Price',
@@ -1076,7 +1132,7 @@ const bookingBrandAssetsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
