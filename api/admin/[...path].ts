@@ -160,6 +160,8 @@ export default async function handler(
         return await handleDirectBooking(req, res)
       case 'field-sales':
         return await handleFieldSales(req, res)
+      case 'deposits':
+        return await handleDeposits(req, res)
       case 'prospects':
         return await handleProspects(req, res)
       case 'env-vars':
@@ -284,6 +286,14 @@ async function handleDirectBooking(req: VercelRequest, res: VercelResponse) {
  */
 async function handleFieldSales(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/field-sales.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Deposit check-in — outside deposits into the business account, tagged invoice or street
+ */
+async function handleDeposits(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/deposits.js')
   return handler.default(req, res)
 }
 

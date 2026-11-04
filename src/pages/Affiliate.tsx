@@ -250,6 +250,9 @@ export default function Affiliate() {
   const [userGalleries, setUserGalleries] = useState<UserGallery[]>([]);
   const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(null);
   const [galleryRevenueTotal, setGalleryRevenueTotal] = useState(0);
+  // Gallery sales alone, dated — SITE REVENUE adds bookings and street to
+  // these. Commissions stay out of it: they are paid on those same sales.
+  const [gallerySalesHistory, setGallerySalesHistory] = useState<{ date: string; amount: number }[]>([]);
   const [history, setHistory] = useState<{
     revenue: (string | { date: string; amount: number })[];
     newsletter: string[];
@@ -326,6 +329,43 @@ export default function Affiliate() {
       setActiveApp('affiliate');
     }
   }, []);
+
+  // SITE REVENUE (admin only): bookings and street, the same numbers the
+  // admin dashboard shows. Totals come from revenue-summary; the dated rows
+  // feed the YTD / MTD / 7D windows. Street includes deposits the owner
+  // tagged street at the deposit check-in.
+  const [siteRevenue, setSiteRevenue] = useState<{
+    bookings: number;
+    street: number;
+    history: { date: string; amount: number }[];
+  }>({ bookings: 0, street: 0, history: [] });
+
+  useEffect(() => {
+    if (!userIsAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [summaryRes, payments, nights, deposits] = await Promise.all([
+          fetch('/api/admin/revenue-summary'),
+          supabase.from('invoice_payments').select('amount, paid_at'),
+          supabase.from('field_sales').select('night, total'),
+          supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
+        ]);
+        const summary = summaryRes.ok ? await summaryRes.json() : null;
+        const total = (source: string) =>
+          ((summary?.sources ?? []).find((x: any) => x.source === source)?.totalCents ?? 0) / 100;
+        const rows = [
+          ...(payments.data ?? []).map((r: any) => ({ date: r.paid_at, amount: Number(r.amount || 0) })),
+          ...(nights.data ?? []).map((r: any) => ({ date: `${r.night}T12:00:00Z`, amount: Number(r.total || 0) })),
+          ...(deposits.data ?? []).map((r: any) => ({ date: r.received_at, amount: Number(r.amount_cents || 0) / 100 })),
+        ].filter(r => r.date && r.amount > 0);
+        if (!cancelled) setSiteRevenue({ bookings: total('bookings'), street: total('street'), history: rows });
+      } catch (err) {
+        console.error('Site revenue failed:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userIsAdmin]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -514,6 +554,7 @@ export default function Affiliate() {
       const salesData = sales || [];
       const galleryTotal = salesData.reduce((sum: any, o: any) => sum + (o.total_amount_cents || 0), 0) / 100;
       setGalleryRevenueTotal(galleryTotal);
+      setGallerySalesHistory(salesData.map((o: any) => ({ date: o.created_at, amount: (o.total_amount_cents || 0) / 100 })));
 
       const revenueHistory: { date: string; amount: number }[] = [
         ...commissionsData.map(c => ({ date: c.created_at, amount: Number(c.amount) })),
@@ -1036,14 +1077,17 @@ export default function Affiliate() {
                     affiliateRevenue={parseFloat(String(affiliateData?.total_earnings || 0))}
                     galleryRevenue={galleryRevenueTotal}
                     subscriberRevenue={0}
+                    bookingRevenue={siteRevenue.bookings}
+                    streetRevenue={siteRevenue.street}
                     galleryPhotoCount={userGalleries.reduce((sum, g) => sum + (g.photo_count || 0), 0)}
                     usersCount={affiliateData?.network_size || 0}
                     stats={{
-                      revenue: parseFloat(String(affiliateData?.total_earnings || 0)) + galleryRevenueTotal,
+                      revenue: galleryRevenueTotal + siteRevenue.bookings + siteRevenue.street,
                       newsletter: 0,
-                      affiliates: (affiliateData?.total_conversions || 0)
+                      affiliates: (affiliateData?.total_conversions || 0),
+                      bookings: siteRevenue.bookings,
                     }}
-                    history={history}
+                    history={{ ...history, revenue: [...gallerySalesHistory, ...siteRevenue.history] }}
                   />
                 )}
 

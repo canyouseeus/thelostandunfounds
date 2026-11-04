@@ -53,6 +53,41 @@ const fail = (error: string, httpStatus?: number, result?: unknown): JobOutcome 
   status: 'failed', httpStatus, error, result,
 })
 
+/**
+ * Top up the Payments balance from the business financial account to cover a
+ * deposit's owner pay — at most once per deposit. Returns the top-up (new or
+ * the one already on file). Throws if Stripe refuses, so the job fails with
+ * the reason instead of waiting three days for money that is not coming.
+ */
+async function fundDepositPay(
+  supabase: SupabaseClient, depositId: string, cents: number, jobId: string
+): Promise<{ id: string; status: string }> {
+  const { data: deposit, error } = await supabase
+    .from('deposit_checkins').select('id, owner_pay_topup_id').eq('id', depositId).maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!deposit) throw new Error(`Deposit ${depositId} not found`)
+  const stripe = getStripe()
+  if (deposit.owner_pay_topup_id) {
+    const existing = await stripe.topups.retrieve(deposit.owner_pay_topup_id)
+    if (!['failed', 'canceled', 'reversed'].includes(existing.status)) return { id: existing.id, status: existing.status }
+    throw new Error(`Top-up ${existing.id} for this deposit ${existing.status}; not retrying automatically`)
+  }
+  const topup = await stripe.topups.create(
+    {
+      amount: cents,
+      currency: 'usd',
+      description: `Fund owner pay (10% BTC DCA) for deposit ${depositId}`,
+      statement_descriptor: 'TLAU DCA',
+      metadata: { admin_job_id: jobId, deposit_id: depositId },
+    },
+    { idempotencyKey: `deposit-topup-${depositId}` }
+  )
+  const { error: saveError } = await supabase
+    .from('deposit_checkins').update({ owner_pay_topup_id: topup.id }).eq('id', depositId)
+  if (saveError) throw new Error(`Top-up ${topup.id} created but not saved: ${saveError.message}`)
+  return { id: topup.id, status: topup.status }
+}
+
 /** Available USD in the platform's Payments balance, in dollars. */
 async function availableUsd(): Promise<number> {
   const balance = await getStripe().balance.retrieve()
@@ -277,9 +312,17 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
   },
 
   /**
-   * { fieldSaleId?, amount } — the owner's pay for a street night, to his
-   * Stripe Connect account. Queued by recordFieldSale. Waits (hourly, up to
-   * 3 days) when the available balance is short, like affiliate_payout.
+   * { fieldSaleId?, depositId?, amount } — the owner's pay (10%) for a street night
+   * or an outside deposit (deposit check-in), to his Stripe Connect account
+   * (where it is DCA'd into bitcoin). Queued by recordFieldSale and the deposit
+   * check-in. Waits (hourly, up to 3 days) when the available balance is short,
+   * like affiliate_payout.
+   *
+   * A deposit's money sits in the business financial account, not the Payments
+   * balance a Connect transfer is paid from. So for a deposit, a short balance
+   * first triggers ONE top-up (financial account -> Payments balance) for the
+   * pay, recorded on the deposit row so a later retry never tops up twice; the
+   * job then waits for it to settle like any other.
    */
   async owner_pay(supabase, payload, jobId) {
     const cents = Math.round(Number(payload.amount) * 100)
@@ -293,9 +336,11 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
 
     const available = await availableUsd()
     if (Math.round(available * 100) < cents) {
+      const topup = payload.depositId ? await fundDepositPay(supabase, payload.depositId, cents, jobId) : null
       return {
         status: 'waiting_funds',
-        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}`,
+        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}` +
+          (topup ? ` — top-up ${topup.id} from the business account is ${topup.status}` : ''),
         retryAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       }
     }
@@ -305,8 +350,8 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
         amount: cents,
         currency: 'usd',
         destination: acct.stripe_account_id,
-        description: 'Owner pay — street night',
-        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '' },
+        description: payload.depositId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
+        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '', deposit_id: payload.depositId || '' },
       },
       { idempotencyKey: `admin-job-${jobId}` }
     )

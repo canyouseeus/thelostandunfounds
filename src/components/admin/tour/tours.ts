@@ -1183,7 +1183,22 @@ const bookingBrandAssetsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+/* ── Deposit check-in (2026-11-04) ── */
+
+const depositsTour: Tour = {
+  id: 'money-deposits',
+  title: 'Deposit Check-In',
+  summary: 'Venmo and Cash App money that lands in the business account: say whether it was a direct invoice or street, so nothing counts twice.',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: [
+    openFromDock('money', 'Money In / Out', 'Tap Money In / Out to open it.'),
+    inPanel('money', { target: 'money-deposits', title: 'Deposits', body: 'Every outside deposit into the business account. Direct invoice money is already counted on its invoice. Street money counts toward Street.' }),
+    inPanel('money', { target: 'money-deposit-row', title: 'Switch a Deposit', body: 'Tagged one wrong? Tap the other button on its row.' }),
+  ],
+};
+
+export const TOURS: Tour[] = [depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

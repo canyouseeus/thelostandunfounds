@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fee = (cents: number) => Math.round(cents * CARD_FEE_RATE) + CARD_FEE_FIXED_CENTS
 
     try {
-        const [shop, gallery, tickets, invPaid, commissions, prodigi, refunds, invoicesOpen, commissionsOwed, street] =
+        const [shop, gallery, tickets, invPaid, commissions, prodigi, refunds, invoicesOpen, commissionsOwed, street, streetDeposits] =
             await Promise.all([
                 supabase.from('shop_orders')
                     .select('customer_email, amount_total_cents, paid_at, status'),
@@ -70,6 +70,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     .eq('status', 'available'),
                 supabase.from('field_sales')
                     .select('night, total'),
+                // Outside deposits the owner tagged as street money. Ones
+                // tagged invoice are already counted as invoice payments.
+                supabase.from('deposit_checkins')
+                    .select('amount_cents, received_at')
+                    .eq('category', 'street'),
             ])
 
         const txns: Txn[] = []
@@ -100,6 +105,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const cents = Math.round(Number(n.total ?? 0) * 100)
             if (cents <= 0) continue
             txns.push({ source: 'street', email: null, cents, at: `${n.night}T12:00:00Z`, feeCents: 0 })
+        }
+        for (const d of streetDeposits.data ?? []) {
+            if (!(d.amount_cents > 0)) continue
+            txns.push({ source: 'street', email: null, cents: d.amount_cents, at: d.received_at, feeCents: 0 })
         }
         // No affiliate rows: every commission is on a sale already pushed above
         // (an invoice payment, a gallery or shop order). Adding them counted

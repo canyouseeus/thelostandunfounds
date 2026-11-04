@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { logApiCall, logError } from '../../lib/adminErrorLog';
 import { cn } from '../ui/utils';
+import { DepositAccounting } from './DepositCheckIn';
 import { type Bill, type BillPriority, daysUntil, PRIORITY_ORDER, PRIORITY_TEXT } from '../../lib/bills';
 
 interface Entry {
@@ -323,6 +324,8 @@ export default function MoneyLedgerView() {
             {error && <p className="bg-red-500/10 text-red-400 text-xs p-3">{error}</p>}
 
             {data && <BillsSection bills={data.bills ?? []} onChange={load} onError={setError} />}
+
+            <DepositAccounting />
 
             {s && (
                 <section className="space-y-3">
