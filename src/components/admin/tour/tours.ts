@@ -546,6 +546,7 @@ const aLaCarteTour: Tour = {
     { target: 'gallery-a-la-carte-album', title: 'Whole Album', body: 'Their price for every photo. Blank = not offered.' },
     { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Album Owners still get everything free.' },
     { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
+    { target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'FREE gives that buyer this many photos at no cost. After that they pay like everyone else.', missingNote: 'Add a buyer first. FREE sits next to their email.' },
     { target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new buyer their invite link.' },
   ],
 };
@@ -996,6 +997,7 @@ const inviteListsSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): To
   wrap({ target: 'gallery-form-owners', title: 'Album Owners', body: 'Everyone here downloads every photo free, with no watermark. Only add the people the photos belong to.' }),
   wrap({ target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite goes here, on public galleries too. They see the whole album and pay for the photos they want.' }),
   wrap({ target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'Want them to have some free? Type how many next to their email.', missingNote: 'Add a buyer first. FREE sits next to their email.' }),
   wrap({ target: 'gallery-a-la-carte-price', title: 'Their Price', body: 'What each photo costs them, under Pricing.' }),
   wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new person their invite link.' }),
 ];
@@ -1030,6 +1032,55 @@ const photographerInviteListsTour: Tour = {
   group: 'new',
   announce: '2026-11-04',
   steps: inviteListsSteps([openPhotographer], s => s),
+};
+
+// Free photos for one à la carte buyer (owner, 2026-11-04): their first N are
+// $0, then they pay. Same screen on every dashboard that edits galleries.
+const freePhotosSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
+  ...open,
+  wrap({
+    target: 'gallery-row-open',
+    action: 'click',
+    title: 'Open A Gallery',
+    body: 'Tap a gallery to open it.',
+    missingNote: 'No galleries yet. Make one with NEW first.',
+  }),
+  wrap({ target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Free photos go to people on this list, not to Album Owners.' }),
+  wrap({ target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'Type how many photos they get free. Their first picks cost nothing, then they pay the prices under Pricing.', missingNote: 'Add a buyer first. FREE sits next to their email.' }),
+  wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY. Their invite tells them how many are free.' }),
+];
+
+const freePhotosTour: Tour = {
+  id: 'gallery-free-photos',
+  title: 'Free Photos For A Buyer',
+  summary: 'Give one à la carte buyer a set number of free photos, like 10, without making them an album owner.',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: freePhotosSteps([
+    openFromDock('gallery', 'Free Photos', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+  ], s => inPanel('gallery', s)),
+};
+
+const memberFreePhotosTour: Tour = {
+  id: 'member-gallery-free-photos',
+  title: 'Free Photos For A Buyer',
+  summary: 'Give one à la carte buyer a set number of free photos, like 10, without making them an album owner.',
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: freePhotosSteps([memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.')], s => inApp('gallery', s)),
+};
+
+const photographerFreePhotosTour: Tour = {
+  id: 'photographer-gallery-free-photos',
+  title: 'Free Photos For A Buyer',
+  summary: 'Give one à la carte buyer a set number of free photos, like 10, without making them an album owner.',
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: freePhotosSteps([openPhotographer], s => s),
 };
 
 const albumPriceTour: Tour = {
@@ -1132,7 +1183,7 @@ const bookingBrandAssetsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

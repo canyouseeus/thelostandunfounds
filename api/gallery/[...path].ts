@@ -907,7 +907,7 @@ async function handleGalleryPass(req: VercelRequest, res: VercelResponse) {
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
         const { data: library } = await supabase
             .from('photo_libraries')
-            .select('id, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, owner_id, user_id')
+            .select('id, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, buyer_free_photos, owner_id, user_id')
             .eq('slug', slug)
             .maybeSingle();
         if (!library) return res.status(200).json({ role: null });
@@ -927,6 +927,8 @@ async function handleGalleryPass(req: VercelRequest, res: VercelResponse) {
                 albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price)
                     : Number(library.album_price) > 0 ? Number(library.album_price) : null,
                 albumCount: count || 0,
+                // Free-photo allowance left (lib/api-handlers/_free-allowance.ts).
+                freeLeft: await (await import('../../lib/api-handlers/_free-allowance.js')).freeLeft(supabase, library, user.email),
             };
         }
         return res.status(200).json({

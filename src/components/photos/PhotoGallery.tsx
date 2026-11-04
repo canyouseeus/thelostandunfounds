@@ -30,7 +30,7 @@ import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 import { setGalleryPass, withGalleryPass } from '../../lib/galleryPass';
-import { buyerTotal, galleryTotal, type BuyerPricing } from '../../lib/buyerPricing';
+import { buyerTotalWithFree, galleryTotal, type BuyerPricing } from '../../lib/buyerPricing';
 import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
@@ -356,7 +356,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // The signed-in viewer's role here (GET /api/gallery/pass): an album owner
     // has every photo free; an à la carte buyer sees the whole album behind the
     // watermark overlay and buys photos at buyerPrice each (owner, 2026-11-02).
-    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null; pricing: BuyerPricing | null } | null>(null);
+    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null; pricing: BuyerPricing | null; freeLeft: number } | null>(null);
     // À la carte buyers see their own bundles (e.g. 4 for $10), not the album's.
     const pricingOptions: PricingOption[] = galleryRole?.role === 'buyer'
         ? (galleryRole.pricing?.bundles || []).map((b, i) => ({ id: `buyer-${i}`, name: `${b.photo_count} photos`, price: b.price, photo_count: b.photo_count } as PricingOption))
@@ -422,7 +422,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 const data = res.ok ? await res.json() : null;
                 if (cancelled || !data?.role || !data.pass) return;
                 setGalleryPass(librarySlug, data.pass);
-                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null, pricing: data.pricing ?? null });
+                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null, pricing: data.pricing ?? null, freeLeft: Math.max(0, Number(data.pricing?.freeLeft) || 0) });
             } catch { /* no pass: downloads of a private album stay locked */ }
         })();
         return () => { cancelled = true; };
@@ -901,7 +901,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         if (count <= 0 || !library) return 0;
         // À la carte: the same function the server checkout charges with.
         if (galleryRole?.role === 'buyer' && galleryRole.pricing) {
-            return buyerTotal(wholeAlbumRef.current ? galleryRole.pricing.albumCount : count, galleryRole.pricing);
+            const pricing = galleryRole.pricing;
+            const n = wholeAlbumRef.current ? pricing.albumCount : count;
+            // Free-photo allowance first, then the rest at their prices —
+            // the same function the server checkout charges with.
+            return buyerTotalWithFree(n, galleryRole.freeLeft, pricing, wholeAlbumRef.current);
         }
         // Everyone else: the same function the server checkout charges with.
         return galleryTotal(wholeAlbumRef.current && albumOffer ? albumOffer.count : count, {
@@ -982,11 +986,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             if (!email) return; // user cancelled
         }
         setBuyerEmail(email);
+        // Covered by their free-photo allowance: nothing to pay, so no card
+        // or bitcoin choice. The server grants them and answers method 'free'.
+        if (galleryRole?.role === 'buyer' && computeTotal(selectedPhotos.length) <= 0) {
+            await submitPayment('stripe', email);
+            return;
+        }
         setPaymentPickerOpen(true);
     };
 
-    const submitPayment = async (paymentMethod: 'stripe' | 'strike') => {
-        const email = buyerEmail;
+    const submitPayment = async (paymentMethod: 'stripe' | 'strike', emailOverride?: string) => {
+        const email = emailOverride || buyerEmail;
         if (!email || selectedPhotos.length === 0) return;
 
         setCheckoutPending(true);
@@ -1006,6 +1016,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
             if (!r.ok) {
                 alert('Checkout failed: ' + (d.error || 'Unknown error'));
+                return;
+            }
+
+            // Free-photo allowance: the whole selection was granted free.
+            if (d.method === 'free') {
+                setGalleryRole(prev => prev ? { ...prev, freeLeft: Math.max(0, Number(d.freeLeft) || 0) } : prev);
+                setPaymentPickerOpen(false);
+                setSelectedPhotos([]);
+                await fetchPurchasedAssets();
+                alert(`${d.free} free photo${d.free === 1 ? ' is' : 's are'} yours. They are unlocked in the gallery now.`);
                 return;
             }
 
@@ -1061,6 +1081,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Same precedence as the server checkout and the header price display:
     // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
     // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
+    // À la carte free-photo allowance, for the tray: "3 free · 7 free left".
+    const freeNote = (() => {
+        if (galleryRole?.role !== 'buyer' || galleryRole.freeLeft <= 0) return null;
+        const n = wholeAlbumRef.current && galleryRole.pricing ? galleryRole.pricing.albumCount : selectedPhotos.length;
+        const free = Math.min(galleryRole.freeLeft, n);
+        return `${free} free · ${galleryRole.freeLeft - free} free left`;
+    })();
+
     const singlePrice = (() => {
         if (galleryRole?.role === 'buyer') return galleryRole.buyerPrice || 5;
         const single = pricingOptions.find(o => o.photo_count === 1);
@@ -1858,6 +1886,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 loading={checkoutPending}
                 totalAmount={computeTotal(selectedPhotos.length)}
                 isFree={isFreeGallery}
+                note={freeNote}
+                claimFree={galleryRole?.role === 'buyer' && selectedPhotos.length > 0 && computeTotal(selectedPhotos.length) <= 0}
             />
 
             {/* Payment method picker — Card vs Bitcoin */}
