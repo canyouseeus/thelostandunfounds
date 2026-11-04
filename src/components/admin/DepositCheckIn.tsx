@@ -226,6 +226,19 @@ export function DepositAccounting() {
     }
   };
 
+  const retryPay = async (d: Deposit) => {
+    setBusyId(d.id);
+    setRowError(null);
+    try {
+      await authFetch({ method: 'POST', body: JSON.stringify({ id: d.id, retryPay: true }) });
+      window.dispatchEvent(new CustomEvent(DEPOSITS_CHANGED_EVENT));
+    } catch (e: any) {
+      setRowError(e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <section className="space-y-3" data-tour="money-deposits">
       <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Deposits</h3>
@@ -280,6 +293,17 @@ export function DepositAccounting() {
                 </div>
               )}
             </div>
+            {d.pay?.status === 'failed' && (
+              <button
+                type="button"
+                disabled={busyId === d.id}
+                onClick={() => retryPay(d)}
+                className="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-red-400/10 text-red-400 hover:bg-red-400 hover:text-black transition-colors disabled:opacity-50"
+                style={{ borderRadius: 0 }}
+              >
+                Retry 10%
+              </button>
+            )}
             <TagButtons value={d.category} onPick={c => pick(d, c)} busy={busyId === d.id} />
           </div>
         ))}

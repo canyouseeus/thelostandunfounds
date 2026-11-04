@@ -72,15 +72,21 @@ async function fundDepositPay(
     if (!['failed', 'canceled', 'reversed'].includes(existing.status)) return { id: existing.id, status: existing.status }
     throw new Error(`Top-up ${existing.id} for this deposit ${existing.status}; not retrying automatically`)
   }
+  // `source` must name the business financial account. Left out, Stripe pulls
+  // the top-up from the platform's default external bank account instead —
+  // which failed with "default usd bank account has not been verified" on
+  // 2026-11-04, though the money was sitting in the financial account.
   const topup = await stripe.topups.create(
     {
       amount: cents,
       currency: 'usd',
+      source: FINANCIAL_ACCOUNTS.business,
       description: `Fund owner pay (10% BTC DCA) for deposit ${depositId}`,
       statement_descriptor: 'TLAU DCA',
       metadata: { admin_job_id: jobId, deposit_id: depositId },
     },
-    { idempotencyKey: `deposit-topup-${depositId}` }
+    // New key: the bank-sourced attempts under the old one are cached by Stripe.
+    { idempotencyKey: `deposit-topup-fa-${depositId}` }
   )
   const { error: saveError } = await supabase
     .from('deposit_checkins').update({ owner_pay_topup_id: topup.id }).eq('id', depositId)

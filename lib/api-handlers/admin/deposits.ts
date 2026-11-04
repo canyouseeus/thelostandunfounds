@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../_booking-payment-utils.js'
+import { getSupabaseAdmin, getStripe } from '../_booking-payment-utils.js'
 import { verifyAdmin } from '../_admin-auth.js'
 
 /**
@@ -8,6 +8,7 @@ import { verifyAdmin } from '../_admin-auth.js'
  *
  * GET                                  → sync, then every outside deposit + which are unsorted
  * POST { id, category: 'invoice' | 'street' } → tag one (or re-tag it, if the wrong button was hit)
+ * POST { id, retryPay: true }          → re-queue a FAILED 10% pay (never one that sent money)
  *
  * Money from outside Stripe (Venmo / Cash App cashouts) lands in the business
  * financial account as a Treasury "received credit" by bank transfer. The site
@@ -128,6 +129,39 @@ export async function syncDeposits(supabase: SupabaseClient): Promise<number> {
   return fresh.length
 }
 
+/**
+ * Re-queue a deposit's failed 10% pay. Refused unless the job failed and no
+ * transfer went out; a top-up already on file is kept unless Stripe says it
+ * failed, so a retry can never fund the same pay twice.
+ */
+async function retryOwnerPay(supabase: SupabaseClient, id: string) {
+  const { data: dep, error } = await supabase
+    .from('deposit_checkins').select('id, owner_pay_job_id, owner_pay_topup_id').eq('id', id).maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!dep?.owner_pay_job_id) return 'This deposit has no 10% pay to retry'
+  const { data: job, error: jobError } = await supabase
+    .from('admin_jobs').select('id, status, result').eq('id', dep.owner_pay_job_id).single()
+  if (jobError) throw new Error(jobError.message)
+  if (job.status !== 'failed') return `The 10% pay is ${job.status}, not failed`
+  if ((job.result as any)?.transferId) return 'The 10% pay already sent'
+  if (dep.owner_pay_topup_id) {
+    const topup = await getStripe().topups.retrieve(dep.owner_pay_topup_id)
+    if (!['failed', 'canceled', 'reversed'].includes(topup.status)) {
+      // Money is already moving for this pay; just let the job wait on it.
+    } else {
+      const { error: clearError } = await supabase
+        .from('deposit_checkins').update({ owner_pay_topup_id: null }).eq('id', id)
+      if (clearError) throw new Error(clearError.message)
+    }
+  }
+  const { error: requeueError } = await supabase
+    .from('admin_jobs')
+    .update({ status: 'queued', error: null, http_status: null, finished_at: null, not_before: new Date().toISOString(), created_at: new Date().toISOString() })
+    .eq('id', job.id).eq('status', 'failed')
+  if (requeueError) throw new Error(requeueError.message)
+  return null
+}
+
 export async function listDeposits(supabase: SupabaseClient) {
   const { data, error } = await supabase.from('deposit_checkins').select(SELECT).order('received_at', { ascending: false })
   if (error) throw new Error(error.message)
@@ -153,8 +187,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ...(await listDeposits(supabase)), synced, syncError })
     }
     if (req.method === 'POST') {
-      const { id, category } = req.body || {}
+      const { id, category, retryPay } = req.body || {}
       if (!id) return res.status(400).json({ error: 'id is required' })
+      if (retryPay) {
+        const refused = await retryOwnerPay(supabase, id)
+        if (refused) return res.status(409).json({ error: refused })
+        const { data: fresh, error: reloadError } = await supabase.from('deposit_checkins').select(SELECT).eq('id', id).single()
+        if (reloadError) throw new Error(reloadError.message)
+        return res.status(200).json({ deposit: fresh })
+      }
       if (!CATEGORIES.includes(category)) return res.status(400).json({ error: 'category must be invoice or street' })
       const { data, error } = await supabase
         .from('deposit_checkins')
