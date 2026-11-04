@@ -158,6 +158,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | page titles, h1, heading case | Page Title Style Rule below |
 | new admin feature, tutorial, walkthrough, tour, onboarding | ADMIN TUTORIAL RULE below, `admin-ops` |
 | public form, contact, signup, ticket, submission, spam, bot, Turnstile, CAPTCHA | TURNSTILE RULE below |
+| dashboard change, "add to the dashboard", widget, panel, tab | Dashboard Scope Rule below |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 
@@ -430,6 +431,37 @@ monotone-smoothed 2px line, flat ~12% fill, r=2 data dots; bars are the accent a
 only** (revenue green-400, newsletter/analytics blue-400, affiliates purple-400,
 bookings amber-500), never by dialect. Never introduce a new chart style.
 
+## DASHBOARD SCOPE RULE
+
+The platform has more than one dashboard, and "the dashboard" doesn't say which one:
+
+| Dashboard | Route | Main file |
+|---|---|---|
+| Admin | `/admin` | `src/pages/Admin.tsx` (+ `src/components/admin/`) |
+| Photographer (contractor) | `/photographer-dashboard` | `src/pages/PhotographerDashboard.tsx` |
+| Affiliate / user | `/dashboard` | `Affiliate` page (`/affiliate-dashboard` redirects here) |
+
+Client preview dashboards (`/silva-star/dashboard`, `/kattitude-preview/dashboard`,
+`/fadebox-preview/dashboard`) belong to client sites and are never in scope unless named.
+
+**Before changing any dashboard, ask which ones the change goes to** unless the request already
+names them. Offer these choices and allow more than one to be picked:
+
+- Admin only
+- Photographer only
+- Affiliate / user only
+- Some of them (a subset, e.g. admin + photographer)
+- All dashboards
+
+Rules:
+1. Never assume admin-only, and never assume "all". A feature built for admin can leak data
+   (revenue, other contractors' payouts, client details) if copied to photographer or affiliate
+   views; one built for a single dashboard may be wanted on the others too.
+2. Ask once, up front, before writing code — use `AskUserQuestion` with `multiSelect: true`.
+3. When the change goes to more than one dashboard, check each target's data access separately:
+   a non-admin dashboard must only see the signed-in user's own rows (RLS), never admin data.
+4. In the wrap-up, state which dashboards were changed and show evidence (screenshot) for each.
+
 ## PAGE TITLE STYLE RULE
 
 Main page titles (h1 headings — page titles, navigation/landing titles, major section titles) are **UPPERCASE**. Does NOT apply to error messages, loading states, success toasts, subheadings (h2+), body text, button labels, or form labels.
@@ -441,7 +473,7 @@ Main page titles (h1 headings — page titles, navigation/landing titles, major 
 - **API/DB security**: audit Supabase RLS policies, check for injection vectors when asked about API or database security.
 - **Infra security**: check Vercel config, env vars, SSL/TLS, Cloudflare Turnstile when asked about infrastructure or deployment security.
 - **Frontend security**: scan for XSS, exposed secrets, CSP headers when asked about frontend security.
-- **Severity response** — critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. There is no automated schedule — these run when asked or when something looks wrong, not on a timer.
+- **Severity response** — critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. A report-only sweep runs about weekly as the desktop-app scheduled task `weekly-security-check` (it fires every 2h while the app is open and skips unless the newest report is 7+ days old) and writes `docs/security/reports/security-check-YYYY-MM-DD.md`. It never fixes, commits or deploys — remediation happens in a normal session.
 
 ## ENVIRONMENT VARIABLES
 
