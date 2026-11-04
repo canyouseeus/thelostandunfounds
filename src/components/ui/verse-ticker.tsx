@@ -66,6 +66,33 @@ const WORDS_PER_MINUTE = 85;
 
 export function VerseTicker({ className, wpm = WORDS_PER_MINUTE }: { className?: string; wpm?: number }) {
   const [verse, setVerse] = useState(() => verseOfTheDay());
+  const [copied, setCopied] = useState(false);
+
+  // Click copies the verse with its reference, KJV-attributed, ready to paste.
+  const copy = async () => {
+    const text = `"${verse.text}" — ${verse.ref} (KJV)`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard API refused (insecure context, permissions) — fall back to
+      // a hidden textarea and execCommand, which still works in those cases.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    setCopied(true);
+  };
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(t);
+  }, [copied]);
 
   const wordCount = verse.text.trim().split(/\s+/).length + 2; // +2 for the reference
   const durationSec = Math.max(6, (wordCount / wpm) * 60);
@@ -77,15 +104,18 @@ export function VerseTicker({ className, wpm = WORDS_PER_MINUTE }: { className?:
   }, []);
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={copy}
+      aria-label={`Copy verse: ${verse.text} — ${verse.ref}`}
       className={cn(
-        'overflow-hidden',
+        'relative block overflow-hidden cursor-copy bg-transparent p-0 text-left',
         // Soften both ends so text dissolves instead of clipping on a hard edge.
         '[mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)]',
         '[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)]',
         className,
       )}
-      title={`${verse.text} — ${verse.ref}`}
+      title="Click to copy"
     >
       {/* Two copies scrolling as one track: the second follows immediately
           behind the first, so text is on screen at every point in the loop
@@ -111,6 +141,16 @@ export function VerseTicker({ className, wpm = WORDS_PER_MINUTE }: { className?:
           </span>
         ))}
       </div>
-    </div>
+      {/* Copy confirmation sits over the paused track for a beat, then clears. */}
+      <span
+        className={cn(
+          'pointer-events-none absolute inset-0 flex items-center justify-center bg-black font-mono text-[13px] tracking-widest text-white transition-opacity duration-200',
+          copied ? 'opacity-100' : 'opacity-0',
+        )}
+        aria-live="polite"
+      >
+        {copied ? 'VERSE COPIED' : ''}
+      </span>
+    </button>
   );
 }

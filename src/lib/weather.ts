@@ -12,6 +12,8 @@ export interface WeatherPlace {
   country: string | null;
   latitude: number;
   longitude: number;
+  /** True when this place came from the device's location fix rather than a search. */
+  geolocated?: boolean;
 }
 
 export interface WeatherDay {
@@ -175,17 +177,38 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
   }));
 }
 
-/** Reverse lookup so a geolocated fix still gets a city name to display. */
+/**
+ * Reverse lookup so a geolocated fix gets a city name to display.
+ *
+ * Open-Meteo's geocoder only searches by name — handed coordinates it returns
+ * nothing — so the reverse lookup goes to BigDataCloud's client endpoint,
+ * which is keyless and CORS-enabled for exactly this browser-side use. If it
+ * fails, the coordinates themselves are shown rather than a vague label.
+ */
 export async function describeCoords(latitude: number, longitude: number, signal?: AbortSignal): Promise<WeatherPlace> {
-  const fallback: WeatherPlace = { name: 'Current Location', admin: null, country: null, latitude, longitude };
+  const fallback: WeatherPlace = {
+    name: `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`,
+    admin: null,
+    country: null,
+    latitude,
+    longitude,
+    geolocated: true,
+  };
   try {
     const data = await getJson(
-      `https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`,
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
       signal,
     );
-    const r = data.results?.[0];
-    if (!r) return fallback;
-    return { name: String(r.name), admin: r.admin1 ?? null, country: r.country_code ?? r.country ?? null, latitude, longitude };
+    const name = data?.city || data?.locality || data?.principalSubdivision;
+    if (!name) return fallback;
+    return {
+      name: String(name),
+      admin: data.principalSubdivision || null,
+      country: data.countryCode || null,
+      latitude,
+      longitude,
+      geolocated: true,
+    };
   } catch {
     return fallback;
   }
