@@ -45,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const [shop, gallery, tickets, invoicePayments, deployments, street] = await Promise.all([
+        const [shop, gallery, tickets, invoicePayments, deployments, street, streetDeposits] = await Promise.all([
             supabase
                 .from('shop_orders')
                 .select('id, customer_email, amount_total_cents, stripe_payment_intent, paid_at, status')
@@ -71,6 +71,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .from('field_sales')
                 .select('id, location, total, night, sale_count')
                 .eq('night', date),
+            // Outside deposits tagged street (invoice-tagged ones are already invoice payments).
+            supabase
+                .from('deposit_checkins')
+                .select('id, amount_cents, received_at, descriptor')
+                .eq('category', 'street')
+                .gte('received_at', dayStart).lte('received_at', dayEnd),
         ])
 
         const paidish = (s: string | null) => !!s && ['paid', 'completed', 'succeeded', 'confirmed'].includes(s.toLowerCase())
@@ -117,6 +123,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 customerEmail: null, amountCents: Math.round(Number(n.total ?? 0) * 100),
                 occurredAt: `${n.night}T12:00:00Z`,
                 reference: n.sale_count != null ? `${n.sale_count} sales` : null,
+                invoiceId: null, invoiceNumber: null, crmContactId: null,
+            })
+        }
+        for (const d of streetDeposits.data ?? []) {
+            sales.push({
+                source: 'street', customerName: 'Street deposit', customerEmail: null,
+                amountCents: d.amount_cents, occurredAt: d.received_at, reference: d.descriptor,
                 invoiceId: null, invoiceNumber: null, crmContactId: null,
             })
         }

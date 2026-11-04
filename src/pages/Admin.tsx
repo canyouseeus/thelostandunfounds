@@ -126,6 +126,7 @@ import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
+import { DepositCheckInModal } from '../components/admin/DepositCheckIn';
 import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { installGlobalListeners, logApiCall } from '../lib/adminErrorLog';
 
@@ -762,11 +763,16 @@ export default function Admin() {
         });
 
         // Street nights count on the night they happened.
-        const { data: streetRows } = await supabase.from('field_sales').select('night, total');
-        const streetHistory = (streetRows || []).map((r: any) => ({
-          date: `${r.night}T12:00:00Z`,
-          amount: Number(r.total || 0),
-        }));
+        // Street money: logged street nights, plus outside deposits the owner
+        // tagged street. Deposits tagged invoice are already in bookingHistory.
+        const [{ data: streetRows }, { data: streetDepositRows }] = await Promise.all([
+          supabase.from('field_sales').select('night, total'),
+          supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
+        ]);
+        const streetHistory = [
+          ...(streetRows || []).map((r: any) => ({ date: `${r.night}T12:00:00Z`, amount: Number(r.total || 0) })),
+          ...(streetDepositRows || []).map((r: any) => ({ date: r.received_at, amount: Number(r.amount_cents || 0) / 100 })),
+        ];
 
         historyData = {
           // Bookings are part of total revenue, so the revenue series must
@@ -1005,8 +1011,13 @@ export default function Admin() {
             collectedByInvoice.set(p.invoice_id, prior + Number(p.amount || 0));
           }
 
-          const { data: streetNights } = await supabase.from('field_sales').select('total');
-          streetRevenueTotal = (streetNights || []).reduce((sum, r: any) => sum + Number(r.total || 0), 0);
+          const [{ data: streetNights }, { data: streetDeposits }] = await Promise.all([
+            supabase.from('field_sales').select('total'),
+            supabase.from('deposit_checkins').select('amount_cents').eq('category', 'street'),
+          ]);
+          streetRevenueTotal =
+            (streetNights || []).reduce((sum, r: any) => sum + Number(r.total || 0), 0) +
+            (streetDeposits || []).reduce((sum, r: any) => sum + Number(r.amount_cents || 0) / 100, 0);
 
           bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
             // Invoices marked paid with no itemised payments still count in
@@ -2331,7 +2342,7 @@ export default function Admin() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        <WhatsNewModal />
+        <WhatsNewModal after={<DepositCheckInModal />} />
 
       </div>
     </div>
