@@ -40,11 +40,11 @@ const bodyContent = `
   </div>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    To accept, reply with <strong style="color: #ffffff;">"approved"</strong> and we will send the deposit invoice within the hour. The deposit is $1,000 — balance due on launch day. Site goes live within 3 weeks of deposit clearing.
+    To accept, reply to this email with <strong style="color: #ffffff;">"approved"</strong> and we will send the deposit invoice within the hour. The deposit is $1,000 — balance due on launch day. Site goes live within 3 weeks of deposit clearing.
   </p>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    Questions? Text or call — (512) 967-2787. We will be in touch.
+    Questions? Just reply to this email. We will be in touch.
   </p>
 
   <hr style="${EMAIL_STYLES.divider}">

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import sharp from 'sharp';
 import { getZohoAuthContext, sendZohoEmail, ensureBannerHtml } from '../../lib/api-handlers/_zoho-email-utils.js';
+import { ZipWriter } from '../../lib/api-handlers/_zip-writer.js';
 // syncGalleryPhotos is dynamically imported inside handleSync to avoid loading
 // googleapis on every cold start (stream/checkout/capture don't need it)
 
@@ -174,6 +175,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (route === 'stream') {
             return await handleStream(req, res);
+        }
+
+        if (route === 'zip') {
+            return await handleZip(req, res);
         }
 
         if (route === 'invite') {
@@ -668,6 +673,233 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             details: err.message,
             fileId
         });
+    }
+}
+
+// ── Bulk download ────────────────────────────────────────────────────────────
+//
+// One request, one .zip. The client used to open /api/gallery/stream once per
+// photo; iOS Safari treats every attachment response as its own "Do you want to
+// download…?" prompt and blocks programmatic ones after the first, so a client
+// pulling a 40-photo shoot on a phone was tapping Allow forty times.
+//
+// Same trust model as a single download (a valid email, logged per photo in
+// photo_download_events) — this widens nothing the stream endpoint does not
+// already allow, it just delivers the result as one file.
+const ZIP_MAX_FILES = 100;
+const ZIP_BATCH = 4;            // photos fetched in parallel; also the RAM ceiling
+const ZIP_DEADLINE_MS = 270_000; // stop adding photos before the 300s function cap
+const DRIVE_ID = /^[A-Za-z0-9_-]{10,100}$/;
+
+/**
+ * The photo's original bytes, for one zip entry.
+ *
+ * The Drive API first, with the token fetched once per zip rather than once per
+ * photo: that is the untouched original, which is what "Download Original"
+ * promises. The public CDN at =s4096 is only the fallback for a Drive
+ * credential problem, so a gallery still zips (at 4096px) rather than failing.
+ *
+ * Deliberately NOT the URL handleStream builds for downloads. It formats the
+ * size as `=s` + `w4096-h4096` = `=sw4096-h4096`, which Google answers with a
+ * 400 — verified — so the stream's CDN attempt has never succeeded and every
+ * single-photo download has been falling through to the Drive fallback.
+ */
+async function fetchOriginalBuffer(fileId: string, driveToken: string | null): Promise<Buffer | null> {
+    if (driveToken) {
+        try {
+            const r = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,
+                { headers: { Authorization: `Bearer ${driveToken}` }, signal: AbortSignal.timeout(60000) }
+            );
+            if (r.ok && (r.headers.get('content-type') || '').startsWith('image/')) {
+                return Buffer.from(await r.arrayBuffer());
+            }
+            console.warn('[zip] drive fetch not usable:', fileId, r.status);
+        } catch (err: any) {
+            console.warn('[zip] drive fetch failed:', fileId, err?.message);
+        }
+    }
+    try {
+        const r = await fetch(`https://lh3.googleusercontent.com/d/${fileId}=s4096`, {
+            signal: AbortSignal.timeout(20000),
+        });
+        if (r.ok && (r.headers.get('content-type') || '').includes('image')) {
+            return Buffer.from(await r.arrayBuffer());
+        }
+    } catch (err: any) {
+        console.warn('[zip] cdn fetch failed:', fileId, err?.message);
+    }
+    return null;
+}
+
+async function handleZip(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Sent as a plain HTML form post (so the browser saves the response as a
+    // download itself, with no blob held in page memory), which arrives
+    // urlencoded with `files` as a JSON string. A JSON body works too.
+    let body: any = req.body;
+    if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch { body = {}; }
+    }
+    body = body || {};
+    let rawFiles = body.files;
+    if (typeof rawFiles === 'string') {
+        try { rawFiles = JSON.parse(rawFiles); } catch { rawFiles = null; }
+    }
+
+    const emailStr = typeof body.email === 'string' ? body.email.trim() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+        return res.status(400).json({ error: 'A valid email is required to download.' });
+    }
+    if (!Array.isArray(rawFiles) || rawFiles.length === 0) {
+        return res.status(400).json({ error: 'files must be a non-empty array' });
+    }
+
+    const seen = new Set<string>();
+    const requested: { id: string; name: string }[] = [];
+    for (const f of rawFiles) {
+        const id = typeof f === 'string' ? f : f?.id;
+        if (typeof id !== 'string' || !DRIVE_ID.test(id) || seen.has(id)) continue;
+        seen.add(id);
+        requested.push({ id, name: typeof f?.name === 'string' ? f.name.slice(0, 200) : '' });
+    }
+    if (requested.length === 0) {
+        return res.status(400).json({ error: 'No valid files in request' });
+    }
+    if (requested.length > ZIP_MAX_FILES) {
+        return res.status(400).json({ error: `At most ${ZIP_MAX_FILES} photos per zip.` });
+    }
+
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const ids = requested.map(r => r.id);
+
+    // Titles + mime types from the DB, exactly as the single-photo path does.
+    // A Drive-native photo with no row falls back to the name the client sent.
+    const meta = new Map<string, { id: string; title: string | null; mime: string | null }>();
+    try {
+        const { data } = await supabase
+            .from('photos')
+            .select('id, title, mime_type, google_drive_file_id')
+            .in('google_drive_file_id', ids);
+        for (const p of data || []) {
+            meta.set(p.google_drive_file_id as string, { id: p.id as string, title: p.title as string | null, mime: p.mime_type as string | null });
+        }
+    } catch (err: any) {
+        console.warn('[zip] metadata lookup failed (non-fatal):', err?.message);
+    }
+
+    // Log one download event per photo, fire-and-forget, as the stream does.
+    try {
+        const ipRaw = (req.headers['x-forwarded-for'] as string | undefined) || (req.socket as any)?.remoteAddress || '';
+        const ip = ipRaw.split(',')[0].trim() || null;
+        const ua = (req.headers['user-agent'] as string | undefined) || null;
+        void supabase.from('photo_download_events').insert(
+            ids.map(fid => ({
+                photo_id: meta.get(fid)?.id ?? null,
+                google_drive_file_id: fid,
+                email: emailStr,
+                ip_address: ip,
+                user_agent: ua,
+                source: 'free',
+            }))
+        ).then(({ error }) => {
+            if (error) console.warn('[download-event] zip insert failed:', error.message);
+        });
+    } catch (err: any) {
+        console.warn('[download-event] zip skipped:', err?.message);
+    }
+
+    let aborted = false;
+    res.on('close', () => { if (!res.writableEnded) aborted = true; });
+
+    let started = false;
+    const sink = async (chunk: Buffer) => {
+        if (aborted) throw new Error('client disconnected');
+        if (!res.write(chunk)) {
+            await new Promise<void>(resolve => res.once('drain', () => resolve()));
+        }
+    };
+    const startResponse = () => {
+        if (started) return;
+        started = true;
+        const zipName = `the_lost_and_unfounds_${new Date().toISOString().slice(0, 10)}_${requested.length}_photos.zip`;
+        res.status(200);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Accel-Buffering', 'no');
+    };
+
+    const driveToken = await getDriveAccessToken();
+
+    const zip = new ZipWriter(sink);
+    const usedNames = new Set<string>();
+    const missing: string[] = [];
+    const startedAt = Date.now();
+
+    try {
+        for (let i = 0; i < requested.length; i += ZIP_BATCH) {
+            if (aborted) return;
+            const batch = requested.slice(i, i + ZIP_BATCH);
+
+            if (Date.now() - startedAt > ZIP_DEADLINE_MS) {
+                batch.forEach(b => missing.push(`${b.name || b.id} (ran out of time — download again)`));
+                continue;
+            }
+
+            const fetched = await Promise.all(batch.map(async b => {
+                const m = meta.get(b.id);
+                // Video is deliberately not zipped: a clip does not fit the
+                // one-photo-in-memory model. It stays a single download.
+                if (m?.mime?.startsWith('video/')) return { b, m, buf: null as Buffer | null, skipped: 'video — download it individually' };
+                return { b, m, buf: await fetchOriginalBuffer(b.id, driveToken), skipped: '' };
+            }));
+
+            for (const { b, m, buf, skipped } of fetched) {
+                const label = m?.title || b.name || b.id;
+                if (!buf) {
+                    missing.push(`${label}${skipped ? ` (${skipped})` : ' (could not be retrieved)'}`);
+                    continue;
+                }
+                // Same branded name a single download gets; a repeated title
+                // gets a counter so the second photo does not overwrite the first.
+                let name = buildDownloadFilename(m?.title || b.name || 'photo', m?.mime);
+                if (usedNames.has(name)) {
+                    const dot = name.lastIndexOf('.');
+                    let n = 2;
+                    while (usedNames.has(`${name.slice(0, dot)}_${n}${name.slice(dot)}`)) n++;
+                    name = `${name.slice(0, dot)}_${n}${name.slice(dot)}`;
+                }
+                usedNames.add(name);
+                startResponse();
+                await zip.addFile(name, buf);
+            }
+        }
+
+        if (zip.count === 0) {
+            return res.status(502).json({ error: 'None of the selected photos could be retrieved.', missing });
+        }
+
+        if (missing.length > 0) {
+            // A silently short archive reads as a complete one. Say what is not in it.
+            await zip.addFile(
+                '_NOT_INCLUDED.txt',
+                Buffer.from(`These items are not in this zip:\r\n\r\n${missing.join('\r\n')}\r\n`, 'utf8')
+            );
+        }
+        await zip.finish();
+        res.end();
+    } catch (err: any) {
+        console.error('[zip] failed:', err?.message);
+        if (!started) {
+            return res.status(500).json({ error: 'Zip failed', details: err?.message });
+        }
+        // Headers are gone; the only honest signal left is a broken connection.
+        res.destroy(err);
     }
 }
 

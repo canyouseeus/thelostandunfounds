@@ -149,6 +149,178 @@ const EDITABLE_FIELDS = [
   { key: 'phone' as const, label: 'Phone', type: 'tel' },
 ];
 
+interface ClientHoursRow {
+  id: string;
+  work_date: string;
+  start_time: string | null;
+  stop_time: string | null;
+  hours: number;
+  earned: number;
+  paid: number;
+  notes: string | null;
+}
+
+const shortTime = (t: string | null) => {
+  if (!t) return null;
+  const [h, m] = t.split(':');
+  const hour = parseInt(h, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:${m} ${period}`;
+};
+
+/** Recurring hours/pay tracker for a client — a hand-kept source of truth
+ * instead of trusting whatever spreadsheet the client last emailed. */
+function ClientHoursLog({ clientId }: { clientId: string }) {
+  const [rows, setRows] = useState<ClientHoursRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [draft, setDraft] = useState({
+    work_date: new Date().toISOString().slice(0, 10),
+    start_time: '',
+    stop_time: '',
+    hours: '',
+    earned: '',
+    paid: '',
+    notes: '',
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('client_hours')
+        .select('id, work_date, start_time, stop_time, hours, earned, paid, notes')
+        .eq('client_id', clientId)
+        .order('work_date', { ascending: false });
+      if (!cancelled) {
+        if (!error) setRows(data || []);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  const totals = rows.reduce(
+    (acc, r) => ({
+      hours: acc.hours + Number(r.hours || 0),
+      earned: acc.earned + Number(r.earned || 0),
+      paid: acc.paid + Number(r.paid || 0),
+    }),
+    { hours: 0, earned: 0, paid: 0 },
+  );
+  const balance = totals.earned - totals.paid;
+
+  const addEntry = async () => {
+    if (!draft.work_date || !draft.hours) {
+      setErr('Date and hours are required');
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+
+    const row = {
+      client_id: clientId,
+      work_date: draft.work_date,
+      start_time: draft.start_time || null,
+      stop_time: draft.stop_time || null,
+      hours: Number(draft.hours),
+      earned: Number(draft.earned || 0),
+      paid: Number(draft.paid || 0),
+      notes: draft.notes.trim() || null,
+    };
+
+    const { data, error } = await supabase.from('client_hours').insert(row).select().single();
+    setSaving(false);
+
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    setRows(prev => [data, ...prev]);
+    setDraft({ work_date: new Date().toISOString().slice(0, 10), start_time: '', stop_time: '', hours: '', earned: '', paid: '', notes: '' });
+    setAdding(false);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="block text-[9px] text-white/40 uppercase tracking-widest">Hours Log</span>
+        <button
+          onClick={() => setAdding(a => !a)}
+          className="text-[9px] font-bold uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+        >
+          {adding ? 'Cancel' : '+ Add Entry'}
+        </button>
+      </div>
+
+      {!loading && rows.length > 0 && (
+        <div className="flex items-center gap-4 mb-2 text-[10px] font-mono text-white/40">
+          <span>{totals.hours}h total</span>
+          <span>{money(totals.earned)} earned</span>
+          <span>{money(totals.paid)} paid</span>
+          {balance > 0.005 && <span className="text-amber-400">{money(balance)} balance</span>}
+        </div>
+      )}
+
+      {adding && (
+        <div className="bg-white/5 p-3 mb-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" value={draft.work_date} onChange={(e) => setDraft(d => ({ ...d, work_date: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white outline-none focus:bg-white/10 transition-colors" />
+            <input type="number" step="0.25" placeholder="Hours" value={draft.hours} onChange={(e) => setDraft(d => ({ ...d, hours: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors" />
+            <input type="time" value={draft.start_time} onChange={(e) => setDraft(d => ({ ...d, start_time: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white outline-none focus:bg-white/10 transition-colors" />
+            <input type="time" value={draft.stop_time} onChange={(e) => setDraft(d => ({ ...d, stop_time: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white outline-none focus:bg-white/10 transition-colors" />
+            <input type="number" step="0.01" placeholder="Earned $" value={draft.earned} onChange={(e) => setDraft(d => ({ ...d, earned: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors" />
+            <input type="number" step="0.01" placeholder="Paid $" value={draft.paid} onChange={(e) => setDraft(d => ({ ...d, paid: e.target.value }))}
+              className="bg-white/5 px-2 py-2 text-xs text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors" />
+          </div>
+          <input type="text" placeholder="Notes (optional)" value={draft.notes} onChange={(e) => setDraft(d => ({ ...d, notes: e.target.value }))}
+            className="w-full bg-white/5 px-2 py-2 text-xs text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors" />
+          {err && <p className="text-[10px] font-bold uppercase tracking-widest text-red-400">{err}</p>}
+          <button
+            onClick={addEntry}
+            disabled={saving}
+            className="px-4 py-2 text-[9px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save Entry'}
+          </button>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-[11px] text-white/30 normal-case">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="text-[11px] text-white/30 normal-case">No hours logged yet.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {rows.map((r) => (
+            <div key={r.id} className="bg-white/5 px-3 py-2 flex items-center justify-between gap-3 text-[11px]">
+              <div className="min-w-0">
+                <span className="font-bold text-white">{shortDate(r.work_date)}</span>
+                {(r.start_time || r.stop_time) && (
+                  <span className="text-white/40 ml-2">{shortTime(r.start_time)}–{shortTime(r.stop_time)}</span>
+                )}
+                {r.notes && <p className="text-white/40 normal-case mt-0.5 truncate">{r.notes}</p>}
+              </div>
+              <div className="text-right shrink-0 font-mono text-white/70">
+                <div>{r.hours}h</div>
+                <div className="text-white/40">{money(r.earned)} / {money(r.paid)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClientEditor({
   client,
   onSaved,
@@ -240,6 +412,10 @@ function ClientEditor({
             placeholder="Anything worth remembering about this client…"
           />
         </label>
+
+        <div className="pt-2">
+          <ClientHoursLog clientId={client.id} />
+        </div>
       </div>
 
       {err && (
