@@ -56,7 +56,6 @@ import {
   XMarkIcon,
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
-  BriefcaseIcon,
   RectangleStackIcon,
   SwatchIcon,
   CloudArrowUpIcon
@@ -1116,11 +1115,11 @@ export default function Affiliate() {
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
                 <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
-                    { id: 'photographer', icon: BriefcaseIcon, title: 'Photographer', show: hasPhotographer },
+                    { id: 'photographer', icon: CameraIcon, title: 'Photographer', show: hasPhotographer },
                     { id: 'portfolio', icon: RectangleStackIcon, title: 'Portfolio', show: hasPortfolio },
                     { id: 'brandkit', icon: SwatchIcon, title: 'Brand Kit', show: hasPhotographer },
                     { id: 'contentrequests', icon: CloudArrowUpIcon, title: 'Content Requests', show: hasPhotographer },
-                    { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
+                    { id: 'gallery', icon: PhotoIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
                     { id: 'settings', icon: Cog6ToothIcon, title: 'Account', show: true }
@@ -1158,11 +1157,11 @@ export default function Affiliate() {
                 <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                   {activeApp && (() => {
                     const meta: Record<string, { title: string; icon: JSX.Element }> = {
-                      photographer: { title: 'Photographer', icon: <BriefcaseIcon className="w-5 h-5 text-white/40" /> },
+                      photographer: { title: 'Photographer', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
                       portfolio: { title: 'Portfolio', icon: <RectangleStackIcon className="w-5 h-5 text-white/40" /> },
                       brandkit: { title: 'Brand Kit', icon: <SwatchIcon className="w-5 h-5 text-white/40" /> },
                       contentrequests: { title: 'Content Requests', icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
-                      gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
+                      gallery: { title: 'The Gallery', icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                       writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                       affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
                       settings: { title: 'Account Settings', icon: <Cog6ToothIcon className="w-5 h-5 text-white/40" /> },

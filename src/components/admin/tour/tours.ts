@@ -812,11 +812,11 @@ const photographerLiveTour: Tour = {
     { target: 'pg-terms', title: 'Before You Upload', body: 'Everything you send goes on a public site. Read what can never go on it.' },
     { target: 'pg-terms-agree', title: 'Agree To The Terms', body: 'Tick the box once you have read the Photographer Terms.' },
     { target: 'pg-terms-continue', action: 'click', title: 'Agree And Continue', body: 'Tap AGREE AND CONTINUE to unlock live galleries.' },
-    inPhotog({ target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY.' }),
-    { target: 'pg-live-go', title: 'Go Live', body: 'Guests’ gallery page keeps checking for new photos while it is live. END LIVE when the night is over.', missingNote: 'Start a gallery first. Its buttons appear here.' },
-    { target: 'pg-live-share', title: 'Share', body: 'Copies the gallery link for guests.' },
-    { target: 'pg-live-send', action: 'click', title: 'Send Photos', body: 'Tap SEND PHOTOS.' },
-    { target: 'pg-live-uploader', title: 'Pick Your Shots', body: 'Let the camera app drop shots into your phone’s photos, then choose the keepers. They appear in the gallery straight away.' },
+    inPhotog({ target: 'pg-live-new', title: 'Start One', body: 'Name the event, then tap NEW LIVE GALLERY. It is picked for you.' }),
+    { target: 'pg-live-select', title: 'Pick The Gallery', body: 'Or choose one you already made. One already live has — LIVE after its name.', missingNote: 'Start a gallery first. It appears in this list.' },
+    { target: 'pg-live-go', title: 'Go Live', body: 'Guests’ gallery page keeps checking for new photos while it is live. END LIVE when the night is over.', missingNote: 'Pick a gallery first. Its status and GO LIVE appear here.' },
+    { target: 'pg-live-uploader', title: 'Send From Camera Roll', body: 'Let the camera app drop shots into your phone’s photos, then choose the keepers. They appear in the gallery straight away.', missingNote: 'Pick a gallery first.' },
+    { target: 'pg-live-share', title: 'Share', body: 'Copies the gallery link for guests.', missingNote: 'Pick a gallery first.' },
   ],
 };
 
