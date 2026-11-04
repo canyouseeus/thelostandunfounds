@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // calendar can render "Eric is out" without implying the studio is.
             supabase
                 .from('photographer_availability')
-                .select('id, date, note, photographers(id, name)')
+                .select('id, date, start_time, end_time, note, source, photographers(id, name)')
                 .eq('is_blocked', true)
                 .gte('date', start)
                 .lte('date', end)
@@ -85,6 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const crewBlocked = (crewRes.data || []).map((row: any) => ({
             id: row.id,
             date: row.date,
+            // Null times = out all day; otherwise only out for that window.
+            startTime: row.start_time ? String(row.start_time).slice(0, 5) : null,
+            endTime: row.end_time ? String(row.end_time).slice(0, 5) : null,
             note: row.note,
             photographerId: row.photographers?.id || null,
             photographerName: row.photographers?.name || 'Unknown photographer',

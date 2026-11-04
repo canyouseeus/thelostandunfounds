@@ -54,6 +54,9 @@ interface CalendarNote {
 interface CrewBlock {
     id: string;
     date: string;
+    /** Null = out all day; otherwise out only for this window (HH:MM). */
+    startTime?: string | null;
+    endTime?: string | null;
     note: string | null;
     photographerId: string | null;
     photographerName: string;
@@ -484,6 +487,13 @@ function ActivityLegend() {
     );
 }
 
+/** "13:00" → "1:00 PM". */
+function formatClock(hhmm: string): string {
+    const [h, m] = hhmm.split(':').map(Number);
+    if (h === 24) return '12:00 AM';
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
 /**
  * Who can shoot on a given day.
  *
@@ -494,7 +504,10 @@ function ActivityLegend() {
  * indistinguishable from one that failed to load.
  */
 function CrewAvailability({ crew, blocks }: { crew: CrewMember[]; blocks: CrewBlock[] }) {
-    const outIds = new Set(blocks.map(b => b.photographerId).filter(Boolean) as string[]);
+    // Only an all-day block takes someone off the "available" list; a 1–3pm
+    // block still leaves them free for a morning shoot, so they stay listed
+    // and the window shows underneath.
+    const outIds = new Set(blocks.filter(b => !b.startTime).map(b => b.photographerId).filter(Boolean) as string[]);
     const available = crew.filter(person => !outIds.has(person.id));
 
     return (
@@ -519,7 +532,9 @@ function CrewAvailability({ crew, blocks }: { crew: CrewMember[]; blocks: CrewBl
                             {blocks.map(block => (
                                 <div key={block.id} className="bg-amber-500/10 px-3 py-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
-                                        {block.photographerName} — unavailable
+                                        {block.photographerName} — {block.startTime && block.endTime
+                                            ? `busy ${formatClock(block.startTime)}–${formatClock(block.endTime)}`
+                                            : 'unavailable'}
                                     </p>
                                     {block.note && <p className="text-xs text-white/50 mt-1 text-left">{block.note}</p>}
                                 </div>

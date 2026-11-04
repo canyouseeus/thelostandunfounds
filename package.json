@@ -63,6 +63,7 @@
     "framer-motion": "^11.11.17",
     "google-auth-library": "^10.5.0",
     "googleapis": "^170.0.0",
+    "ical.js": "2.2.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.575.0",
