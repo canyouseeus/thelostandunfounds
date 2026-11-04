@@ -59,6 +59,7 @@ BUTTONS = {
     # that varies would mean generating a PNG per invoice at send time.
     "btn-pay-deposit": "PAY DEPOSIT",
     "btn-pay-balance": "PAY BALANCE",
+    "btn-pay-in-full": "PAY IN FULL",
     "btn-open-gallery": "OPEN YOUR GALLERY",
     "btn-view-invoice": "VIEW INVOICE",
 }

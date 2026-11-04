@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
+  createFullPaymentLink,
   createPaymentLink,
   getStripe,
   nextInvoiceNumber,
@@ -180,4 +181,47 @@ export async function ensureInvoicePaymentLink(
   }
 
   return { invoiceNumber, paymentLinkId: link.id, url: link.url, amount: amountDue, active: true, created: true }
+}
+
+/**
+ * Add a pay-in-full link to an existing invoice that has a deposit link.
+ *
+ * Invoices created before quotes offered both options only carry the deposit
+ * link. This adds the second one (for everything still owed) so the PDF and
+ * email can show "pay in full", and the webhook settles a payment on it.
+ * Idempotent: an active full link is returned as-is.
+ */
+export async function ensureInvoiceFullPaymentLink(
+  supabase: SupabaseClient,
+  invoiceNumber: string,
+  origin: string
+) {
+  const { data: inv } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, status, total, booking_id, stripe_full_payment_link_id, bookings(event_type)')
+    .eq('invoice_number', invoiceNumber)
+    .maybeSingle()
+  if (!inv) throw new InvoiceInputError(`Invoice ${invoiceNumber} not found`, 404)
+  if (['paid', 'void', 'cancelled'].includes(inv.status)) {
+    throw new InvoiceInputError(`Invoice ${invoiceNumber} is ${inv.status}`, 409)
+  }
+
+  const stripe = getStripe()
+  if (inv.stripe_full_payment_link_id) {
+    const existing = await stripe.paymentLinks.retrieve(inv.stripe_full_payment_link_id)
+    if (existing.active) {
+      return { invoiceNumber, fullPaymentLinkId: existing.id, url: existing.url, active: true, created: false }
+    }
+  }
+
+  const link = await createFullPaymentLink(supabase, stripe, {
+    invoiceId: inv.id,
+    invoiceNumber,
+    total: Number(inv.total || 0),
+    label: (inv as any).bookings?.event_type || 'Photography',
+    bookingId: inv.booking_id,
+    redirectUrl: `${origin}/booking?payment=success`,
+  })
+  if (!link) throw new InvoiceInputError(`Invoice ${invoiceNumber} has nothing left to collect`)
+  return { invoiceNumber, fullPaymentLinkId: link.id, url: link.url, amount: link.amount, active: true, created: true }
 }

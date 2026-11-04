@@ -26,6 +26,7 @@ try {
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
+  createFullPaymentLink,
   BOOKING_PAYMENT_SOURCE,
   BookingLineItem,
   buildBookingPaymentEmailBody,
@@ -169,6 +170,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url })
       .eq('id', invoice.id)
 
+    // Non-fatal: the deposit link alone is a complete quote.
+    let fullLink: { url: string } | null = null
+    try {
+      fullLink = await createFullPaymentLink(supabase, stripe, {
+        invoiceId: invoice.id,
+        invoiceNumber,
+        total,
+        label: booking.event_type || 'Photography',
+        bookingId,
+        redirectUrl: `${origin}/booking?payment=success`,
+      })
+    } catch (fullErr: any) {
+      console.warn('[create-quote] full-payment link failed:', fullErr?.message)
+    }
+
     await supabase
       .from('bookings')
       .update({
@@ -193,6 +209,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         amountDueLabel: `Deposit Due (${pct}%)`,
         paymentUrl: link.url,
         pdfUrl,
+        fullPaymentUrl: fullLink?.url || null,
       })
       await sendBookingPaymentEmail({ to: recipient, kind: 'quote', invoiceNumber, bodyHtml })
       emailed = true
@@ -210,6 +227,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       total,
       depositAmount,
       paymentLinkUrl: link.url,
+      fullPaymentLinkUrl: fullLink?.url || null,
       pdfUrl,
       emailed,
       emailError,

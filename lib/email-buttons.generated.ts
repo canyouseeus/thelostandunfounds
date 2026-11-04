@@ -11,6 +11,7 @@ export const EMAIL_BUTTON_FILES: Record<string, string> = {
   'btn-workbook': 'btn-workbook.605dc23d.png',
   'btn-pay-deposit': 'btn-pay-deposit.cb17233e.png',
   'btn-pay-balance': 'btn-pay-balance.f1aa2ace.png',
+  'btn-pay-in-full': 'btn-pay-in-full.03b3aa12.png',
   'btn-open-gallery': 'btn-open-gallery.91b13346.png',
   'btn-view-invoice': 'btn-view-invoice.d9be4898.png',
   'btn-newsletter': 'btn-newsletter.971f8f48.png',
