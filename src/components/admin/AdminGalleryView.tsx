@@ -54,6 +54,7 @@ interface PhotoLibrary {
     buyer_price?: number | null;
     buyer_bundles?: { photo_count: number; price: number }[] | null;
     buyer_album_price?: number | null;
+    buyer_free_photos?: Record<string, number> | null; // Free-photo allowance per à la carte buyer
     album_price?: number | null; // Whole album, for every buyer
     user_id?: string;
     live_mode?: boolean; // A live event is running — see /admin/live
@@ -234,6 +235,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     const [buyerEmails, setBuyerEmails] = useState<string[]>([]);
     const [originalBuyerEmails, setOriginalBuyerEmails] = useState<string[]>([]);
     const [newBuyerInput, setNewBuyerInput] = useState('');
+    // Free-photo allowance (owner, 2026-11-04): a buyer's first N photos are
+    // $0, then they pay like everyone on the list (_free-allowance.ts).
+    const [buyerFree, setBuyerFree] = useState<Record<string, number>>({});
     const [buyerPrice, setBuyerPrice] = useState<number>(5);
     // À la carte deals: "N photos for $X", and the whole album for one price.
     const [buyerBundles, setBuyerBundles] = useState<{ photo_count: number; price: number }[]>([]);
@@ -524,6 +528,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 buyer_price: buyerPrice > 0 ? buyerPrice : 5,
                 buyer_bundles: buyerBundles.filter(b => b.photo_count > 1 && b.price > 0),
                 buyer_album_price: typeof buyerAlbumPrice === 'number' && buyerAlbumPrice > 0 ? buyerAlbumPrice : null,
+                // Only for people still on the À La Carte list.
+                buyer_free_photos: Object.fromEntries(buyerEmails
+                    .map(e => e.trim().toLowerCase())
+                    .filter(e => (buyerFree[e] || 0) > 0)
+                    .map(e => [e, Math.floor(buyerFree[e])])),
                 album_price: typeof albumPrice === 'number' && albumPrice > 0 ? albumPrice : null,
                 // Assign owner to current user for all new galleries
                 ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
@@ -966,6 +975,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         const existingBuyers = (lib.buyer_emails || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
         setBuyerEmails(existingBuyers);
         setOriginalBuyerEmails(existingBuyers);
+        setBuyerFree(Object.fromEntries(Object.entries(lib.buyer_free_photos || {})
+            .map(([e, n]) => [e.trim().toLowerCase(), Math.floor(Number(n)) || 0])));
         setNewBuyerInput('');
         setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
         setBuyerBundles(Array.isArray(lib.buyer_bundles) ? lib.buyer_bundles.map(b => ({ photo_count: Number(b.photo_count), price: Number(b.price) })) : []);
@@ -997,6 +1008,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setNewEmailInput('');
         setBuyerEmails([]);
         setOriginalBuyerEmails([]);
+        setBuyerFree({});
         setNewBuyerInput('');
         setBuyerPrice(5);
         setBuyerBundles([]);
@@ -1374,6 +1386,23 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                                 >
                                                     <span>{email}</span>
                                                     {!originalBuyerEmails.includes(email) && <span className="text-[9px] uppercase ml-1 opacity-60">new</span>}
+                                                    <label className="flex items-center gap-1 ml-2 text-[9px] uppercase tracking-widest text-white/50" data-tour={idx === 0 ? 'gallery-a-la-carte-free' : undefined}>
+                                                        Free
+                                                        <input
+                                                            type="number"
+                                                            min={0}
+                                                            step={1}
+                                                            inputMode="numeric"
+                                                            value={buyerFree[email] || ''}
+                                                            placeholder="0"
+                                                            onChange={(e) => {
+                                                                const n = Math.max(0, Math.floor(Number(e.target.value) || 0));
+                                                                setBuyerFree(prev => ({ ...prev, [email]: n }));
+                                                            }}
+                                                            className="w-10 bg-white/10 px-1 py-0.5 text-white text-right font-mono text-[11px] focus:outline-none rounded-none"
+                                                            aria-label={`Free photos for ${email}`}
+                                                        />
+                                                    </label>
                                                     <button
                                                         type="button"
                                                         onClick={() => setBuyerEmails(buyerEmails.filter((_, i) => i !== idx))}
@@ -1420,7 +1449,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </button>
                                     </div>
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        New buyers get their own invite link when you save. Their prices are under Pricing above.
+                                        New buyers get their own invite link when you save. Their prices are under Pricing above. FREE gives one buyer that many photos at no cost, then they pay like everyone else.
                                     </p>
                                 </div>
 

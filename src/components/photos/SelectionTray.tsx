@@ -20,6 +20,10 @@ interface SelectionTrayProps {
     // Zero-priced gallery: the button downloads the selection instead of
     // opening checkout, and the amount reads FREE rather than $0.00.
     isFree?: boolean;
+    // À la carte free-photo allowance: a line under the amount ("3 free · 7
+    // free left"), and when the whole selection is free the button claims it.
+    note?: string | null;
+    claimFree?: boolean;
 }
 
 const SelectionTray: React.FC<SelectionTrayProps> = ({
@@ -29,6 +33,8 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
     loading,
     totalAmount,
     isFree = false,
+    note = null,
+    claimFree = false,
 }) => {
     const count = selectedPhotos.length;
 
@@ -88,10 +94,11 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                 <div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2">
                     <div className="flex items-baseline gap-2.5">
                         <span className="text-2xl md:text-3xl font-black text-green-400 tracking-tighter leading-none">
-                            {isFree ? 'FREE' : `$${totalAmount.toFixed(2)}`}
+                            {isFree || claimFree ? 'FREE' : `$${totalAmount.toFixed(2)}`}
                         </span>
                         <span className="text-[9px] font-black text-white/40 tracking-[0.2em] uppercase leading-none">
                             {count} Photo{count !== 1 ? 's' : ''}
+                            {note ? <span className="block mt-1 text-green-400/80">{note}</span> : null}
                         </span>
                     </div>
 
@@ -102,6 +109,11 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                     >
                         {loading ? (
                             <LoadingSpinner size="sm" className="text-black" />
+                        ) : claimFree ? (
+                            <>
+                                CLAIM FREE
+                                <ArrowRightIcon className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-x-0.5" />
+                            </>
                         ) : isFree ? (
                             <>
                                 DOWNLOAD

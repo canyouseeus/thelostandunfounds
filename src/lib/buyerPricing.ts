@@ -49,6 +49,20 @@ export function buyerTotal(count: number, pricing: BuyerPricing): number {
 }
 
 /**
+ * What an à la carte buyer with a free-photo allowance pays (owner,
+ * 2026-11-04; lib/api-handlers/_free-allowance.ts): the first `freeLeft` of
+ * the `count` photos are $0, the rest are priced as usual. While any photo in
+ * the order is free, the whole-album price doesn't kick in by count alone;
+ * BUY WHOLE ALBUM never costs more than the album price.
+ */
+export function buyerTotalWithFree(count: number, freeLeft: number, pricing: BuyerPricing, wholeAlbum = false): number {
+    if (count <= 0) return 0;
+    const free = Math.min(Math.max(0, Math.floor(freeLeft)), count);
+    const rest = buyerTotal(count - free, free > 0 ? { ...pricing, albumPrice: null } : pricing);
+    return wholeAlbum && pricing.albumPrice && pricing.albumPrice > 0 ? round(Math.min(rest, pricing.albumPrice)) : rest;
+}
+
+/**
  * What anyone else pays for `count` photos from a gallery: its pricing options
  * ("N photos for $X", largest first; a 1-photo option is the per-photo price),
  * the rest at `single` each — and every photo in the album costs albumPrice

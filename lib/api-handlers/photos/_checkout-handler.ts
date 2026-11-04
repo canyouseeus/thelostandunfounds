@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { roleFor, emailList } from '../_gallery-pass.js'
 import { verifiedUser } from '../_turnstile.js'
-import { buyerTotal, cleanBundles, galleryTotal } from '../../../src/lib/buyerPricing.js'
+import { buyerTotal, buyerTotalWithFree, cleanBundles, galleryTotal } from '../../../src/lib/buyerPricing.js'
+import { allowanceFor, freeLeft, grantFree, ownedPhotoIds } from '../_free-allowance.js'
 
 type PaymentMethod = 'stripe' | 'strike'
 
@@ -86,7 +87,7 @@ export default async function handler(
 
     const { data: library, error: libraryError } = await supabase
       .from('photo_libraries')
-      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, owner_id, user_id')
+      .select('id, name, price, is_private, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, buyer_free_photos, owner_id, user_id')
       .eq('id', libraryId)
       .single()
 
@@ -128,13 +129,52 @@ export default async function handler(
           photoIds = albumIds
           count = photoIds.length
         }
-        buyerAmount = buyerTotal(count, {
+        const buyerAlbumPrice = Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : albumPrice
+        const pricing = {
           single: buyerPrice,
           bundles: cleanBundles(library.buyer_bundles),
           // Their own whole-album price, else the gallery's.
-          albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price) : albumPrice,
+          albumPrice: buyerAlbumPrice,
           albumCount: albumIds.length,
-        })
+        }
+
+        // Free-photo allowance (owner, 2026-11-04, _free-allowance.ts): the
+        // buyer's first N photos from this gallery are $0. Photos they already
+        // hold are never sold or granted twice.
+        const allowance = allowanceFor(library, email)
+        if (allowance > 0) {
+          const owned = await ownedPhotoIds(supabase, library.id, email)
+          const wanted = photoIds.filter(id => !owned.has(id))
+          if (wanted.length === 0) {
+            return res.status(400).json({ error: 'You already have these photos.' })
+          }
+          const left = await freeLeft(supabase, library, email)
+          const freeIds = wanted.slice(0, left)
+          const paidIds = wanted.slice(freeIds.length)
+          let freeOrderId: string | null = null
+          if (freeIds.length > 0) {
+            freeOrderId = await grantFree(supabase, { libraryId: library.id, email, photoIds: freeIds, allowance })
+            if (!freeOrderId) {
+              return res.status(409).json({ error: 'Your free photos were just used. Refresh the page and try again.' })
+            }
+          }
+          if (paidIds.length === 0) {
+            return res.status(200).json({
+              method: 'free',
+              orderId: freeOrderId,
+              free: freeIds.length,
+              freeLeft: left - freeIds.length,
+              amount: 0,
+            })
+          }
+          // The rest are paid at the usual à la carte prices — the same
+          // function the gallery page's tray total uses.
+          buyerAmount = buyerTotalWithFree(wanted.length, freeIds.length, pricing, wholeAlbum === true)
+          photoIds = paidIds
+          count = paidIds.length
+        } else {
+          buyerAmount = buyerTotal(count, pricing)
+        }
       } else if (role === 'owner') {
         return res.status(400).json({ error: 'You already have every photo in this album — no purchase needed.' })
       } else if (library.is_private) {

@@ -14,6 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
 import { EMAIL_STYLES, generateTransactionalEmail } from '../email-template.js';
 import { inviteUrl, inviteRecordUrl } from './_gallery-access-link.js';
+import { allowanceFor } from './_free-allowance.js';
 
 export interface InviteResults {
     succeeded: string[];
@@ -29,7 +30,7 @@ export async function sendGalleryInvites(
     const results: InviteResults = { succeeded: [], failed: [] };
     const { data: library, error: libError } = await supabase
         .from('photo_libraries')
-        .select('id, name, slug, invited_emails, buyer_emails, buyer_price')
+        .select('id, name, slug, invited_emails, buyer_emails, buyer_price, buyer_free_photos')
         .eq('id', libraryId)
         .single();
     if (libError || !library) {
@@ -49,7 +50,11 @@ export async function sendGalleryInvites(
             // À la carte: on the buyer list and not an album owner — they see the
             // whole album and buy the photos they want (owner, 2026-11-02).
             const aLaCarte = buyers.includes(email.trim().toLowerCase()) && !owners.includes(email.trim().toLowerCase());
-            const intro = aLaCarte
+            // Free-photo allowance (_free-allowance.ts): say so up front.
+            const free = aLaCarte ? allowanceFor(library, email) : 0;
+            const intro = aLaCarte && free > 0
+                ? `Photos from <strong style="color: #ffffff;">${library.name}</strong> are up. Browse the whole album and pick the ones you want — your first ${free} are free, then ${price} a photo, full resolution.`
+                : aLaCarte
                 ? `Photos from <strong style="color: #ffffff;">${library.name}</strong> are up. Browse the whole album and pick the ones you want — ${price} a photo, full resolution.`
                 : `Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.`;
             const inviteBody = (galleryUrl: string) => `
