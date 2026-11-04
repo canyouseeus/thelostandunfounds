@@ -1211,8 +1211,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                 <div data-tour="gallery-form-pricing" className="space-y-3">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Pricing</label>
                                     {/* A private gallery sells only to its à la carte list (album
-                                        owners are free, everyone else is refused), so it shows those
-                                        prices instead. */}
+                                        owners are free, everyone else is refused), so it shows only
+                                        those prices. A public gallery shows both: its public prices,
+                                        and what the people on its à la carte list pay (owner,
+                                        2026-11-04 — invites to a public gallery used to land on the
+                                        free owner list with no way to choose). */}
                                     {!modalData.is_private && (
                                     <div className="bg-white/5 p-3 space-y-3">
                                         <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} />
@@ -1230,10 +1233,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         <PriceRow tour="gallery-form-album-price" label="Whole album" value={albumPrice} onChange={setAlbumPrice} placeholder="Off" />
                                     </div>
                                     )}
-                                    {modalData.is_private && (
                                     <div className="bg-white/5 p-3 space-y-3" data-tour="gallery-form-pricing-a-la-carte">
                                         <p className={PRICE_GROUP}>À la carte buyers</p>
-                                        <p className="text-[10px] text-white/30 -mt-2">Album owners get everything free.</p>
+                                        <p className="text-[10px] text-white/30 -mt-2">
+                                            {modalData.is_private
+                                                ? 'Album owners get everything free.'
+                                                : 'What the people on your À La Carte list pay. Everyone else pays the prices above. Album owners get everything free.'}
+                                        </p>
                                         <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} />
                                         <BundleRows
                                             tour="gallery-a-la-carte-bundles"
@@ -1250,7 +1256,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             placeholder="Off"
                                         />
                                     </div>
-                                    )}
                                     <p className="text-[10px] text-white/30">Per photo 0 = free. Whole album blank = not offered.</p>
                                 </div>
 
@@ -1264,9 +1269,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     />
                                 </div>
 
-                                {/* Client Invitations */}
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Invited Clients</label>
+                                {/* Album owners (invited_emails): free, clean downloads of every
+                                    photo, on public and private galleries alike (roleFor in
+                                    _gallery-pass.ts). Named for what it grants, so an invite
+                                    meant for a buyer never lands here by default. */}
+                                <div data-tour="gallery-form-owners">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Album Owners</label>
+                                    <p className="text-[10px] text-white/30 mb-3">
+                                        Download every photo free, no watermark. Only the people the photos belong to. Anyone who should pay goes under À La Carte below.
+                                    </p>
 
                                     {/* Existing email chips */}
                                     {invitedEmails.length > 0 && (
@@ -1332,7 +1343,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </button>
                                     </div>
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        Press Enter or click Add. New clients will receive an access link when you save.
+                                        Press Enter or click Add. New owners get their access link when you save.
                                     </p>
                                     {invitedEmails.length > 0 && editingId && (
                                         <button
@@ -1345,9 +1356,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                     )}
                                 </div>
 
-                                {/* À la carte — same album, buy per photo. Private galleries only:
-                                    a public gallery already sells to anyone. */}
-                                {modalData.is_private && (
+                                {/* À la carte — same album, buy per photo. On every gallery: on a
+                                    public one it is how you invite someone who should pay, at the
+                                    À La Carte prices (checkout already prices this list on public
+                                    galleries — _checkout-handler.ts). */}
                                 <div data-tour="gallery-form-a-la-carte">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">À La Carte</label>
                                     <p className="text-[10px] text-white/30 mb-3">
@@ -1411,7 +1423,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         New buyers get their own invite link when you save. Their prices are under Pricing above.
                                     </p>
                                 </div>
-                                )}
 
                                 <div>
                                     <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
