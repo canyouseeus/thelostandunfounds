@@ -4,7 +4,13 @@
     {
       "name": "Affiliate Dashboard Preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true,
       "url": "http://localhost:3000/preview/affiliate?section=affiliate"
@@ -12,14 +18,26 @@
     {
       "name": "Vercel API Server",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "Tattoo Artist Proposal Preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true,
       "url": "http://localhost:3000/tattoo-artist-proposal.html"
@@ -27,7 +45,13 @@
     {
       "name": "Tattoo Artist Website Preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true,
       "url": "http://localhost:3000/tattoo-artist-preview.html"
@@ -35,7 +59,13 @@
     {
       "name": "Tattoo Artist Dashboard Preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true,
       "url": "http://localhost:3000/tattoo-artist-dashboard-preview.html"
@@ -43,7 +73,13 @@
     {
       "name": "Kiosk Proposal Preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "runtimeArgs": [
+        "-y",
+        "--",
+        "vercel",
+        "dev",
+        "--yes"
+      ],
       "port": 3000,
       "autoPort": true,
       "url": "http://localhost:3000/kiosk-proposal.html"
@@ -51,14 +87,28 @@
     {
       "name": "Vite Frontend",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite"],
+      "runtimeArgs": [
+        "vite"
+      ],
       "port": 3000
     },
     {
       "name": "Local Backend Server",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["local-server.js"],
+      "runtimeArgs": [
+        "local-server.js"
+      ],
       "port": 3001
+    },
+    {
+      "name": "Vite Spec Sheets",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5173"
+      ],
+      "port": 5173
     }
   ]
 }

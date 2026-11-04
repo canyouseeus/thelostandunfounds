@@ -22,6 +22,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
 import { MatureCover, MATURE_BLUR, useMatureConsent } from './MatureCover';
 import SelectionTray from './SelectionTray';
+import DownloadBar from './DownloadBar';
+import { splitIntoZipParts, startZipDownload } from '../../lib/galleryZip';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
 import DownloadEmailModal from '../DownloadEmailModal';
@@ -119,7 +121,10 @@ const PhotoCard: React.FC<{
     onDownload?: () => void;
     /** This viewer has downloaded/saved this photo before. */
     isDownloaded?: boolean;
-}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload, isDownloaded = false }) => {
+    /** "Your Assets" bulk-download pick — separate from the storefront cart. */
+    isDownloadSelected?: boolean;
+    onToggleDownload?: () => void;
+}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload, isDownloaded = false, isDownloadSelected = false, onToggleDownload }) => {
     const [rotation, setRotation] = useState(0);
     const isUnlocked = isPurchased || isFree;
     const [matureOk, confirmMature] = useMatureConsent();
@@ -245,6 +250,23 @@ const PhotoCard: React.FC<{
                             >
                                 <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                                     <ArrowDownTrayIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                </div>
+                            </button>
+                        )}
+
+                        {/* Bulk-download pick (Your Assets). Video is left out: it does not
+                            go in the zip and stays a single download from the lightbox. */}
+                        {activeTab === 'assets' && isPurchased && onToggleDownload && !isVideoPhoto(photo) && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleDownload(); }}
+                                className="absolute top-2 right-2 z-[45] outline-none"
+                                aria-label={isDownloadSelected ? 'Deselect for download' : 'Select for download'}
+                            >
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isDownloadSelected
+                                    ? 'bg-white border-white scale-110'
+                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                    }`}>
+                                    {isDownloadSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
                                 </div>
                             </button>
                         )}
@@ -375,6 +397,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
+    // Ids picked in "Your Assets" for one bulk zip. Deliberately not persisted
+    // and not selectedPhotos: that is the checkout cart, this is a download list.
+    const [downloadIds, setDownloadIds] = useState<Set<string>>(new Set());
     const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
     const [mapActivePhoto, setMapActivePhoto] = useState<Photo | null>(null);
     const [loading, setLoading] = useState(true);
@@ -1077,6 +1102,38 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         });
     };
 
+    const toggleDownload = (photo: Photo) => {
+        setDownloadIds(prev => {
+            const next = new Set(prev);
+            if (next.has(photo.id)) next.delete(photo.id);
+            else next.add(photo.id);
+            return next;
+        });
+    };
+
+    // Everything in the current Your Assets view that can go in a zip: filtered
+    // like the grid is, and no video (see PhotoCard).
+    const zippableAssets = (): Photo[] =>
+        activeTab !== 'assets'
+            ? []
+            : purchasedPhotos.filter(p => p.google_drive_file_id && !isVideoPhoto(p) && displayedIds.has(p.id));
+
+    const handleZipDownload = async (part: number) => {
+        const all = zippableAssets();
+        // Same rule the bar uses for its count: the visible picks, else everything.
+        const picked = all.filter(p => downloadIds.has(p.id));
+        const files = splitIntoZipParts(picked.length > 0 ? picked : all)[part];
+        if (!files || files.length === 0) return;
+
+        // Always through requestDownloadEmail, which only reuses a cached address
+        // that is well-formed. The form post navigates to the response, so a bad
+        // address bounced by the server would replace the gallery with raw JSON.
+        const email = await requestDownloadEmail(files);
+        if (!email) return; // cancelled
+        setBuyerEmail(email);
+        startZipDownload(files.map(p => ({ id: p.google_drive_file_id, name: p.title })), email);
+    };
+
     // ── Derived values — must be computed before any early returns (Rules of Hooks) ──
     // Same precedence as the server checkout and the header price display:
     // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
@@ -1233,6 +1290,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     });
 
     const displayedPhotos = filteredPhotos;
+    const displayedIds = new Set(displayedPhotos.map(p => p.id));
+    const zippable = zippableAssets();
+    const zipSelection = zippable.filter(p => downloadIds.has(p.id));
+    const showDownloadBar = activeTab === 'assets' && zippable.length > 0;
+    const showCartTray = activeTab === 'storefront' && selectedPhotos.length > 0;
 
     return (
         <div
@@ -1651,6 +1713,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
                                                 onDownload={() => downloadPhotos([photo])}
                                                 isDownloaded={downloadedIds.has(photo.id)}
+                                                isDownloadSelected={downloadIds.has(photo.id)}
+                                                onToggleDownload={() => toggleDownload(photo)}
                                             />
                                         ))}
                                     </div>
@@ -1724,7 +1788,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             <div
                 className={cn(
                     "fixed left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 transition-[bottom] duration-300",
-                    selectedPhotos.length > 0
+                    showCartTray || showDownloadBar
                         ? "bottom-[8.5rem] md:bottom-28"
                         : "bottom-[calc(1rem+env(safe-area-inset-bottom))]"
                 )}
@@ -1879,8 +1943,18 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             </div>
 
             {/* Tray */}
+            {showDownloadBar && (
+                <DownloadBar
+                    count={zipSelection.length > 0 ? zipSelection.length : zippable.length}
+                    isSelection={zipSelection.length > 0}
+                    totalDownloadable={zippable.length}
+                    onSelectAll={() => setDownloadIds(new Set(zippable.map(p => p.id)))}
+                    onClear={() => setDownloadIds(new Set())}
+                    onDownload={handleZipDownload}
+                />
+            )}
             <SelectionTray
-                selectedPhotos={selectedPhotos}
+                selectedPhotos={activeTab === 'storefront' ? selectedPhotos : []}
                 onRemove={(id) => setSelectedPhotos(prev => prev.filter(p => p.id !== id))}
                 onCheckout={handleCheckout}
                 loading={checkoutPending}

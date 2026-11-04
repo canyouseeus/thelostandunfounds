@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { buildName, isClaptropName, getAvailableBytes, formatBytes, resetSeqs, claptropTail, dateFromName } from './claptrop-namer.js';
 import { run as runRetrograde } from './claptrop-retrograde.js';
+import { resolveClaptropDcim } from './find-claptrop-card.mjs';
+import { zipAndUploadDate, readManifest, MANIFEST_SUFFIX, uploadResumable } from './drive-raw-zip.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -32,6 +34,7 @@ const drive = google.drive({ version: 'v3', auth: oauth2Client });
 const args              = process.argv.slice(2);
 const SKIP_DRIVE        = args.includes('--skip-drive');   // /claptrop-ii
 const SUBJECT_OVERRIDE  = (() => { const i = args.indexOf('--subject'); return i !== -1 ? args[i + 1] : undefined; })();
+const SD_OVERRIDE       = (() => { const i = args.indexOf('--sd'); return i !== -1 ? args[i + 1] : undefined; })();
 const LOW_DISK_THRESHOLD_GB = 2; // flush local staging when available < 2 GB
 
 // ─── Upload History ───────────────────────────────────────────────────────────
@@ -160,9 +163,16 @@ function addFileToIndex(idx: DriveFingerprintIndex, name: string, size: string, 
 }
 
 // Compute MD5 of a local file
+// Read in chunks — videos can exceed Node's 2 GiB single-read limit.
 function md5OfFile(filePath: string): string {
     const hash = crypto.createHash('md5');
-    hash.update(fs.readFileSync(filePath));
+    const fd = fs.openSync(filePath, 'r');
+    try {
+        const buf = Buffer.alloc(8 * 1024 * 1024);
+        for (let n; (n = fs.readSync(fd, buf, 0, buf.length, null)) > 0; ) hash.update(buf.subarray(0, n));
+    } finally {
+        fs.closeSync(fd);
+    }
     return hash.digest('hex');
 }
 
@@ -219,6 +229,11 @@ async function buildDriveFileIndex(folderId: string): Promise<DriveFingerprintIn
                 for (const k of sub.ns)   idx.ns.add(k);
                 for (const k of sub.tail) idx.tail.add(k);
                 for (const k of sub.date) idx.date.add(k);
+            } else if (f.name?.endsWith(MANIFEST_SUFFIX)) {
+                // RAFs live inside per-date zips; the manifest says what is in each one.
+                for (const e of await retryApiCall(() => readManifest(drive, f.id!), `manifest(${f.name})`)) {
+                    addFileToIndex(idx, e.name, String(e.size), e.md5);
+                }
             } else if (f.name) {
                 addFileToIndex(idx, f.name, f.size ?? '0', f.md5Checksum ?? undefined);
             }
@@ -230,23 +245,33 @@ async function buildDriveFileIndex(folderId: string): Promise<DriveFingerprintIn
     return idx;
 }
 
+// Same name is NOT proof of a duplicate — numbering can repeat across runs and
+// two different photos can share a name. Only byte-identical copies (md5+size)
+// are removed, and they go to Drive trash (recoverable), never hard-deleted.
 async function removeDuplicatesInFolder(parentId: string, label: string) {
-    const res = await retryApiCall(() => drive.files.list({
-        q: `'${parentId}' in parents and trashed = false`,
-        fields: 'files(id, name, createdTime)',
-        orderBy: 'createdTime',
-    }), `listForDedupe(${label})`);
+    const seen = new Set<string>();
+    let pageToken: string | undefined;
+    do {
+        const res = await retryApiCall(() => drive.files.list({
+            q: `'${parentId}' in parents and trashed = false`,
+            fields: 'nextPageToken, files(id, name, size, md5Checksum, createdTime)',
+            orderBy: 'createdTime',
+            pageSize: 1000,
+            ...(pageToken ? { pageToken } : {}),
+        }), `listForDedupe(${label})`);
 
-    const seen = new Map<string, string>();
-    for (const f of res.data.files || []) {
-        if (!f.name || !f.id) continue;
-        if (seen.has(f.name)) {
-            await retryApiCall(() => drive.files.delete({ fileId: f.id! }), `deleteDup(${f.name})`);
-            console.log(`  Removed duplicate: ${f.name}`);
-        } else {
-            seen.set(f.name, f.id);
+        for (const f of res.data.files || []) {
+            if (!f.id || !f.md5Checksum) continue;
+            const key = `${f.md5Checksum}:${f.size}`;
+            if (seen.has(key)) {
+                await retryApiCall(() => drive.files.update({ fileId: f.id!, requestBody: { trashed: true } }), `trashDup(${f.name})`);
+                console.log(`  Trashed byte-identical duplicate: ${f.name}`);
+            } else {
+                seen.add(key);
+            }
         }
-    }
+        pageToken = res.data.nextPageToken ?? undefined;
+    } while (pageToken);
 }
 
 // ─── Upload a single file → Drive, then delete local copy ────────────────────
@@ -295,6 +320,16 @@ async function uploadAndClean(
     const success = await (async () => {
         for (let attempt = 0; attempt <= 5; attempt++) {
             try {
+                // Large files (videos) go up in resumable chunks and are md5-checked.
+                if (fileSize > 64 * 1024 * 1024) {
+                    const sum = md5OfFile(filePath);
+                    const up = await uploadResumable(oauth2Client, filePath, uploadName, parentId, ({ '.mov': 'video/quicktime', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' } as Record<string, string>)[path.extname(uploadName).toLowerCase()] ?? 'application/octet-stream', pct => {
+                        process.stdout.write(`\r  ${uploadName}: ${pct}%`);
+                    });
+                    process.stdout.write('\n');
+                    if (up.md5Checksum !== sum) throw new Error(`md5 mismatch after upload (${up.md5Checksum} vs ${sum})`);
+                    return true;
+                }
                 await drive.files.create({
                     requestBody: { name: uploadName, parents: [parentId] },
                     media: { body: fs.createReadStream(filePath) },
@@ -348,6 +383,42 @@ function getFilesRecursive(dir: string): string[] {
     return results;
 }
 
+// ─── RAW: one zip per shoot date ──────────────────────────────────────────────
+//
+// RAFs go to RAW archive / YYYY-MM-DD / …_YYYY-MM-DD_RAF.zip (+ manifest), never
+// as loose files. Already-in-Drive RAFs (including inside existing zips, via
+// their manifests) are skipped. Local files are deleted only after the zip's
+// md5 is verified in Drive. Returns the paths that failed and were kept.
+
+async function zipRawByDate(filePaths: string[], rawParentId: string, index: DriveFingerprintIndex): Promise<string[]> {
+    const byDate = new Map<string, string[]>();
+    for (const filePath of filePaths) {
+        const name = path.basename(filePath);
+        const axis = isInHistory(name) ? 'history' : findExistingInDrive(index, filePath);
+        if (axis) {
+            console.log(`  Skipping ${name} (already in Drive: ${axis})`);
+            fs.unlinkSync(filePath);
+            continue;
+        }
+        const date = dateFromName(name) ?? 'unknown-date';
+        (byDate.get(date) ?? byDate.set(date, []).get(date)!).push(filePath);
+    }
+
+    const failed: string[] = [];
+    for (const [date, files] of [...byDate].sort()) {
+        try {
+            const folderId = await getOrCreateFolder(date, rawParentId);
+            const { entries } = await zipAndUploadDate(drive, oauth2Client, files, date, folderId);
+            for (const e of entries) { addFileToIndex(index, e.name, String(e.size), e.md5); addToHistory(e.name); }
+            for (const f of files) fs.unlinkSync(f);
+        } catch (err: any) {
+            console.error(`  ❌ RAW zip for ${date} failed — ${files.length} file(s) kept locally: ${err.message}`);
+            failed.push(...files);
+        }
+    }
+    return failed;
+}
+
 // ─── Phase 0: Flush local staging → Drive (frees disk space) ─────────────────
 
 async function flushStagingToDrive(indexes: Record<string, DriveFingerprintIndex>) {
@@ -360,6 +431,11 @@ async function flushStagingToDrive(indexes: Record<string, DriveFingerprintIndex
         if (!files.length) continue;
 
         console.log(`\nFlushing ${type} (${files.length} files)…`);
+        if (type === 'RAW') {
+            const paths = files.map(f => path.join(config.local, f)).filter(f => fs.statSync(f).isFile());
+            failed.push(...await zipRawByDate(paths, config.parent, indexes[type]));
+            continue;
+        }
         const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
 
         for (const file of files) {
@@ -394,12 +470,15 @@ async function pMap<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>
     return results;
 }
 
-async function importFromSDCard(sdPath: string) {
+async function importFromSDCard(sdPath: string, indexes: Record<string, DriveFingerprintIndex>) {
     console.log(`\n=== Phase 1: Importing from SD card (${sdPath}) ===`);
     resetSeqs();
 
     const allFiles = getFilesRecursive(sdPath);
     console.log(`Found ${allFiles.length} files on SD card.`);
+
+    let copied = 0;
+    let alreadyPresent = 0;
 
     const order: { type: keyof typeof FOLDER_CONFIG; exts: string[] }[] = [
         { type: 'JPG', exts: ['.jpg', '.jpeg'] },
@@ -416,9 +495,12 @@ async function importFromSDCard(sdPath: string) {
         fs.mkdirSync(config.local, { recursive: true });
 
         // Build set of names already in destination (for collision detection)
+        // Names already in staging AND in Drive, so numbering continues past
+        // earlier runs instead of restarting at _001 and reusing a name.
         const existingNames = new Set(
             fs.readdirSync(config.local).map(f => f.toLowerCase())
         );
+        for (const k of indexes[group.type].ns) existingNames.add(k.slice(3, k.lastIndexOf(':')));
 
         // Step 1: resolve all names sequentially (geocoding is rate-limited to 1 req/s)
         const tasks: { srcPath: string; destPath: string; log: any }[] = [];
@@ -433,6 +515,7 @@ async function importFromSDCard(sdPath: string) {
             });
             const destPath = path.join(config.local, meta.filename);
             if (!fs.existsSync(destPath)) tasks.push({ srcPath, destPath, log });
+            else alreadyPresent++;
         }
 
         // Step 2: copy + delete in parallel batches of 10
@@ -442,7 +525,7 @@ async function importFromSDCard(sdPath: string) {
                 await fs.promises.copyFile(srcPath, destPath);
                 await fs.promises.unlink(srcPath);
                 renameLogs.push(log);
-                done++;
+                done++; copied++;
                 if (done % 10 === 0 || done === tasks.length) {
                     console.log(`  ${done}/${tasks.length} ${group.type} files copied…`);
                 }
@@ -452,7 +535,8 @@ async function importFromSDCard(sdPath: string) {
         });
     }
 
-    console.log('\n✅ SD card import complete.');
+    console.log(`\n✅ SD card import complete. Copied ${copied} file(s); ${alreadyPresent} already in staging.`);
+    return { copied, alreadyPresent, scanned: allFiles.length };
 }
 
 // ─── Phase 2: Upload Desktop staging → Drive ──────────────────────────────────
@@ -466,6 +550,11 @@ async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintInde
     for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
         const filePaths = getFilesRecursive(config.local).filter(f => !path.basename(f).startsWith('.'));
         if (!filePaths.length) { console.log(`\nNo files in ${type} staging.`); continue; }
+
+        if (type === 'RAW') {
+            for (const f of await zipRawByDate(filePaths, config.parent, indexes[type])) failed.push({ filePath: f, parentId: '', type });
+            continue;
+        }
 
         const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
         await removeDuplicatesInFolder(targetId, type);
@@ -481,6 +570,7 @@ async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintInde
     if (failed.length) {
         console.log(`\n=== Retrying ${failed.length} failed upload(s) ===`);
         for (const { filePath, parentId, type } of failed) {
+            if (type === 'RAW') { console.warn(`  RAW kept locally (zip failed): ${path.basename(filePath)}`); continue; }
             await uploadAndClean(filePath, parentId, false, indexes[type]);
         }
     } else {
@@ -493,8 +583,26 @@ async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintInde
 async function startSync() {
     loadHistory();
 
-    const SD_CARD_PATH = '/Volumes/CLAPTROP II/DCIM';
-    const USE_SD_CARD  = fs.existsSync(SD_CARD_PATH);
+    // ── Locate the SD card ─────────────────────────────────────────────────────
+    // Cards are numbered (CLAPTROP, CLAPTROP II, CLAPTROP III…), so discover by
+    // pattern rather than pinning to one volume name. --sd <path> overrides.
+    const card = resolveClaptropDcim(SD_OVERRIDE);
+
+    if (card.reason === 'ambiguous') {
+        console.error('\n❌ Multiple CLAPTROP volumes are mounted:');
+        for (const m of card.matches) console.error(`   • ${m.volume}`);
+        console.error('   Refusing to guess. Re-run with --sd "<path>", e.g.:');
+        console.error(`   node_modules/.bin/tsx scripts/upload-to-drive.ts --sd "${card.matches[0].volume}"`);
+        process.exit(1);
+    }
+
+    if (card.reason === 'override' && !card.dcim) {
+        console.error(`\n❌ --sd path not found: ${SD_OVERRIDE}`);
+        process.exit(1);
+    }
+
+    const SD_CARD_PATH = card.dcim;
+    const USE_SD_CARD  = !!SD_CARD_PATH;
 
     console.log('\n=== CLAPTROP Pipeline ===');
     if (SKIP_DRIVE)       console.log('Mode: Import only (--skip-drive)');
@@ -530,11 +638,23 @@ async function startSync() {
     }
 
     // ── SD card import (with claptrop naming) ──────────────────────────────────
+    let importedNothing = false;
+
     if (USE_SD_CARD) {
-        console.log(`\n✅ SD Card detected: ${SD_CARD_PATH}`);
-        await importFromSDCard(SD_CARD_PATH);
+        console.log(`\n✅ SD Card detected: ${card.name} → ${SD_CARD_PATH}`);
+        const result = await importFromSDCard(SD_CARD_PATH!, driveIndexes);
+        if (result.copied === 0) {
+            importedNothing = true;
+            console.error('\n❌ SD card was found but ZERO files were imported.');
+            console.error(`   Scanned ${result.scanned} file(s) under ${SD_CARD_PATH};`);
+            console.error(`   ${result.alreadyPresent} already existed in staging, 0 were copied.`);
+            console.error('   This is NOT a successful run — check the card contents and staging folders.');
+        }
     } else {
-        console.log('\n⚠️  SD Card not found. Skipping import step.');
+        console.log('\n⚠️  No SD card was found under /Volumes (looked for any mounted');
+        console.log('    volume containing a DCIM folder).');
+        console.log('    Pass --sd "/Volumes/<your card>" to point at it explicitly.');
+        console.log('    Skipping import step; flushing existing staging instead.');
     }
 
     // ── Upload staging → Drive (and clean up local files) ─────────────────────
@@ -557,7 +677,12 @@ async function startSync() {
         }
     }
 
+    if (importedNothing) {
+        console.error('\n=== Finished with errors: SD card found but nothing imported ===');
+        process.exit(1);
+    }
+
     console.log('\n=== Done ===');
 }
 
-startSync().catch(console.error);
+startSync().catch(err => { console.error(err); process.exit(1); });

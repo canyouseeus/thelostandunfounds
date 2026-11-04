@@ -1,0 +1,11 @@
+.git
+.claude/worktrees
+node_modules
+dist
+build
+coverage
+.vercel
+supabase/.temp
+roa-mockup-deploy/.vercel
+*.log
+.DS_Store

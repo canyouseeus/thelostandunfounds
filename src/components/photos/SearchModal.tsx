@@ -8,6 +8,7 @@ import {
   TagIcon,
   CalendarIcon,
   ArrowRightIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 interface SearchPhoto {
@@ -38,6 +39,11 @@ interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPhotoSelect?: (photo: SearchPhoto) => void;
+  /** Tag-filter chips shown as an expandable card at the top of the search. */
+  availableTags?: { id: string; name: string; type: string }[];
+  selectedTagIds?: string[];
+  onToggleTag?: (id: string) => void;
+  onClearTags?: () => void;
 }
 
 const TYPE_DOT: Record<string, string> = {
@@ -55,13 +61,22 @@ function getThumbUrl(photo: SearchPhoto) {
   return photo.thumbnail_url || '';
 }
 
-export function SearchModal({ isOpen, onClose, onPhotoSelect }: SearchModalProps) {
+export function SearchModal({
+  isOpen,
+  onClose,
+  onPhotoSelect,
+  availableTags = [],
+  selectedTagIds = [],
+  onToggleTag,
+  onClearTags,
+}: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchPhoto[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(-1);
   const [hasSearched, setHasSearched] = useState(false);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -178,6 +193,58 @@ export function SearchModal({ isOpen, onClose, onPhotoSelect }: SearchModalProps
                   {total === 0 ? 'No results' : `${total} result${total !== 1 ? 's' : ''}`}
                   {query && <span className="text-white/20"> for "{query}"</span>}
                 </p>
+              </div>
+            )}
+
+            {/* Expandable tag-filter card (frosted tray) */}
+            {availableTags.length > 0 && (
+              <div className="px-4 sm:px-8 pb-4">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setTagsExpanded(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3"
+                  >
+                    <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/70">
+                      <TagIcon className="w-3.5 h-3.5" />
+                      Tags{selectedTagIds.length > 0 ? ` · ${selectedTagIds.length}` : ''}
+                    </span>
+                    <ChevronDownIcon
+                      className={`w-4 h-4 text-white/50 transition-transform ${tagsExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {tagsExpanded && (
+                    <div className="px-4 pb-4 pt-1 flex items-center gap-2 flex-wrap max-h-[38vh] overflow-y-auto">
+                      {selectedTagIds.length > 0 && onClearTags && (
+                        <button
+                          type="button"
+                          onClick={onClearTags}
+                          className="flex items-center gap-1 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                        >
+                          <XMarkIcon className="w-2.5 h-2.5" />
+                          Clear
+                        </button>
+                      )}
+                      {availableTags.map(tag => {
+                        const active = selectedTagIds.includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => onToggleTag?.(tag.id)}
+                            className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border transition-colors ${
+                              active
+                                ? 'bg-white text-black border-white'
+                                : 'text-white/50 border-white/20 hover:text-white hover:border-white/40'
+                            }`}
+                          >
+                            {tag.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

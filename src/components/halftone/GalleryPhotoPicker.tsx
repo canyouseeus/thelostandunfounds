@@ -20,7 +20,7 @@ import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expan
 
 type Source = { kind: 'library' | 'tag'; id: string; name: string; count: number }
 
-interface GalleryPhoto {
+export interface GalleryPhoto {
   id: string
   title: string | null
   google_drive_file_id: string
@@ -37,14 +37,19 @@ const DATE_NAME = new RegExp(`^(\\d{4}|\\d{4}-\\d{2}(-\\d{2})?|${MONTH}( \\d{4})
 interface Props {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  onPick: (photo: { blob: Blob; label: string }) => void
+  /** Hands back the full-size original as a blob (the halftone generator). */
+  onPick?: (photo: { blob: Blob; label: string }) => void
+  /** Hands back the photo row itself, nothing downloaded (e.g. attaching it to a CRM client). */
+  onSelect?: (photo: GalleryPhoto) => void | Promise<void>
+  /** Overrides the one-line hint under CHOOSE A PHOTO. */
+  hint?: string
   /** Set for a photographer: they see only the galleries they own, and no Drive folders. */
   ownerId?: string
 }
 
 const row = 'w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-left'
 
-export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, ownerId }: Props) {
+export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, onSelect, hint, ownerId }: Props) {
   const [sources, setSources] = useState<Source[] | null>(null)
   const [sourceError, setSourceError] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
@@ -158,6 +163,18 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
   const pick = async (p: GalleryPhoto) => {
     setOpening(p.id)
     setError(null)
+    if (onSelect) {
+      try {
+        await onSelect(p)
+        onOpenChange(false)
+      } catch (e) {
+        logError(`gallery photo select ${p.id}: ${e instanceof Error ? e.message : String(e)}`)
+        setError(e instanceof Error ? e.message : 'That photo could not be added.')
+      } finally {
+        setOpening(null)
+      }
+      return
+    }
     const url = `/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=${ORIGINAL_SIZE}`
     try {
       const res = await fetch(url)
@@ -165,7 +182,7 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const blob = await res.blob()
       if (!blob.type.startsWith('image/')) throw new Error(`not an image (${blob.type || 'unknown'})`)
-      onPick({ blob, label: p.title || 'gallery-photo' })
+      onPick?.({ blob, label: p.title || 'gallery-photo' })
       onOpenChange(false)
     } catch (e) {
       logError(`gallery photo ${p.id}: ${e instanceof Error ? e.message : String(e)}`)
@@ -184,7 +201,7 @@ export default function GalleryPhotoPicker({ isOpen, onOpenChange, onPick, owner
               <>
                 <h2 className="text-lg font-black text-white uppercase tracking-widest pr-12 mb-1">CHOOSE A PHOTO</h2>
                 <p className="text-white/40 text-xs mb-4">
-                  {ownerId ? 'From your galleries. Nothing here gets published.' : 'From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.'}
+                  {hint ?? (ownerId ? 'From your galleries. Nothing here gets published.' : 'From a gallery, or from a folder in your Drive JPG folder. Nothing here gets published.')}
                 </p>
                 <input
                   type="search"

@@ -220,6 +220,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     // Price per photo: the gallery's 1-photo pricing option (what checkout and
     // the gallery page read first), kept in step with photo_libraries.price.
     const singleOptionIdx = pricingOptions.findIndex(o => o.photo_count === 1);
+    // Photos in the gallery being edited — the whole-album price shows its per-photo price against it.
+    const editingAlbumCount = libraries.find(l => l.id === editingId)?.photo_count || 0;
     const singlePriceValue = singleOptionIdx >= 0 ? pricingOptions[singleOptionIdx].price : (modalData.price ?? 5);
     const setSinglePrice = (price: number) => {
         if (singleOptionIdx >= 0) {
@@ -1233,6 +1235,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         <PriceRow tour="gallery-form-single-price" label="Per photo" value={singlePriceValue} onChange={v => setSinglePrice(v === '' ? 0 : v)} />
                                         <BundleRows
                                             tour="gallery-form-bundles"
+                                            single={Number(singlePriceValue) || 0}
                                             bundles={pricingOptions.map((o, i) => ({ ...o, i })).filter(o => o.photo_count !== 1)}
                                             onChange={(i, patch) => setPricingOptions(pricingOptions.map((o, j) => j === i ? { ...o, ...patch } : o))}
                                             onRemove={(i) => {
@@ -1242,7 +1245,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             }}
                                             onAdd={() => setPricingOptions([...pricingOptions, { id: '', name: '', photo_count: 3, price: 10 }])}
                                         />
-                                        <PriceRow tour="gallery-form-album-price" label="Whole album" value={albumPrice} onChange={setAlbumPrice} placeholder="Off" />
+                                        <PriceRow tour="gallery-form-album-price" label="Whole album" value={albumPrice} onChange={setAlbumPrice} placeholder="Off" count={editingAlbumCount} single={Number(singlePriceValue) || 0} />
                                     </div>
                                     )}
                                     <div className="bg-white/5 p-3 space-y-3" data-tour="gallery-form-pricing-a-la-carte">
@@ -1255,6 +1258,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         <PriceRow tour="gallery-a-la-carte-price" label="Per photo" value={buyerPrice} onChange={v => setBuyerPrice(v === '' ? 0 : v)} />
                                         <BundleRows
                                             tour="gallery-a-la-carte-bundles"
+                                            single={Number(buyerPrice) || 0}
                                             bundles={buyerBundles.map((b, i) => ({ ...b, i }))}
                                             onChange={(i, patch) => setBuyerBundles(buyerBundles.map((x, j) => j === i ? { ...x, ...patch } : x))}
                                             onRemove={(i) => setBuyerBundles(buyerBundles.filter((_, j) => j !== i))}
@@ -1266,6 +1270,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             value={buyerAlbumPrice}
                                             onChange={setBuyerAlbumPrice}
                                             placeholder="Off"
+                                            count={editingAlbumCount}
+                                            single={Number(buyerPrice) || 0}
                                         />
                                     </div>
                                     <p className="text-[10px] text-white/30">Per photo 0 = free. Whole album blank = not offered.</p>
