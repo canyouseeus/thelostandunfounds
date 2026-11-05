@@ -326,6 +326,7 @@ const crmTour: Tour = {
     inPanel('crm', { target: 'crm-totals', title: 'Totals', body: 'Clients, billed, collected and outstanding.' }),
     inPanel('crm', { target: 'crm-client', action: 'click', title: 'A Client', body: 'Tap a client to open them.' }),
     inPanel('crm', { target: 'crm-field', title: 'Their Details', body: 'Name, business, email, phone and notes. Edit any of them.' }),
+    inPanel('crm', { target: 'crm-photos', title: 'Photos', body: 'Photos from your galleries, kept with this client.' }),
     inPanel('crm', { target: 'crm-save', title: 'Save', body: 'SAVE CHANGES keeps your edits.' }),
   ],
 };
@@ -424,6 +425,21 @@ const consoleTours: Tour[] = [
 ];
 
 /* ── New features ─────────────────────────────────────────────────────── */
+
+const crmPhotosTour: Tour = {
+  id: 'crm-client-photos',
+  title: 'Client Photos',
+  summary: 'Add photos from any gallery to a client in the CRM.',
+  group: 'new',
+  announce: '2026-11-04',
+  steps: [
+    openFromDock('crm', 'Client Photos', 'Client photos live in the CRM. Tap the CRM icon.'),
+    inPanel('crm', { target: 'crm-client', action: 'click', title: 'A Client', body: 'Tap a client to open them.' }),
+    inPanel('crm', { target: 'crm-photos', title: 'Photos', body: 'Photos you have added to this client.' }),
+    inPanel('crm', { target: 'crm-add-photo', action: 'click', title: 'Add From Gallery', body: 'Tap ADD FROM GALLERY.' }),
+    { target: 'halftone-picker-filter', title: 'Find A Gallery', body: 'Type to find a gallery or folder, then tap it and tap a photo to add it.' },
+  ],
+};
 
 const liveEventTour: Tour = {
   id: 'live-event-galleries',
@@ -542,7 +558,7 @@ const aLaCarteTour: Tour = {
       missingNote: 'No galleries yet. Make one with NEW first.',
     }),
     { target: 'gallery-a-la-carte-price', title: 'Price Per Photo', body: 'What each photo costs them.' },
-    { target: 'gallery-a-la-carte-bundles', title: 'Bundles', body: 'Deals like 4 photos for $10. ADD BUNDLE makes another.' },
+    { target: 'gallery-a-la-carte-bundles', title: 'Bundles', body: 'Deals like 4 photos for $10. Type a price, or a % OFF and the price fills in. The line under each shows the price per photo and what it saves. ADD BUNDLE makes another.' },
     { target: 'gallery-a-la-carte-album', title: 'Whole Album', body: 'Their price for every photo. Blank = not offered.' },
     { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Album Owners still get everything free.' },
     { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
@@ -1198,7 +1214,7 @@ const depositsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
