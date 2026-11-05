@@ -108,8 +108,10 @@ async function processLibrary(library: { id: string; slug: string; name: string 
         const meta  = photo.metadata || {};
         const title = photo.title || photo.google_drive_file_id;
 
-        // Get ext from title or Drive mime (default jpg)
-        const ext = title.includes('.') ? path.extname(title).toLowerCase() : '.jpg';
+        // Gallery titles are stems ("@tlau.photos_…_235"), so a dot is not an
+        // extension — only a real image extension counts (default jpg).
+        const titleExt = title.match(/\.(jpe?g|png|heic|raf)$/i)?.[0];
+        const ext = titleExt ? titleExt.toLowerCase() : '.jpg';
 
         // Date from metadata
         let date: Date | undefined;
@@ -124,7 +126,7 @@ async function processLibrary(library: { id: string; slug: string; name: string 
         const lon = meta.location?.longitude ?? null;
 
         const { meta: nameMeta, log } = await buildName({
-            originalName: `${title}${title.includes('.') ? '' : ext}`,
+            originalName: `${title}${titleExt ? '' : ext}`,
             date,
             lat,
             lon,
