@@ -5,6 +5,7 @@ import {
     triggerReferralCommission,
     triggerInvoiceCommission,
     jobCostForBooking,
+    queueOwnerCut,
 } from './affiliates/_commission-trigger.js'
 import { stripeFundsAvailableAt } from './_prodigi-fulfillment.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
@@ -485,6 +486,25 @@ async function finalizeShopOrder(
         amountTotal: session.amount_total,
         customerId: session.customer,
     })
+
+    // The owner's 10% of profit (merch). Profit needs the product's cost: a
+    // physical product with no cost on file is skipped and logged rather than
+    // paid on gross; a digital one costs nothing to make.
+    try {
+        const { data: order } = await supabase
+            .from('shop_orders').select('product_id, quantity').eq('id', shopOrderId).single()
+        const { data: costRow } = await supabase
+            .from('product_costs').select('cost').eq('product_id', order?.product_id || '').limit(1).maybeSingle()
+        const gross = (Number(session.amount_total) || 0) / 100
+        const unitCost = costRow ? Number(costRow.cost) || 0 : productKind === 'digital' ? 0 : null
+        if (unitCost === null) {
+            console.warn('⚠️ Owner 10% skipped: no product_costs row for physical product', order?.product_id, shopOrderId)
+        } else {
+            await queueOwnerCut(supabase, { source: 'shop', sourceId: shopOrderId }, gross - unitCost * (order?.quantity || 1))
+        }
+    } catch (ownerErr: any) {
+        console.error('⚠️ Owner 10% for shop order failed:', ownerErr?.message)
+    }
 
     if (productKind === 'digital' && customerEmail && downloadToken) {
         try {

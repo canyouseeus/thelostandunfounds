@@ -65,21 +65,23 @@ const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
  * Midas 8% − Secret Santa 3%. With no referrer, nothing is taken and the base
  * is the whole profit. Whoever shoots it: on a crew job the photographer's 80%
  * is the cost, so the profit is the house's 20% and the 10% comes after the
- * splits on that. Street nights pay 10% of the night through
- * recordFieldSale (no split there). Gallery photo sales and event tickets are
- * not included "for now".
+ * splits on that. Gallery sales the same way (a crew photographer's 97% is the
+ * cost). Merch is every merch channel: Prodigi prints (through the split), the
+ * site shop (finalizeShopOrder — no affiliate split runs there yet, so the base
+ * is the whole profit) and Fourthwall (its own webhook). Street nights pay 10% of the night through recordFieldSale
+ * (no split there). Event tickets are not included.
  */
 export const OWNER_CUT_RATE = 0.10;
-const OWNER_CUT_SOURCES: ReadonlyArray<CommissionTriggerInput['source']> = ['booking', 'prodigi_order'];
+const OWNER_CUT_SOURCES: ReadonlyArray<string> = ['booking', 'prodigi_order', 'photo_order', 'shop', 'fourthwall'];
 
 /**
  * Queue the owner's 10% as an `owner_pay` admin job, once per sale (the
  * idempotency key refuses a second insert). Never throws: a missed queue is
  * logged, never allowed to break the payment webhook that called it.
  */
-async function queueOwnerCut(
+export async function queueOwnerCut(
   supabase: SupabaseClient,
-  input: CommissionTriggerInput,
+  input: { source: string; sourceId: string },
   base: number
 ): Promise<void> {
   if (!OWNER_CUT_SOURCES.includes(input.source)) return;

@@ -254,10 +254,11 @@ Owner-confirmed 2026-10-20. Full detail in `affiliate-program`.
 - **Owner's 10%** (owner-confirmed 2026-11-05), on top of any affiliate share or King Midas
   winnings he earns: 10% of what the company keeps after the affiliate program (profit − 42% −
   MLM − King Midas 8% − Secret Santa 3%; no referrer → the whole profit), on every booked service
-  and every merch (Prodigi) sale. On a job another photographer shoots, their 80% is the cost, so
-  the profit is the house's 20%, the splits come out of that, then his 10%. Street nights: 10% of
-  the night. Gallery photo sales and event tickets:
-  not yet. Queued by `queueOwnerCut` in `_commission-trigger.ts` from the one split writer, once
+  every gallery sale, and every merch sale (Prodigi prints, site shop, Fourthwall). On a job
+  another photographer shoots, their 80% is the cost, so the profit is the house's 20%, the
+  splits come out of that, then his 10% (gallery: the crew's 97% is the cost). Merch with no
+  `product_costs` row is skipped and logged, never paid on gross. Street nights: 10% of the
+  night. Event tickets: not included. Queued by `queueOwnerCut` in `_commission-trigger.ts` from the one split writer, once
   per job at full payment (card or hand-recorded), as an `owner_pay` job. Never queue a separate
   10% on a deposit: the job's split counts it.
 - Times to the owner are in **Central**.

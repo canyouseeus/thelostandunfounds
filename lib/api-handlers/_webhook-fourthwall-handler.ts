@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { queueOwnerCut } from './affiliates/_commission-trigger.js'
 
 /**
  * Fourthwall Webhook Handler
@@ -156,6 +157,7 @@ async function handleOrderCreated(
 
   if (!affiliateRef) {
     console.log('No affiliate reference in order:', orderId)
+    await fourthwallOwnerCut(supabase, orderId, order.line_items || order.items || [], 0)
     return
   }
 
@@ -169,6 +171,7 @@ async function handleOrderCreated(
 
   if (affiliateError || !affiliate) {
     console.warn(`Affiliate not found: ${affiliateRef}`, affiliateError)
+    await fourthwallOwnerCut(supabase, orderId, order.line_items || order.items || [], 0)
     return
   }
 
@@ -280,8 +283,46 @@ async function handleOrderCreated(
   // Update KING MIDAS daily stats
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
   await updateKingMidasStats(supabase as any, affiliateId, totalProfit, today)
+  await fourthwallOwnerCut(supabase, orderId, lineItems, totalCommission)
 
   console.log(`Commission created: $${totalCommission.toFixed(2)} for affiliate ${affiliateRef} from order ${orderId} (available after ${holdDays} days)`)
+}
+
+/**
+ * The owner's 10% on a Fourthwall order (merch), of what the company keeps:
+ * profit, less the affiliate's commission and the King Midas 8% this handler
+ * credits when there is one. Fourthwall's path has no MLM or Secret Santa.
+ * Never throws; one owner_pay per order (idempotency key).
+ */
+async function fourthwallOwnerCut(
+  supabase: ReturnType<typeof createClient>,
+  orderId: string,
+  lineItems: any[],
+  commission: number
+) {
+  if (!orderId) return
+  try {
+    let profit = 0
+    for (const item of lineItems) {
+      const { data: productCost } = await (supabase as any)
+        .from('product_costs')
+        .select('cost')
+        .eq('product_id', item.product_id || item.product?.id)
+        .eq('variant_id', item.variant_id || item.variant?.id || '')
+        .eq('source', 'fourthwall')
+        .maybeSingle()
+      if (!productCost) {
+        console.warn('Owner 10% skipped: no product_costs row for Fourthwall item', item.product_id || item.product?.id, orderId)
+        return
+      }
+      const price = parseFloat(item.price || item.unit_price || 0)
+      profit += (price - (Number(productCost.cost) || 0)) * (item.quantity || 1)
+    }
+    const kept = profit - commission - (commission > 0 ? profit * 0.08 : 0)
+    await queueOwnerCut(supabase as any, { source: 'fourthwall', sourceId: orderId }, kept)
+  } catch (err: any) {
+    console.error('Owner 10% for Fourthwall order failed:', err?.message)
+  }
 }
 
 /**
