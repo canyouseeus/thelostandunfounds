@@ -23,9 +23,12 @@ This skill governs all communication channels for THE LOST+UNFOUNDS.
 1. **Load Envs**: Load Supabase credentials from `.env.local`.
 2. **Query Latest**: Fetch the most recent campaign from `newsletter_campaigns`.
 3. **Inject CTA**: Inject the Getting Started link (`https://www.thelostandunfounds.com/blog/getting-started`) into the HTML content before the footer/hr.
-4. **Send/Test**: 
-   - Test: POST to `/api/newsletter/send` with `testEmail`.
-   - Full Send: Omit `testEmail` to target all verified subscribers.
+4. **Send/Test**: `/api/newsletter/send` (and `/retry`) are admin-only — the owner's session or
+   `ADMIN_SECRET`. The admin composer sends the session. From an agent session, add the issue to
+   `lib/newsletters/`, register it in `NEWSLETTER_ISSUES` (`lib/api-handlers/admin/_jobs.ts`), and
+   queue `send_newsletter`:
+   - Test: `{"issue": "...", "testEmail": "thelostandunfounds@gmail.com"}`.
+   - Full Send: `{"issue": "...", "confirm": true}` to all verified subscribers.
 
 > **Provider**: the newsletter handler auto-selects Resend whenever `RESEND_API_KEY` is set, and
 > only falls back to Zoho when it isn't. Resend is the correct provider for bulk — confirm the key
