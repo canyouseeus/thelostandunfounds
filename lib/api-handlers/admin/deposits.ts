@@ -84,8 +84,9 @@ interface ReceivedCredit {
 async function listReceivedCredits(): Promise<ReceivedCredit[]> {
   const key = stripeMoneyKey()
   const out: ReceivedCredit[] = []
-  let url: string | null =
-    `https://api.stripe.com/v2/money_management/received_credits?limit=50&financial_account=${BUSINESS_FINANCIAL_ACCOUNT}`
+  // The list takes no financial_account filter (Stripe: "Unknown field");
+  // isOutsideDeposit keeps only the business account's credits.
+  let url: string | null = 'https://api.stripe.com/v2/money_management/received_credits?limit=50'
   // A few pages is months of deposits; stop there rather than walk all history every load.
   for (let page = 0; url && page < 4; page++) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${key}`, 'Stripe-Version': STRIPE_VERSION } })
