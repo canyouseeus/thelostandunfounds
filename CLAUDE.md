@@ -251,6 +251,14 @@ Owner-confirmed 2026-10-20. Full detail in `affiliate-program`.
   exactly like a website booking.
 - The owner's own affiliate (`THELOSTANDUNFOUNDS`) is paid like any other, to his Stripe Connect
   account.
+- **Owner's 10%** (owner-confirmed 2026-11-05), on top of any affiliate share or King Midas
+  winnings he earns: 10% of what the company keeps after the affiliate program (profit − 42% −
+  MLM − King Midas 8% − Secret Santa 3%; no referrer → the whole profit), on every booked service
+  **he shoots** and every merch (Prodigi) sale. A job another photographer shoots pays him only
+  the house's 20%, no 10%. Street nights: 10% of the night. Gallery photo sales and event tickets:
+  not yet. Queued by `queueOwnerCut` in `_commission-trigger.ts` from the one split writer, once
+  per job at full payment (card or hand-recorded), as an `owner_pay` job. Never queue a separate
+  10% on a deposit: the job's split counts it.
 - Times to the owner are in **Central**.
 
 ## MODEL SELECTION RULE

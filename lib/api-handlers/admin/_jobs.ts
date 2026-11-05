@@ -369,10 +369,13 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
         amount: cents,
         currency: 'usd',
         destination: acct.stripe_account_id,
-        description: payload.depositId || payload.invoiceId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
+        description: payload.source
+          ? `Owner pay — 10% of kept profit (${payload.source})`
+          : payload.depositId || payload.invoiceId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
         metadata: {
           admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '',
           deposit_id: payload.depositId || '', invoice_id: payload.invoiceId || '',
+          source: payload.source || '', source_id: payload.sourceId || '',
         },
       },
       { idempotencyKey: `admin-job-${jobId}` }

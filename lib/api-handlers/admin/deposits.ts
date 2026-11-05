@@ -205,7 +205,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .maybeSingle()
       if (error) throw new Error(error.message)
       if (!data) return res.status(404).json({ error: 'Deposit not found' })
-      await queueOwnerPay(supabase, data as any)
+      // Invoice money's 10% now comes from that job's profit split
+      // (queueOwnerCut in _commission-trigger), so only street money pays here.
+      if (data.category === 'street') await queueOwnerPay(supabase, data as any)
       const { data: fresh, error: reloadError } = await supabase.from('deposit_checkins').select(SELECT).eq('id', id).single()
       if (reloadError) throw new Error(reloadError.message)
       return res.status(200).json({ deposit: fresh })

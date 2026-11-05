@@ -58,6 +58,56 @@ export interface CommissionTriggerResult {
 const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
 
 /**
+ * Owner decision, 2026-11-05: the owner is paid 10% of what the company keeps
+ * on every booked service HE SHOOTS and every merch sale, on top of any affiliate share
+ * or King Midas winnings he earns like anyone else. The base is the job's
+ * profit AFTER the affiliate program takes its cut: profit − 42% − MLM − King
+ * Midas 8% − Secret Santa 3%. With no referrer, nothing is taken and the base
+ * is the whole profit. Street nights pay 10% of the night through
+ * recordFieldSale (no split there). Gallery photo sales and event tickets are
+ * not included "for now".
+ */
+export const OWNER_CUT_RATE = 0.10;
+const OWNER_CUT_SOURCES: ReadonlyArray<CommissionTriggerInput['source']> = ['booking', 'prodigi_order'];
+
+/**
+ * Queue the owner's 10% as an `owner_pay` admin job, once per sale (the
+ * idempotency key refuses a second insert). Never throws: a missed queue is
+ * logged, never allowed to break the payment webhook that called it.
+ */
+async function queueOwnerCut(
+  supabase: SupabaseClient,
+  input: CommissionTriggerInput,
+  base: number
+): Promise<void> {
+  if (!OWNER_CUT_SOURCES.includes(input.source)) return;
+  const amount = money(Math.max(0, base) * OWNER_CUT_RATE);
+  if (!(amount > 0)) return;
+  // A service the owner did not shoot: another photographer is paid 80% and
+  // the owner's take is the house's 20% — no extra 10% (owner, 2026-11-05).
+  // sourceId is a booking id, or a standalone invoice's own id.
+  if (input.source === 'booking') {
+    const { data: invoices, error } = await supabase
+      .from('invoices').select('status, contractor_payout')
+      .or(`booking_id.eq.${input.sourceId},id.eq.${input.sourceId}`);
+    if (error) {
+      console.error('[commission-trigger] owner cut skipped, photographer unknown:', error.message);
+      return;
+    }
+    const crewShot = (invoices || []).some((inv: any) => inv.status !== 'superseded' && money(inv.contractor_payout) > 0);
+    if (crewShot) return;
+  }
+  const { error } = await supabase.from('admin_jobs').insert({
+    action: 'owner_pay',
+    payload: { amount, source: input.source, sourceId: input.sourceId, base: money(base) },
+    requested_by: 'commission-trigger',
+    note: `Owner pay 10% of $${money(base).toFixed(2)} kept (${input.source} ${input.sourceId})`,
+    idempotency_key: `owner-cut-${input.source}-${input.sourceId}`,
+  });
+  if (error && error.code !== '23505') console.error('[commission-trigger] owner cut not queued:', error.message);
+}
+
+/**
  * Cost of a job billed on an invoice: `job_cost` when recorded (a job the
  * owner shot himself has a cost but no contractor), else the contractor's
  * payout. Selected with `*` so a missing column reads as "not recorded"
@@ -153,6 +203,8 @@ export async function triggerReferralCommission(
 
   const row = Array.isArray(data) ? data[0] : data;
   if (!row || !row.affiliate_id) {
+    // No referrer: no share is taken, so the company keeps the whole profit.
+    await queueOwnerCut(supabase, input, grossAmount - (cost ?? 0));
     return { triggered: false, reason: 'no_referrer' };
   }
 
@@ -174,6 +226,17 @@ export async function triggerReferralCommission(
         }
       : undefined,
   };
+
+  // What the company keeps after the program's shares. Only on the first
+  // record: a webhook retry (already_recorded) was queued the first time.
+  if (isNew && result.breakdown) {
+    const b = result.breakdown;
+    await queueOwnerCut(
+      supabase,
+      input,
+      b.profit - (result.amount ?? 0) - b.mlmLevel1 - b.mlmLevel2 - b.kingMidas - b.secretSanta
+    );
+  }
 
   // Send commission_earned email (deduped by commission id)
   if (isNew && row.commission_id && !input.adoptCommissionId) {
@@ -207,6 +270,38 @@ export async function triggerReferralCommission(
   }
 
   return result;
+}
+
+/**
+ * Run the split for an invoice that just became fully paid by any route —
+ * the same call the Stripe webhook makes, so a balance paid by Venmo, cash or
+ * Apple Pay and recorded by hand splits exactly like one paid by card. A
+ * booking invoice splits on the booking (whole project), a standalone invoice
+ * on itself. Idempotent: a second call finds the first record.
+ */
+export async function triggerSettledInvoiceSplit(
+  supabase: SupabaseClient,
+  invoiceId: string
+): Promise<CommissionTriggerResult> {
+  const { data: invoice } = await supabase
+    .from('invoices').select('id, status, booking_id, paid_at').eq('id', invoiceId).maybeSingle();
+  if (!invoice) return { triggered: false, reason: 'invoice_not_found' };
+  if (invoice.status !== 'paid') return { triggered: false, reason: 'invoice_not_paid' };
+  if (!invoice.booking_id) return triggerInvoiceCommission(supabase, invoice.id);
+
+  const { data: booking } = await supabase
+    .from('bookings').select('id, email, total_amount_cents, affiliate_code').eq('id', invoice.booking_id).maybeSingle();
+  const grossAmount = (Number(booking?.total_amount_cents) || 0) / 100;
+  if (!booking?.email || !(grossAmount > 0)) return { triggered: false, reason: 'booking_incomplete' };
+  return triggerReferralCommission(supabase, {
+    email: booking.email,
+    source: 'booking',
+    sourceId: booking.id,
+    grossAmount,
+    cost: await jobCostForBooking(supabase, booking.id),
+    saleAt: invoice.paid_at || null,
+    fallbackAffiliateCode: booking.affiliate_code || null,
+  });
 }
 
 /**

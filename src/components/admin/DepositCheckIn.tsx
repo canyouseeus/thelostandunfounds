@@ -198,8 +198,8 @@ export function DepositCheckInModal() {
         </button>
         <p className="mt-6 text-xs text-white/40 leading-relaxed">
           Invoice money is already counted on its invoice, so it is not counted twice. Street money counts toward
-          Street. Either way, 10% ({usd(Math.round(deposit.amount_cents * 0.1))}) goes to your Stripe account for the
-          bitcoin DCA. Picked the wrong one? Switch it in Money In / Out → Deposits.
+          Street, and 10% ({usd(Math.round(deposit.amount_cents * 0.1))}) goes to your Stripe account for the bitcoin
+          DCA. An invoice's 10% comes from that job's profit split instead. Picked the wrong one? Switch it in Money In / Out → Deposits.
         </p>
       </div>
     </div>,
@@ -244,8 +244,8 @@ export function DepositAccounting() {
       <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Deposits</h3>
       <p className="text-xs text-white/50 leading-relaxed">
         Venmo and Cash App money that landed in the business account. Direct invoice: already counted on its invoice,
-        not counted again. Street: counted as street revenue. Tagging one queues 10% to your Stripe account for the
-        bitcoin DCA, once — switching the tag later does not send it again. Tap the other button to switch one.
+        not counted again; its 10% comes from that job's profit split. Street: counted as street revenue, and
+        tagging it queues 10% to your Stripe account for the bitcoin DCA, once. Tap the other button to switch one.
       </p>
 
       {error && <p className="text-xs text-red-400">{error}</p>}

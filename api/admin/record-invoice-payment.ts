@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getStripe, getSupabaseAdmin } from '../../lib/api-handlers/_booking-payment-utils.js'
+import { triggerSettledInvoiceSplit } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
@@ -153,6 +154,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // Fully paid by hand: run the same profit split a card payment runs
+    // (affiliate, pots, and the owner's 10% when he shot it). Never let a split
+    // failure undo the recorded payment.
+    let split: unknown = null
+    if (settles) {
+      try { split = await triggerSettledInvoiceSplit(supabase, inv.id) } catch (e: any) {
+        console.error('[record-invoice-payment] split failed:', e?.message)
+        split = { triggered: false, reason: e?.message || 'split failed' }
+      }
+    }
+
     const { data: after } = await supabase
       .from('invoices')
       .select('invoice_number, status, total, amount_due, paid_at, payment_method')
@@ -165,6 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       recorded: requested,
       collected: round2(collectedBefore + requested),
       paymentLink,
+      split,
     })
   } catch (err: any) {
     console.error('[record-invoice-payment] failed:', err)
