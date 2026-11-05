@@ -85,8 +85,10 @@ async function fundDepositPay(
       statement_descriptor: 'TLAU DCA',
       metadata: { admin_job_id: jobId, deposit_id: depositId },
     },
-    // New key: the bank-sourced attempts under the old one are cached by Stripe.
-    { idempotencyKey: `deposit-topup-fa-${depositId}` }
+    // On the default API version Stripe refused the financial account as a
+    // source ("No such source", 2026-11-05); money-management features need the
+    // preview version. New key again: the refused attempts are cached under the old.
+    { idempotencyKey: `deposit-topup-fa2-${depositId}`, apiVersion: '2026-09-30.preview' as any }
   )
   const { error: saveError } = await supabase
     .from('deposit_checkins').update({ owner_pay_topup_id: topup.id }).eq('id', depositId)
@@ -318,8 +320,9 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
   },
 
   /**
-   * { fieldSaleId?, depositId?, amount } — the owner's pay (10%) for a street night
-   * or an outside deposit (deposit check-in), to his Stripe Connect account
+   * { fieldSaleId?, depositId?, invoiceId?, amount } — the owner's pay (10%) for a
+   * street night, an outside deposit (deposit check-in) or a card deposit on an
+   * invoice, to his Stripe Connect account
    * (where it is DCA'd into bitcoin). Queued by recordFieldSale and the deposit
    * check-in. Waits (hourly, up to 3 days) when the available balance is short,
    * like affiliate_payout.
@@ -342,11 +345,21 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
 
     const available = await availableUsd()
     if (Math.round(available * 100) < cents) {
-      const topup = payload.depositId ? await fundDepositPay(supabase, payload.depositId, cents, jobId) : null
+      // A top-up Stripe refuses must not fail the pay: the owner is still owed
+      // it, and card income settling into the Payments balance covers it. Keep
+      // waiting (hourly, up to 3 days) and say why in the job's error.
+      let funding = ''
+      if (payload.depositId) {
+        try {
+          const topup = await fundDepositPay(supabase, payload.depositId, cents, jobId)
+          funding = ` — top-up ${topup.id} from the business account is ${topup.status}`
+        } catch (e: any) {
+          funding = ` — top-up from the business account refused (${e?.message || e}); waiting for card income`
+        }
+      }
       return {
         status: 'waiting_funds',
-        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}` +
-          (topup ? ` — top-up ${topup.id} from the business account is ${topup.status}` : ''),
+        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}${funding}`,
         retryAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       }
     }
@@ -356,8 +369,11 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
         amount: cents,
         currency: 'usd',
         destination: acct.stripe_account_id,
-        description: payload.depositId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
-        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '', deposit_id: payload.depositId || '' },
+        description: payload.depositId || payload.invoiceId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
+        metadata: {
+          admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '',
+          deposit_id: payload.depositId || '', invoice_id: payload.invoiceId || '',
+        },
       },
       { idempotencyKey: `admin-job-${jobId}` }
     )

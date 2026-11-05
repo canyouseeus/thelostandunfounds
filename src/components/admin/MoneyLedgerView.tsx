@@ -252,6 +252,85 @@ function Stat({ label, cents, accent }: { label: string; cents: number; accent?:
     );
 }
 
+interface StripeBalances {
+    balance: { available: number; pending: number };
+    financialAccounts: { id: string; name: string; available: number; inboundPending: number; outboundPending: number }[];
+    financialAccountsError: string | null;
+}
+
+const dollars = (d: number) => usd(Math.round(d * 100));
+
+/** Live Stripe money: the Payments balance (card income) and every financial account. */
+function StripeBalancesSection() {
+    const [data, setData] = useState<StripeBalances | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            setData(await authFetch('/api/admin/stripe-balance'));
+            setError(null);
+        } catch (err: any) {
+            logError(err.message);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
+
+    const accounts = data?.financialAccounts ?? [];
+    const total = data ? data.balance.available + data.balance.pending + accounts.reduce((n, a) => n + a.available, 0) : 0;
+
+    return (
+        <section className="space-y-3">
+            <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+                    Stripe balances{data ? ` · ${dollars(total)} total` : ''}
+                </h3>
+                <button
+                    onClick={load}
+                    disabled={loading}
+                    className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white/60 hover:text-white transition-colors disabled:opacity-50"
+                    style={surface}
+                >
+                    {loading ? 'Loading…' : 'Refresh'}
+                </button>
+            </div>
+            {error && <p className="bg-red-500/10 text-red-400 text-xs p-3">{error}</p>}
+            {!data && !error && <p className="text-white/40 text-xs uppercase tracking-widest">Loading Stripe…</p>}
+            {data && (
+                <>
+                    <div data-tour="money-stripe-payments" className="grid grid-cols-2 gap-2">
+                        <Stat label="Payments · available" cents={Math.round(data.balance.available * 100)} accent="text-green-400" />
+                        <Stat label="Payments · pending" cents={Math.round(data.balance.pending * 100)} accent="text-white/60" />
+                    </div>
+                    <div data-tour="money-stripe-accounts" className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {accounts.map(a => (
+                            <div key={a.id} className="bg-white/5 p-4 text-left" style={surface}>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1 truncate">{a.name}</p>
+                                <p className="text-xl font-black tabular-nums text-white">{dollars(a.available)}</p>
+                                {(a.inboundPending > 0 || a.outboundPending > 0) && (
+                                    <p className="text-[10px] uppercase tracking-widest text-white/40 mt-1 tabular-nums">
+                                        {a.inboundPending > 0 && `+${dollars(a.inboundPending)} coming`}
+                                        {a.inboundPending > 0 && a.outboundPending > 0 && ' · '}
+                                        {a.outboundPending > 0 && `−${dollars(a.outboundPending)} going out`}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    {data.financialAccountsError && (
+                        <p className="text-[10px] uppercase tracking-widest text-red-400">Financial accounts: {data.financialAccountsError}</p>
+                    )}
+                </>
+            )}
+        </section>
+    );
+}
+
 export default function MoneyLedgerView() {
     const [data, setData] = useState<LedgerResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -322,6 +401,8 @@ export default function MoneyLedgerView() {
     return (
         <div className="space-y-8 text-left">
             {error && <p className="bg-red-500/10 text-red-400 text-xs p-3">{error}</p>}
+
+            <StripeBalancesSection />
 
             {data && <BillsSection bills={data.bills ?? []} onChange={load} onError={setError} />}
 

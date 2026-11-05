@@ -21,6 +21,36 @@ import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 
 const usd = (cents: number) => Math.round(cents) / 100
 
+/** The platform's storage financial accounts, named the way the owner knows them. */
+const ACCOUNT_LABELS: Record<string, string> = {
+  fa_65UbOiP49XIyCjVLt9w16UbOGOJESQ1Wd0tevkXEB3w5km: 'Business',
+  fa_65Vc0ZpAuxheTRvd98q16UbOGOJESQ1Wd0tevkXEB3wDSi: 'King Midas pot',
+  fa_65Vc0ZPs07Y7q1ibQPv16UbOGOJESQ1Wd0tevkXEB3wOEa: 'Secret Santa',
+  fa_65Vc0aUTLSwK4YumRSn16UbOGOJESQ1Wd0tevkXEB3wPCa: 'Affiliate pay',
+}
+
+/** Every open financial account (Treasury v2) with its USD balance. */
+async function financialAccounts() {
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) throw new Error('STRIPE_SECRET_KEY not configured')
+  const res = await fetch('https://api.stripe.com/v2/money_management/financial_accounts?limit=20', {
+    headers: { Authorization: `Bearer ${key}`, 'Stripe-Version': '2026-09-30.preview' },
+  })
+  const body: any = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(`Stripe financial accounts: ${body?.error?.message || res.status}`)
+  const val = (side: any) => usd(side?.usd?.value ?? 0)
+  return (body.data ?? [])
+    .filter((fa: any) => fa.status === 'open')
+    .map((fa: any) => ({
+      id: fa.id,
+      name: ACCOUNT_LABELS[fa.id] || fa.display_name || 'Financial account',
+      available: val(fa.balance?.available),
+      inboundPending: val(fa.balance?.inbound_pending),
+      outboundPending: val(fa.balance?.outbound_pending),
+    }))
+    .sort((a: any, b: any) => (a.name === 'Business' ? -1 : b.name === 'Business' ? 1 : a.name.localeCompare(b.name)))
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email, X-Admin-Secret')
@@ -42,7 +72,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const payouts = await stripe.payouts.list({ limit: 5 })
     const charges = await stripe.charges.list({ limit: 5 })
 
+    // A Treasury hiccup must not hide the Payments balance.
+    let accounts: any[] = []
+    let accountsError: string | null = null
+    try { accounts = await financialAccounts() } catch (e: any) { accountsError = e?.message || 'lookup failed' }
+
     return res.status(200).json({
+      financialAccounts: accounts,
+      financialAccountsError: accountsError,
       balance: {
         available: pick(balance.available),
         pending: pick((balance as any).pending),

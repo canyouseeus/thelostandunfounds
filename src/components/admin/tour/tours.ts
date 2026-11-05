@@ -1214,7 +1214,22 @@ const depositsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+/* ── Stripe balances (2026-11-05) ── */
+
+const stripeBalancesTour: Tour = {
+  id: 'money-stripe-balances',
+  title: 'Stripe Balances',
+  summary: 'Live Stripe money at the top of Money In / Out: the Payments balance and every financial account.',
+  group: 'new',
+  announce: '2026-11-05',
+  steps: [
+    openFromDock('money', 'Money In / Out', 'Tap Money In / Out to open it.'),
+    inPanel('money', { target: 'money-stripe-payments', title: 'Payments Balance', body: 'Card money. Available can pay people now. Pending shows when it settles.' }),
+    inPanel('money', { target: 'money-stripe-accounts', title: 'Financial Accounts', body: 'Business, King Midas, Secret Santa and Affiliate pay, each with what is in it now.' }),
+  ],
+};
+
+export const TOURS: Tour[] = [stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
