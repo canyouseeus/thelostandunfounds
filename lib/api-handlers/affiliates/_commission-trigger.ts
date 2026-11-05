@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendAffiliateEmail } from './_emails.js';
+import { ADMIN_EMAILS } from '../_admin-auth.js';
 
 export interface CommissionTriggerInput {
   email: string;
@@ -67,18 +68,31 @@ const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
  * is the cost, so the profit is the house's 20% and the 10% comes after the
  * splits on that. Gallery sales the same way (a crew photographer's 97% is the
  * cost). Merch is every merch channel: Prodigi prints (through the split), the
- * site shop (finalizeShopOrder — no affiliate split runs there yet, so the base
- * is the whole profit) and Fourthwall (its own webhook). Street nights pay 10% of the night through recordFieldSale
- * (no split there). Event tickets are not included.
+ * site shop — the owner's own TLAU merch, screen printing to come
+ * (finalizeShopOrder; no affiliate split runs there yet, so the base is the
+ * whole profit) and Fourthwall until it is retired (its own webhook). Event
+ * tickets for events the owner created. Street nights pay 10% of the night
+ * through recordFieldSale (no split there).
  */
 export const OWNER_CUT_RATE = 0.10;
-const OWNER_CUT_SOURCES: ReadonlyArray<string> = ['booking', 'prodigi_order', 'photo_order', 'shop', 'fourthwall'];
+const OWNER_CUT_SOURCES: ReadonlyArray<string> = ['booking', 'prodigi_order', 'photo_order', 'shop', 'fourthwall', 'event_ticket'];
 
 /**
  * Queue the owner's 10% as an `owner_pay` admin job, once per sale (the
  * idempotency key refuses a second insert). Never throws: a missed queue is
  * logged, never allowed to break the payment webhook that called it.
  */
+/** Was this ticket order for an event the owner created? Unknown → no. */
+async function isOwnersEvent(supabase: SupabaseClient, eventOrderId: string): Promise<boolean> {
+  const { data: order } = await supabase.from('event_orders').select('event_id').eq('id', eventOrderId).maybeSingle();
+  if (!order?.event_id) return false;
+  const { data: event } = await supabase.from('events').select('owner_id').eq('id', order.event_id).maybeSingle();
+  if (!event?.owner_id) return false;
+  const { data: user } = await supabase.auth.admin.getUserById(event.owner_id);
+  const email = user?.user?.email?.toLowerCase();
+  return !!email && ADMIN_EMAILS.includes(email);
+}
+
 export async function queueOwnerCut(
   supabase: SupabaseClient,
   input: { source: string; sourceId: string },
@@ -87,6 +101,9 @@ export async function queueOwnerCut(
   if (!OWNER_CUT_SOURCES.includes(input.source)) return;
   const amount = money(Math.max(0, base) * OWNER_CUT_RATE);
   if (!(amount > 0)) return;
+  // Tickets count only for events the owner created (events.owner_id is his
+  // admin login); another organizer's event is theirs.
+  if (input.source === 'event_ticket' && !(await isOwnersEvent(supabase, input.sourceId))) return;
   const { error } = await supabase.from('admin_jobs').insert({
     action: 'owner_pay',
     payload: { amount, source: input.source, sourceId: input.sourceId, base: money(base) },

@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getStripe } from '../../lib/api-handlers/affiliates/_stripe-client.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { stripeMoneyKey, explainMoneyKeyError } from '../../lib/api-handlers/_stripe-money-key.js'
 /**
  * Report the Stripe balance, the payout schedule and recent bank payouts.
  *
@@ -31,13 +32,12 @@ const ACCOUNT_LABELS: Record<string, string> = {
 
 /** Every open financial account (Treasury v2) with its USD balance. */
 async function financialAccounts() {
-  const key = process.env.STRIPE_SECRET_KEY
-  if (!key) throw new Error('STRIPE_SECRET_KEY not configured')
+  const key = stripeMoneyKey()
   const res = await fetch('https://api.stripe.com/v2/money_management/financial_accounts?limit=20', {
     headers: { Authorization: `Bearer ${key}`, 'Stripe-Version': '2026-09-30.preview' },
   })
   const body: any = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(`Stripe financial accounts: ${body?.error?.message || res.status}`)
+  if (!res.ok) throw new Error(explainMoneyKeyError(body?.error?.message || String(res.status)))
   const val = (side: any) => usd(side?.usd?.value ?? 0)
   return (body.data ?? [])
     .filter((fa: any) => fa.status === 'open')

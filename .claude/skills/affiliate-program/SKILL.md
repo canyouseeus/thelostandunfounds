@@ -118,7 +118,9 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
     referrer → whole profit). Applies to every booked service (whoever shoots it), every
     gallery sale, and all merch: Prodigi (via the split), site shop (`finalizeShopOrder`, no
     affiliate split there yet) and Fourthwall (`fourthwallOwnerCut`, less its commission and KM 8%).
-    Merch with no `product_costs` row is skipped, never paid on gross. Event tickets excluded. A crew job's profit is the house's 20% (the photographer's 80% is the cost); the
+    Merch with no `product_costs` row is skipped, never paid on gross. The site shop is his own
+    TLAU merch (screen printing to come; Fourthwall will be removed). Event tickets count only
+    for events he created (`events.owner_id` → an `ADMIN_EMAILS` login, `isOwnersEvent`). A crew job's profit is the house's 20% (the photographer's 80% is the cost); the
     splits come out of that, then his 10%. `queueOwnerCut()` in `_commission-trigger.ts`, called from
     `triggerReferralCommission`, one `owner_pay` job per sale (key `owner-cut-<source>-<id>`).
     A booking splits once at full payment — card (webhook) or recorded by hand

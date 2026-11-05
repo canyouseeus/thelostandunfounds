@@ -11,6 +11,7 @@ import { getZohoAuthContext } from '../_zoho-email-utils.js'
 import { sendPhotographerInvite } from './photographer-invite.js'
 import { sendGalleryInvites } from '../_gallery-invite.js'
 import { ADMIN_EMAILS } from '../_admin-auth.js'
+import { stripeMoneyKey } from '../_stripe-money-key.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -88,7 +89,8 @@ async function fundDepositPay(
     // On the default API version Stripe refused the financial account as a
     // source ("No such source", 2026-11-05); money-management features need the
     // preview version. New key again: the refused attempts are cached under the old.
-    { idempotencyKey: `deposit-topup-fa2-${depositId}`, apiVersion: '2026-09-30.preview' as any }
+    // A money-management move: the restricted key when set (see _stripe-money-key).
+    { idempotencyKey: `deposit-topup-fa2-${depositId}`, apiVersion: '2026-09-30.preview' as any, apiKey: stripeMoneyKey() }
   )
   const { error: saveError } = await supabase
     .from('deposit_checkins').update({ owner_pay_topup_id: topup.id }).eq('id', depositId)

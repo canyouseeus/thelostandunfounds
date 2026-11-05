@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin, getStripe } from '../_booking-payment-utils.js'
 import { verifyAdmin } from '../_admin-auth.js'
+import { stripeMoneyKey, explainMoneyKeyError } from '../_stripe-money-key.js'
 
 /**
  * Deposit check-in — /api/admin/deposits
@@ -81,8 +82,7 @@ interface ReceivedCredit {
 
 /** Received credits into the business account, newest first. */
 async function listReceivedCredits(): Promise<ReceivedCredit[]> {
-  const key = process.env.STRIPE_SECRET_KEY
-  if (!key) throw new Error('STRIPE_SECRET_KEY not configured')
+  const key = stripeMoneyKey()
   const out: ReceivedCredit[] = []
   let url: string | null =
     `https://api.stripe.com/v2/money_management/received_credits?limit=50&financial_account=${BUSINESS_FINANCIAL_ACCOUNT}`
@@ -90,7 +90,7 @@ async function listReceivedCredits(): Promise<ReceivedCredit[]> {
   for (let page = 0; url && page < 4; page++) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${key}`, 'Stripe-Version': STRIPE_VERSION } })
     const body: any = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(`Stripe received credits: ${body?.error?.message || res.status}`)
+    if (!res.ok) throw new Error(explainMoneyKeyError(body?.error?.message || String(res.status)))
     out.push(...(body.data ?? []))
     url = body.next_page_url ? `https://api.stripe.com${body.next_page_url}` : null
   }
