@@ -49,7 +49,7 @@ export default function InteractiveCard({
     }
   };
 
-  const baseClasses = "group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer";
+  const baseClasses = "group relative bg-white/5 rounded-none px-6 py-4 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer";
 
   // If it's a simple card without flip, just render normally
   if (!showFlip) {
@@ -81,14 +81,14 @@ export default function InteractiveCard({
             className={`tool-card-front ${baseClasses} ${className}`}
           >
             {icon && (
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
+              <div className="w-10 h-10 bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-all flex-shrink-0">
                 {icon}
               </div>
             )}
             {(title || description) ? (
               <div className="flex items-center gap-4 flex-1">
                 {icon && (
-                  <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
+                  <div className="w-10 h-10 bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-all flex-shrink-0">
                     {icon}
                   </div>
                 )}
@@ -108,14 +108,14 @@ export default function InteractiveCard({
             className={`tool-card-front ${baseClasses} ${className}`}
           >
             {icon && (
-              <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
+              <div className="w-10 h-10 bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-all flex-shrink-0">
                 {icon}
               </div>
             )}
             {(title || description) ? (
               <div className="flex items-center gap-4 flex-1">
                 {icon && (
-                  <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
+                  <div className="w-10 h-10 bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-all flex-shrink-0">
                     {icon}
                   </div>
                 )}
@@ -137,7 +137,7 @@ export default function InteractiveCard({
             {children}
           </div>
         )}
-        <div className="tool-card-back group relative bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
+        <div className="tool-card-back group relative bg-white/5 rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
           {backContent || (
             <div className="text-center">
               <div className="flex justify-center mb-4">

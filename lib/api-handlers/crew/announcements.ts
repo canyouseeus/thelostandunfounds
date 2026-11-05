@@ -33,7 +33,8 @@ const H2 = EMAIL_STYLES.heading2;
 const LINK = EMAIL_STYLES.link;
 const MUTED = EMAIL_STYLES.muted;
 const TERMS_URL = `${SITE}/terms/photographers`;
-const DASHBOARD_URL = `${SITE}/photographer-dashboard`;
+// The Photographer app on /dashboard; /photographer-dashboard only redirects here.
+const DASHBOARD_URL = `${SITE}/dashboard?section=photographer`;
 
 export interface CrewMember {
   id: string;
@@ -143,7 +144,7 @@ function termsEmail(person: CrewMember) {
   };
 }
 
-/** The new tools on the photographer dashboard since September. */
+/** The new photographer tools since September. */
 function toolsEmail(person: CrewMember) {
   const name = firstName(person);
   const loginNote = person.hasLogin
@@ -156,50 +157,69 @@ function toolsEmail(person: CrewMember) {
   const content = `
     <h1 style="${H1}">NEW ON YOUR DASHBOARD</h1>
     <p style="${P}">
-      Hey ${name}, a lot has landed on the photographer dashboard over the last few weeks. Here's
-      what's there now and what it's for.
+      Hey ${name}, a lot has landed for photographers over the last few weeks. Here's what's there
+      now and what it's for.
     </p>
     ${loginNote}
+    ${section('ONE DASHBOARD', `<p style="${P}">
+      Everything is on <strong>thelostandunfounds.com/dashboard</strong> now. Tap the camera icon,
+      <strong>PHOTOGRAPHER</strong>, for your jobs, pay, calendar and live galleries. The old
+      photographer dashboard link still works and takes you there.
+    </p>`)}
     ${section('LIVE GALLERIES', `<p style="${P}">
-      Run a gallery during the event, not after. Name it, tap <strong>NEW LIVE GALLERY</strong>,
-      then <strong>GO LIVE</strong>. Tap <strong>SEND PHOTOS</strong> and pick shots straight from
-      your phone's camera roll. They show up for guests right away, each one named and credited to
-      you. <strong>END LIVE</strong> when the night is over.
+      Run a gallery during the event, not after. Name the event and tap
+      <strong>NEW LIVE GALLERY</strong>, or pick one you already made. Tap <strong>GO LIVE</strong>,
+      then <strong>SEND FROM CAMERA ROLL</strong> and choose the keepers, photos or video. They show
+      up for guests right away, each one named and credited to you. <strong>END LIVE</strong> when
+      the night is over.
     </p>`)}
-    ${section('QR CODES AND WALLPAPERS', `<p style="${P}">
-      Every one of your galleries has a QR button. Pick a style, set it on one of your photos, and
-      download it as a phone wallpaper or something to print for the table. Guests scan it and land
-      on the gallery.
+    ${section('YOUR CALENDAR', `<p style="${P}">
+      Block a few hours, not just a whole day: say 1:00 to 3:00 PM. Even better, connect your Google,
+      iCloud or Outlook calendar and your busy times block themselves, every hour. We only see that
+      you're busy, never what the event is.
     </p>`)}
-    ${section('SCREENS', `<p style="${P}">
-      Turn any photo from your galleries into a halftone film for screen printing. The screen
-      settings are locked to what prints cleanly (250 mesh, 55 LPI). Add text, save your settings as
-      a preset, then download, share or email the film PDF. Every film you make is kept, so you can
-      get it again later.
+    ${section('YOUR GALLERIES', `<p style="${P}">
+      Galleries take video now, up to 2GB a clip. Uploads pick back up if you switch apps halfway.
+      Tap any photo to make it the cover or delete it. Each gallery has two lists:
+      <strong>ALBUM OWNERS</strong> get every photo free, and <strong>À LA CARTE</strong> buyers
+      pay per photo, with bundles, a whole-album price, or a set number of free photos you choose.
+    </p>`)}
+    ${section('PORTFOLIO', `<p style="${P}">
+      You get your own public page at thelostandunfounds.com/portfolio/your-handle: photos, video,
+      YouTube and TikTok, and a WORKED WITH wall of logos. Edit it from the
+      <strong>PORTFOLIO</strong> app, and add a profile picture while you're there.
+    </p>`)}
+    ${section('CONTENT REQUESTS', `<p style="${P}">
+      Need a client's logo or footage? <strong>CONTENT REQUESTS</strong> makes them an upload link,
+      no login needed. Their files go to your own Drive folder and you're told when they land.
+      <strong>MAKE WHITE</strong> turns a dark logo white so it shows on our black pages.
+    </p>`)}
+    ${section('BRAND KIT', `<p style="${P}">
+      The tiger mascot in white and black, how to use it, and a private folder for your own logos.
+    </p>`)}
+    ${section('QR CODES, WALLPAPERS AND SCREENS', `<p style="${P}">
+      Every gallery has a QR button: put the code on one of your photos and download it as a phone
+      wallpaper or a print for the table. <strong>SCREENS</strong> turns any of your photos into a
+      halftone film for screen printing, ready to download, share or email as a PDF.
     </p>`)}
     ${section('18+ PHOTOS', `<p style="${P}">
-      If a set contains nudity, tick <strong>"These photos contain nudity"</strong> when you
-      upload. They're blurred on public pages until a viewer confirms they're 18+. The rules on what's
-      allowed are in a separate email about the Photographer Terms.
+      If a set contains nudity, tick <strong>"These photos contain nudity"</strong> when you upload.
+      They're blurred on public pages until a viewer confirms they're 18+.
+    </p>
+    <p style="${P}">
+      Uploads also need you to agree to the <strong>PHOTOGRAPHER TERMS</strong> first. The dashboard
+      asks once, the first time you go to upload, and the separate email explains what's in them.
     </p>`)}
-    ${section('GET HELP', `<p style="${P}">
-      Something not working? <strong>GET HELP</strong> on your dashboard opens a ticket. We reply by
-      email, and the whole thread stays on your dashboard.
-    </p>`)}
-    ${section('WALKTHROUGHS', `<p style="${P}">
-      Not sure where something is? Tap the <strong>?</strong> in the bottom left of your dashboard.
-      Each of these tools has a walkthrough that points at every button in turn. A WELCOME tour runs
-      the first time you visit.
-    </p>`)}
-    ${section('ONE THING FIRST', `<p style="${P}">
-      Uploads now need you to agree to the <strong>PHOTOGRAPHER TERMS</strong>. The dashboard asks
-      once, the first time you go to upload. The other email explains what's in them.
+    ${section('HELP AND WALKTHROUGHS', `<p style="${P}">
+      <strong>GET HELP</strong> opens a ticket, and we reply by email. Not sure where something is?
+      Tap the <strong>?</strong> in the bottom left. Every one of these tools has a walkthrough that
+      points at each button in turn.
     </p>`)}
     ${renderImageButton(DASHBOARD_URL, 'btn-crew-dashboard', 'OPEN MY DASHBOARD')}
     ${signOff}`;
 
   return {
-    subject: `${name}, new tools on your photographer dashboard`,
+    subject: `${name}, new tools on your dashboard`,
     content,
     variant: person.hasLogin ? 'signed-in' : 'needs-login',
   };
@@ -207,7 +227,7 @@ function toolsEmail(person: CrewMember) {
 
 export const CAMPAIGNS: Record<string, (person: CrewMember) => { subject: string; content: string; variant: string }> = {
   terms_2026_10_29: termsEmail,
-  tools_2026_10: toolsEmail,
+  tools_2026_11: toolsEmail,
 };
 
 /** Everyone on the active roster, minus the house, with what each email depends on. */

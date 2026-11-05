@@ -20,6 +20,8 @@ import {
 } from '@heroicons/react/24/outline';
 import ExpressBookingModal from '../components/booking/ExpressBookingModal';
 import TurnstileField, { turnstileRequired } from '../components/TurnstileField';
+import BrandAssetPicker from '../components/booking/BrandAssetPicker';
+import { sendFilesToUploadLink } from '../lib/clientUploadSend';
 
 // ── Service data ──────────────────────────────────────────────────────────────
 
@@ -571,6 +573,11 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [turnstileKey, setTurnstileKey] = useState(0);
     const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
+    // Brand assets picked on the form, sent through this booking's upload link
+    // once it saves (the server returns the link with the booking).
+    const [brandFiles, setBrandFiles] = useState<File[]>([]);
+    const [brandLink, setBrandLink] = useState<string | null>(null);
+    const [brandStatus, setBrandStatus] = useState<{ state: 'idle' | 'sending' | 'done' | 'error'; received?: number; error?: string }>({ state: 'idle' });
     const [contextOpen, setContextOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
     const [conflictingEvents, setConflictingEvents] = useState<Array<{ id: string; title: string; location: string | null }>>([]);
@@ -709,7 +716,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
         e.preventDefault();
         setError('');
         if (turnstileRequired() && !turnstileToken) {
-            setError('Please complete the security check.');
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
         setSubmitting(true);
@@ -738,7 +745,21 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
             } else {
                 setNotifyDebug(null);
             }
+            const link: { token: string; url: string } | null = data?.brandAssets || null;
+            setBrandLink(link?.url || null);
             setStep('success');
+            // The booking is saved; the files ride its own upload link. A
+            // failure here leaves the booking intact and the link on screen.
+            if (brandFiles.length) {
+                if (!link) {
+                    setBrandStatus({ state: 'error', error: 'Your booking is in, but the upload link could not be made. Reply to the confirmation email with your files.' });
+                } else {
+                    setBrandStatus({ state: 'sending' });
+                    sendFilesToUploadLink(link.token, brandFiles, { note: 'Sent with the booking request.' })
+                        .then(r => { setBrandStatus({ state: 'done', received: r.received }); setBrandFiles([]); })
+                        .catch((e: any) => setBrandStatus({ state: 'error', error: e?.message || 'Upload failed.' }));
+                }
+            }
         } catch (err: any) {
             setError(err?.message || 'Something went wrong. Please try again.');
         } finally {
@@ -1194,6 +1215,8 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                             className="w-full bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:bg-white/10 transition-colors rounded-none mb-6 resize-none"
                                         />
 
+                                        <BrandAssetPicker files={brandFiles} onChange={setBrandFiles} onError={setError} />
+
                                         <TurnstileField
                                             action="booking"
                                             resetKey={turnstileKey}
@@ -1456,6 +1479,12 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     )
                                 )}
 
+                                {!expressMode && detailsStep === TOTAL_DETAILS_STEPS - 1 && (
+                                    <div className="mt-6">
+                                        <BrandAssetPicker files={brandFiles} onChange={setBrandFiles} onError={setError} />
+                                    </div>
+                                )}
+
                                 <TurnstileField
                                     action="booking"
                                     resetKey={turnstileKey}
@@ -1517,6 +1546,31 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     is on hold while we talk. I'll reach out within 24 hours to confirm
                                     scope — nothing is finalized until the retainer is received.
                                 </p>
+                                {(brandLink || brandStatus.state !== 'idle') && (
+                                    <div data-tour="booking-brand-assets-sent" className="bg-white/5 p-4 text-left space-y-3">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Brand assets</p>
+                                        {brandStatus.state === 'sending' && <p className="text-white/70 text-sm">Uploading your files…</p>}
+                                        {brandStatus.state === 'done' && (
+                                            <p className="text-white text-sm">{brandStatus.received} file{brandStatus.received === 1 ? '' : 's'} received.</p>
+                                        )}
+                                        {brandStatus.state === 'error' && <p className="text-red-400 text-sm">{brandStatus.error}</p>}
+                                        {brandStatus.state === 'idle' && (
+                                            <p className="text-white/60 text-sm">Got a logo or brand guide we should match? Send it any time before the shoot.</p>
+                                        )}
+                                        {brandLink && (
+                                            <a
+                                                href={brandLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-block px-4 py-3 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors"
+                                                style={{ borderRadius: 0 }}
+                                            >
+                                                {brandStatus.state === 'done' ? 'Send more files' : 'Upload brand assets'}
+                                            </a>
+                                        )}
+                                        {brandLink && <p className="text-white/30 text-[10px]">The link is in your confirmation email too.</p>}
+                                    </div>
+                                )}
                                 {notifyDebug && (
                                     <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">
                                         <p className="font-black uppercase tracking-widest mb-1">Admin notice</p>
@@ -1531,7 +1585,7 @@ const BookingPage: React.FC<{ focus?: ServiceFocus }> = ({ focus }) => {
                                     for the latest work.
                                 </p>
                                 <button
-                                    onClick={() => { setForm(EMPTY_FORM); setStep('calendar'); }}
+                                    onClick={() => { setForm(EMPTY_FORM); setStep('calendar'); setBrandFiles([]); setBrandLink(null); setBrandStatus({ state: 'idle' }); }}
                                     className="text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-colors"
                                 >
                                     Submit another request

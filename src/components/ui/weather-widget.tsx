@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { DetailSheet } from './detail-sheet';
 import { cn } from './utils';
@@ -34,6 +34,37 @@ const weekday = (iso: string, index: number) =>
 
 const clockTime = (iso: string) =>
   iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—';
+
+/**
+ * The map-style "you are here" arrow, shown beside a city that came from the
+ * device's location fix rather than a search — so a located city reads as
+ * "here" without spelling out "Current Location".
+ */
+function LocationArrow({ className, style }: { className?: string; style?: CSSProperties }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-label="Current location" role="img" className={cn('flex-shrink-0', className)} style={style} fill="currentColor">
+      <path d="M21 3 3 10.53l7.84 2.63L13.47 21z" />
+    </svg>
+  );
+}
+
+/** City label for the tile faces: arrow first when located, never clipped. */
+function PlaceLabel({ place, className, style }: { place: WeatherPlace; className?: string; style?: CSSProperties }) {
+  return (
+    <span className={cn('inline-flex items-center whitespace-nowrap', className)} style={style}>
+      {place.geolocated && <LocationArrow style={{ width: '0.85em', height: '0.85em', marginRight: '0.4em' }} />}
+      {place.name}
+    </span>
+  );
+}
+
+/**
+ * Font size (in cqmin) that fits a city name across `width` cqmin at the
+ * tile's black, widest-tracked uppercase — about 0.82em per character — so
+ * long names shrink instead of truncating. Capped at the design size.
+ */
+const fitName = (place: WeatherPlace, max: number, width: number) =>
+  Math.min(max, width / ((place.name.length + (place.geolocated ? 1.3 : 0)) * 0.82));
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -153,7 +184,10 @@ function WeatherDetail({
           <>
             {/* Current conditions */}
             <div className="text-left">
-              <h2 className="text-2xl font-black uppercase tracking-widest text-white pr-10">{data.place.name}</h2>
+              <h2 className="flex items-center gap-2 text-2xl font-black uppercase tracking-widest text-white pr-10">
+                {data.place.geolocated && <LocationArrow className="w-5 h-5" />}
+                {data.place.name}
+              </h2>
               <p className="mt-1 text-[11px] uppercase tracking-widest text-white/40">
                 {[data.place.admin, data.place.country].filter(Boolean).join(', ')}
                 {isDefault && ' — Default'}
@@ -405,12 +439,11 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
               {conditionGlyph(data.current.code, data.current.isDay)}
             </span>
             <div className="absolute left-0 bottom-0 flex flex-col text-left">
-              <span
-                className="font-black uppercase tracking-widest text-white/60 truncate"
-                style={{ fontSize: '9cqmin', lineHeight: 1, marginBottom: '3cqmin', maxWidth: '80cqmin' }}
-              >
-                {data.place.name}
-              </span>
+              <PlaceLabel
+                place={data.place}
+                className="font-black uppercase tracking-widest text-white/60"
+                style={{ fontSize: `${fitName(data.place, 9, 86)}cqmin`, lineHeight: 1, marginBottom: '3cqmin' }}
+              />
               <span className="font-black leading-none text-white tabular-nums" style={{ fontSize: '32cqmin' }}>
                 {round(data.current.temperature)}°
               </span>
@@ -535,12 +568,11 @@ export function WeatherWidget({ className, size = '2x2' }: { className?: string;
               >
                 {round(data.current.temperature)}°
               </div>
-              <div
-                className="font-bold uppercase tracking-widest text-white/70 truncate"
-                style={{ fontSize: `${5.5 * S}cqmin`, lineHeight: 1.3, marginTop: `${3 * S}cqmin` }}
-              >
-                {data.place.name}
-              </div>
+              <PlaceLabel
+                place={data.place}
+                className="font-bold uppercase tracking-widest text-white/70"
+                style={{ fontSize: `${fitName(data.place, 5.5 * S, cols >= 4 && rows === 2 ? 58 : 86)}cqmin`, lineHeight: 1.3, marginTop: `${3 * S}cqmin` }}
+              />
               <div
                 className="uppercase tracking-widest text-white/40 truncate"
                 style={{ fontSize: `${4.8 * S}cqmin`, lineHeight: 1.3 }}

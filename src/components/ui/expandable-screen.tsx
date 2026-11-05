@@ -23,13 +23,32 @@ const ExpandableScreenContext = createContext<ExpandableScreenContextValue | nul
 let scrollLockCount = 0;
 let prevBodyOverflow = '';
 let prevHtmlOverflow = '';
+const BODY_PIN_PROPS = ['position', 'top', 'left', 'right', 'width'] as const;
+let prevBodyPin: Record<(typeof BODY_PIN_PROPS)[number], string> | null = null;
+let lockedScrollY = 0;
 
+/**
+ * The body is pinned with position: fixed, not just overflow: hidden. On
+ * iPhone, overflow: hidden does not stop Safari from scrolling the page to
+ * lift a focused field above the keyboard; the fixed screen stays put while
+ * the caret is drawn where the page scrolled to — outside the field. A
+ * pinned body cannot scroll, so the caret stays in the box. The page's
+ * scroll position is restored on release.
+ */
 function acquireScrollLock() {
   if (scrollLockCount === 0) {
     prevBodyOverflow = document.body.style.overflow;
     prevHtmlOverflow = document.documentElement.style.overflow;
+    lockedScrollY = window.scrollY;
+    const style = document.body.style;
+    prevBodyPin = { position: style.position, top: style.top, left: style.left, right: style.right, width: style.width };
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    style.position = 'fixed';
+    style.top = `-${lockedScrollY}px`;
+    style.left = '0';
+    style.right = '0';
+    style.width = '100%';
   }
   scrollLockCount += 1;
 }
@@ -39,6 +58,11 @@ function releaseScrollLock() {
   if (scrollLockCount === 0) {
     document.body.style.overflow = prevBodyOverflow;
     document.documentElement.style.overflow = prevHtmlOverflow;
+    if (prevBodyPin) {
+      for (const prop of BODY_PIN_PROPS) document.body.style[prop] = prevBodyPin[prop];
+      prevBodyPin = null;
+    }
+    window.scrollTo(0, lockedScrollY);
   }
 }
 

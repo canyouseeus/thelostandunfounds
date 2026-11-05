@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import NumberField from '../ui/NumberField';
 import {
   PrinterIcon,
   TruckIcon,
@@ -100,6 +101,7 @@ interface ProdigiOrder {
   tracking_number: string | null;
   tracking_url: string | null;
   error_message: string | null;
+  funds_available_at?: string | null;
   created_at: string;
   prodigi_products?: { title: string; sku: string } | null;
 }
@@ -525,7 +527,9 @@ export default function AdminPrintShopView() {
                   </span>
                   <span className="text-white/30 text-[10px] font-mono">×{order.copies}</span>
                   <span className={cn('text-[9px] font-black uppercase tracking-widest', isError ? 'text-red-400' : ORDER_STATUS_COLOR[order.status] || 'text-white/40')}>
-                    {order.status.replace('_', ' ')}
+                    {order.status === 'paid'
+                      ? `Awaiting funds${order.funds_available_at ? ` · ${new Date(order.funds_available_at).toLocaleDateString()}` : ''}`
+                      : order.status.replace('_', ' ')}
                   </span>
                   <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
                     {order.payment_source === 'strike' ? '⚡ Lightning' : 'Card'}
@@ -754,12 +758,9 @@ function ProductDetail({
           {(['x', 'y', 'width', 'height'] as const).map((key) => (
             <div key={key}>
               <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">{key} %</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
+              <NumberField
                 value={bounds[key]}
-                onChange={(e) => setBounds((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                onChange={(v) => setBounds((prev) => ({ ...prev, [key]: v === '' ? 0 : Math.min(100, v) }))}
                 className="w-full bg-white/5 px-2 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300"
               />
             </div>
@@ -1020,12 +1021,9 @@ function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onS
         {(['x', 'y', 'width', 'height'] as const).map((key) => (
           <div key={key}>
             <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">{key} %</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
+            <NumberField
               value={bounds[key]}
-              onChange={(e) => setBounds((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+              onChange={(v) => setBounds((prev) => ({ ...prev, [key]: v === '' ? 0 : Math.min(100, v) }))}
               className="w-full bg-white/5 px-2 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300"
             />
           </div>

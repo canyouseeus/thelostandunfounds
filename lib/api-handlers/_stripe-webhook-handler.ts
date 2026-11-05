@@ -6,7 +6,7 @@ import {
     triggerInvoiceCommission,
     jobCostForBooking,
 } from './affiliates/_commission-trigger.js'
-import { createProdigiOrder } from './_prodigi-client.js'
+import { stripeFundsAvailableAt } from './_prodigi-fulfillment.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
 import { accrueCrewPayout, accruePhotoSalePayouts } from './crew/_shared.js'
 
@@ -244,7 +244,7 @@ async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
                 const { data: invoice } = await supabase
                     .from('invoices')
                     .select('id')
-                    .eq('stripe_payment_link_id', paymentLinkId)
+                    .or(`stripe_payment_link_id.eq.${paymentLinkId},stripe_full_payment_link_id.eq.${paymentLinkId}`)
                     .maybeSingle()
                 if (invoice) {
                     source = 'booking'
@@ -504,13 +504,12 @@ async function finalizeShopOrder(
 }
 
 /**
- * Submit a paid Prodigi print order to the Prodigi fulfillment API and
- * trigger the affiliate commission (42% of unit_price - unit_cost profit).
+ * Mark a Prodigi print order paid and queue it for fulfillment, then trigger
+ * the affiliate commission (42% of unit_price - unit_cost profit).
  *
- * Idempotent: skips submission if the prodigi_orders row is already past
- * 'paid' (submitted/in_production/shipped/complete), and Prodigi's own
- * idempotencyKey (keyed to the row id) protects against a duplicate
- * createOrder call even if this function somehow runs twice concurrently.
+ * Nothing goes to Prodigi here — the hourly prodigi-orders cron submits it
+ * once Stripe has released this payment. Idempotent: skips a row already
+ * past 'pending_payment'.
  */
 async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Session) {
     const { data: order, error: orderError } = await supabase
@@ -554,58 +553,21 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
         },
     }
 
+    // Queue it rather than submitting now: Prodigi bills the owner's card on
+    // submit, and this payment is not in the Stripe balance until it settles.
+    // /api/cron/prodigi-orders submits once it has (see _prodigi-fulfillment).
+    const fundsAvailableAt = await stripeFundsAvailableAt(session.id)
     await supabase
         .from('prodigi_orders')
-        .update({ status: 'paid', paid_at: new Date().toISOString(), customer_email: customerEmail, recipient })
-        .eq('id', order.id)
-
-    try {
-        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
-        const result = await createProdigiOrder({
-            merchantReference: order.id,
-            idempotencyKey: order.id,
+        .update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            customer_email: customerEmail,
             recipient,
-            items: [
-                {
-                    sku: order.sku,
-                    copies: order.copies || 1,
-                    // fillPrintArea crops to the print area's aspect ratio;
-                    // Prodigi auto-rotates the asset to whichever orientation
-                    // needs the least cropping, so a landscape photo prints
-                    // correctly on a portrait-shaped SKU (and vice versa)
-                    // without us pre-rotating pixels ourselves.
-                    sizing: 'fillPrintArea',
-                    ...(order.order_attributes && Object.keys(order.order_attributes).length > 0
-                        ? { attributes: order.order_attributes }
-                        : {}),
-                    assets: [{ printArea: 'default', url: order.asset_url }],
-                },
-            ],
-            callbackUrl: `${origin.replace(/\/$/, '')}/api/prodigi/webhook`,
-            metadata: { prodigiOrderRowId: order.id, shopOrderId: order.shop_order_id },
+            funds_available_at: fundsAvailableAt,
         })
-
-        await supabase
-            .from('prodigi_orders')
-            .update({
-                status: 'submitted',
-                prodigi_order_id: result?.order?.id || null,
-                prodigi_status: result?.order?.status || null,
-                submitted_at: new Date().toISOString(),
-            })
-            .eq('id', order.id)
-
-        console.log('✅ Prodigi order submitted:', { rowId: order.id, prodigiOrderId: result?.order?.id })
-    } catch (prodigiErr: any) {
-        console.error('❌ Failed to submit Prodigi order:', prodigiErr?.message || prodigiErr)
-        await supabase
-            .from('prodigi_orders')
-            .update({ status: 'error', error_message: prodigiErr?.message || 'Prodigi submission failed' })
-            .eq('id', order.id)
-        // Don't throw — the customer paid, so this needs to surface to admins
-        // for manual retry rather than failing the whole webhook (which would
-        // make Stripe retry indefinitely on our end while charging succeeded).
-    }
+        .eq('id', order.id)
+    console.log('🕒 Prodigi order queued until funds settle:', { rowId: order.id, fundsAvailableAt })
 
     if (customerEmail) {
         const profit = Math.max(0, Number(order.unit_price) - Number(order.unit_cost)) * (order.copies || 1)
@@ -786,10 +748,11 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
             : session.payment_link?.id || null
     if (!paymentLinkId) return
 
+    // Either the deposit link or the pay-in-full link offered beside it.
     const { data: invoice } = await supabase
         .from('invoices')
-        .select('id, invoice_number, booking_id, invoice_type, status, total')
-        .eq('stripe_payment_link_id', paymentLinkId)
+        .select('id, invoice_number, booking_id, invoice_type, status, total, stripe_payment_link_id, stripe_full_payment_link_id')
+        .or(`stripe_payment_link_id.eq.${paymentLinkId},stripe_full_payment_link_id.eq.${paymentLinkId}`)
         .maybeSingle()
 
     // Not one of ours (some other payment link) — nothing to do.
@@ -866,6 +829,24 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
         return
     }
 
+    // Two links were offered (deposit / pay in full). Once either is used the
+    // other must stop working, or a client who paid the deposit could still
+    // pay the full amount on top of it. Best-effort, like everything after
+    // the payment is recorded.
+    const otherLinkId = [invoice.stripe_payment_link_id, invoice.stripe_full_payment_link_id]
+        .find((id: string | null) => id && id !== paymentLinkId)
+    if (otherLinkId) {
+        try {
+            const key = process.env.STRIPE_SECRET_KEY
+            if (key) {
+                const stripe = new Stripe(key, { apiVersion: '2024-12-18.acacia' as any, typescript: true })
+                await stripe.paymentLinks.update(otherLinkId, { active: false })
+            }
+        } catch (linkErr: any) {
+            console.warn('⚠️ Could not deactivate the other payment link:', linkErr?.message)
+        }
+    }
+
     if (!invoice.booking_id) {
         console.log('✅ Standalone invoice paid (no booking link):', invoice.id)
         // A job booked directly (phone, email) is billed as a standalone
@@ -925,22 +906,51 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
             console.error('⚠️ Booking commission trigger failed:', commissionErr?.message)
         }
     } else {
-        // Quote deposit paid. Don't downgrade a booking that's already 'paid'.
+        // Quote paid — usually the deposit, or everything at once on the
+        // pay-in-full link. Don't downgrade a booking that's already 'paid'.
         if (booking.status !== 'paid') {
             await supabase
                 .from('bookings')
-                .update({ status: 'deposit_paid', deposit_paid_at: paidAt })
+                .update(
+                    settled
+                        ? { status: 'paid', deposit_paid_at: paidAt, paid_at: paidAt }
+                        : { status: 'deposit_paid', deposit_paid_at: paidAt },
+                )
                 .eq('id', booking.id)
         }
-        console.log('✅ Booking deposit paid:', booking.id)
+        console.log(settled ? '✅ Booking paid in full up front:' : '✅ Booking deposit paid:', booking.id)
+
+        // Paid in full on the quote: there will be no final invoice, so the
+        // commission that final payment would have triggered fires here.
+        if (settled) {
+            try {
+                const grossAmount = (Number(booking.total_amount_cents) || 0) / 100
+                if (booking.email && grossAmount > 0) {
+                    const result = await triggerReferralCommission(supabase, {
+                        email: booking.email,
+                        source: 'booking',
+                        sourceId: booking.id,
+                        grossAmount,
+                        cost: await jobCostForBooking(supabase, booking.id),
+                        saleAt: paidAt,
+                        fallbackAffiliateCode: booking.affiliate_code || null,
+                    })
+                    if (result.triggered) {
+                        console.log('✅ Booking commission registered:', { booking: booking.id, amount: result.amount })
+                    }
+                }
+            } catch (commissionErr: any) {
+                console.error('⚠️ Booking commission trigger failed:', commissionErr?.message)
+            }
+        }
 
         // Confirm to the client and set the expectation that the balance is
         // collected on the day. Best-effort: a mail failure must not fail the
         // webhook, or Stripe retries a payment we have already recorded.
         try {
             if (booking.email) {
-                const total = (Number(booking.total_amount_cents) || 0) / 100
-                const deposit = (Number(booking.deposit_amount_cents) || 0) / 100
+                // What actually arrived, not the deposit we asked for — on the
+                // pay-in-full link they differ, and the email must say so.
                 await sendDepositConfirmationEmail({
                     to: booking.email,
                     clientName: booking.name,
@@ -949,8 +959,8 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
                     eventDate: booking.event_date,
                     startTime: booking.start_time,
                     location: booking.location,
-                    depositPaid: deposit,
-                    balanceDue: Math.max(0, Math.round((total - deposit) * 100) / 100),
+                    depositPaid: amountPaid,
+                    balanceDue: remaining,
                 })
             }
         } catch (mailErr: any) {

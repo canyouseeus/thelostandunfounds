@@ -4,11 +4,17 @@
  * with the full affiliate dashboard inlined for the affiliate section.
  */
 
+import NumberField from '../components/ui/NumberField';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import JobPayouts from '../components/JobPayouts';
+import PhotographerPanel from '../components/crew/PhotographerPanel';
+import PortfolioEditor from '../components/portfolio/PortfolioEditor';
+import BrandKit from '../components/brand/BrandKit';
+import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
+import ProfilePictureEditor from '../components/ProfilePictureEditor';
+import CrewOnboardingModal from '../components/crew/CrewOnboardingModal';
 import { useToast } from '../components/Toast';
 import {
   UserIcon,
@@ -49,7 +55,10 @@ import {
   TagIcon,
   XMarkIcon,
   DocumentCheckIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  RectangleStackIcon,
+  SwatchIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
@@ -60,12 +69,11 @@ import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
 import TourHelpButton from '../components/admin/tour/TourHelpButton';
-import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
+import { DashboardId, TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
-import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import SEOHead from '../components/SEOHead';
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount';
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge';
@@ -218,6 +226,9 @@ export default function Affiliate() {
 
   // Core state
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  // On the crew roster: gets the PHOTOGRAPHER app. The roster is admin-only
+  // under RLS, so ask the crew route, which checks the verified session.
+  const [isCrew, setIsCrew] = useState(false);
   const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
   // Pre-open a section if ?section= is in the URL (e.g. /dashboard?section=affiliate)
   const initialSection = searchParams.get('section') || '';
@@ -238,6 +249,9 @@ export default function Affiliate() {
   const [userGalleries, setUserGalleries] = useState<UserGallery[]>([]);
   const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(null);
   const [galleryRevenueTotal, setGalleryRevenueTotal] = useState(0);
+  // Gallery sales alone, dated — SITE REVENUE adds bookings and street to
+  // these. Commissions stay out of it: they are paid on those same sales.
+  const [gallerySalesHistory, setGallerySalesHistory] = useState<{ date: string; amount: number }[]>([]);
   const [history, setHistory] = useState<{
     revenue: (string | { date: string; amount: number })[];
     newsletter: string[];
@@ -309,10 +323,48 @@ export default function Affiliate() {
   // by the activeApp initial state; ?stripe=... fires after a Stripe Connect redirect).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has('stripe')) {
+    // Photographers come back from Stripe with ?section=photographer; leave that open.
+    if (params.has('stripe') && !params.get('section')) {
       setActiveApp('affiliate');
     }
   }, []);
+
+  // SITE REVENUE (admin only): bookings and street, the same numbers the
+  // admin dashboard shows. Totals come from revenue-summary; the dated rows
+  // feed the YTD / MTD / 7D windows. Street includes deposits the owner
+  // tagged street at the deposit check-in.
+  const [siteRevenue, setSiteRevenue] = useState<{
+    bookings: number;
+    street: number;
+    history: { date: string; amount: number }[];
+  }>({ bookings: 0, street: 0, history: [] });
+
+  useEffect(() => {
+    if (!userIsAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [summaryRes, payments, nights, deposits] = await Promise.all([
+          fetch('/api/admin/revenue-summary'),
+          supabase.from('invoice_payments').select('amount, paid_at'),
+          supabase.from('field_sales').select('night, total'),
+          supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
+        ]);
+        const summary = summaryRes.ok ? await summaryRes.json() : null;
+        const total = (source: string) =>
+          ((summary?.sources ?? []).find((x: any) => x.source === source)?.totalCents ?? 0) / 100;
+        const rows = [
+          ...(payments.data ?? []).map((r: any) => ({ date: r.paid_at, amount: Number(r.amount || 0) })),
+          ...(nights.data ?? []).map((r: any) => ({ date: `${r.night}T12:00:00Z`, amount: Number(r.total || 0) })),
+          ...(deposits.data ?? []).map((r: any) => ({ date: r.received_at, amount: Number(r.amount_cents || 0) / 100 })),
+        ].filter(r => r.date && r.amount > 0);
+        if (!cancelled) setSiteRevenue({ bookings: total('bookings'), street: total('street'), history: rows });
+      } catch (err) {
+        console.error('Site revenue failed:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userIsAdmin]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -322,6 +374,25 @@ export default function Affiliate() {
       }
     };
     checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/crew/setup', {
+          headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+        });
+        if (!res.ok) return;
+        const payload = await res.json();
+        if (!cancelled) setIsCrew(!!payload.onRoster);
+      } catch (err) {
+        console.warn('Error checking crew roster:', err);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [user]);
 
   // Show affiliate signup wizard when ?join=affiliate is in URL and user has no affiliate account
@@ -482,6 +553,7 @@ export default function Affiliate() {
       const salesData = sales || [];
       const galleryTotal = salesData.reduce((sum: any, o: any) => sum + (o.total_amount_cents || 0), 0) / 100;
       setGalleryRevenueTotal(galleryTotal);
+      setGallerySalesHistory(salesData.map((o: any) => ({ date: o.created_at, amount: (o.total_amount_cents || 0) / 100 })));
 
       const revenueHistory: { date: string; amount: number }[] = [
         ...commissionsData.map(c => ({ date: c.created_at, amount: Number(c.amount) })),
@@ -897,6 +969,12 @@ export default function Affiliate() {
   const hasGallery = userGalleries.length > 0 || userIsAdmin;
   const hasBookClub = !!userSubdomain || userIsAdmin;
   const hasAffiliate = !!affiliateData || userIsAdmin;
+  const hasPhotographer = isCrew || userIsAdmin;
+  // Portfolios and profile pictures: photographers, affiliates, writers and
+  // the admin. The database enforces the same rule (private.can_have_portfolio),
+  // so this only decides what shows.
+  const hasPortfolio = hasPhotographer || hasAffiliate || hasBookClub;
+  const tourDashboards: DashboardId[] = hasPhotographer ? ['member', 'photographer'] : ['member'];
 
   return (
     <>
@@ -916,8 +994,11 @@ export default function Affiliate() {
         noIndex={true}
       />
       <div data-tour-root="member" data-active-panel={activeApp ?? ''} className="min-h-screen bg-black text-white selection:bg-white/20">
-        <WhatsNewModal dashboard="member" />
-        <TourHelpButton dashboard="member" />
+        <WhatsNewModal dashboard={tourDashboards} />
+        <TourHelpButton dashboard={tourDashboards} />
+        {/* Picks up where the crew onboarding email left off. Hides itself
+            for anyone not on the roster, or with nothing left to do. */}
+        <CrewOnboardingModal userId={user.id} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           {/* Main Grid Layout - 12 Columns */}
@@ -929,12 +1010,8 @@ export default function Affiliate() {
 
               <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
-                    <AvatarImage src={user.user_metadata?.avatar_url || '/logo.png'} alt="Profile" />
-                    <AvatarFallback className="bg-white text-black font-black text-2xl">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {/* Tap to change. Circles are the one sanctioned rounded shape (noir-design). */}
+                  <ProfilePictureEditor size="md" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h1 className="text-xl sm:text-3xl font-black uppercase tracking-tighter">My Dashboard</h1>
@@ -999,14 +1076,17 @@ export default function Affiliate() {
                     affiliateRevenue={parseFloat(String(affiliateData?.total_earnings || 0))}
                     galleryRevenue={galleryRevenueTotal}
                     subscriberRevenue={0}
+                    bookingRevenue={siteRevenue.bookings}
+                    streetRevenue={siteRevenue.street}
                     galleryPhotoCount={userGalleries.reduce((sum, g) => sum + (g.photo_count || 0), 0)}
                     usersCount={affiliateData?.network_size || 0}
                     stats={{
-                      revenue: parseFloat(String(affiliateData?.total_earnings || 0)) + galleryRevenueTotal,
+                      revenue: galleryRevenueTotal + siteRevenue.bookings + siteRevenue.street,
                       newsletter: 0,
-                      affiliates: (affiliateData?.total_conversions || 0)
+                      affiliates: (affiliateData?.total_conversions || 0),
+                      bookings: siteRevenue.bookings,
                     }}
-                    history={history}
+                    history={{ ...history, revenue: [...gallerySalesHistory, ...siteRevenue.history] }}
                   />
                 )}
 
@@ -1023,7 +1103,7 @@ export default function Affiliate() {
                   />
                 )}
               </div>
-              <div data-tour="m-clock" className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
+              <div data-tour="m-clock" data-header-widgets-anchor className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
                 <ClockWidget size="lg" className="md:flex-1" />
                 <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
               </div>
@@ -1035,7 +1115,11 @@ export default function Affiliate() {
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
                 <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
-                    { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
+                    { id: 'photographer', icon: CameraIcon, title: 'Photographer', show: hasPhotographer },
+                    { id: 'portfolio', icon: RectangleStackIcon, title: 'Portfolio', show: hasPortfolio },
+                    { id: 'brandkit', icon: SwatchIcon, title: 'Brand Kit', show: hasPhotographer },
+                    { id: 'contentrequests', icon: CloudArrowUpIcon, title: 'Content Requests', show: hasPhotographer },
+                    { id: 'gallery', icon: PhotoIcon, title: 'The Gallery', show: hasGallery },
                     { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
                     { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
                     { id: 'settings', icon: Cog6ToothIcon, title: 'Account', show: true }
@@ -1061,7 +1145,7 @@ export default function Affiliate() {
 
             {/* Technical support: open a ticket, follow the ones already open. */}
             <div className="col-span-12 pt-4">
-              <MyTickets role={affiliateData ? 'affiliate' : undefined} />
+              <MyTickets role={isCrew ? 'photographer' : affiliateData ? 'affiliate' : undefined} />
             </div>
 
             {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
@@ -1073,7 +1157,11 @@ export default function Affiliate() {
                 <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                   {activeApp && (() => {
                     const meta: Record<string, { title: string; icon: JSX.Element }> = {
-                      gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
+                      photographer: { title: 'Photographer', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
+                      portfolio: { title: 'Portfolio', icon: <RectangleStackIcon className="w-5 h-5 text-white/40" /> },
+                      brandkit: { title: 'Brand Kit', icon: <SwatchIcon className="w-5 h-5 text-white/40" /> },
+                      contentrequests: { title: 'Content Requests', icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
+                      gallery: { title: 'The Gallery', icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                       writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                       affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
                       settings: { title: 'Account Settings', icon: <Cog6ToothIcon className="w-5 h-5 text-white/40" /> },
@@ -1098,20 +1186,37 @@ export default function Affiliate() {
                   })()}
 
                   <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
+              {/* Photographer Section */}
+              {hasPhotographer && activeApp === 'photographer' && (
+                <PhotographerPanel userId={user.id} />
+              )}
+
+              {/* Portfolio Section */}
+              {hasPortfolio && activeApp === 'portfolio' && (
+                <PortfolioEditor
+                  userId={user.id}
+                  suggestedHandle={affiliateData?.code || user.email?.split('@')[0]}
+                  suggestedName={user.user_metadata?.full_name || user.user_metadata?.name || ''}
+                />
+              )}
+
+              {/* Brand Kit Section */}
+              {hasPhotographer && activeApp === 'brandkit' && (
+                <BrandKit userId={user.id} />
+              )}
+
+              {/* Content Requests — this photographer's own clients' logos and
+                  files. The API scopes it to them; the studio sees all of it. */}
+              {hasPhotographer && activeApp === 'contentrequests' && (
+                <AdminClientUploadsView photographerView />
+              )}
+
               {/* Gallery Section */}
               {hasGallery && activeApp === 'gallery' && (
-                <>
-                  {/* Job pay for shoots covered. Lives here as well as on the
-                      photographer dashboard because this is where contractors
-                      actually land — the affiliate earnings figure above reads
-                      $0.00 for someone who has been paid for shoots, since
-                      commission and wages are deliberately separate ledgers. */}
-                  {user && <JobPayouts userId={user.id} />}
-                  <AdminGalleryView
-                    onBack={() => setActiveApp(null)}
-                    isPhotographerView={true}
-                  />
-                </>
+                <AdminGalleryView
+                  onBack={() => setActiveApp(null)}
+                  isPhotographerView={true}
+                />
               )}
 
               {/* Writer Section */}
@@ -1753,13 +1858,9 @@ export default function Affiliate() {
                                 <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
                                   Payout Amount
                                 </label>
-                                <input
-                                  type="number"
-                                  min={payoutSettings?.payment_threshold || 10}
-                                  max={dashData.balance?.available_balance || 0}
-                                  step="0.01"
+                                <NumberField
                                   value={payoutAmount}
-                                  onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                                  onChange={(v) => setPayoutAmount(v === '' ? 0 : v)}
                                   className="w-full px-4 py-3 bg-white/5 rounded-none text-white focus:outline-none transition-colors font-mono text-sm"
                                 />
                                 <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
@@ -1819,6 +1920,12 @@ export default function Affiliate() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="bg-[#0a0a0a] p-6">
                     <div data-tour="m-account" className="space-y-4 max-w-2xl">
+                      {hasPortfolio && (
+                        <div className="pb-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 mb-3">Profile Picture</p>
+                          <ProfilePictureEditor size="lg" showActions />
+                        </div>
+                      )}
                       <AdminBentoRow label="Tier" value={tier || 'Free'} />
                       <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
                       <AdminBentoRow label="Invites" value="0 Available" />

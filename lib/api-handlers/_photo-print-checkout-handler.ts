@@ -101,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ).replace(/\/$/, '')
 
         const assetUrl = `${origin}/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=4096`
-        const productName = `${photo.title} — ${option.size_label}`
+        const productName = `Photo print — ${option.size_label}`
 
         const successUrl = `${origin}/shop/success?session_id={CHECKOUT_SESSION_ID}`
         const cancelUrl = `${origin}/gallery`
@@ -143,6 +143,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ],
             ...(customerEmail ? { customer_email: customerEmail } : {}),
             shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU'] },
+            custom_text: {
+                shipping_address: {
+                    message: 'Made to order. Ships once your payment clears, usually 1–3 weeks to arrive. Shipping & returns: thelostandunfounds.com/shipping',
+                },
+            },
             allow_promotion_codes: true,
             success_url: successUrl,
             cancel_url: cancelUrl,

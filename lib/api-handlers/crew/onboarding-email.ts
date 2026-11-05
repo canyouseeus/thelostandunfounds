@@ -119,7 +119,7 @@ export function buildOnboardingEmail(person: Recipient): {
   missing: string[];
 } {
   const firstName = escapeHtml(person.name.trim().split(/\s+/)[0] || 'there');
-  const dashboard = `${SITE}/photographer-dashboard`;
+  const dashboard = `${SITE}/dashboard?section=photographer`;
 
   const hasGear = person.gearItems > 0;
   const missing: string[] = [];

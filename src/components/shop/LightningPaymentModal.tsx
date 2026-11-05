@@ -104,7 +104,7 @@ export function LightningPaymentModal({
         onClick={onClose}
       />
       <div
-        className="relative bg-black border border-white rounded-none shadow-2xl max-w-md w-full overflow-hidden"
+        className="relative bg-[#0a0a0a] rounded-none max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -125,7 +125,7 @@ export function LightningPaymentModal({
           {paymentState === 'waiting' && (
             <>
               <div className="flex justify-center">
-                <div className="bg-black p-2 border border-white/20">
+                <div className="bg-black p-2">
                   <img
                     src={qrCodeUrl}
                     alt="Lightning Invoice QR Code"
@@ -145,7 +145,7 @@ export function LightningPaymentModal({
                     type="text"
                     readOnly
                     value={lnInvoice}
-                    className="flex-1 bg-white/5 border border-white/20 text-white/70 text-xs px-3 py-2 rounded-none font-mono truncate"
+                    className="flex-1 bg-white/5 text-white/70 text-xs px-3 py-2 rounded-none font-mono truncate"
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
                   <button

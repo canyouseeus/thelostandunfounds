@@ -145,6 +145,64 @@ export async function createPaymentLink(
   return { id: link.id, url: link.url }
 }
 
+/**
+ * A second, pay-everything-now link alongside a deposit link.
+ *
+ * Clients asked to be able to settle the whole job up front instead of a
+ * deposit now and a balance later. The amount is whatever is still owed on the
+ * invoice (total minus payments recorded), so it stays right after a partial
+ * payment. The link id is stored in `stripe_full_payment_link_id` so the
+ * webhook matches a payment on it exactly like the deposit link, and settles
+ * the invoice in one go.
+ *
+ * Returns null when there is nothing left to collect.
+ */
+export async function createFullPaymentLink(
+  supabase: SupabaseClient,
+  stripe: Stripe,
+  args: {
+    invoiceId: string
+    invoiceNumber: string
+    total: number
+    label: string
+    bookingId?: string | null
+    redirectUrl: string
+  }
+): Promise<{ id: string; url: string; amount: number } | null> {
+  const { data: payments } = await supabase
+    .from('invoice_payments')
+    .select('amount')
+    .eq('invoice_id', args.invoiceId)
+  const received = (payments || []).reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)
+  const amount = Math.round((args.total - received) * 100) / 100
+  const amountCents = Math.round(amount * 100)
+  if (amountCents < 50) return null
+
+  const link = await createPaymentLink(stripe, {
+    amountCents,
+    productName: `Paid in full — ${args.label} — ${args.invoiceNumber}`,
+    description: `${args.invoiceNumber} paid in full${args.bookingId ? ` — booking ${args.bookingId}` : ''}`,
+    metadata: {
+      source: BOOKING_PAYMENT_SOURCE,
+      kind: 'full',
+      invoiceId: args.invoiceId,
+      ...(args.bookingId ? { bookingId: args.bookingId } : {}),
+    },
+    redirectUrl: args.redirectUrl,
+  })
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({ stripe_full_payment_link_id: link.id, stripe_full_payment_link_url: link.url })
+    .eq('id', args.invoiceId)
+  if (error) {
+    // A link the webhook can't match would take money nothing records.
+    await stripe.paymentLinks.update(link.id, { active: false })
+    throw new Error(`Failed to save full-payment link on invoice; link deactivated: ${error.message}`)
+  }
+  return { id: link.id, url: link.url, amount }
+}
+
 function fmtUSD(n: number): string {
   return `$${Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`
 }
@@ -186,6 +244,8 @@ export function buildBookingPaymentEmailBody(args: {
   amountDueLabel: string
   paymentUrl: string
   pdfUrl: string
+  /** Optional pay-everything-now link, shown under the deposit button. */
+  fullPaymentUrl?: string | null
 }): string {
   const text = BRAND.colors.text
   const muted = BRAND.colors.textMuted
@@ -194,10 +254,14 @@ export function buildBookingPaymentEmailBody(args: {
 
   const intro =
     args.kind === 'quote'
-      ? `Here's the quote for your ${escapeHtml(args.eventType || 'shoot')}. To lock the date, a <b>50% deposit</b> is due now — the rest is invoiced after the shoot.`
+      ? args.fullPaymentUrl
+        ? `Here's the invoice for your ${escapeHtml(args.eventType || 'shoot')}. To lock the date, pay the <b>50% deposit</b> now and the rest is invoiced after the shoot — or pay the full ${fmtUSD(args.projectTotal)} now and you're all set.`
+        : `Here's the invoice for your ${escapeHtml(args.eventType || 'shoot')}. To lock the date, a <b>50% deposit</b> is due now — the rest is invoiced after the shoot.`
       : `Thanks again for your ${escapeHtml(args.eventType || 'shoot')}. Here's the final invoice for the remaining balance.`
 
-  const heading = args.kind === 'quote' ? 'YOUR QUOTE IS READY' : 'FINAL INVOICE'
+  // Clients see an invoice either way. `kind` stays 'quote' internally — it is
+  // the deposit stage — but nobody books a shoot to receive a "quote".
+  const heading = args.kind === 'quote' ? 'YOUR INVOICE IS READY' : 'FINAL INVOICE'
 
   return `
     <h1 style="color:${text} !important;font-size:26px;font-weight:bold;letter-spacing:0.08em;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${heading}</h1>
@@ -239,10 +303,13 @@ export function buildBookingPaymentEmailBody(args: {
       args.kind === 'quote' ? 'btn-pay-deposit' : 'btn-pay-balance',
       args.kind === 'quote' ? 'PAY DEPOSIT' : 'PAY BALANCE'
     )}
+    ${args.kind === 'quote' && args.fullPaymentUrl ? `
+    <p style="color:${muted};font-size:12px;letter-spacing:0.2em;text-transform:uppercase;text-align:center;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">or pay the full ${fmtUSD(args.projectTotal)}</p>
+    ${renderImageButton(escapeHtml(args.fullPaymentUrl), 'btn-pay-in-full', 'PAY IN FULL')}` : ''}
 
     <p style="color:${muted};font-size:12px;line-height:1.6;margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;">
       Secure payment via Stripe. Prefer the full document?
-      <a href="${escapeHtml(args.pdfUrl)}" style="color:${text};text-decoration:underline;">View the ${args.kind === 'quote' ? 'quote' : 'invoice'} PDF</a>.
+      <a href="${escapeHtml(args.pdfUrl)}" style="color:${text};text-decoration:underline;">View the invoice PDF</a>.
     </p>
 
     <hr style="border:none;margin:24px 0;">
@@ -268,7 +335,7 @@ export async function sendBookingPaymentEmail(args: {
   })
   const subject =
     args.kind === 'quote'
-      ? `Your quote ${args.invoiceNumber} — ${BRAND.name}`
+      ? `Your invoice ${args.invoiceNumber} — ${BRAND.name}`
       : `Invoice ${args.invoiceNumber} — ${BRAND.name}`
 
   const auth = await getZohoAuthContext()
@@ -410,6 +477,21 @@ export async function createQuoteForBooking(args: {
     .update({ stripe_payment_link_id: link.id, stripe_payment_link_url: link.url })
     .eq('id', invoice.id)
 
+  // Non-fatal: the deposit link alone is a complete quote.
+  let fullLink: { url: string } | null = null
+  try {
+    fullLink = await createFullPaymentLink(supabase, stripe, {
+      invoiceId: invoice.id,
+      invoiceNumber,
+      total,
+      label: booking.event_type || 'Photography',
+      bookingId,
+      redirectUrl: `${origin}/booking?payment=success`,
+    })
+  } catch (fullErr: any) {
+    console.warn('[createQuoteForBooking] full-payment link failed:', fullErr?.message)
+  }
+
   await supabase
     .from('bookings')
     .update({
@@ -434,6 +516,7 @@ export async function createQuoteForBooking(args: {
       amountDueLabel: `Deposit Due (${pct}%)`,
       paymentUrl: link.url,
       pdfUrl,
+      fullPaymentUrl: fullLink?.url || null,
     })
     await sendBookingPaymentEmail({ to: recipient, kind: 'quote', invoiceNumber, bodyHtml })
     emailed = true
@@ -486,13 +569,21 @@ export async function sendDepositConfirmationEmail(args: {
       <strong>${label}:</strong> ${value}
     </p>`
 
+  // Paid on the pay-in-full link: nothing is owed, so don't promise a final
+  // invoice that will never come.
+  const paidInFull = args.balanceDue <= 0.005
+  const balanceLine = paidInFull
+    ? `<strong>Paid in full.</strong> Nothing else is due — see you at the shoot.`
+    : `<strong>Remaining balance: ${fmt(args.balanceDue)}</strong>, collected on the day of the shoot
+      once it's complete. We'll send the final invoice and payment link then — nothing to do before that.`
+
   const bodyHtml = `
-    <h1 style="color: ${BRAND.colors.text}; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; letter-spacing: 0.1em;">DEPOSIT RECEIVED</h1>
+    <h1 style="color: ${BRAND.colors.text}; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; letter-spacing: 0.1em;">${paidInFull ? 'PAYMENT RECEIVED' : 'DEPOSIT RECEIVED'}</h1>
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
       ${args.clientName ? `Hi ${args.clientName},` : 'Hi,'}
     </p>
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
-      Thank you for booking with us — we've received your deposit of <strong>${fmt(args.depositPaid)}</strong>
+      Thank you for booking with us — we've received your ${paidInFull ? 'payment' : 'deposit'} of <strong>${fmt(args.depositPaid)}</strong>
       against ${args.invoiceNumber}. Your shoot is confirmed.
     </p>
     ${row('Shoot', args.eventType || 'Photography')}
@@ -501,8 +592,7 @@ export async function sendDepositConfirmationEmail(args: {
     ${args.location ? row('Location', args.location) : ''}
     <hr style="border: none; margin: 30px 0;">
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
-      <strong>Remaining balance: ${fmt(args.balanceDue)}</strong>, collected on the day of the shoot
-      once it's complete. We'll send the final invoice and payment link then — nothing to do before that.
+      ${balanceLine}
     </p>
     <p style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
       If anything about the date, time or access changes, just reply to this email.
@@ -521,7 +611,9 @@ export async function sendDepositConfirmationEmail(args: {
     auth,
     to: args.to,
     cc: FROM_EMAIL,
-    subject: `Deposit received — your shoot is confirmed (${args.invoiceNumber})`,
+    subject: paidInFull
+      ? `Payment received — your shoot is confirmed (${args.invoiceNumber})`
+      : `Deposit received — your shoot is confirmed (${args.invoiceNumber})`,
     htmlContent,
   })
 }

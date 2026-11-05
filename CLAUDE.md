@@ -22,6 +22,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Payments | Stripe | Checkout Sessions + webhooks; Connect for affiliate payouts |
 | Shop | Fourthwall | External platform |
 
+## OWNER LOCATION
+
+The owner lives in **Austin, Texas**, on `America/Chicago` time. Give every time to them in
+Central and label it CST or CDT correctly: DST ends the first Sunday of November and starts the
+second Sunday of March. The session clock is UTC. Convert it; don't guess. (Owner, 2026-11-01:
+"I need you to remember where I am.")
+
 ## Where to Find Things
 
 | What you need | Where to look |
@@ -131,9 +138,10 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | invoice, proposal, quote, estimate, client document | `client-documents` |
 | billing, deposit, payment link, promo code, discount code, checkout | `email-billing` |
 | blocked connector, "requires approval", can't do it from here | `build-the-endpoint` |
+| find clients, prospects, leads, outreach, prospecting, cold email | `client-hunter`, `brand-ethos` |
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
-| gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
+| gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting`, GALLERY EVERYWHERE RULE below |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
 | modal, overlay, z-index, popup | `modal-z-index-manager` |
 | database, migration, RLS, schema, Supabase, SQL | `supabase-mcp`, `infra-ops`, `verify-schema` |
@@ -150,6 +158,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | page titles, h1, heading case | Page Title Style Rule below |
 | new admin feature, tutorial, walkthrough, tour, onboarding | ADMIN TUTORIAL RULE below, `admin-ops` |
 | public form, contact, signup, ticket, submission, spam, bot, Turnstile, CAPTCHA | TURNSTILE RULE below |
+| dashboard change, "add to the dashboard", widget, panel, tab | Dashboard Scope Rule below |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 
@@ -203,6 +212,8 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `create_invoice` | `{clientName, clientEmail, clientPhone?, description, eventDate?, lineItems[]}` |
 | `create_payment_link` | `{invoiceNumber}` |
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
+| `invite_photographer` | `{email, name?, testEmail?}` — the "You're on the roster" photographer invite (Admin → Gallery → Invite Photographer); `testEmail` previews it there, stores nothing, no CC |
+| `gallery_invite` | `{slug \| library_id, emails?, testEmail?}` — the client gallery invite (edit a gallery → Resend); each opens the gallery in one tap. `emails` may be album owners or à la carte buyers (each gets their list's copy). No `emails` → everyone invited but media@; media@ gets a record copy of each, never a CC (the link is a login). `testEmail` (admin address) previews it there only |
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
@@ -375,6 +386,20 @@ first visit, running the tour marked `intro`. A new dashboard gets a `data-tour-
 4. Changing an existing tool? Update its tour so the steps still match what is on screen. All tours
    are listed under TUTORIALS (SAGE MODE on → TUTORIALS, or the `/sagemode` page).
 
+## GALLERY EVERYWHERE RULE
+
+Owner rule, 2026-11-02: **a gallery change ships to every dashboard that has galleries, by
+default** — admin (`/admin` → Gallery), member (`/dashboard` → Gallery app) and photographer
+(`/dashboard` → Photographer → My Galleries). Only admin-only *tools* (sync, Drive, applications,
+tags) stay admin-only.
+
+- All three render the same `src/components/admin/AdminGalleryView.tsx` (`isPhotographerView` for
+  member and photographer). Put a gallery feature in that form, never in an admin-only copy, and
+  never behind `!isPhotographerView` unless it is an admin-only tool.
+- The tour goes on all three dashboards too: a step in each gallery tour and a `group: 'new'` tour
+  per `dashboard` (see `albumPriceTour` and its member/photographer twins in `tours.ts`).
+- Pricing math lives once, in `src/lib/buyerPricing.ts`, shared by the gallery page and checkout.
+
 ## DASHBOARD CLOCK RULE
 Clock face click → cycles formats (Analog → Digital 12h → 24h). Top label click → cycles modes (Clock → Stopwatch → Timer). Use `e.stopPropagation()` on clock face clicks.
 
@@ -408,6 +433,37 @@ monotone-smoothed 2px line, flat ~12% fill, r=2 data dots; bars are the accent a
 only** (revenue green-400, newsletter/analytics blue-400, affiliates purple-400,
 bookings amber-500), never by dialect. Never introduce a new chart style.
 
+## DASHBOARD SCOPE RULE
+
+The platform has more than one dashboard, and "the dashboard" doesn't say which one:
+
+| Dashboard | Route | Main file |
+|---|---|---|
+| Admin | `/admin` | `src/pages/Admin.tsx` (+ `src/components/admin/`) |
+| Photographer (contractor) | `/photographer-dashboard` | `src/pages/PhotographerDashboard.tsx` |
+| Affiliate / user | `/dashboard` | `Affiliate` page (`/affiliate-dashboard` redirects here) |
+
+Client preview dashboards (`/silva-star/dashboard`, `/kattitude-preview/dashboard`,
+`/fadebox-preview/dashboard`) belong to client sites and are never in scope unless named.
+
+**Before changing any dashboard, ask which ones the change goes to** unless the request already
+names them. Offer these choices and allow more than one to be picked:
+
+- Admin only
+- Photographer only
+- Affiliate / user only
+- Some of them (a subset, e.g. admin + photographer)
+- All dashboards
+
+Rules:
+1. Never assume admin-only, and never assume "all". A feature built for admin can leak data
+   (revenue, other contractors' payouts, client details) if copied to photographer or affiliate
+   views; one built for a single dashboard may be wanted on the others too.
+2. Ask once, up front, before writing code — use `AskUserQuestion` with `multiSelect: true`.
+3. When the change goes to more than one dashboard, check each target's data access separately:
+   a non-admin dashboard must only see the signed-in user's own rows (RLS), never admin data.
+4. In the wrap-up, state which dashboards were changed and show evidence (screenshot) for each.
+
 ## PAGE TITLE STYLE RULE
 
 Main page titles (h1 headings — page titles, navigation/landing titles, major section titles) are **UPPERCASE**. Does NOT apply to error messages, loading states, success toasts, subheadings (h2+), body text, button labels, or form labels.
@@ -419,7 +475,7 @@ Main page titles (h1 headings — page titles, navigation/landing titles, major 
 - **API/DB security**: audit Supabase RLS policies, check for injection vectors when asked about API or database security.
 - **Infra security**: check Vercel config, env vars, SSL/TLS, Cloudflare Turnstile when asked about infrastructure or deployment security.
 - **Frontend security**: scan for XSS, exposed secrets, CSP headers when asked about frontend security.
-- **Severity response** — critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. There is no automated schedule — these run when asked or when something looks wrong, not on a timer.
+- **Severity response** — critical (exposed secrets, active breach): treat as urgent, remediate immediately. High (SQL injection, RLS bypass): fix promptly, don't defer. Medium (missing headers, outdated deps): note and batch into normal work. A report-only sweep runs about weekly as the desktop-app scheduled task `weekly-security-check` (it fires every 2h while the app is open and skips unless the newest report is 7+ days old) and writes `docs/security/reports/security-check-YYYY-MM-DD.md`. It never fixes, commits or deploys — remediation happens in a normal session.
 
 ## ENVIRONMENT VARIABLES
 

@@ -49,6 +49,15 @@ export { normalizeHandle };
 
 export const INGEST_KEY_PREFIX = 'tlu_live_';
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+// Gallery video is short clips, 30 seconds to 2 minutes (owner, 2026-11-01).
+// 1GB covers 2 minutes at any phone setting, 4K included. Anything longer
+// belongs on YouTube: every view streams through our function, so long video
+// here is a bandwidth bill.
+const MAX_VIDEO_UPLOAD_BYTES = 1024 * 1024 * 1024;
+
+function isGalleryMedia(mimeType: string | null | undefined): boolean {
+    return Boolean(mimeType && (mimeType.startsWith('image/') || mimeType.startsWith('video/')));
+}
 const MAX_BATCH = 200;
 
 export class HttpError extends Error {
@@ -103,7 +112,11 @@ function bearer(req: VercelRequest): string {
     return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 }
 
-async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string; slug?: string }): Promise<IngestLibrary> {
+async function loadLibrary(
+    supabase: ServiceSupabaseClient,
+    match: { id?: string; slug?: string },
+    opts: { createFolder?: boolean } = {},
+): Promise<IngestLibrary> {
     let query = supabase
         .from('photo_libraries')
         .select('id, slug, name, google_drive_folder_id, gdrive_folder_id, live_mode, owner_id, photographer_handle');
@@ -112,13 +125,53 @@ async function loadLibrary(supabase: ServiceSupabaseClient, match: { id?: string
     if (error) throw new HttpError(500, error.message);
     if (!data) throw new HttpError(404, 'Gallery not found.');
 
-    const folderId = data.google_drive_folder_id || data.gdrive_folder_id;
+    let folderId = data.google_drive_folder_id || data.gdrive_folder_id;
+    if (!folderId && opts.createFolder) folderId = await createGalleryFolder(supabase, data);
     if (!folderId) throw new HttpError(409, `Gallery ${data.slug} has no Google Drive folder to publish into.`);
     return {
         id: data.id, slug: data.slug, name: data.name, folderId,
         live_mode: Boolean(data.live_mode), owner_id: data.owner_id ?? null,
         handle: normalizeHandle(data.photographer_handle),
     };
+}
+
+/**
+ * Give a gallery made with Direct Upload (no Drive link) its own Drive folder,
+ * on its first upload. Only for callers already allowed to write to the
+ * gallery — the admin, or the photographer who owns it — never an ingest key.
+ * Lands in CLIENT_GALLERIES_DRIVE_FOLDER_ID like api/admin/gallery-upload.ts.
+ */
+async function createGalleryFolder(
+    supabase: ServiceSupabaseClient,
+    library: { id: string; slug: string; name: string | null },
+): Promise<string> {
+    let folderId: string;
+    try {
+        folderId = await ingestDeps.createFolder(
+            library.name || library.slug,
+            process.env.CLIENT_GALLERIES_DRIVE_FOLDER_ID || undefined,
+        );
+    } catch (err: any) {
+        throw new HttpError(502, `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`);
+    }
+    // Only fill an empty slot: two first uploads racing must end on one folder.
+    const { data: claimed, error } = await supabase
+        .from('photo_libraries')
+        .update({ google_drive_folder_id: folderId })
+        .eq('id', library.id)
+        .is('google_drive_folder_id', null)
+        .select('google_drive_folder_id')
+        .maybeSingle();
+    if (error) throw new HttpError(500, error.message);
+    if (claimed?.google_drive_folder_id) return claimed.google_drive_folder_id;
+    // The other upload won; use its folder. The empty one made here is harmless.
+    const { data: winner } = await supabase
+        .from('photo_libraries')
+        .select('google_drive_folder_id')
+        .eq('id', library.id)
+        .maybeSingle();
+    if (winner?.google_drive_folder_id) return winner.google_drive_folder_id;
+    throw new HttpError(500, 'Could not record the gallery\'s Google Drive folder.');
 }
 
 /**
@@ -158,13 +211,20 @@ export async function resolveIngestCaller(
         if (!(await verifyAdmin(req)) && !(await verifiedPhotographer(req, supabase))) throw new HttpError(401, 'Unauthorized');
         throw new HttpError(400, 'slug is required.');
     }
-    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }), keyId: null, handle: HOUSE_HANDLE, party: null };
+    if (await verifyAdmin(req)) return { library: await loadLibrary(supabase, { slug }, { createFolder: true }), keyId: null, handle: HOUSE_HANDLE, party: null };
 
     // A photographer may upload to galleries they own, and no others.
     const photographer = await verifiedPhotographer(req, supabase);
     if (!photographer) throw new HttpError(401, 'Unauthorized');
-    const library = await loadLibrary(supabase, { slug });
-    if (library.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const { data: owned, error: ownedError } = await supabase
+        .from('photo_libraries')
+        .select('owner_id')
+        .eq('slug', slug)
+        .maybeSingle();
+    if (ownedError) throw new HttpError(500, ownedError.message);
+    if (!owned) throw new HttpError(404, 'Gallery not found.');
+    if (owned.owner_id !== photographer.userId) throw new HttpError(403, 'That gallery is not yours.');
+    const library = await loadLibrary(supabase, { slug }, { createFolder: true });
     return { library, keyId: null, handle: normalizeHandle(photographer.instagram), party: { userId: photographer.userId } };
 }
 
@@ -480,10 +540,14 @@ export async function startUpload(
     origin?: string,
 ): Promise<{ uploadUrl: string; fileName: string }> {
     const mimeType = typeof body.mimeType === 'string' ? body.mimeType.toLowerCase() : '';
-    if (!mimeType.startsWith('image/')) throw new HttpError(400, 'Only photos can be uploaded to a live gallery.');
+    if (!isGalleryMedia(mimeType)) throw new HttpError(400, 'Only photos and videos can be uploaded to a gallery.');
     const size = Number(body.size);
     if (!Number.isFinite(size) || size <= 0) throw new HttpError(400, 'size (bytes) is required.');
-    if (size > MAX_UPLOAD_BYTES) throw new HttpError(413, 'That file is larger than 200MB.');
+    if (mimeType.startsWith('video/')) {
+        if (size > MAX_VIDEO_UPLOAD_BYTES) throw new HttpError(413, 'That video is over 1GB. Gallery clips should be about 2 minutes or less; post longer videos to YouTube.');
+    } else if (size > MAX_UPLOAD_BYTES) {
+        throw new HttpError(413, 'That file is larger than 200MB.');
+    }
 
     const fileName = safeFileName(typeof body.fileName === 'string' ? body.fileName : '');
     const inboxId = await ensureInbox(supabase, caller.library);
@@ -605,8 +669,8 @@ export async function completeUpload(
     if (file.trashed || !(file.parents || []).includes(inboxId)) {
         throw new HttpError(403, 'That file is not in this gallery\'s live inbox.');
     }
-    if (!file.mimeType?.startsWith('image/')) {
-        throw new HttpError(400, 'Only photos can be added to a live gallery.');
+    if (!isGalleryMedia(file.mimeType)) {
+        throw new HttpError(400, 'Only photos and videos can be added to a gallery.');
     }
 
     const { data: already } = await supabase

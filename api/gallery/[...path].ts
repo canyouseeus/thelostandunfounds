@@ -180,6 +180,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleInvite(req, res);
         }
 
+        if (route === 'pass') {
+            return await handleGalleryPass(req, res);
+        }
+        if (route === 'my-downloads') {
+            return await handleMyDownloads(req, res);
+        }
+        if (route === 'invite-open') {
+            return await handleInviteOpen(req, res);
+        }
+        if (route === 'access-link') {
+            return await handleAccessLink(req, res);
+        }
         if (route === 'access-info') {
             return await handleAccessInfo(req, res);
         }
@@ -365,7 +377,7 @@ async function streamVideoFromDrive(
     res: VercelResponse,
     fileId: string,
     mimeType: string,
-    opts: { download: boolean; filename: string }
+    opts: { download: boolean; filename: string; cache?: string }
 ): Promise<boolean> {
     const token = await getDriveAccessToken();
     if (!token) return false;
@@ -397,7 +409,7 @@ async function streamVideoFromDrive(
     }
     res.setHeader(
         'Cache-Control',
-        opts.download ? 'no-store' : 'public, max-age=31536000, immutable'
+        opts.download ? 'no-store' : (opts.cache || 'public, max-age=31536000, immutable')
     );
     if (opts.download) {
         res.setHeader('Content-Disposition', `attachment; filename="${opts.filename}"`);
@@ -493,7 +505,7 @@ async function fetchViaServiceAccount(fileId: string, targetSize: number): Promi
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
-    const { fileId, size, download, email } = req.query;
+    const { fileId, size, download, email, gp, et } = req.query;
     const isDownload = download === 'true';
 
     try {
@@ -518,20 +530,38 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
         let photoIdForEvent: string | null = null;
         let photoTitle = 'photo';
         let photoMimeType: string | null = null;
+        let photoLibraryId: string | null = null;
         try {
             const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
             const { data: photo } = await supabase
                 .from('photos')
-                .select('id, title, mime_type')
+                .select('id, title, mime_type, library_id')
                 .eq('google_drive_file_id', fileId as string)
                 .single();
             if (photo?.title) photoTitle = photo.title as string;
             if (photo?.id) photoIdForEvent = photo.id as string;
             if (photo?.mime_type) photoMimeType = photo.mime_type as string;
+            if (photo?.library_id) photoLibraryId = photo.library_id as string;
         } catch {
             // Non-fatal — a file with no row still streams as an image below.
         }
         let downloadFilename = buildDownloadFilename(photoTitle, photoMimeType);
+
+        // Who may have the full file (album owner, buyer of this photo, paid
+        // order token), and whether the answer depends on the asker — see
+        // lib/api-handlers/_stream-access.ts.
+        const { streamAccess } = await import('../../lib/api-handlers/_stream-access.js');
+        const access = await streamAccess(createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!), {
+            photoId: photoIdForEvent,
+            libraryId: photoLibraryId,
+            gp,
+            et,
+        });
+        if (isDownload && !access.download) {
+            return res.status(403).json({ error: 'Buy this photo to download it.' });
+        }
+        // Personal answers stay out of the shared CDN cache.
+        const viewCache = access.personal ? 'private, max-age=86400' : 'public, max-age=31536000, immutable';
 
         // Video leaves here entirely: it cannot be resized, cannot be buffered
         // into a response, and needs Range to play at all.
@@ -539,6 +569,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             const served = await streamVideoFromDrive(req, res, fileId as string, photoMimeType, {
                 download: isDownload,
                 filename: downloadFilename,
+                cache: viewCache,
             });
             if (served) return;
             console.error('[stream] video path failed for fileId:', fileId);
@@ -594,7 +625,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
                 return res.send(lh3Buffer);
             }
             res.setHeader('Content-Type', lh3ContentType || 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('Cache-Control', viewCache);
             return res.send(lh3Buffer);
         }
 
@@ -612,7 +643,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
                 return res.send(saResult.buffer);
             }
             res.setHeader('Content-Type', saResult.contentType);
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('Cache-Control', viewCache);
             return res.send(saResult.buffer);
         }
 
@@ -730,82 +761,9 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
         });
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-        const { data: library, error: libError } = await supabase
-            .from('photo_libraries')
-            .select('name, slug')
-            .eq('id', libraryId)
-            .single();
-
-        if (libError || !library) {
-            console.error('Library fetch error:', libError);
-            return res.status(404).json({ error: 'Gallery not found' });
-        }
-
-        // Point at the access page, not the gallery itself. An invited client has
-        // no session yet, so the bare gallery URL used to drop them on the site's
-        // sign-in modal and ask them to invent a password. /access emails them a
-        // link instead and lands them in the gallery.
-        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}/access`;
-        const auth = await getZohoAuthContext();
-
-        const results = {
-            succeeded: [] as string[],
-            failed: [] as { email: string; error: string }[]
-        };
-
-        // Send to each email
-        console.log(`[Gallery Invite] Starting invitation sequence for library: ${library.name} (${libraryId}). Target emails:`, emails);
-
-        for (const email of emails) {
-            try {
-                const body = `
-                    <h1 style="${EMAIL_STYLES.heading1}">YOUR GALLERY IS OPEN</h1>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      Your photos from <strong style="color: #ffffff;">${library.name}</strong> are ready to view and download.
-                    </p>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      Open the link below and enter this email address — <strong style="color: #ffffff;">${email}</strong> — and we'll send you a sign-in link. There's no password to create.
-                    </p>
-
-                    <div style="margin: 40px 0;">
-                      <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">OPEN MY GALLERY</a>
-                    </div>
-
-                    <p style="${EMAIL_STYLES.paragraph}">
-                      The gallery stays available — come back and pull anything you need, whenever you need it. There's no expiry on it.
-                    </p>
-
-                    <hr style="${EMAIL_STYLES.divider}">
-
-                    <p style="${EMAIL_STYLES.muted}">
-                      GALLERY: ${library.name}<br>
-                      INVITED: ${email}<br>
-                      Questions? Reply to this email or reach us at media@thelostandunfounds.com.
-                    </p>
-                `;
-
-                const result = await sendZohoEmail({
-                    auth,
-                    to: email,
-                    // Business record — client correspondence stays on file.
-                    cc: 'media@thelostandunfounds.com',
-                    subject: `YOUR GALLERY IS OPEN: ${library.name} | THE LOST+UNFOUNDS`,
-                    htmlContent: generateTransactionalEmail(body)
-                });
-                if (result.success) {
-                    results.succeeded.push(email);
-                    console.log(`[Gallery Invite] Successfully sent invitation to ${email} for gallery: ${library.name}`);
-                } else {
-                    results.failed.push({ email, error: result.error || 'Unknown error' });
-                    console.error(`[Gallery Invite] Zoho rejected invite to ${email}:`, result.error);
-                }
-            } catch (innerErr: any) {
-                console.error(`Failed to send invite to ${email}:`, innerErr);
-                results.failed.push({ email, error: innerErr.message || String(innerErr) });
-            }
-        }
+        const { sendGalleryInvites } = await import('../../lib/api-handlers/_gallery-invite.js');
+        const { library, results } = await sendGalleryInvites(supabase, libraryId, emails);
+        if (!library) return res.status(404).json({ error: 'Gallery not found' });
 
         const hasFailures = results.failed.length > 0;
         // Return 207 Multi-Status if some failed, or 200 if all good (or 200 with stats)
@@ -831,6 +789,160 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
  * It deliberately does not confirm whether a given email is on the invite list:
  * that would turn this into an invitee oracle for anyone with the slug.
  */
+/**
+ * POST { slug, email, turnstileToken } — email an invited client a sign-in
+ * link to the gallery, from our own mail. See lib/api-handlers/_gallery-access-link.ts.
+ * An address that is not invited gets the same answer as one that is, so this
+ * never reveals the invite list.
+ */
+async function handleAccessLink(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { verifyTurnstile, clientIp } = await import('../../lib/api-handlers/_turnstile.js');
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    const check = await verifyTurnstile(body.turnstileToken, clientIp(req.headers), ['gallery-access']);
+    if (!check.ok) return res.status(check.status).json({ error: check.error });
+
+    try {
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY;
+        if (!SUPABASE_URL || !svcKey) return res.status(500).json({ error: 'Server configuration error' });
+        const { sendGalleryAccessLink } = await import('../../lib/api-handlers/_gallery-access-link.js');
+        const outcome = await sendGalleryAccessLink(createClient(SUPABASE_URL, svcKey), { slug: body.slug, email: body.email });
+
+        if (outcome.sent) return res.status(200).json({ success: true });
+        if (outcome.reason === 'bad_email') return res.status(400).json({ error: 'Enter the email address your invite was sent to.' });
+        if (outcome.reason === 'link_failed' || outcome.reason === 'send_failed') {
+            console.error('[access-link]', outcome.reason, outcome.detail);
+            return res.status(502).json({ error: 'We could not send the email just now. Please try again in a minute.' });
+        }
+        // Not invited, or no such gallery: same answer as a real send.
+        return res.status(200).json({ success: true });
+    } catch (err: any) {
+        console.error('[access-link] Error:', err);
+        return res.status(500).json({ error: 'We could not send the email just now. Please try again in a minute.' });
+    }
+}
+
+/**
+ * POST { slug, key } — the invite email's own link. Checks the key (an HMAC of
+ * the gallery and the invited address) and that the address is still invited,
+ * then answers with a one-time sign-in link that lands in the gallery. Sends
+ * no email, so it needs no Turnstile; the key is the proof.
+ */
+async function handleInviteOpen(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY;
+        if (!SUPABASE_URL || !svcKey) return res.status(500).json({ error: 'Server configuration error' });
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { openWithInviteKey } = await import('../../lib/api-handlers/_gallery-access-link.js');
+        const outcome = await openWithInviteKey(createClient(SUPABASE_URL, svcKey), { slug: body.slug, key: body.key });
+        if (outcome.ok) return res.status(200).json({ link: outcome.link });
+        if (outcome.reason === 'link_failed') {
+            console.error('[invite-open] link failed:', outcome.detail);
+            return res.status(502).json({ error: 'We could not open the gallery just now. Please try again in a minute.' });
+        }
+        return res.status(403).json({ error: 'This invite link no longer works. Enter your email below and we\'ll send you a new one.' });
+    } catch (err: any) {
+        console.error('[invite-open] Error:', err);
+        return res.status(500).json({ error: 'We could not open the gallery just now. Please try again in a minute.' });
+    }
+}
+
+/**
+ * GET ?slug= — which photos in this gallery the signed-in viewer has
+ * downloaded, from photo_download_events (logged by every download). The
+ * session is verified here; an email in the request is never trusted, or
+ * anyone could see what someone else saved. Anonymous viewers keep their
+ * marks on their own device instead (PhotoGallery).
+ */
+async function handleMyDownloads(req: VercelRequest, res: VercelResponse) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    try {
+        const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+        const user = await verifiedUser(req);
+        const email = user?.email?.trim().toLowerCase();
+        if (!email) return res.status(200).json({ photoIds: [] });
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+        if (!slug) return res.status(400).json({ error: 'slug is required' });
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const { data: library } = await supabase.from('photo_libraries').select('id').eq('slug', slug).maybeSingle();
+        if (!library) return res.status(200).json({ photoIds: [] });
+        const { data: events, error } = await supabase
+            .from('photo_download_events')
+            .select('photo_id, email, photos!inner(library_id)')
+            .eq('photos.library_id', library.id)
+            .ilike('email', email.replace(/[\\%_]/g, c => `\\${c}`))
+            .limit(5000);
+        if (error) throw error;
+        const ids = new Set<string>();
+        for (const e of events || []) {
+            if (e.photo_id && String(e.email || '').trim().toLowerCase() === email) ids.add(e.photo_id as string);
+        }
+        return res.status(200).json({ photoIds: [...ids] });
+    } catch (err: any) {
+        console.error('[my-downloads] Error:', err);
+        return res.status(500).json({ error: 'Could not load your downloads.' });
+    }
+}
+
+/**
+ * GET ?slug= — the signed-in viewer's pass for this gallery: album owner
+ * (free, clean) or à la carte buyer ($buyer_price a photo), from the live
+ * invite lists. The page appends it to stream URLs as &gp= (an <img> or a
+ * download link carries no session). See lib/api-handlers/_gallery-pass.ts.
+ */
+async function handleGalleryPass(req: VercelRequest, res: VercelResponse) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    try {
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : '';
+        if (!slug) return res.status(400).json({ error: 'slug is required' });
+        const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+        const { verifyAdmin } = await import('../../lib/api-handlers/_admin-auth.js');
+        const { roleFor, mintPass } = await import('../../lib/api-handlers/_gallery-pass.js');
+        const user = await verifiedUser(req);
+        if (!user?.email) return res.status(200).json({ role: null });
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const { data: library } = await supabase
+            .from('photo_libraries')
+            .select('id, invited_emails, buyer_emails, buyer_price, buyer_bundles, buyer_album_price, album_price, buyer_free_photos, owner_id, user_id')
+            .eq('slug', slug)
+            .maybeSingle();
+        if (!library) return res.status(200).json({ role: null });
+
+        const role = roleFor(library, { email: user.email, userId: user.id, isAdmin: await verifyAdmin(req) });
+        if (!role) return res.status(200).json({ role: null });
+        let pricing = null;
+        if (role === 'buyer') {
+            const { cleanBundles } = await import('../../src/lib/buyerPricing.js');
+            const { count } = await supabase
+                .from('photos')
+                .select('id', { count: 'exact', head: true })
+                .eq('library_id', library.id);
+            pricing = {
+                single: Number(library.buyer_price) || 5,
+                bundles: cleanBundles(library.buyer_bundles),
+                albumPrice: Number(library.buyer_album_price) > 0 ? Number(library.buyer_album_price)
+                    : Number(library.album_price) > 0 ? Number(library.album_price) : null,
+                albumCount: count || 0,
+                // Free-photo allowance left (lib/api-handlers/_free-allowance.ts).
+                freeLeft: await (await import('../../lib/api-handlers/_free-allowance.js')).freeLeft(supabase, library, user.email),
+            };
+        }
+        return res.status(200).json({
+            role,
+            pass: mintPass(library.id, user.email, role),
+            buyerPrice: pricing?.single ?? null,
+            pricing,
+        });
+    } catch (err: any) {
+        console.error('[gallery-pass] Error:', err);
+        return res.status(500).json({ error: 'Could not check your access.' });
+    }
+}
+
 async function handleAccessInfo(req: VercelRequest, res: VercelResponse) {
     try {
         const slug = typeof req.query.slug === 'string' ? req.query.slug : null;
@@ -1078,7 +1190,7 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
             });
 
             for (const f of (listRes.data.files || [])) {
-                if (!f.mimeType?.startsWith('image/') && f.mimeType !== 'video/quicktime') continue;
+                if (!f.mimeType?.startsWith('image/') && !f.mimeType?.startsWith('video/')) continue;
                 if (!f.id) continue;
 
                 const title = (f.name || '').replace(/\.[^.]+$/, '');
@@ -1238,15 +1350,37 @@ async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     try {
         const { requireAdminUser, batchDeletePhotos } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
-        const admin = await requireAdminUser(req);
-        if (!admin) return res.status(403).json({ error: 'Forbidden' });
-
         const { photoIds } = req.body || {};
-        if (!Array.isArray(photoIds) || !photoIds.length) {
+        if (!Array.isArray(photoIds) || !photoIds.length || !photoIds.every(id => typeof id === 'string')) {
             return res.status(400).json({ error: 'photoIds is required' });
         }
 
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        // The admin, or the signed-in owner of every gallery the photos are in
+        // (GALLERY EVERYWHERE RULE: members and photographers delete from their
+        // own galleries). Ownership is read here, never taken from the request.
+        const admin = await requireAdminUser(req);
+        if (!admin) {
+            const { verifiedUser } = await import('../../lib/api-handlers/_turnstile.js');
+            const user = await verifiedUser(req);
+            if (!user) return res.status(403).json({ error: 'Forbidden' });
+            const { data: rows, error: rowsError } = await supabase
+                .from('photos')
+                .select('id, library_id')
+                .in('id', photoIds);
+            if (rowsError) throw rowsError;
+            const libIds = [...new Set((rows || []).map(r => r.library_id).filter(Boolean))];
+            const { data: libs, error: libsError } = libIds.length
+                ? await supabase.from('photo_libraries').select('id, owner_id, user_id').in('id', libIds)
+                : { data: [], error: null };
+            if (libsError) throw libsError;
+            const mine = new Set((libs || [])
+                .filter(l => l.owner_id === user.id || l.user_id === user.id)
+                .map(l => l.id));
+            const owns = new Set(photoIds).size === (rows || []).length
+                && (rows || []).every(r => r.library_id && mine.has(r.library_id));
+            if (!owns) return res.status(403).json({ error: 'You can only delete photos from your own galleries.' });
+        }
         const result = await batchDeletePhotos(supabase as any, photoIds);
         return res.status(200).json({ success: true, ...result });
     } catch (err: any) {

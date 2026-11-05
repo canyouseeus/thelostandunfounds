@@ -10,11 +10,14 @@ import { OWNER_AFFILIATE_CODE, findAffiliateByCode } from '../affiliates/_referr
 import { getZohoAuthContext } from '../_zoho-email-utils.js'
 import { sendNewsletter } from '../_newsletter-send-handler.js'
 import { sendCrewAnnouncement } from '../crew/announcements.js'
-import { ISSUE as NEWSLETTER_2026_10 } from '../../newsletters/2026-10-whats-new.js'
+import { ISSUE as NEWSLETTER_2026_11 } from '../../newsletters/2026-11-whats-new.js'
+import { sendPhotographerInvite } from './photographer-invite.js'
+import { sendGalleryInvites } from '../_gallery-invite.js'
+import { ADMIN_EMAILS } from '../_admin-auth.js'
 
 /** Newsletter issues whose copy is in the repo, by the key a job names. */
 const NEWSLETTER_ISSUES: Record<string, { subject: string; content: string; contentHtml: string }> = {
-  '2026-10-whats-new': NEWSLETTER_2026_10,
+  '2026-11-whats-new': NEWSLETTER_2026_11,
 }
 
 /**
@@ -57,6 +60,47 @@ const ok = (result: unknown, httpStatus = 200): JobOutcome => ({ status: 'done',
 const fail = (error: string, httpStatus?: number, result?: unknown): JobOutcome => ({
   status: 'failed', httpStatus, error, result,
 })
+
+/**
+ * Top up the Payments balance from the business financial account to cover a
+ * deposit's owner pay — at most once per deposit. Returns the top-up (new or
+ * the one already on file). Throws if Stripe refuses, so the job fails with
+ * the reason instead of waiting three days for money that is not coming.
+ */
+async function fundDepositPay(
+  supabase: SupabaseClient, depositId: string, cents: number, jobId: string
+): Promise<{ id: string; status: string }> {
+  const { data: deposit, error } = await supabase
+    .from('deposit_checkins').select('id, owner_pay_topup_id').eq('id', depositId).maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!deposit) throw new Error(`Deposit ${depositId} not found`)
+  const stripe = getStripe()
+  if (deposit.owner_pay_topup_id) {
+    const existing = await stripe.topups.retrieve(deposit.owner_pay_topup_id)
+    if (!['failed', 'canceled', 'reversed'].includes(existing.status)) return { id: existing.id, status: existing.status }
+    throw new Error(`Top-up ${existing.id} for this deposit ${existing.status}; not retrying automatically`)
+  }
+  // `source` must name the business financial account. Left out, Stripe pulls
+  // the top-up from the platform's default external bank account instead —
+  // which failed with "default usd bank account has not been verified" on
+  // 2026-11-04, though the money was sitting in the financial account.
+  const topup = await stripe.topups.create(
+    {
+      amount: cents,
+      currency: 'usd',
+      source: FINANCIAL_ACCOUNTS.business,
+      description: `Fund owner pay (10% BTC DCA) for deposit ${depositId}`,
+      statement_descriptor: 'TLAU DCA',
+      metadata: { admin_job_id: jobId, deposit_id: depositId },
+    },
+    // New key: the bank-sourced attempts under the old one are cached by Stripe.
+    { idempotencyKey: `deposit-topup-fa-${depositId}` }
+  )
+  const { error: saveError } = await supabase
+    .from('deposit_checkins').update({ owner_pay_topup_id: topup.id }).eq('id', depositId)
+  if (saveError) throw new Error(`Top-up ${topup.id} created but not saved: ${saveError.message}`)
+  return { id: topup.id, status: topup.status }
+}
 
 /** Available USD in the platform's Payments balance, in dollars. */
 async function availableUsd(): Promise<number> {
@@ -202,6 +246,64 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
   },
 
   /**
+   * { email, name?, testEmail? } — the "you're on the roster" invite, same as
+   * Admin → Gallery → Invite Photographer. A real send stores the 7-day
+   * invitation and CCs media@; testEmail previews it at that address only,
+   * storing nothing.
+   */
+  /**
+   * { slug | library_id, emails?, testEmail? } — the client gallery invite
+   * (album owners, or à la carte buyers listed in emails; each gets the copy
+   * for their list),
+   * same as Admin → Gallery → edit a gallery → Resend. Without `emails` it
+   * goes to everyone on the gallery's invite list except media@ (which gets
+   * a record copy of each instead). Each invite opens the gallery in one tap.
+   * testEmail (an admin address) previews it there only: [TEST], no record
+   * copy, and its button won't open the gallery (that address isn't invited).
+   */
+  async gallery_invite(supabase, payload) {
+    let query = supabase.from('photo_libraries').select('id, slug, invited_emails, buyer_emails')
+    query = payload.library_id ? query.eq('id', payload.library_id) : query.eq('slug', payload.slug || '')
+    const { data: library, error } = await query.maybeSingle()
+    if (error) return fail(error.message, 500)
+    if (!library) return fail('gallery not found (give slug or library_id)', 404)
+
+    const invited = String(library.invited_emails || '')
+      .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+    // À la carte buyers are invited too (they buy per photo); listed emails
+    // may be on either list.
+    const buyers = String(library.buyer_emails || '')
+      .split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+    let emails: string[]
+    let test = false
+    if (payload.testEmail) {
+      const t = String(payload.testEmail).trim().toLowerCase()
+      if (!ADMIN_EMAILS.includes(t)) return fail(`testEmail must be an admin address: ${ADMIN_EMAILS.join(', ')}`, 400)
+      emails = [t]
+      test = true
+    } else if (Array.isArray(payload.emails) && payload.emails.length) {
+      emails = payload.emails.map((e: any) => String(e).trim().toLowerCase())
+      const notInvited = emails.filter((e) => !invited.includes(e) && !buyers.includes(e))
+      // Only people on the list: an invite to anyone else carries a key that
+      // can't open the gallery, and this must never mail arbitrary addresses.
+      if (notInvited.length) return fail(`not on the invite list: ${notInvited.join(', ')}`, 400)
+    } else {
+      emails = invited.filter((e) => e !== 'media@thelostandunfounds.com')
+    }
+    if (!emails.length) return fail('nobody to invite', 400)
+
+    const { results } = await sendGalleryInvites(supabase, library.id, emails, { test })
+    const out = { gallery: library.slug, test, ...results }
+    return results.failed.length ? fail(`${results.failed.length} invite(s) failed`, 502, out) : ok(out)
+  },
+
+  async invite_photographer(supabase, payload) {
+    if (!payload.email) return fail('email is required', 400)
+    const result = await sendPhotographerInvite(supabase, payload as any)
+    return result.sent ? ok(result) : fail(result.error || 'invite not sent', 500, result)
+  },
+
+  /**
    * { affiliateCode, amount, notes? }
    * Never attempts a transfer the platform cannot cover: client card payments
    * sit in "pending" for days, and a failed transfer emails the affiliate.
@@ -262,9 +364,17 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
   },
 
   /**
-   * { fieldSaleId?, amount } — the owner's pay for a street night, to his
-   * Stripe Connect account. Queued by recordFieldSale. Waits (hourly, up to
-   * 3 days) when the available balance is short, like affiliate_payout.
+   * { fieldSaleId?, depositId?, amount } — the owner's pay (10%) for a street night
+   * or an outside deposit (deposit check-in), to his Stripe Connect account
+   * (where it is DCA'd into bitcoin). Queued by recordFieldSale and the deposit
+   * check-in. Waits (hourly, up to 3 days) when the available balance is short,
+   * like affiliate_payout.
+   *
+   * A deposit's money sits in the business financial account, not the Payments
+   * balance a Connect transfer is paid from. So for a deposit, a short balance
+   * first triggers ONE top-up (financial account -> Payments balance) for the
+   * pay, recorded on the deposit row so a later retry never tops up twice; the
+   * job then waits for it to settle like any other.
    */
   async owner_pay(supabase, payload, jobId) {
     const cents = Math.round(Number(payload.amount) * 100)
@@ -278,9 +388,11 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
 
     const available = await availableUsd()
     if (Math.round(available * 100) < cents) {
+      const topup = payload.depositId ? await fundDepositPay(supabase, payload.depositId, cents, jobId) : null
       return {
         status: 'waiting_funds',
-        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}`,
+        error: `Platform available balance $${available.toFixed(2)} < $${(cents / 100).toFixed(2)}` +
+          (topup ? ` — top-up ${topup.id} from the business account is ${topup.status}` : ''),
         retryAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       }
     }
@@ -290,8 +402,8 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
         amount: cents,
         currency: 'usd',
         destination: acct.stripe_account_id,
-        description: 'Owner pay — street night',
-        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '' },
+        description: payload.depositId ? 'Owner pay — 10% of deposit (BTC DCA)' : 'Owner pay — street night',
+        metadata: { admin_job_id: jobId, field_sale_id: payload.fieldSaleId || '', deposit_id: payload.depositId || '' },
       },
       { idempotencyKey: `admin-job-${jobId}` }
     )

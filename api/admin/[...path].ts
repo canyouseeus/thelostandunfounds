@@ -104,6 +104,8 @@ export default async function handler(
     'new-blog-contributor-notification',
     'reset-password',
     'affiliate-stripe-reminders',
+    // Checks its own auth: the admin, or the signed-in owner of the gallery
+    // (the /setup onboarding wizard syncs a photographer's new gallery).
     'sync-library',
   ])
   if (!PUBLIC_ROUTES.has(fullRoute) && !(await verifyAdmin(req))) {
@@ -158,6 +160,10 @@ export default async function handler(
         return await handleDirectBooking(req, res)
       case 'field-sales':
         return await handleFieldSales(req, res)
+      case 'deposits':
+        return await handleDeposits(req, res)
+      case 'prospects':
+        return await handleProspects(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
@@ -280,6 +286,22 @@ async function handleDirectBooking(req: VercelRequest, res: VercelResponse) {
  */
 async function handleFieldSales(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/field-sales.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Deposit check-in — outside deposits into the business account, tagged invoice or street
+ */
+async function handleDeposits(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/deposits.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Prospects found by the client-hunter agent — the owner reviews and sends
+ */
+async function handleProspects(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/prospects.js')
   return handler.default(req, res)
 }
 

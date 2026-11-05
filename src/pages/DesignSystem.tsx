@@ -47,7 +47,7 @@ export default function DesignSystem() {
   const [activeTab, setActiveTab] = useState<TabType>('typography');
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'dashboard', label: 'Dashboard Widgets' },
+    { id: 'dashboard', label: 'Dashboard' },
     { id: 'typography', label: 'Typography' },
     { id: 'colors', label: 'Colors' },
     { id: 'components', label: 'Components' },
@@ -74,16 +74,17 @@ export default function DesignSystem() {
             Visual reference for fonts, colors, components, and design patterns
           </p>
 
-          {/* Tabs */}
-          <div className="flex flex-wrap gap-2 pb-4">
+          {/* Tabs — an even grid, flush with the heading: 3 × 3 on phones, one row of 9 on desktop. */}
+          <div className="grid grid-cols-3 lg:grid-cols-9 gap-1 pb-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium transition ${activeTab === tab.id
-                  ? 'text-white bg-white/10'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                className={`w-full min-w-0 truncate px-3 lg:px-2 py-3 text-left text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === tab.id
+                  ? 'bg-white text-black'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                   }`}
+                style={{ borderRadius: 0 }}
               >
                 {tab.label}
               </button>
@@ -214,6 +215,23 @@ function TypographySection() {
           Correct: <strong className="text-white">THE LOST+UNFOUNDS</strong><br />
           Incorrect: The Lost+Unfounds, The Lost + Unfounds, the lost+unfounds
         </p>
+      </div>
+
+      {/* Mascot — owner-confirmed 2026-10-31 */}
+      <div className="mb-12 pl-6 py-4 pr-6 bg-white/5 flex flex-col sm:flex-row gap-6 sm:items-center">
+        <div className="w-40 h-40 bg-black flex items-center justify-center p-3 shrink-0">
+          <img src="/brand/kit/SCOT33-white.png" alt="SCOT33, the tiger mascot of THE LOST+UNFOUNDS" className="max-w-full max-h-full object-contain" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-2xl font-black text-white mb-2 tracking-wide uppercase">MASCOT: SCOT33</h2>
+          <p className="text-white/80 text-lg">
+            <span className="text-white font-bold">SCOT33</span> is our mascot. He is a <span className="text-white font-bold">tiger</span>.
+          </p>
+          <p className="text-white/60 text-sm mt-2">
+            Spelled with two 3s. He is the main mark, inside the ring THE LOST+UNFOUNDS / CAN YOU SEE US?.
+            Black or white only. Files and usage rules: Brand Kit on the dashboard (<code className="text-white/80">public/brand/kit/</code>).
+          </p>
+        </div>
       </div>
 
       <div>

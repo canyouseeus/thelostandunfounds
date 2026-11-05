@@ -73,7 +73,7 @@ export default function ExpressBookingModal({
     // Turnstile (TURNSTILE RULE): single-use, so remounted after every attempt.
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [turnstileKey, setTurnstileKey] = useState(0);
-    const [done, setDone] = useState<{ invoiceNumber?: string; total?: number } | null>(null);
+    const [done, setDone] = useState<{ invoiceNumber?: string; total?: number; brandAssetsUrl?: string } | null>(null);
 
     const isAirbnb = eventType === 'Airbnb / Short-Term Rental';
 
@@ -138,7 +138,7 @@ export default function ExpressBookingModal({
     const submit = async () => {
         if (!client || !slot) return;
         if (turnstileRequired() && !turnstileToken) {
-            setError('Please complete the security check.');
+            setError('Still running the security check — give it a second and try again.');
             return;
         }
         setSubmitting(true);
@@ -166,7 +166,7 @@ export default function ExpressBookingModal({
             });
             const data = await res.json().catch(() => null);
             if (!res.ok) throw new Error(data?.error || `Could not confirm (${res.status})`);
-            setDone({ invoiceNumber: data?.quote?.invoiceNumber, total: data?.quote?.total });
+            setDone({ invoiceNumber: data?.quote?.invoiceNumber, total: data?.quote?.total, brandAssetsUrl: data?.brandAssets?.url });
         } catch (e: any) {
             setError(e?.message || 'Something went wrong. Please reply to our email.');
         } finally {
@@ -230,6 +230,23 @@ export default function ExpressBookingModal({
                                         balance is collected on the day, once the shoot is complete.
                                     </p>
                                 </div>
+                                {done.brandAssetsUrl && (
+                                    <div className="bg-white/5 p-4 mb-6">
+                                        <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1">Brand assets</p>
+                                        <p className="text-white text-sm mb-3">
+                                            A logo or brand guide we should match? Send it any time before the shoot.
+                                        </p>
+                                        <a
+                                            href={done.brandAssetsUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block px-4 py-3 bg-white/10 text-white text-[11px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors"
+                                            style={{ borderRadius: 0 }}
+                                        >
+                                            Upload brand assets
+                                        </a>
+                                    </div>
+                                )}
                                 <button
                                     onClick={onClose}
                                     className="w-full px-6 py-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-zinc-200 transition-colors"

@@ -29,6 +29,9 @@ import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import { setGalleryPass, withGalleryPass } from '../../lib/galleryPass';
+import { buyerTotalWithFree, galleryTotal, type BuyerPricing } from '../../lib/buyerPricing';
+import SaveToPhotosSheet, { canSaveToPhotos, photoFilename, type SaveItem } from './SaveToPhotosSheet';
 
 // Gallery photos are loaded a page at a time to keep database egress low —
 // pulling the entire library on every (often bot-driven) page view was the
@@ -75,6 +78,8 @@ interface PhotoLibrary {
     slug: string;
     description: string;
     price: number;
+    // Whole album, for every buyer (owner, 2026-11-02). Checkout charges the same.
+    album_price?: number | null;
     is_private?: boolean;
     owner_id?: string;
     google_drive_folder_id?: string;
@@ -112,7 +117,9 @@ const PhotoCard: React.FC<{
     onToggleSelect: () => void;
     onLightbox: () => void;
     onDownload?: () => void;
-}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload }) => {
+    /** This viewer has downloaded/saved this photo before. */
+    isDownloaded?: boolean;
+}> = ({ photo, index, isSelected, isPurchased, isFree = false, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox, onDownload, isDownloaded = false }) => {
     const [rotation, setRotation] = useState(0);
     const isUnlocked = isPurchased || isFree;
     const [matureOk, confirmMature] = useMatureConsent();
@@ -219,9 +226,9 @@ const PhotoCard: React.FC<{
                                 onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
                                 className="absolute top-2 right-2 z-[45] outline-none"
                             >
-                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
-                                    ? 'bg-white border-white scale-110'
-                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all ${isSelected
+                                    ? 'bg-white scale-110'
+                                    : 'bg-black/40 backdrop-blur-md hover:bg-black/60'
                                     }`}>
                                     {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
                                 </div>
@@ -242,9 +249,21 @@ const PhotoCard: React.FC<{
                             </button>
                         )}
 
+                        {/* Downloaded by this viewer */}
+                        {isDownloaded && (
+                            <div
+                                className="absolute bottom-1.5 right-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em]"
+                                title="You've downloaded this"
+                                data-testid="downloaded-badge"
+                            >
+                                <ArrowDownTrayIcon className="w-2.5 h-2.5" />
+                                SAVED
+                            </div>
+                        )}
+
                         {/* Purchased Badge */}
                         {isPurchased && (
-                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
+                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em]">
                                 <CheckCircleIcon className="w-2.5 h-2.5" />
                                 PROPRIETARY
                             </div>
@@ -331,10 +350,28 @@ const PhotoCard: React.FC<{
 };
 
 const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ librarySlug, inline = false }) => {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
-    const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
+    const [rawPricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
+    // The signed-in viewer's role here (GET /api/gallery/pass): an album owner
+    // has every photo free; an à la carte buyer sees the whole album behind the
+    // watermark overlay and buys photos at buyerPrice each (owner, 2026-11-02).
+    const [galleryRole, setGalleryRole] = useState<{ role: 'owner' | 'buyer'; buyerPrice: number | null; pricing: BuyerPricing | null; freeLeft: number } | null>(null);
+    // À la carte buyers see their own bundles (e.g. 4 for $10), not the album's.
+    const pricingOptions: PricingOption[] = galleryRole?.role === 'buyer'
+        ? (galleryRole.pricing?.bundles || []).map((b, i) => ({ id: `buyer-${i}`, name: `${b.photo_count} photos`, price: b.price, photo_count: b.photo_count } as PricingOption))
+        : rawPricingOptions;
+    // Set by BUY WHOLE ALBUM: the server then charges for every photo in it.
+    const wholeAlbumRef = useRef(false);
     const [photos, setPhotos] = useState<Photo[]>([]);
+    // Every photo in the album, not just the pages loaded so far — the count
+    // checkout prices "the whole album" against.
+    const [albumTotal, setAlbumTotal] = useState(0);
+    // Whole-album offer: an à la carte buyer's own price (falls back to the
+    // gallery's on the server), else the gallery's album_price for everyone.
+    const albumOffer: { price: number; count: number } | null = galleryRole?.role === 'buyer'
+        ? (galleryRole.pricing?.albumPrice ? { price: Number(galleryRole.pricing.albumPrice), count: galleryRole.pricing.albumCount } : null)
+        : (Number(library?.album_price) > 0 && albumTotal > 0 ? { price: Number(library!.album_price), count: albumTotal } : null);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
@@ -354,6 +391,58 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
     // Buyer email (used for order receipts + entitlement lookup)
     const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
+    // On a phone, downloads go to the camera roll through the share sheet.
+    const [saveSheet, setSaveSheet] = useState<SaveItem[] | null>(null);
+
+    // Photos this viewer has downloaded, marked SAVED on the grid. Signed in:
+    // from the download log for their verified email (follows them across
+    // devices). Not signed in: remembered on this device only — an email typed
+    // into the download prompt proves nothing, so the server won't answer for it.
+    const downloadedKey = `gallery_downloaded_${librarySlug}`;
+    const [downloadedIds, setDownloadedIds] = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem(`gallery_downloaded_${librarySlug}`) || '[]')); } catch { return new Set(); }
+    });
+    const markDownloaded = (ids: string[]) => {
+        if (!ids.length) return;
+        setDownloadedIds(prev => {
+            const next = new Set(prev);
+            ids.forEach(id => next.add(id));
+            try { localStorage.setItem(downloadedKey, JSON.stringify([...next])); } catch { /* private mode */ }
+            return next;
+        });
+    };
+    useEffect(() => {
+        let cancelled = false;
+        setGalleryPass(librarySlug, null);
+        setGalleryRole(null);
+        if (!user) return;
+        (async () => {
+            try {
+                const res = await fetch(`/api/gallery/pass?slug=${encodeURIComponent(librarySlug)}`);
+                const data = res.ok ? await res.json() : null;
+                if (cancelled || !data?.role || !data.pass) return;
+                setGalleryPass(librarySlug, data.pass);
+                setGalleryRole({ role: data.role, buyerPrice: data.buyerPrice ?? null, pricing: data.pricing ?? null, freeLeft: Math.max(0, Number(data.pricing?.freeLeft) || 0) });
+            } catch { /* no pass: downloads of a private album stay locked */ }
+        })();
+        return () => { cancelled = true; };
+    }, [librarySlug, user?.id]);
+
+    useEffect(() => {
+        let cancelled = false;
+        try { setDownloadedIds(new Set(JSON.parse(localStorage.getItem(downloadedKey) || '[]'))); } catch { setDownloadedIds(new Set()); }
+        if (!user) return;
+        (async () => {
+            try {
+                const res = await fetch(`/api/gallery/my-downloads?slug=${encodeURIComponent(librarySlug)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled && Array.isArray(data.photoIds)) markDownloaded(data.photoIds);
+            } catch { /* marks are a convenience; never block the gallery */ }
+        })();
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [librarySlug, user?.id]);
 
     // Drive-native gallery: true when the API returned 403 (not in invited_emails)
     const [driveAccessDenied, setDriveAccessDenied] = useState(false);
@@ -527,14 +616,21 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         fetchDrivePhotos(library.slug);
     }, [library, loading]);
 
-    // Auto-open login modal when landing on a private gallery without being logged in
+    // A private gallery with nobody signed in goes to its access page, where an
+    // invited client gets a sign-in link by email. Never the site's password
+    // modal: clients have no password, and that modal was a dead end (Bandit,
+    // 2026-11-02, re-tapping a used one-time link at midnight). Waits for the
+    // session to finish loading — right after a sign-in link the tokens are
+    // still being read from the URL, and leaving then would throw them away.
     useEffect(() => {
-        if (loading) return;
+        if (loading || authLoading) return;
         if (!library?.is_private) return;
         if (user) return;
-        setAuthMessage('This is a private gallery. Please log in to view your photos.');
-        setAuthModalOpen(true);
-    }, [library, user, loading]);
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        if (/access_token=/.test(hash)) return;
+        const expired = /error_code=otp_expired|error=access_denied/.test(hash);
+        window.location.replace(`/gallery/${encodeURIComponent(library.slug)}/access${expired ? '?expired=1' : ''}`);
+    }, [library, user, loading, authLoading]);
 
     async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
@@ -651,9 +747,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             }
 
             libraryIdsRef.current = libraryIds;
-            const { data: photoData, error: photoError } = await supabase
+            const { data: photoData, error: photoError, count: photoTotal } = await supabase
                 .from('photos')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .in('library_id', libraryIds)
                 .order('created_at', { ascending: false })
                 .order('title', { ascending: false })
@@ -672,6 +768,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return true;
             });
             setPhotos(fetchedPhotos);
+            setAlbumTotal(photoTotal ?? fetchedPhotos.length);
             offsetRef.current = (photoData || []).length;
             setHasMore((photoData || []).length === GALLERY_PAGE_SIZE);
 
@@ -770,6 +867,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     }
 
     const handleToggleSelect = (photo: Photo) => {
+        wholeAlbumRef.current = false; // picking by hand is no longer "the whole album"
         setSelectedPhotos(prev => {
             const isSelected = prev.find(p => p.id === photo.id);
             if (isSelected) {
@@ -801,30 +899,30 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // per-photo price + bundle tiers (mirrors the server-side math).
     const computeTotal = (count: number): number => {
         if (count <= 0 || !library) return 0;
-        const single = Number(library.price) || 0;
-        const sortedBundles = [...pricingOptions]
-            .filter(o => o.photo_count && o.photo_count > 0)
-            .sort((a, b) => b.photo_count - a.photo_count);
-
-        let amount = 0;
-        let remaining = count;
-        for (const opt of sortedBundles) {
-            const numBundles = Math.floor(remaining / opt.photo_count);
-            if (numBundles > 0) {
-                amount += numBundles * Number(opt.price);
-                remaining %= opt.photo_count;
-            }
+        // À la carte: the same function the server checkout charges with.
+        if (galleryRole?.role === 'buyer' && galleryRole.pricing) {
+            const pricing = galleryRole.pricing;
+            const n = wholeAlbumRef.current ? pricing.albumCount : count;
+            // Free-photo allowance first, then the rest at their prices —
+            // the same function the server checkout charges with.
+            return buyerTotalWithFree(n, galleryRole.freeLeft, pricing, wholeAlbumRef.current);
         }
-        amount += remaining * single;
-        return amount;
+        // Everyone else: the same function the server checkout charges with.
+        return galleryTotal(wholeAlbumRef.current && albumOffer ? albumOffer.count : count, {
+            single: Number(library.price) || 0,
+            options: pricingOptions,
+            albumPrice: albumOffer?.price ?? null,
+            albumCount: albumOffer?.count ?? 0,
+        });
     };
 
     // Same-origin anchor with the stream endpoint's attachment disposition —
     // not window.open, which popup blockers eat when fired in a loop.
     const triggerFileDownload = (photo: Photo, email: string) => {
+        markDownloaded([photo.id]);
         const fileId = photo.google_drive_file_id || photo.id;
         const a = document.createElement('a');
-        a.href = `/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`;
+        a.href = withGalleryPass(`/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`);
         a.download = '';
         a.rel = 'noopener';
         document.body.appendChild(a);
@@ -837,6 +935,20 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         const email = await requestDownloadEmail(toDownload);
         if (!email) return; // user cancelled
         setBuyerEmail(email);
+        // Phones: straight into Photos via the share sheet, not into Files one
+        // download at a time (Safari blocks a burst of downloads anyway).
+        if (canSaveToPhotos()) {
+            setSaveSheet(toDownload.map(photo => {
+                const fileId = photo.google_drive_file_id || photo.id;
+                return {
+                    url: withGalleryPass(`/api/gallery/stream?fileId=${encodeURIComponent(fileId)}&download=true&email=${encodeURIComponent(email)}`),
+                    filename: photoFilename(photo.title, photo.mime_type, photo.id),
+                    type: photo.mime_type || 'image/jpeg',
+                    photoId: photo.id,
+                };
+            }));
+            return;
+        }
         if (toDownload.length === 1) {
             triggerFileDownload(toDownload[0], email);
             return;
@@ -854,25 +966,37 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
     };
 
-    const handleCheckout = async () => {
-        if (selectedPhotos.length === 0) return;
+    const handleCheckout = async (opts?: { wholeAlbum?: boolean }) => {
+        // BUY WHOLE ALBUM calls this in the same tap that selects every photo,
+        // before the new selection has rendered — so it can't wait on it.
+        const wholeAlbum = opts?.wholeAlbum === true;
+        wholeAlbumRef.current = wholeAlbum;
+        if (!wholeAlbum && selectedPhotos.length === 0) return;
         // A zero-priced gallery has nothing to pay for — the server checkout
         // rejects it outright — so the tray hands out the files directly.
         if (isFreeGallery) {
             await downloadPhotos(selectedPhotos);
             return;
         }
-        let email = buyerEmail;
+        // A signed-in à la carte buyer pays as themselves (the server uses
+        // their session address anyway); no need to type it.
+        let email = buyerEmail || (galleryRole?.role === 'buyer' ? user?.email ?? null : null);
         if (!email) {
             email = await requestDownloadEmail(selectedPhotos);
             if (!email) return; // user cancelled
-            setBuyerEmail(email);
+        }
+        setBuyerEmail(email);
+        // Covered by their free-photo allowance: nothing to pay, so no card
+        // or bitcoin choice. The server grants them and answers method 'free'.
+        if (galleryRole?.role === 'buyer' && computeTotal(selectedPhotos.length) <= 0) {
+            await submitPayment('stripe', email);
+            return;
         }
         setPaymentPickerOpen(true);
     };
 
-    const submitPayment = async (paymentMethod: 'stripe' | 'strike') => {
-        const email = buyerEmail;
+    const submitPayment = async (paymentMethod: 'stripe' | 'strike', emailOverride?: string) => {
+        const email = emailOverride || buyerEmail;
         if (!email || selectedPhotos.length === 0) return;
 
         setCheckoutPending(true);
@@ -884,6 +1008,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     photoIds: selectedPhotos.map(p => p.id),
                     email,
                     paymentMethod,
+                    wholeAlbum: wholeAlbumRef.current || undefined,
                     returnPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
                 }),
             });
@@ -891,6 +1016,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
             if (!r.ok) {
                 alert('Checkout failed: ' + (d.error || 'Unknown error'));
+                return;
+            }
+
+            // Free-photo allowance: the whole selection was granted free.
+            if (d.method === 'free') {
+                setGalleryRole(prev => prev ? { ...prev, freeLeft: Math.max(0, Number(d.freeLeft) || 0) } : prev);
+                setPaymentPickerOpen(false);
+                setSelectedPhotos([]);
+                await fetchPurchasedAssets();
+                alert(`${d.free} free photo${d.free === 1 ? ' is' : 's are'} yours. They are unlocked in the gallery now.`);
                 return;
             }
 
@@ -946,7 +1081,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Same precedence as the server checkout and the header price display:
     // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
     // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
+    // À la carte free-photo allowance, for the tray: "3 free · 7 free left".
+    const freeNote = (() => {
+        if (galleryRole?.role !== 'buyer' || galleryRole.freeLeft <= 0) return null;
+        const n = wholeAlbumRef.current && galleryRole.pricing ? galleryRole.pricing.albumCount : selectedPhotos.length;
+        const free = Math.min(galleryRole.freeLeft, n);
+        return `${free} free · ${galleryRole.freeLeft - free} free left`;
+    })();
+
     const singlePrice = (() => {
+        if (galleryRole?.role === 'buyer') return galleryRole.buyerPrice || 5;
         const single = pricingOptions.find(o => o.photo_count === 1);
         if (single) return Number(single.price) || 0;
         return library ? Number(library.price) || 0 : 0;
@@ -955,8 +1099,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // No per-photo price and no paid bundle: the gallery is a free download.
     // The all-public aggregate view carries a placeholder price of 0, so it
     // is excluded — those photos belong to galleries with their own prices.
-    const isFreeGallery = !!library && !isAllPublic && singlePrice <= 0
-        && !pricingOptions.some(o => Number(o.price) > 0);
+    const isFreeGallery = galleryRole?.role === 'owner'
+        || (!!library && !isAllPublic && galleryRole?.role !== 'buyer' && singlePrice <= 0
+            && !pricingOptions.some(o => Number(o.price) > 0));
 
     // ── SEO ────────────────────────────────────────────────────────────────────
     // useMemo must be called unconditionally before any early returns.
@@ -1220,6 +1365,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         ))}
                                     </div>
                                 )}
+                                {albumOffer ? (
+                                    <div className="pt-2 space-y-2">
+                                        <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
+                                            Whole album ({albumOffer.count}) for ${albumOffer.price.toFixed(0)}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // Every photo; the server prices it from the database.
+                                                setSelectedPhotos(photos);
+                                                void handleCheckout({ wholeAlbum: true });
+                                            }}
+                                            className="px-5 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
+                                            data-tour="buy-whole-album"
+                                        >
+                                            Buy Whole Album — ${albumOffer.price.toFixed(0)}
+                                        </button>
+                                    </div>
+                                ) : null}
                                 <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
                                     Pay with Card or Bitcoin
                                 </p>
@@ -1251,7 +1415,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     : 'Pick Card or Bitcoin and complete payment.'}
                             </p>
                         </div>
-                        <div className="pt-3 mt-2 border-t border-white/5">
+                        <div className="pt-3 mt-2">
                             <p className="text-[8px] font-black tracking-[0.25em] uppercase text-white/30 leading-relaxed">
                                 Personal use only
                             </p>
@@ -1339,17 +1503,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         This is a private gallery.
                                     </p>
                                     <p className="text-white/40 text-sm max-w-md mx-auto">
-                                        If you are the owner of this gallery, please log in to view and manage your photos.
+                                        Invited? Get a sign-in link by email — no password needed.
                                     </p>
+                                    <a
+                                        href={`/gallery/${encodeURIComponent(librarySlug)}/access`}
+                                        className="inline-block mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/80 transition-colors"
+                                    >
+                                        Get My Gallery Link
+                                    </a>
                                     <button
                                         onClick={() => {
                                             setAuthTitle(undefined);
                                             setAuthMessage(undefined);
                                             setAuthModalOpen(true);
                                         }}
-                                        className="inline-block mt-4 px-8 py-3 bg-transparent border border-white text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
+                                        className="block mx-auto mt-3 text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-widest"
                                     >
-                                        Log In
+                                        Owner? Log in
                                     </button>
                                 </>
                             ) : driveAccessDenied ? (
@@ -1480,6 +1650,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 onToggleSelect={() => handleToggleSelect(photo)}
                                                 onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
                                                 onDownload={() => downloadPhotos([photo])}
+                                                isDownloaded={downloadedIds.has(photo.id)}
                                             />
                                         ))}
                                     </div>
@@ -1492,7 +1663,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             <button
                                 onClick={loadMorePhotos}
                                 disabled={loadingMore}
-                                className="px-8 py-3 bg-transparent border border-white/30 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-8 py-3 bg-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loadingMore ? 'Loading…' : 'Load More'}
                             </button>
@@ -1502,6 +1673,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             </div >
 
             {/* Lightbox */}
+            {saveSheet && <SaveToPhotosSheet items={saveSheet} onClose={() => setSaveSheet(null)} onSaved={markDownloaded} />}
             <PhotoLightbox
                 photo={activePhotoIndex !== null ? photos[activePhotoIndex] : null}
                 onClose={() => setActivePhotoIndex(null)}
@@ -1714,6 +1886,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 loading={checkoutPending}
                 totalAmount={computeTotal(selectedPhotos.length)}
                 isFree={isFreeGallery}
+                note={freeNote}
+                claimFree={galleryRole?.role === 'buyer' && selectedPhotos.length > 0 && computeTotal(selectedPhotos.length) <= 0}
             />
 
             {/* Payment method picker — Card vs Bitcoin */}
@@ -1731,7 +1905,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 16 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                            className="relative bg-[#0a0a0a] w-full max-w-sm p-8"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
@@ -1761,7 +1935,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 <button
                                     onClick={() => submitPayment('strike')}
                                     disabled={checkoutPending}
-                                    className="w-full py-4 bg-transparent border border-white/30 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:border-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                                    className="w-full py-4 bg-white/10 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/20 transition-colors disabled:opacity-50"
                                 >
                                     Pay with Bitcoin
                                 </button>
@@ -1789,7 +1963,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 16 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-black border border-white/20 w-full max-w-sm p-8 text-center"
+                            className="relative bg-[#0a0a0a] w-full max-w-sm p-8 text-center"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button

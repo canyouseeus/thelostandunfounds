@@ -11,10 +11,10 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { DashboardId } from './tours';
+import { DashboardIds } from './tours';
 import { TutorialList } from './TutorialLibrary';
 
-export default function TourHelpButton({ dashboard }: { dashboard: DashboardId }) {
+export default function TourHelpButton({ dashboard }: { dashboard: DashboardIds }) {
   const [open, setOpen] = useState(false);
 
   return createPortal(

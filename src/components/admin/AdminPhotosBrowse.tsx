@@ -93,7 +93,7 @@ const TYPE_COLORS: Record<string, string> = {
 export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhotosBrowseProps) {
   const { session } = useAuth();
   // This component renders under two layouts: /admin (AdminLayout, which mounts
-  // MusicPlayer) and /photographer-dashboard (plain Layout, which does not).
+  // MusicPlayer) and /dashboard (plain Layout, which does not).
   // Only the first has a permanent bottom bar for the console tray to clear.
   const { pathname } = useLocation();
   const hasPlayerBar = pathname.startsWith('/admin');
@@ -1226,7 +1226,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[25000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           >
-            <div className="bg-black border border-white/20 w-full max-w-sm p-6">
+            <div className="bg-[#0a0a0a] w-full max-w-sm p-6">
               <p className="text-sm font-bold uppercase tracking-wider text-white mb-2">Changes Saved</p>
               <p className="text-white/50 text-xs mb-6">
                 Create a new gallery with {editedPhotoIds.size} edited photo{editedPhotoIds.size !== 1 ? 's' : ''}?

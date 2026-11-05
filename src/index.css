@@ -36,6 +36,14 @@ input[type=number] {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* White text caret everywhere (owner, 2026-11-01). iOS Safari otherwise draws
+   its system blue. A template may still set its own caretColor inline. */
+input,
+textarea,
+[contenteditable] {
+  caret-color: #fff;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -908,7 +916,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   display: block;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
 }
 

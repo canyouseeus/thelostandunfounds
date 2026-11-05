@@ -34,6 +34,7 @@ import {
   DocumentTextIcon,
   UserIcon,
   MagnifyingGlassIcon,
+  ViewfinderCircleIcon,
   FunnelIcon,
   EllipsisVerticalIcon,
   PencilIcon,
@@ -63,6 +64,7 @@ import {
   EllipsisHorizontalIcon,
   CloudArrowUpIcon,
   Squares2X2Icon,
+  ScaleIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -101,6 +103,8 @@ import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminRosterView from '../components/admin/AdminRosterView';
 import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminSupportView from '../components/admin/AdminSupportView';
+import { AdminProspectsView } from '../components/admin/AdminProspectsView';
+import MoneyLedgerView from '../components/admin/MoneyLedgerView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -122,6 +126,7 @@ import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import WhatsNewModal from '../components/admin/tour/WhatsNewModal';
+import { DepositCheckInModal } from '../components/admin/DepositCheckIn';
 import { TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { installGlobalListeners, logApiCall } from '../lib/adminErrorLog';
 
@@ -249,6 +254,14 @@ export default function Admin() {
   const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   // Support tickets whose last word is the user's: someone is waiting on a reply.
   const [supportWaiting, setSupportWaiting] = useState<number>(0);
+  const [prospectsWaiting, setProspectsWaiting] = useState<number>(0);
+  // Leads the client-hunter agent found that still need a read — the dock badge.
+  useEffect(() => {
+    fetch('/api/admin/prospects?status=new')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.prospects) setProspectsWaiting(d.prospects.filter((p: any) => p.status === 'new').length); })
+      .catch(() => {});
+  }, []);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
   const [newestSubscribers, setNewestSubscribers] = useState<Array<{ email: string; created_at: string }>>([]);
   const [affiliateStats, setAffiliateStats] = useState<{
@@ -750,11 +763,16 @@ export default function Admin() {
         });
 
         // Street nights count on the night they happened.
-        const { data: streetRows } = await supabase.from('field_sales').select('night, total');
-        const streetHistory = (streetRows || []).map((r: any) => ({
-          date: `${r.night}T12:00:00Z`,
-          amount: Number(r.total || 0),
-        }));
+        // Street money: logged street nights, plus outside deposits the owner
+        // tagged street. Deposits tagged invoice are already in bookingHistory.
+        const [{ data: streetRows }, { data: streetDepositRows }] = await Promise.all([
+          supabase.from('field_sales').select('night, total'),
+          supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
+        ]);
+        const streetHistory = [
+          ...(streetRows || []).map((r: any) => ({ date: `${r.night}T12:00:00Z`, amount: Number(r.total || 0) })),
+          ...(streetDepositRows || []).map((r: any) => ({ date: r.received_at, amount: Number(r.amount_cents || 0) / 100 })),
+        ];
 
         historyData = {
           // Bookings are part of total revenue, so the revenue series must
@@ -993,8 +1011,13 @@ export default function Admin() {
             collectedByInvoice.set(p.invoice_id, prior + Number(p.amount || 0));
           }
 
-          const { data: streetNights } = await supabase.from('field_sales').select('total');
-          streetRevenueTotal = (streetNights || []).reduce((sum, r: any) => sum + Number(r.total || 0), 0);
+          const [{ data: streetNights }, { data: streetDeposits }] = await Promise.all([
+            supabase.from('field_sales').select('total'),
+            supabase.from('deposit_checkins').select('amount_cents').eq('category', 'street'),
+          ]);
+          streetRevenueTotal =
+            (streetNights || []).reduce((sum, r: any) => sum + Number(r.total || 0), 0) +
+            (streetDeposits || []).reduce((sum, r: any) => sum + Number(r.amount_cents || 0) / 100, 0);
 
           bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
             // Invoices marked paid with no itemised payments still count in
@@ -2038,7 +2061,9 @@ export default function Admin() {
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'crm', icon: UserGroupIcon, title: 'CRM' },
+                { id: 'prospects', icon: ViewfinderCircleIcon, title: 'Prospects', badge: prospectsWaiting },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
+                { id: 'money', icon: ScaleIcon, title: 'Money In / Out' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
                 { id: 'support', icon: LifebuoyIcon, title: 'Support', badge: supportWaiting },
@@ -2110,6 +2135,7 @@ export default function Admin() {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
+                  money:       { title: 'Money In / Out',           icon: <ScaleIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -2121,6 +2147,7 @@ export default function Admin() {
                   bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   crm:         { title: 'CRM',                      icon: <UserGroupIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
+                  prospects:   { title: 'Prospects',                icon: <ViewfinderCircleIcon className="w-5 h-5 text-white/40" />, extra: prospectsWaiting > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{prospectsWaiting} TO REVIEW</span> : null },
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('crm')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">← CRM</button> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
@@ -2157,6 +2184,11 @@ export default function Admin() {
                 {activePanelSection === 'clientuploads' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Content Requests</div>}>
                     <AdminClientUploadsView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'money' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Money In / Out</div>}>
+                    <MoneyLedgerView />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'blog' && (
@@ -2238,6 +2270,11 @@ export default function Admin() {
                     <AdminPrintShopView />
                   </ErrorBoundary>
                 )}
+                {activePanelSection === 'prospects' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Prospects</div>}>
+                    <AdminProspectsView onCountChange={setProspectsWaiting} />
+                  </ErrorBoundary>
+                )}
                 {activePanelSection === 'support' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Support</div>}>
                     <AdminSupportView onCountChange={setSupportWaiting} />
@@ -2305,7 +2342,7 @@ export default function Admin() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        <WhatsNewModal />
+        <WhatsNewModal after={<DepositCheckInModal />} />
 
       </div>
     </div>

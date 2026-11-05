@@ -7,13 +7,15 @@
 //   POST /api/client-uploads/sign
 //   POST /api/client-uploads/record
 //
-// Admin (Bearer access token, admin email allowlist):
+// Management (Bearer access token — the admin sees every request, a
+// photographer on the roster sees only their own):
 //   GET  /api/client-uploads/links
 //   POST /api/client-uploads/links
 //   POST /api/client-uploads/toggle
 //   POST /api/client-uploads/invite
 //   POST /api/client-uploads/retry-mirror
 //   GET  /api/client-uploads/uploads?linkId=...
+//   POST /api/client-uploads/make-white
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
     HttpError,
@@ -22,8 +24,9 @@ import {
     getPublicLink,
     listLinks,
     listUploads,
+    makeWhite,
     recordBatch,
-    requireAdmin,
+    requireRequester,
     retryMirror,
     sendInvite,
     setLinkActive,
@@ -69,40 +72,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             case 'links': {
-                await requireAdmin(req, supabase);
-                if (req.method === 'GET') return res.status(200).json({ links: await listLinks(supabase) });
-                if (req.method === 'POST') return res.status(200).json(await createLink(supabase, req.body || {}));
+                const requester = await requireRequester(req, supabase);
+                if (req.method === 'GET') return res.status(200).json({ links: await listLinks(supabase, requester) });
+                if (req.method === 'POST') return res.status(200).json(await createLink(supabase, req.body || {}, requester));
                 return res.status(405).json({ error: 'Method not allowed' });
             }
 
             case 'toggle': {
-                await requireAdmin(req, supabase);
+                const requester = await requireRequester(req, supabase);
                 if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
                 const { id, is_active } = req.body || {};
                 if (!id) return res.status(400).json({ error: 'id is required' });
-                return res.status(200).json({ link: await setLinkActive(supabase, id, !!is_active) });
+                return res.status(200).json({ link: await setLinkActive(supabase, requester, id, !!is_active) });
             }
 
             case 'invite': {
-                await requireAdmin(req, supabase);
+                const requester = await requireRequester(req, supabase);
                 if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-                return res.status(200).json(await sendInvite(supabase, req.body || {}));
+                return res.status(200).json(await sendInvite(supabase, requester, req.body || {}));
             }
 
             case 'retry-mirror': {
-                await requireAdmin(req, supabase);
+                const requester = await requireRequester(req, supabase);
                 if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
                 const { id } = req.body || {};
                 if (!id) return res.status(400).json({ error: 'id is required' });
-                return res.status(200).json(await retryMirror(supabase, id));
+                return res.status(200).json(await retryMirror(supabase, requester, id));
+            }
+
+            case 'make-white': {
+                const requester = await requireRequester(req, supabase);
+                if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+                const { id } = req.body || {};
+                if (!id) return res.status(400).json({ error: 'id is required' });
+                return res.status(200).json(await makeWhite(supabase, requester, id));
             }
 
             case 'uploads': {
-                await requireAdmin(req, supabase);
+                const requester = await requireRequester(req, supabase);
                 if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
                 const linkId = (req.query.linkId as string) || '';
                 if (!linkId) return res.status(400).json({ error: 'linkId is required' });
-                return res.status(200).json({ uploads: await listUploads(supabase, linkId) });
+                return res.status(200).json({ uploads: await listUploads(supabase, requester, linkId) });
             }
 
             default:

@@ -33,7 +33,12 @@ export default function Layout({ children }: { children?: ReactNode }) {
   // so they belong to the signed-in admin dashboard only. Being on an /admin
   // URL isn't enough: the sign-in gate lives there too, and a locked-out
   // visitor shouldn't see dashboard chrome floating over the logo.
-  const isAdminRoute = location.pathname.startsWith('/admin') && userIsAdmin
+  //
+  // The member dashboard (/dashboard) gets the same header clock + verse: it
+  // has its own full-size clock and calendar to hand over to, and every
+  // signed-in person who reaches it is looking at their own dashboard.
+  const isMemberDashboard = location.pathname === '/dashboard' && !loading && !!user
+  const isAdminRoute = (location.pathname.startsWith('/admin') && userIsAdmin) || isMemberDashboard
   const [headerNow, setHeaderNow] = useState(new Date())
   useEffect(() => {
     if (!isAdminRoute) return
@@ -54,8 +59,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
       // Track only the first row (clock / calendar / calculator), not the whole
       // grid — anchoring to the full grid kept the ticker up until every one of
       // the twelve cells had scrolled past.
-      const grid = document.getElementById('dashboard-widgets')
-      const el = grid?.firstElementChild
+      // The member dashboard marks its clock/calendar block directly.
+      const el = document.querySelector('[data-header-widgets-anchor]')
+        ?? document.getElementById('dashboard-widgets')?.firstElementChild
       if (!el) return setBigWidgetsVisible(false)
       const r = el.getBoundingClientRect()
       // Track the row's centre rather than its edges, so entering and leaving
@@ -359,8 +365,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     <ClockWidget size="lg" hideLabel lockMode className="w-[64px] !min-h-[46px]" />
                     <Link
-                      to="/admin?panel=calendar"
-                      title="Open master calendar"
+                      to={userIsAdmin ? '/admin?panel=calendar' : '/dashboard'}
+                      title={userIsAdmin ? 'Open master calendar' : 'My dashboard'}
                       // Matched to the mini clock's digits rather than styled
                       // on its own: the clock draws them at 15cqw of its 64px
                       // box — 9.6px, bold, mono, tabular — so the date is the

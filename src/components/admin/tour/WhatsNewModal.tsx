@@ -5,10 +5,10 @@
  * it comes back next time until the tour is run or dismissed.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SparklesIcon } from '@heroicons/react/24/outline';
-import { announcedTours, DashboardId, toursFor } from './tours';
+import { announcedTours, DashboardIds, toursFor } from './tours';
 import { useTour } from './TourContext';
 
 const SNOOZE_KEY = 'tlu_whats_new_snoozed';
@@ -17,13 +17,18 @@ function readSnoozed(): string | null {
   try { return sessionStorage.getItem(SNOOZE_KEY); } catch { return null; }
 }
 
-export default function WhatsNewModal({ dashboard = 'admin' }: { dashboard?: DashboardId }) {
+/**
+ * `after` renders once the tour pop-ups are done: no walkthrough running and
+ * nothing left to announce this visit (the admin deposit check-in uses it).
+ */
+export default function WhatsNewModal({ dashboard = 'admin', after = null }: { dashboard?: DashboardIds; after?: ReactNode }) {
   const { start, activeId, seen, markSeen } = useTour();
   const [snoozed, setSnoozed] = useState<string | null>(readSnoozed);
 
   const intro = toursFor(dashboard).find(t => t.intro && !seen.includes(t.id));
   const tour = intro ?? announcedTours(dashboard).find(t => !seen.includes(t.id));
-  if (!tour || activeId || snoozed === tour.id) return null;
+  if (activeId) return null;
+  if (!tour || snoozed === tour.id) return <>{after}</>;
 
   // Someone new gets the welcome tour, which already covers what is there.
   // Features announced before they arrived are not new to them.

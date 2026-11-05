@@ -5,6 +5,19 @@ description: Captures the core brand philosophy and operational identity of The 
 
 # Brand Ethos
 
+## Mascot: SCOT33
+
+Owner-confirmed 2026-10-31. **SCOT33 is our mascot, and he is a tiger.** Spelled with two 3s.
+
+- He is the main mark: SCOT33 inside the ring of lettering THE LOST+UNFOUNDS / CAN YOU SEE US?.
+  `public/logo.png` is that mark in white.
+- He is **not a bear**. Agents have called him one twice. Look at the stripes.
+- Black or white only. Never recolour him, never separate him from his lettering.
+- Files: `public/brand/kit/SCOT33-white.png` and `SCOT33-black.png` (the owner's Drive originals,
+  "SCOT33 WHITE.png" and "SCOT33.png"). Usage rules ship to photographers in the BRAND KIT app;
+  source in `src/lib/brand-kit.ts`.
+- The cat is **TOULOUS3** (Toulouse), a different character and not the logo.
+
 ## The Mission
 
 **The Lost and Unfounds is a future-forward creative agency that simplifies business operations.**

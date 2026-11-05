@@ -117,6 +117,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             line_items: [lineItem as any],
             ...(customerEmail ? { customer_email: customerEmail } : {}),
             shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU'] },
+            custom_text: {
+                shipping_address: {
+                    message: 'Made to order. Ships once your payment clears, usually 1–3 weeks to arrive. Shipping & returns: thelostandunfounds.com/shipping',
+                },
+            },
             allow_promotion_codes: true,
             success_url: successUrl,
             cancel_url: cancelUrl,

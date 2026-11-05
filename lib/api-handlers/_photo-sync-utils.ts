@@ -115,7 +115,9 @@ async function listFolderEntries(
         for (const f of (res.data.files || [])) {
             if (f.mimeType === 'application/vnd.google-apps.folder') {
                 if (f.id) subfolders.push(f);
-            } else if (f.mimeType?.startsWith('image/') || f.mimeType === 'video/quicktime') {
+            } else if (f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/')) {
+                // Any video, not just .mov: a file the sync does not list counts as
+                // gone from Drive, and its row is deleted as an orphan.
                 if (f.id) photos.push(f);
             }
         }

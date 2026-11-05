@@ -37,6 +37,10 @@ import { TOUR_PANEL_EVENT, getTour, Tour, TourStep } from './tours';
 
 const SEEN_KEY = 'tlu_tours_seen';
 const PAD = 6;
+// Smallest gap between the outline and the screen's edge.
+const EDGE = 4;
+// Room the step card needs above or below the outline.
+const CARD_ROOM = 260;
 const FADE_MS = 120;
 // Frames the target must hold still before it is measured for good.
 const STILL_FRAMES = 3;
@@ -196,6 +200,32 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
     return () => mo.disconnect();
   }, []);
 
+  // Lock the page while the tour runs: the reader's finger must not drag the
+  // dashboard out from under the outline. Done by blocking scroll gestures,
+  // never by setting overflow on <html>/<body>: panels and pop-ups save and
+  // restore that inline style themselves, so one opened during a tour saved
+  // the tour's "hidden" as normal and put it back after the tour ended,
+  // locking the dashboard for good. The tour still scrolls each target into
+  // view itself; only the reader's gestures are stopped.
+  useEffect(() => {
+    const block = (e: Event) => { if (e.cancelable) e.preventDefault(); };
+    const blockKeys = (e: KeyboardEvent) => {
+      if ([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        const t = e.target as HTMLElement | null;
+        if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(t.tagName))) return;
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('touchmove', block, { passive: false });
+    window.addEventListener('wheel', block, { passive: false });
+    window.addEventListener('keydown', blockKeys);
+    return () => {
+      window.removeEventListener('touchmove', block);
+      window.removeEventListener('wheel', block);
+      window.removeEventListener('keydown', blockKeys);
+    };
+  }, []);
+
   const go = useCallback((to: number) => {
     if (to >= tour.steps.length) { onClose(); return; }
     if (to < 0) return;
@@ -228,6 +258,37 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
       let still = 0;
       let scrolledTo: HTMLElement | null = null;
 
+      // Never turned up, or never came out from under something painted over
+      // it. Say why if the step knows; otherwise skip it.
+      const skipMissing = () => {
+        if (step.missingNote) { arrive(step, null); return; }
+        let to = index + dirRef.current;
+        // Jump the whole run of steps that can't be there either — the rest
+        // of an app that failed to load, say — instead of waiting on each in
+        // turn. Stop at any step that could still appear: one that changes
+        // the page or panel first, has no target, explains itself with a
+        // missingNote, or whose target is already on screen.
+        const len = tour.steps.length;
+        while (to >= 0 && to < len) {
+          const n = tour.steps[to];
+          const panelMoves = n.panel !== undefined && openPanel() !== (n.panel ?? '');
+          const routeMoves = !!n.route && window.location.pathname !== n.route;
+          if (!n.target || routeMoves || panelMoves || n.missingNote || findTarget(n.target)) break;
+          to += dirRef.current;
+        }
+        // Backing into a missing first step: stay where the reader was.
+        if (to < 0) to = shownRef.current ? shownRef.current.index : index + 1;
+        if (to >= tour.steps.length) {
+          // Ran off the end skipping. If most of the tour never showed —
+          // an empty CRM, no tickets yet — say so rather than vanish.
+          if (shownCountRef.current * 2 < tour.steps.length) {
+            arrive({ title: 'That\u2019s It For Now', body: 'The rest of this tool appears once it has something in it. Run this tutorial again from TUTORIALS then.' }, null, tour.steps.length - 1);
+          } else onClose();
+          return;
+        }
+        setIndex(to);
+      };
+
       const tick = () => {
         if (cancelled) return;
         const elapsed = performance.now() - started;
@@ -255,33 +316,7 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
           const loading = !!document.querySelector('[data-tour-loading]');
           const settledPage = quiet && !loading && elapsed >= (changed ? MIN_WAIT_AFTER_CHANGE_MS : 0);
           if (elapsed < limit && !settledPage) { raf = requestAnimationFrame(tick); return; }
-          // Never turned up. Say why if the step knows; otherwise skip it.
-          if (step.missingNote) { arrive(step, null); return; }
-          let to = index + dirRef.current;
-          // Jump the whole run of steps that can't be there either — the rest
-          // of an app that failed to load, say — instead of waiting on each in
-          // turn. Stop at any step that could still appear: one that changes
-          // the page or panel first, has no target, explains itself with a
-          // missingNote, or whose target is already on screen.
-          const len = tour.steps.length;
-          while (to >= 0 && to < len) {
-            const n = tour.steps[to];
-            const panelMoves = n.panel !== undefined && openPanel() !== (n.panel ?? '');
-            const routeMoves = !!n.route && window.location.pathname !== n.route;
-            if (!n.target || routeMoves || panelMoves || n.missingNote || findTarget(n.target)) break;
-            to += dirRef.current;
-          }
-          // Backing into a missing first step: stay where the reader was.
-          if (to < 0) to = shownRef.current ? shownRef.current.index : index + 1;
-          if (to >= tour.steps.length) {
-            // Ran off the end skipping. If most of the tour never showed —
-            // an empty CRM, no tickets yet — say so rather than vanish.
-            if (shownCountRef.current * 2 < tour.steps.length) {
-              arrive({ title: 'That\u2019s It For Now', body: 'The rest of this tool appears once it has something in it. Run this tutorial again from TUTORIALS then.' }, null, tour.steps.length - 1);
-            } else onClose();
-            return;
-          }
-          setIndex(to);
+          skipMissing();
           return;
         }
 
@@ -297,9 +332,12 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
         // Something painted over it: wait, unless it is only off screen
         // because the scroll above is still running.
         const onScreen = b.top >= 0 && b.top < window.innerHeight;
-        if (onScreen && covered(el) && elapsed < limit) {
+        if (onScreen && covered(el)) {
           last = null; still = 0;
-          raf = requestAnimationFrame(tick);
+          if (elapsed < limit) { raf = requestAnimationFrame(tick); return; }
+          // Still under a pop-up when time is up: outlining it would draw a
+          // box around whatever is on top. Skip it like a missing target.
+          skipMissing();
           return;
         }
         still = sameBox(last, b) ? still + 1 : 0;
@@ -391,10 +429,15 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
   // then glides, rather than collapsing between every step.
   const hole = box
     ? (() => {
-        const top = Math.max(box.top - PAD, 0);
-        const left = Math.max(box.left - PAD, 0);
-        const bottom = Math.min(box.top + box.height + PAD, vh);
-        const right = Math.min(box.left + box.width + PAD, vw);
+        // EDGE keeps all four sides of the outline on screen: a hole clamped
+        // to 0 draws its top line above the viewport, under the phone's bar.
+        const top = Math.max(box.top - PAD, EDGE);
+        const left = Math.max(box.left - PAD, EDGE);
+        let bottom = Math.min(box.top + box.height + PAD, vh - EDGE);
+        // A section taller than the screen: outline the part on screen and
+        // stop short of the bottom, so the card sits under it, not on it.
+        if (bottom - top > vh - CARD_ROOM - 12 && top < CARD_ROOM) bottom = Math.max(vh - CARD_ROOM - 12, top + 40);
+        const right = Math.min(box.left + box.width + PAD, vw - EDGE);
         return { top, left, width: Math.max(right - left, 0), height: Math.max(bottom - top, 0) };
       })()
     : null;
@@ -402,7 +445,6 @@ function TourOverlay({ tour, onClose }: { tour: Tour; onClose: () => void }) {
   const step = shown?.step;
   const isLast = (shown?.index ?? 0) >= tour.steps.length - 1;
   const cardWidth = Math.min(380, vw - 32);
-  const CARD_ROOM = 260;
   let cardPos: { top?: number; bottom?: number; left: number } | null = null;
   if (hole) {
     const left = Math.min(Math.max(hole.left, 16), vw - cardWidth - 16);
