@@ -100,7 +100,7 @@ EOF
   wait_for_other_uploads
   act "STEP 3/3  uploading to Drive (JPG → RAW zips → MOV, into NEW UPLOADS/<date>)"
   node_modules/.bin/tsx scripts/upload-to-drive.ts --sd "$B" 2>&1 | tee "$LOGS/upload-$i.log" \
-    | perl -ne 'BEGIN{$|=1} chomp; for (split /\r/) { next if /: \d+%\s*$/ || /^\s*$/ || /^\s*\[dotenv/; s/^\s+//; print "$_\n" }' \
+    | perl -ne 'BEGIN{$|=1} chomp; for (split /\r/) { next if (/: \d+%\s*$/ && !/\.(zip|mov|mp4): \d+%/i) || /^\s*$/ || /^\s*\[dotenv/; s/^\s+//; print "$_\n" }' \
     | while IFS= read -r line; do act "$line"; done
   left=$(find "$B" -type f ! -name '.*' | wc -l | tr -d ' ')
   if pipeline_ok "$LOGS/upload-$i.log" && staging_empty && [ "$left" = 0 ]; then

@@ -6,6 +6,7 @@
 # Meant to run under launchd (see the launchctl line in the claptrop docs) so it
 # survives the Claude app quitting. Each pass is safe to repeat: files already in
 # Drive are skipped, and card files are cleared only after a clean upload.
+# caffeinate -d keeps the screen on (no lock); -i/-m/-s keep the Mac and disk awake.
 # Stops when the card is empty, the card is gone for 30 min, or 40 passes fail. Retries 30 s after a failure.
 set -u
 CARD_ROOT="${1:?usage: claptrop-card-forever.sh <card volume>}"
@@ -30,7 +31,7 @@ for pass in $(seq 1 40); do
   n=$(left)
   if [ "$n" = 0 ]; then echo "$(date '+%m-%d %H:%M') CARD EMPTY — all uploaded."; exit 0; fi
   echo "$(date '+%m-%d %H:%M') pass $pass: $n files on card"
-  caffeinate -ims bash "$PROJ/scripts/claptrop-card-batches.sh" "$CARD_ROOT"
+  caffeinate -dims bash "$PROJ/scripts/claptrop-card-batches.sh" "$CARD_ROOT"
   rc=$?
   if [ "$rc" = 0 ] && [ "$(left)" = 0 ]; then echo "$(date '+%m-%d %H:%M') CARD EMPTY — all uploaded."; exit 0; fi
   echo "$(date '+%m-%d %H:%M') pass $pass ended (exit $rc) — retrying in 30 s"

@@ -406,6 +406,8 @@ library folder, and never move files out of NEW UPLOADS for him.
    It runs `claptrop-card-batches.sh` in batches of ≤30 GB: copy → md5-verify against the card →
    `upload-to-drive.ts --sd <batch>` → clear that batch's files off the card **only** after a clean
    upload. It retries 30 s after a failure and stops when the card is empty.
+   It runs under `caffeinate -dims`: the Mac, disk **and screen** stay awake, so it never sleeps or
+   locks mid-upload. Big RAF zips and videos print progress every 10%, so a long zip is not a stall.
 2. Launch it from a Terminal `.command` file with `nohup … & disown`, like
    `~/Desktop/<CARD> import/RUN-CLAPTROP-4-UPLOAD.command`. macOS privacy (TCC) blocks launchd and
    background agents from reading `/Volumes` and `~/Desktop`. It must keep going through Claude
