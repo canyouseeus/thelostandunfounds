@@ -142,6 +142,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | CRM, leads, pipeline, contacts, Shadow Board | `noir-design`, `no-border-design`, `bento-design` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting`, GALLERY EVERYWHERE RULE below |
+| SD card, camera card, CLAPTROP, upload photos to Drive, NEW UPLOADS, RAF, duplicates in Drive | CLAPTROP UPLOAD RULE below |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
 | modal, overlay, z-index, popup | `modal-z-index-manager` |
 | database, migration, RLS, schema, Supabase, SQL | `supabase-mcp`, `infra-ops`, `verify-schema` |
@@ -383,6 +384,60 @@ first visit, running the tour marked `intro`. A new dashboard gets a `data-tour-
    only reach by typing its URL.
 4. Changing an existing tool? Update its tour so the steps still match what is on screen. All tours
    are listed under TUTORIALS (SAGE MODE on → TUTORIALS, or the `/sagemode` page).
+
+## CLAPTROP UPLOAD RULE — camera card → Google Drive
+
+Owner rules, 2026-11-04/05. Scripts are in `scripts/` (branch `claptrop-card-uploads`, not
+yet merged to `main`).
+
+**Owner workflow:** every upload lands in the archive's **NEW UPLOADS/<date>** folder. The owner
+then sorts the keepers into the gallery/library folders by hand. Never upload straight into a
+library folder, and never move files out of NEW UPLOADS for him.
+
+**Drive layout — no loose files anywhere:**
+- JPG archive `1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4` → `NEW UPLOADS/<YYYY-MM-DD>/`
+- RAW archive `1BMLrQ6JhHOW7osSZSxl8-Ve4nBAzrPEV` → `NEW UPLOADS/<YYYY-MM-DD>/…_RAF.zip` +
+  `.manifest.json`. RAFs always go up as **one zip per date**, never loose and never in the JPG tree.
+- MOV archive `13yWZiOr6UpDhS1VDtKVonx441O137Lc-` → `NEW UPLOADS/<YYYY-MM-DD>/`
+- Order: all JPGs first, then RAW, then MOV.
+
+**Run it:**
+1. Card bigger than the free disk, or any card: `bash scripts/claptrop-card-forever.sh "/Volumes/<CARD>"`.
+   It runs `claptrop-card-batches.sh` in batches of ≤30 GB: copy → md5-verify against the card →
+   `upload-to-drive.ts --sd <batch>` → clear that batch's files off the card **only** after a clean
+   upload. It retries 30 s after a failure and stops when the card is empty.
+2. Launch it from a Terminal `.command` file with `nohup … & disown`, like
+   `~/Desktop/<CARD> import/RUN-CLAPTROP-4-UPLOAD.command`. macOS privacy (TCC) blocks launchd and
+   background agents from reading `/Volumes` and `~/Desktop`. It must keep going through Claude
+   usage limits and app quits, so never run it as a foreground tool call.
+3. Live progress: dashboard `http://localhost:4777` (`node scripts/claptrop-dashboard.mjs`), or
+   `bash scripts/claptrop-status.sh` in **one** Terminal window. Every file action goes to
+   `~/Desktop/<CARD> import/logs/activity.log`.
+4. Pause/resume: `bash scripts/claptrop-pause.sh pause|resume` (SIGSTOP/SIGCONT on the runner tree).
+   It does not reach a separately launched upload (e.g. a staging flush): stop those by PID.
+
+**Duplicates — never upload anything twice.** `upload-to-drive.ts` skips a file when any of these
+match:
+- the md5 of **every file in the whole Drive**, not only the archives (album folders such as
+  SPARKLE included);
+- the permanent content ledger `~/.claptrop/upload-ledger.txt`. It holds one `md5:<hash>:<size>`
+  per line, is never pruned, and sits outside the repo on purpose. Every run snapshots Drive into
+  it, so a photo the owner trashed and emptied is never sent again. Never delete or truncate it;
+- RAW zip manifests, and name, tail or date plus size.
+
+Never remove the whole-Drive or ledger check to speed a run up. That is how the SPARKLE photos
+were re-uploaded on 2026-11-05.
+
+**Safety:**
+- Clear card files only after a verified, clean upload. Desktop copies are the only copies until
+  they are uploaded.
+- In Drive, **trash, never delete**. The owner empties the Drive trash and the Mac Trash himself.
+- Report counts and get the owner's yes before any mass Drive change (moving, sorting, trashing
+  duplicates).
+- Leave `~/Desktop/PHOTO UPLOADS/organize_photos.sh` alone. Don't read credential values.
+- Never edit a bash script while it is running: write a new file and `mv` it into place.
+  `pgrep -f`/`pkill -f` can match your own shell's command line, so kill by explicit PID.
+- Report times in Central.
 
 ## GALLERY EVERYWHERE RULE
 
