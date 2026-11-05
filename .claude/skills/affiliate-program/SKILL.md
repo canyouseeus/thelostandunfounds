@@ -115,9 +115,9 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
     `acct_1TdzeP2Z4XPVWLVL`.
 -   **Owner's 10%** (owner, 2026-11-05) — separate from and on top of his 42% and King Midas:
     10% of what the company keeps after the program (profit − 42% − MLM − KM 8% − SS 3%; no
-    referrer → whole profit). Applies to booked services **he shoots** (no invoice has a
-    `contractor_payout`) and Prodigi merch. Another photographer shooting → he gets only the
-    house's 20%, no 10%. `queueOwnerCut()` in `_commission-trigger.ts`, called from
+    referrer → whole profit). Applies to every booked service, whoever shoots it, and Prodigi
+    merch. A crew job's profit is the house's 20% (the photographer's 80% is the cost); the
+    splits come out of that, then his 10%. `queueOwnerCut()` in `_commission-trigger.ts`, called from
     `triggerReferralCommission`, one `owner_pay` job per sale (key `owner-cut-<source>-<id>`).
     A booking splits once at full payment — card (webhook) or recorded by hand
     (`record-invoice-payment` → `triggerSettledInvoiceSplit`) — so a deposit never gets its own 10%.

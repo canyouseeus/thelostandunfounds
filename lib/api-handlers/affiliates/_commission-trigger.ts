@@ -59,11 +59,13 @@ const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
 
 /**
  * Owner decision, 2026-11-05: the owner is paid 10% of what the company keeps
- * on every booked service HE SHOOTS and every merch sale, on top of any affiliate share
+ * on every booked service and every merch sale, on top of any affiliate share
  * or King Midas winnings he earns like anyone else. The base is the job's
  * profit AFTER the affiliate program takes its cut: profit − 42% − MLM − King
  * Midas 8% − Secret Santa 3%. With no referrer, nothing is taken and the base
- * is the whole profit. Street nights pay 10% of the night through
+ * is the whole profit. Whoever shoots it: on a crew job the photographer's 80%
+ * is the cost, so the profit is the house's 20% and the 10% comes after the
+ * splits on that. Street nights pay 10% of the night through
  * recordFieldSale (no split there). Gallery photo sales and event tickets are
  * not included "for now".
  */
@@ -83,20 +85,6 @@ async function queueOwnerCut(
   if (!OWNER_CUT_SOURCES.includes(input.source)) return;
   const amount = money(Math.max(0, base) * OWNER_CUT_RATE);
   if (!(amount > 0)) return;
-  // A service the owner did not shoot: another photographer is paid 80% and
-  // the owner's take is the house's 20% — no extra 10% (owner, 2026-11-05).
-  // sourceId is a booking id, or a standalone invoice's own id.
-  if (input.source === 'booking') {
-    const { data: invoices, error } = await supabase
-      .from('invoices').select('status, contractor_payout')
-      .or(`booking_id.eq.${input.sourceId},id.eq.${input.sourceId}`);
-    if (error) {
-      console.error('[commission-trigger] owner cut skipped, photographer unknown:', error.message);
-      return;
-    }
-    const crewShot = (invoices || []).some((inv: any) => inv.status !== 'superseded' && money(inv.contractor_payout) > 0);
-    if (crewShot) return;
-  }
   const { error } = await supabase.from('admin_jobs').insert({
     action: 'owner_pay',
     payload: { amount, source: input.source, sourceId: input.sourceId, base: money(base) },
