@@ -46,7 +46,8 @@ const block = [
 ].join('\n');
 
 const checkOnly = process.argv.includes('--check');
-const targets = readdirSync(publicDir).filter((f) => f.endsWith('-proposal.html'));
+const CLIENT_DOC = /-(proposal|handover)\.html$/;
+const targets = readdirSync(publicDir).filter((f) => CLIENT_DOC.test(f));
 
 let stale = 0;
 let written = 0;
