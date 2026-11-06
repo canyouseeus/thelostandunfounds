@@ -12,6 +12,7 @@ import ShareButtons from '../components/ShareButtons';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
 import { unescapeContent, normalizeTitle, findTitleMatch, formatDisclosure } from '../utils/blogUtils';
+import { getVisitorId } from '../utils/visitor-id';
 
 interface AffiliateLink {
   book_title?: string;
@@ -65,12 +66,11 @@ export default function BlogPost() {
       // Track Page View Start
       const startTime = Date.now();
 
-      // Anonymous visitor id, persisted locally, used to compute unique visitors + bounce rate
-      let visitorId = localStorage.getItem('tlau_visitor_id');
-      if (!visitorId) {
-        visitorId = crypto.randomUUID();
-        localStorage.setItem('tlau_visitor_id', visitorId);
-      }
+      // Anonymous visitor id, used to compute unique visitors + bounce rate.
+      // Shared with Layout.tsx via utils/visitor-id so both honour the same
+      // 13-month lifetime cap — this file used to mint its own identifier that
+      // never expired, which would have silently defeated the cap.
+      const visitorId = getVisitorId();
 
       // Track Read on Scroll
       let hasRead = false;

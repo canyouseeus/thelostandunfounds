@@ -1,12 +1,19 @@
 /**
  * Privacy Policy
+ *
+ * LAST_UPDATED is a hardcoded constant on purpose. It used to be
+ * `new Date().toLocaleDateString()`, which re-rendered as *today* on every
+ * visit — the page claimed to have been revised the moment you loaded it, no
+ * matter how stale the text was. Bump this by hand whenever the policy text
+ * below actually changes, and only then.
  */
+const LAST_UPDATED = 'August 15, 2026';
 
 export default function Privacy() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-white mb-4">Privacy Policy</h1>
-      <p className="text-white/60 text-sm mb-8">Last updated: {new Date().toLocaleDateString()}</p>
+      <p className="text-white/60 text-sm mb-8">Last updated: {LAST_UPDATED}</p>
 
       <div className="space-y-6 text-white/80">
         <section>
@@ -123,7 +130,7 @@ export default function Privacy() {
             <li><strong>Supabase:</strong> Authentication, database services, and user management</li>
             <li><strong>Google OAuth:</strong> Authentication and account creation</li>
             <li><strong>Stripe:</strong> Payment processing for shop purchases</li>
-            <li><strong>Vercel:</strong> Hosting and deployment services</li>
+            <li><strong>Vercel:</strong> Hosting and deployment, plus cookieless aggregate traffic analytics</li>
             <li><strong>Zoho Mail:</strong> Email delivery and newsletter services</li>
             <li><strong>Fourthwall:</strong> Shop and product management</li>
             <li><strong>Amazon Associates:</strong> Affiliate link tracking (when applicable)</li>
@@ -140,10 +147,13 @@ export default function Privacy() {
           </p>
           <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
             <li>We may receive a commission if you make a purchase</li>
-            <li>Affiliate tracking cookies may be set by third-party services</li>
+            <li>External merchants such as Amazon set their own tracking cookies on their own sites</li>
             <li>Your purchase information is handled by the merchant, not by us</li>
             <li>We disclose affiliate relationships in our content as required</li>
           </ul>
+          <p className="mt-3">
+            We also run our own affiliate program. If you arrive here through a referral link from one of our affiliates, we set a first-party <code>affiliate_ref</code> cookie on our site for 30 days so that the person who referred you is credited for any purchase you make. See the Cookies and Tracking section below for the full detail.
+          </p>
         </section>
 
         <section>
@@ -165,16 +175,62 @@ export default function Privacy() {
         <section>
           <h2 className="text-2xl font-bold text-white mb-3">Cookies and Tracking</h2>
           <p>
-            We use cookies and similar technologies to:
+            We keep this short and specific, because vague cookie disclosures are worse than none. Here is everything we store on your device.
+          </p>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">Cookies</h3>
+          <p>These are first-party cookies, set by our own site. We set no third-party cookies ourselves.</p>
+          <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
+            <li><strong>affiliate_ref</strong> (30 days) — set only if you arrive through an affiliate or referral link (a URL containing <code>?ref=</code>, <code>?affiliate=</code> or <code>?aff=</code>). It credits the referring affiliate if you later buy something. If you never use a referral link, this cookie is never set. In the EU, UK, EEA and Switzerland we ask your permission before writing it, and if you decline we don't.</li>
+            <li><strong>nl_done</strong> (10 years) — set only when you successfully subscribe to the newsletter, so we never show you the signup prompt again. Dismissing the prompt without subscribing does not set it.</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">Browser storage</h3>
+          <p>
+            We also use your browser's local storage. This is not technically a cookie, but it stores data on your device in the same way, so we disclose it here.
           </p>
           <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-            <li>Maintain your session and authentication state</li>
-            <li>Remember your preferences</li>
-            <li>Track usage analytics</li>
-            <li>Enable affiliate link tracking</li>
+            <li><strong>tlau_visitor_id</strong> — a random identifier (a UUID) generated in your browser, which <strong>expires after 13 months</strong> and is then replaced with a fresh, unrelated one. It lets us count returning visitors without knowing who you are. It contains no personal information and is not derived from anything about you or your device. We use it purely to measure how many people visit — never to profile you, never to change what you're shown, and never across any other website.</li>
+            <li><strong>affiliate_ref</strong>, <strong>affiliate_ref_timestamp</strong>, <strong>affiliate_subid</strong> — a copy of the referral information above, plus any campaign tag on the referral link, kept in case the cookie is cleared.</li>
+            <li><strong>Authentication tokens</strong> — if you have an account, these keep you signed in. They are required for login to work.</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">What we record when you view a page</h3>
+          <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
+            <li>The page address and title</li>
+            <li>The referring website, if you arrived from a link elsewhere</li>
+            <li>Your <code>tlau_visitor_id</code></li>
+            <li>Your browser's user-agent string, and the country and city our host derives from your IP address</li>
           </ul>
           <p className="mt-3">
-            You can control cookies through your browser settings. Note that disabling cookies may affect the functionality of our platform.
+            <strong>We do not store your IP address itself</strong> — only the approximate country and city derived from it.
+          </p>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">What we do not do</h3>
+          <p>
+            We do not use Google Analytics, the Meta/Facebook pixel, advertising cookies, retargeting, or any third-party tracking or ad network. We do not build advertising profiles, and we do not sell or share your personal information with anyone.
+          </p>
+          <p className="mt-3">
+            We use <strong>Vercel Analytics</strong> for aggregate traffic counts. It is cookieless by design and does not store a persistent identifier for you.
+          </p>
+          <p className="mt-3">
+            When a purchase sends you to <strong>Stripe</strong> or <strong>Fourthwall</strong>, those companies set their own cookies on their own sites, governed by their privacy policies rather than this one.
+          </p>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">Consent, and why you probably haven't seen a banner</h3>
+          <p>
+            We don't show a site-wide cookie banner, and that is a deliberate design decision rather than an oversight.
+          </p>
+          <p className="mt-3">
+            Our visitor counting is built to stay within the first-party audience-measurement exemption recognised by EU data protection authorities: it is strictly first-party, never shared with anyone, never used across other websites, never used to profile you or personalise what you see, and the identifier expires after 13 months. Storage that meets those conditions does not require consent, so we do not interrupt you to ask for it.
+          </p>
+          <p className="mt-3">
+            The one thing that does require consent is affiliate referral tracking, because that serves us rather than you. So if you are in the EU, UK, EEA or Switzerland <em>and</em> you arrive through a referral link, we ask first, and we store nothing until you answer. Everyone else is never interrupted, because for everyone else there is nothing to ask about.
+          </p>
+
+          <h3 className="text-xl font-semibold text-white mb-2 mt-4">Your choices</h3>
+          <p>
+            You can clear or block cookies and local storage through your browser settings, and clearing them resets your <code>tlau_visitor_id</code>. Blocking storage for this site will sign you out and may stop a referral from being credited, but the rest of the site will keep working. You can also email us at privacy@thelostandunfounds.com to ask what we hold about you or to have it deleted.
           </p>
         </section>
 
