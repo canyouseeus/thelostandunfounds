@@ -140,6 +140,7 @@ const galleryTour: Tour = {
     inPanel('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' }),
     inPanel('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' }),
     inPanel('gallery', { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' }),
+    inPanel('gallery', { target: 'gallery-owner-email', title: 'Add Owners', body: 'Type an email, or paste a whole list. Commas, spaces or new lines all work. Tap ADD.' }),
     inPanel('gallery', { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' }),
     inPanel('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inPanel('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
@@ -561,7 +562,7 @@ const aLaCarteTour: Tour = {
     { target: 'gallery-a-la-carte-bundles', title: 'Bundles', body: 'Deals like 4 photos for $10. Type a price, or a % OFF and the price fills in. The line under each shows the price per photo and what it saves. ADD BUNDLE makes another.' },
     { target: 'gallery-a-la-carte-album', title: 'Whole Album', body: 'Their price for every photo. Blank = not offered.' },
     { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'People here see the whole album behind the watermark and buy the photos they want. Album Owners still get everything free.' },
-    { target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' },
+    { target: 'gallery-a-la-carte-email', title: 'Add Buyers', body: 'Type an email, or paste a whole list, and tap ADD.' },
     { target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'FREE gives that buyer this many photos at no cost. After that they pay like everyone else.', missingNote: 'Add a buyer first. FREE sits next to their email.' },
     { target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new buyer their invite link.' },
   ],
@@ -758,6 +759,7 @@ const memberGalleryTour: Tour = {
     inApp('gallery', { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' }),
     inApp('gallery', { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' }),
     inApp('gallery', { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' }),
+    inApp('gallery', { target: 'gallery-owner-email', title: 'Add Owners', body: 'Type an email, or paste a whole list. Commas, spaces or new lines all work. Tap ADD.' }),
     inApp('gallery', { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' }),
     inApp('gallery', { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' }),
     inApp('gallery', { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' }),
@@ -882,6 +884,7 @@ const photographerGalleriesTour: Tour = {
     { target: 'gallery-form-pricing', title: 'Pricing', body: 'Every price is here: per photo, bundles and the whole album.' },
     { target: 'gallery-form-album-price', title: 'Whole Album', body: 'One price for every photo. The gallery shows a BUY WHOLE ALBUM button. Blank = not offered.', missingNote: 'This gallery is private: its prices are under À La Carte Buyers.' },
     { target: 'gallery-form-owners', title: 'Album Owners', body: 'Free, clean downloads of every photo. Only the people the photos belong to.' },
+    { target: 'gallery-owner-email', title: 'Add Owners', body: 'Type an email, or paste a whole list. Commas, spaces or new lines all work. Tap ADD.' },
     { target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite. They see the album and pay per photo.' },
     { target: 'gallery-form-source', title: 'Photos', body: 'Link its Google Drive folder, or drag photos in.' },
     { target: 'gallery-form-save', title: 'Create', body: 'CREATE GALLERY saves it. CANCEL closes the form.' },
@@ -1011,8 +1014,9 @@ const inviteListsSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): To
     missingNote: 'No galleries yet. Make one with NEW first.',
   }),
   wrap({ target: 'gallery-form-owners', title: 'Album Owners', body: 'Everyone here downloads every photo free, with no watermark. Only add the people the photos belong to.' }),
+  wrap({ target: 'gallery-owner-email', title: 'Add Owners', body: 'Type an email, or paste a whole list. Commas, spaces or new lines all work. Tap ADD.' }),
   wrap({ target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Everyone else you invite goes here, on public galleries too. They see the whole album and pay for the photos they want.' }),
-  wrap({ target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-email', title: 'Add Buyers', body: 'Type an email, or paste a whole list, and tap ADD.' }),
   wrap({ target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'Want them to have some free? Type how many next to their email.', missingNote: 'Add a buyer first. FREE sits next to their email.' }),
   wrap({ target: 'gallery-a-la-carte-price', title: 'Their Price', body: 'What each photo costs them, under Pricing.' }),
   wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends each new person their invite link.' }),
@@ -1050,6 +1054,56 @@ const photographerInviteListsTour: Tour = {
   steps: inviteListsSteps([openPhotographer], s => s),
 };
 
+// Add a whole list at once (owner, 2026-11-08). Same screen on every dashboard
+// that edits galleries.
+const batchInvitesSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
+  ...open,
+  wrap({
+    target: 'gallery-row-open',
+    action: 'click',
+    title: 'Open A Gallery',
+    body: 'Tap a gallery to open it.',
+    missingNote: 'No galleries yet. Make one with NEW first.',
+  }),
+  wrap({ target: 'gallery-owner-email', title: 'Album Owners', body: 'Paste a list of emails here. Commas, spaces or new lines all work. Tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-email', title: 'À La Carte', body: 'Same here for people who pay per photo. Duplicates are skipped, and anything that is not an email stays in the box.' }),
+  wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY sends everyone new their invite link.' }),
+];
+
+const BATCH_INVITES_SUMMARY = 'Paste a whole list of emails into Album Owners or À La Carte instead of adding them one at a time.';
+
+const batchInvitesTour: Tour = {
+  id: 'gallery-batch-invites',
+  title: 'Add Emails In A Batch',
+  summary: BATCH_INVITES_SUMMARY,
+  group: 'new',
+  announce: '2026-11-08',
+  steps: batchInvitesSteps([
+    openFromDock('gallery', 'Add Emails In A Batch', 'Tap the Gallery icon.'),
+    inPanel('gallery', { target: 'gallery-tab-galleries', action: 'click', title: 'Active Galleries', body: 'Tap ACTIVE GALLERIES.' }),
+  ], s => inPanel('gallery', s)),
+};
+
+const memberBatchInvitesTour: Tour = {
+  id: 'member-gallery-batch-invites',
+  title: 'Add Emails In A Batch',
+  summary: BATCH_INVITES_SUMMARY,
+  dashboard: 'member',
+  group: 'new',
+  announce: '2026-11-08',
+  steps: batchInvitesSteps([memberApp('gallery', 'Gallery', 'Tap the Gallery icon to open it.')], s => inApp('gallery', s)),
+};
+
+const photographerBatchInvitesTour: Tour = {
+  id: 'photographer-gallery-batch-invites',
+  title: 'Add Emails In A Batch',
+  summary: BATCH_INVITES_SUMMARY,
+  dashboard: 'photographer',
+  group: 'new',
+  announce: '2026-11-08',
+  steps: batchInvitesSteps([openPhotographer], s => s),
+};
+
 // Free photos for one à la carte buyer (owner, 2026-11-04): their first N are
 // $0, then they pay. Same screen on every dashboard that edits galleries.
 const freePhotosSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): TourStep[] => [
@@ -1062,7 +1116,7 @@ const freePhotosSteps = (open: TourStep[], wrap: (s: TourStep) => TourStep): Tou
     missingNote: 'No galleries yet. Make one with NEW first.',
   }),
   wrap({ target: 'gallery-form-a-la-carte', title: 'À La Carte', body: 'Free photos go to people on this list, not to Album Owners.' }),
-  wrap({ target: 'gallery-a-la-carte-email', title: 'Add A Buyer', body: 'Type their email and tap ADD.' }),
+  wrap({ target: 'gallery-a-la-carte-email', title: 'Add Buyers', body: 'Type an email, or paste a whole list, and tap ADD.' }),
   wrap({ target: 'gallery-a-la-carte-free', title: 'Free Photos', body: 'Type how many photos they get free. Their first picks cost nothing, then they pay the prices under Pricing.', missingNote: 'Add a buyer first. FREE sits next to their email.' }),
   wrap({ target: 'gallery-form-save', title: 'Save', body: 'SAVE GALLERY. Their invite tells them how many are free.' }),
 ];
@@ -1229,7 +1283,7 @@ const stripeBalancesTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
