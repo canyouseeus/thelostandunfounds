@@ -73,6 +73,7 @@ import { DashboardId, TOUR_PANEL_EVENT } from '../components/admin/tour/tours';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
+import { FitBox } from '../components/ui/fit-box';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import SEOHead from '../components/SEOHead';
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount';
@@ -1103,17 +1104,30 @@ export default function Affiliate() {
                   />
                 )}
               </div>
-              <div data-tour="m-clock" data-header-widgets-anchor className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
-                <ClockWidget size="lg" className="md:flex-1" />
-                <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
+            </div>
+
+            {/* Clock and calendar as square tiles, drawn exactly as the admin
+                dashboard draws them: a 4-unit lattice on a phone (two squares
+                side by side), 8 from md. The calendar lays out at its 500px
+                design size and FitBox scales it to the tile, so its day grid
+                never spills or gets squeezed the way `zoom` did. */}
+            <div data-tour="m-clock" data-header-widgets-anchor className="col-span-12 grid grid-cols-4 md:grid-cols-8 gap-3 sm:gap-6">
+              <div className="col-span-2 aspect-square min-w-0">
+                <ClockWidget size="lg" className="!min-h-0 w-full h-full" />
+              </div>
+              <div className="col-span-2 aspect-square min-w-0">
+                <FitBox base={500} className="h-full">
+                  <CalendarWidget size="fill" className="w-full h-full" />
+                </FitBox>
               </div>
             </div>
 
             {/* Console / My Apps Tab Bar */}
             <div className="col-span-12 flex flex-col items-center pt-8">
-              <div className="relative group flex flex-col items-center">
+              <div className="relative group w-full max-w-full flex flex-col items-center">
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
-                <div data-tour="m-dock" className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
+                {/* Wraps like the admin dock, so it never runs off a phone. */}
+                <div data-tour="m-dock" className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
                   {[
                     { id: 'photographer', icon: CameraIcon, title: 'Photographer', show: hasPhotographer },
                     { id: 'portfolio', icon: RectangleStackIcon, title: 'Portfolio', show: hasPortfolio },
