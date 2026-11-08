@@ -10,6 +10,7 @@ import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import EmailBatchInput from './EmailBatchInput';
 import { sendToGalleryResilient } from '../live/sendToGallery';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -234,7 +235,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     // photos they want at buyerPrice each instead of getting everything free.
     const [buyerEmails, setBuyerEmails] = useState<string[]>([]);
     const [originalBuyerEmails, setOriginalBuyerEmails] = useState<string[]>([]);
-    const [newBuyerInput, setNewBuyerInput] = useState('');
     // Free-photo allowance (owner, 2026-11-04): a buyer's first N photos are
     // $0, then they pay like everyone on the list (_free-allowance.ts).
     const [buyerFree, setBuyerFree] = useState<Record<string, number>>({});
@@ -245,7 +245,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
     // Whole-album price for everyone who buys from this gallery (owner, 2026-11-02).
     const [albumPrice, setAlbumPrice] = useState<number | ''>('');
     const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
-    const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
     // Photographer Invite State
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -761,10 +760,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
             setUploadProgress(0);
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
-            setNewEmailInput('');
             setBuyerEmails([]);
             setOriginalBuyerEmails([]);
-            setNewBuyerInput('');
             setIsManaged(false);
         } catch (err: any) {
             console.error('Error saving gallery:', err);
@@ -971,13 +968,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
 
         setInvitedEmails(existingEmails);
         setOriginalInvitedEmails(existingEmails);
-        setNewEmailInput('');
         const existingBuyers = (lib.buyer_emails || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
         setBuyerEmails(existingBuyers);
         setOriginalBuyerEmails(existingBuyers);
         setBuyerFree(Object.fromEntries(Object.entries(lib.buyer_free_photos || {})
             .map(([e, n]) => [e.trim().toLowerCase(), Math.floor(Number(n)) || 0])));
-        setNewBuyerInput('');
         setBuyerPrice(Number(lib.buyer_price) > 0 ? Number(lib.buyer_price) : 5);
         setBuyerBundles(Array.isArray(lib.buyer_bundles) ? lib.buyer_bundles.map(b => ({ photo_count: Number(b.photo_count), price: Number(b.price) })) : []);
         setBuyerAlbumPrice(Number(lib.buyer_album_price) > 0 ? Number(lib.buyer_album_price) : '');
@@ -1005,11 +1000,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
         setUploadProgress(0);
         setInvitedEmails(['media@thelostandunfounds.com']);
         setOriginalInvitedEmails(['media@thelostandunfounds.com']);
-        setNewEmailInput('');
         setBuyerEmails([]);
         setOriginalBuyerEmails([]);
         setBuyerFree({});
-        setNewBuyerInput('');
         setBuyerPrice(5);
         setBuyerBundles([]);
         setBuyerAlbumPrice('');
@@ -1321,41 +1314,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                         </div>
                                     )}
 
-                                    {/* Add new email input */}
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="email"
-                                            value={newEmailInput}
-                                            onChange={(e) => setNewEmailInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ',') {
-                                                    e.preventDefault();
-                                                    const email = newEmailInput.trim().replace(',', '').toLowerCase();
-                                                    if (email && email.includes('@') && !invitedEmails.includes(email)) {
-                                                        setInvitedEmails([...invitedEmails, email]);
-                                                        setNewEmailInput('');
-                                                    }
-                                                }
-                                            }}
-                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none font-mono text-xs"
-                                            placeholder="client@example.com"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const email = newEmailInput.trim().toLowerCase();
-                                                if (email && email.includes('@') && !invitedEmails.includes(email)) {
-                                                    setInvitedEmails([...invitedEmails, email]);
-                                                    setNewEmailInput('');
-                                                }
-                                            }}
-                                            className="px-4 py-2 bg-white/10 text-white text-xs uppercase font-bold hover:bg-white/20 transition-colors"
-                                        >
-                                            + Add
-                                        </button>
-                                    </div>
+                                    <EmailBatchInput
+                                        key={editingId || 'new'}
+                                        existing={invitedEmails}
+                                        otherList={buyerEmails}
+                                        otherListName="À La Carte"
+                                        onAdd={(emails) => setInvitedEmails(prev => [...prev, ...emails])}
+                                        placeholder="Type or paste emails"
+                                        tour="gallery-owner-email"
+                                    />
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        Press Enter or click Add. New owners get their access link when you save.
+                                        Paste a whole list if you like: commas, spaces or new lines all work. New owners get their access link when you save.
                                     </p>
                                     {invitedEmails.length > 0 && editingId && (
                                         <button
@@ -1415,41 +1384,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                                             ))}
                                         </div>
                                     )}
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="email"
-                                            value={newBuyerInput}
-                                            onChange={(e) => setNewBuyerInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ',') {
-                                                    e.preventDefault();
-                                                    const email = newBuyerInput.trim().replace(',', '').toLowerCase();
-                                                    if (email && email.includes('@') && !buyerEmails.includes(email)) {
-                                                        setBuyerEmails([...buyerEmails, email]);
-                                                        setNewBuyerInput('');
-                                                    }
-                                                }
-                                            }}
-                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none font-mono text-xs"
-                                            placeholder="buyer@example.com"
-                                            data-tour="gallery-a-la-carte-email"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const email = newBuyerInput.trim().toLowerCase();
-                                                if (email && email.includes('@') && !buyerEmails.includes(email)) {
-                                                    setBuyerEmails([...buyerEmails, email]);
-                                                    setNewBuyerInput('');
-                                                }
-                                            }}
-                                            className="px-4 py-2 bg-white/10 text-white text-xs uppercase font-bold hover:bg-white/20 transition-colors"
-                                        >
-                                            + Add
-                                        </button>
-                                    </div>
+                                    <EmailBatchInput
+                                        key={editingId || 'new'}
+                                        existing={buyerEmails}
+                                        otherList={invitedEmails}
+                                        otherListName="Album Owners"
+                                        onAdd={(emails) => setBuyerEmails(prev => [...prev, ...emails])}
+                                        placeholder="Type or paste emails"
+                                        tour="gallery-a-la-carte-email"
+                                    />
                                     <p className="text-[10px] text-white/30 mt-2">
-                                        New buyers get their own invite link when you save. Their prices are under Pricing above. FREE gives one buyer that many photos at no cost, then they pay like everyone else.
+                                        Paste a whole list if you like. New buyers get their own invite link when you save. Their prices are under Pricing above. FREE gives one buyer that many photos at no cost, then they pay like everyone else.
                                     </p>
                                 </div>
 
