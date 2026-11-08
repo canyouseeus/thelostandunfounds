@@ -400,8 +400,7 @@ first visit, running the tour marked `intro`. A new dashboard gets a `data-tour-
 
 ## CLAPTROP UPLOAD RULE — camera card → Google Drive
 
-Owner rules, 2026-11-04/05. Scripts are in `scripts/` (branch `claptrop-card-uploads`, not
-yet merged to `main`).
+Owner rules, 2026-11-04/05. Scripts are in `scripts/`.
 
 **Owner workflow:** every upload lands in the archive's **NEW UPLOADS/<date>** folder. The owner
 then sorts the keepers into the gallery/library folders by hand. Never upload straight into a
@@ -438,7 +437,9 @@ match:
 - the permanent content ledger `~/.claptrop/upload-ledger.txt`. It holds one `md5:<hash>:<size>`
   per line, is never pruned, and sits outside the repo on purpose. Every run snapshots Drive into
   it, so a photo the owner trashed and emptied is never sent again. Never delete or truncate it;
-- RAW zip manifests, and name, tail or date plus size.
+- RAW zip manifests, and name, tail or date plus size;
+- for RAFs, another file with the same content in the same run. Two local copies are both new to
+  Drive, so the Drive check alone zips both (52 Nov 1 RAFs on 2026-11-08).
 
 Never remove the whole-Drive or ledger check to speed a run up. That is how the SPARKLE photos
 were re-uploaded on 2026-11-05.

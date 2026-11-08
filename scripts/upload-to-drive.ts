@@ -9,6 +9,7 @@ import { buildName, isClaptropName, getAvailableBytes, formatBytes, resetSeqs, c
 import { run as runRetrograde } from './claptrop-retrograde.js';
 import { resolveClaptropDcim } from './find-claptrop-card.mjs';
 import { zipAndUploadDate, readManifest, MANIFEST_SUFFIX, uploadResumable } from './drive-raw-zip.js';
+import { splitSameRunRepeats } from './same-run-dedup.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -458,7 +459,15 @@ function getFilesRecursive(dir: string): string[] {
 
 async function zipRawByDate(filePaths: string[], rawParentId: string, index: DriveFingerprintIndex): Promise<string[]> {
     const byDate = new Map<string, string[]>();
-    for (const filePath of filePaths) {
+    // The first copy stays in staging until its own zip is verified, so removing
+    // a repeat here never leaves a photo without a copy. Not ledgered: nothing is
+    // uploaded yet, and a failed zip must still be able to retry.
+    const { unique, repeats } = splitSameRunRepeats(filePaths, ledgerKey);
+    for (const filePath of repeats) {
+        console.log(`  Skipping ${path.basename(filePath)} (same content as another file in this run)`);
+        fs.unlinkSync(filePath);
+    }
+    for (const filePath of unique) {
         const name = path.basename(filePath);
         const axis = isInHistory(name) ? 'history' : findExistingInDrive(index, filePath);
         if (axis) {
