@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
-import { EMAIL_STYLES, renderImageButton } from '../../lib/email-template.js'
+import { EMAIL_STYLES, renderGoogleReviewRequest, renderImageButton } from '../../lib/email-template.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
@@ -173,6 +173,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
              ${renderImageButton(SITE, 'btn-newsletter', 'JOIN THE NEWSLETTER')}`
           : ''
       }
+
+      ${renderGoogleReviewRequest()}
 
       <hr style="${EMAIL_STYLES.divider}">
 

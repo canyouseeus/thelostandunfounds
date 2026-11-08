@@ -85,7 +85,7 @@ Every transition needs an email:
 | Booking created | Quote + deposit link | Total, deposit amount, what's included |
 | Deposit paid | Confirmation | Shoot confirmed, date/time/location, **balance due on the day** |
 | Final invoice | Balance link | What's outstanding |
-| Paid in full | Receipt | — |
+| Paid in full | Receipt | Paid in full, plus the Google review ask (`renderGoogleReviewRequest`) |
 
 State the balance terms at the deposit stage, not at the end. A client who thinks the deposit was
 the whole price is a collection problem you created.

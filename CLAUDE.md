@@ -215,6 +215,7 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
 | `invite_photographer` | `{email, name?, testEmail?}` — the "You're on the roster" photographer invite (Admin → Gallery → Invite Photographer); `testEmail` previews it there, stores nothing, no CC |
 | `gallery_invite` | `{slug \| library_id, emails?, testEmail?}` — the client gallery invite (edit a gallery → Resend); each opens the gallery in one tap. `emails` may be album owners or à la carte buyers (each gets their list's copy). No `emails` → everyone invited but media@; media@ gets a record copy of each, never a CC (the link is a login). `testEmail` (admin address) previews it there only |
+| `record_invoice_payment` | `{invoiceNumber, method, amount?, notes?}` — money that arrived outside Stripe Checkout; settling closes the booking and payment links and runs the split. Sends nothing: queue `send_invoice` next for the receipt |
 | `direct_booking` | `{action: "create" \| "attach" \| "invite", …}` — see `email-billing` |
 | `affiliate_payout` | `{affiliateCode, amount, notes?}` — checks the **available** Stripe balance first; short → `waiting_funds`, retried hourly for 3 days |
 | `move_funds` | `{to: "business" \| "king_midas" \| "secret_santa" \| "affiliate_pay", amount, note?}` — Payments balance → that Stripe financial account; short balance → `failed`, not retried |
@@ -328,6 +329,10 @@ removed — do not recreate them.
   Use the CC field, not BCC — recipients should see it. Never substitute a personal address for it.
   Bulk sends (newsletters, campaigns) are exempt: one CC per subscriber is not a business record.
   Verify the CC actually landed before treating a send as done — a dropped CC fails silently.
+- **Ask for a Google review** (owner, 2026-11-08). `renderGoogleReviewRequest()` in
+  `lib/email-template.ts` holds the link and wording. Paid receipts, gallery delivery emails and
+  album owners' gallery invites carry it; put it in any new email that reaches a client after the
+  job is done. A hand-written client follow-up gets the link too.
 
 ## TURNSTILE RULE
 

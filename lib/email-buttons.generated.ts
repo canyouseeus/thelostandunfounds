@@ -15,4 +15,5 @@ export const EMAIL_BUTTON_FILES: Record<string, string> = {
   'btn-open-gallery': 'btn-open-gallery.91b13346.png',
   'btn-view-invoice': 'btn-view-invoice.d9be4898.png',
   'btn-newsletter': 'btn-newsletter.971f8f48.png',
+  'btn-google-review': 'btn-google-review.f669cb17.png',
 };

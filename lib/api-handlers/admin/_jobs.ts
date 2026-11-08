@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getStripe } from '../_booking-payment-utils.js'
 import { createStandaloneInvoice, ensureInvoicePaymentLink } from '../_standalone-invoice.js'
 import { sendInvoiceEmail } from '../_invoice-send.js'
+import { recordInvoicePayment } from '../_record-invoice-payment.js'
 import { createDirectBooking, attachDirectBooking, sendReferrerInvite } from './direct-booking.js'
 import requestPayout from '../affiliates/request-payout.js'
 import { recordFieldSale } from './field-sales.js'
@@ -189,6 +190,17 @@ export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
       message: payload.message,
     })
     return result.status < 400 ? ok(result.body, result.status) : fail(result.body?.error || 'send failed', result.status, result.body)
+  },
+
+  /**
+   * { invoiceNumber, method, amount?, notes? } — money that arrived outside
+   * Stripe Checkout (Apple Pay / Apple Cash, Zelle, cash). Same as
+   * POST /api/admin/record-invoice-payment. It sends nothing; queue send_invoice
+   * after it for the receipt.
+   */
+  async record_invoice_payment(supabase, payload) {
+    const result = await recordInvoicePayment(supabase, payload as any)
+    return result.status < 400 ? ok(result.body, result.status) : fail(result.body?.error || 'record failed', result.status, result.body)
   },
 
   /** { action: 'create' | 'attach' | 'invite', ...same body as /api/admin/direct-booking } */

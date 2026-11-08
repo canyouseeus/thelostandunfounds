@@ -62,6 +62,7 @@ BUTTONS = {
     "btn-pay-in-full": "PAY IN FULL",
     "btn-open-gallery": "OPEN YOUR GALLERY",
     "btn-view-invoice": "VIEW INVOICE",
+    "btn-google-review": "REVIEW US ON GOOGLE",
 }
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "public" / "brand"

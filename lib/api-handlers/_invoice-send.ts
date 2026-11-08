@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { wrapEmailContent, BRAND } from '../email-template.js'
+import { wrapEmailContent, renderGoogleReviewRequest, BRAND } from '../email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js'
 import { generateInvoicePdf, InvoicePdfLineItem } from './_invoice-pdf.js'
 
@@ -46,7 +46,7 @@ function escapeHtml(s: string): string {
  * Render a plain-text personal message as branded HTML paragraphs.
  * Blank lines become paragraph breaks; single line breaks become <br>.
  */
-function buildPersonalMessageBody(message: string, invoiceNumber: string): string {
+function buildPersonalMessageBody(message: string, invoiceNumber: string, isReceipt = false): string {
   const text = BRAND.colors.text
   const muted = BRAND.colors.textMuted
   const paragraphs = message
@@ -64,6 +64,7 @@ function buildPersonalMessageBody(message: string, invoiceNumber: string): strin
 
   return `
     ${html}
+    ${isReceipt ? renderGoogleReviewRequest() : ''}
     <p style="color:${muted} !important;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:30px 0 0 0;font-family:Arial,Helvetica,sans-serif;">
       Invoice ${escapeHtml(invoiceNumber)} — attached as PDF
     </p>
@@ -139,7 +140,7 @@ export async function sendInvoiceEmail(input: SendInvoiceInput): Promise<SendInv
       ? 'Thank you — here is your receipt.'
       : 'Please find your invoice attached.'
 
-    const bodyHtml = buildPersonalMessageBody(bodyMessage, invoice.invoice_number)
+    const bodyHtml = buildPersonalMessageBody(bodyMessage, invoice.invoice_number, invoice.status === 'paid')
 
     const total = Number(invoice.total || 0)
     const amountDue = invoice.amount_due != null ? Number(invoice.amount_due) : total
