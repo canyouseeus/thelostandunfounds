@@ -323,3 +323,17 @@ export function renderImageButton(href: string, name: string, alt: string): stri
   </tr>
 </table>`;
 }
+
+/** The owner's Google Business review link (owner, 2026-11-08). */
+export const GOOGLE_REVIEW_URL =
+  'https://www.google.com/maps/place//data=!4m3!3m2!1s0x21be47be6f279293:0x8c8e995be416c7bf!12e1?source=g.page.m.nd._&laa=nmx-reviews-dialog';
+
+/**
+ * The review ask: one line and a button. It goes in the emails that reach a
+ * client once the job is done: the paid receipt, the gallery delivery and an
+ * album owner's gallery invite. Change the link or wording here, not per email.
+ */
+export function renderGoogleReviewRequest(): string {
+  return `<p style="${EMAIL_STYLES.paragraph}">If you have a minute, a Google review helps more people find us.</p>
+${renderImageButton(GOOGLE_REVIEW_URL.replace(/&/g, '&amp;'), 'btn-google-review', 'REVIEW US ON GOOGLE')}`;
+}

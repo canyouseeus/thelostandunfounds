@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getStripe, getSupabaseAdmin } from '../../lib/api-handlers/_booking-payment-utils.js'
-import { triggerSettledInvoiceSplit } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
+import { getSupabaseAdmin } from '../../lib/api-handlers/_booking-payment-utils.js'
+import { recordInvoicePayment } from '../../lib/api-handlers/_record-invoice-payment.js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 /**
@@ -16,10 +16,8 @@ import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
  * GET  ?client=<name or email fragment>  — read-only lookup: matching invoices
  *      with what has been collected on each. Use it to pick the invoice.
  * POST { invoiceNumber, method, amount?, notes? }
- *      amount defaults to the outstanding balance. Per client-documents, the
- *      invoice flips to 'paid' only when the full balance is in. A still-active
- *      Stripe payment link on a settled invoice is deactivated so the client
- *      cannot pay twice.
+ *      See _record-invoice-payment.ts, shared with the record_invoice_payment
+ *      admin job.
  *
  * It sends nothing. The receipt is a separate step: /api/invoices/send picks
  * the "Receipt — INV-xxx" subject once the invoice is 'paid'.
@@ -87,98 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-    const { invoiceNumber, method, amount, notes } = (req.body || {}) as {
-      invoiceNumber?: string
-      method?: string
-      amount?: number | string
-      notes?: string
-    }
-    if (!invoiceNumber) return res.status(400).json({ error: 'invoiceNumber is required' })
-    if (!method || !method.trim()) return res.status(400).json({ error: 'method is required (e.g. "Apple Pay")' })
-
-    const { data: inv } = await supabase
-      .from('invoices')
-      .select('id, invoice_number, status, total, amount_due, payment_method, stripe_payment_link_id')
-      .eq('invoice_number', invoiceNumber)
-      .maybeSingle()
-    if (!inv) return res.status(404).json({ error: `Invoice ${invoiceNumber} not found` })
-    if (['void', 'cancelled'].includes(inv.status)) {
-      return res.status(409).json({ error: `Invoice ${invoiceNumber} is ${inv.status}` })
-    }
-
-    const prior = (await collectedFor(supabase, [inv.id]))[inv.id] || []
-    const collectedBefore = round2(prior.reduce((s, p) => s + p.amount, 0))
-    const total = Number(inv.total) || 0
-    const outstanding = round2(Math.max(0, total - collectedBefore))
-    if (outstanding < 0.005) {
-      return res.status(409).json({ error: `Invoice ${invoiceNumber} is already fully collected`, collected: collectedBefore, total })
-    }
-
-    const requested = amount === undefined || amount === '' ? outstanding : round2(Number(amount))
-    if (!(requested > 0)) return res.status(400).json({ error: 'amount must be greater than zero' })
-    if (requested - outstanding > 0.005) {
-      return res.status(400).json({ error: `amount ${requested} exceeds the ${outstanding} outstanding` })
-    }
-
-    const paidAt = new Date().toISOString()
-    const { data: payRow, error: payErr } = await supabase
-      .from('invoice_payments')
-      .insert({ invoice_id: inv.id, amount: requested, method: method.trim(), paid_at: paidAt, notes: notes?.trim() || null })
-      .select('id')
-      .single()
-    if (payErr) return res.status(500).json({ error: 'Failed to record payment', details: payErr.message })
-
-    const remaining = round2(Math.max(0, outstanding - requested))
-    const settles = remaining < 0.005
-    const { error: invErr } = await supabase
-      .from('invoices')
-      .update({
-        amount_due: remaining,
-        ...(settles ? { status: 'paid', paid_at: paidAt } : {}),
-        ...(!inv.payment_method ? { payment_method: method.trim() } : {}),
-      })
-      .eq('id', inv.id)
-    if (invErr) {
-      return res.status(500).json({ error: 'Payment recorded but invoice update failed', paymentId: payRow?.id, details: invErr.message })
-    }
-
-    // A settled invoice must not keep a payable link — the client could pay twice.
-    let paymentLink: { id: string; active: boolean } | null = null
-    if (settles && inv.stripe_payment_link_id) {
-      try {
-        const link = await getStripe().paymentLinks.update(inv.stripe_payment_link_id, { active: false })
-        paymentLink = { id: link.id, active: link.active }
-      } catch (e: any) {
-        console.error('[record-invoice-payment] could not deactivate payment link:', e?.message)
-        paymentLink = { id: inv.stripe_payment_link_id, active: true }
-      }
-    }
-
-    // Fully paid by hand: run the same profit split a card payment runs
-    // (affiliate, pots, and the owner's 10% when he shot it). Never let a split
-    // failure undo the recorded payment.
-    let split: unknown = null
-    if (settles) {
-      try { split = await triggerSettledInvoiceSplit(supabase, inv.id) } catch (e: any) {
-        console.error('[record-invoice-payment] split failed:', e?.message)
-        split = { triggered: false, reason: e?.message || 'split failed' }
-      }
-    }
-
-    const { data: after } = await supabase
-      .from('invoices')
-      .select('invoice_number, status, total, amount_due, paid_at, payment_method')
-      .eq('id', inv.id)
-      .single()
-
-    return res.status(200).json({
-      invoice: after,
-      paymentId: payRow?.id,
-      recorded: requested,
-      collected: round2(collectedBefore + requested),
-      paymentLink,
-      split,
-    })
+    const result = await recordInvoicePayment(supabase, (req.body || {}) as any)
+    return res.status(result.status).json(result.body)
   } catch (err: any) {
     console.error('[record-invoice-payment] failed:', err)
     return res.status(500).json({ error: err?.message || 'Failed to record payment' })

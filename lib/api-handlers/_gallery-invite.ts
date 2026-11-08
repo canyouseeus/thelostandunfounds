@@ -12,7 +12,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
-import { EMAIL_STYLES, generateTransactionalEmail } from '../email-template.js';
+import { EMAIL_STYLES, generateTransactionalEmail, renderGoogleReviewRequest } from '../email-template.js';
 import { inviteUrl, inviteRecordUrl } from './_gallery-access-link.js';
 import { allowanceFor } from './_free-allowance.js';
 
@@ -75,6 +75,8 @@ export async function sendGalleryInvites(
                 <p style="${EMAIL_STYLES.paragraph}">
                   The gallery stays available — come back and pull anything you need, whenever you need it. There's no expiry on it.
                 </p>
+
+                ${aLaCarte ? '' : renderGoogleReviewRequest()}
 
                 <hr style="${EMAIL_STYLES.divider}">
 
