@@ -516,7 +516,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                 is_private: modalData.is_private || false,
                 published: modalData.published ?? true,
                 commercial_included: modalData.commercial_included || false,
-                google_drive_folder_id: uploadMode === 'drive' ? (modalData.google_drive_folder_id || null) : null,
+                // Never unlink from the Direct Upload tab. It used to write null here,
+                // so a gallery's second batch found no folder, cut a new one, and the
+                // first batch's photos fell off the site (HALLOW33N 155 + 28, Mikey &
+                // Bandit 64 + 5, 2026-11). undefined leaves the column untouched, which
+                // also keeps a folder the first upload created while this form was open.
+                google_drive_folder_id: uploadMode === 'drive'
+                    ? (modalData.google_drive_folder_id || null)
+                    : (modalData.google_drive_folder_id || undefined),
                 cover_image_url: modalData.cover_image_url || null,
                 price: modalData.price || 5.00,
                 // Lowercased: Supabase Auth stores sign-in emails lowercased, and the
