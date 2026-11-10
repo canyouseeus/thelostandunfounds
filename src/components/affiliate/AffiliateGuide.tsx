@@ -85,7 +85,7 @@ export default function AffiliateGuide() {
                     <div className="flex-1 space-y-4">
                         <p className="text-white/50 text-xs leading-relaxed tracking-wide">
                             We gamify sales with a daily profit pool called the <strong className="text-white font-black uppercase tracking-widest">King Midas Pot</strong>.
-                            8% of each day's profit goes into this pot, paid out to that day's ranked affiliates.
+                            8% of the profit from each day's affiliate sales goes into this pot, paid out to that day's ranked affiliates.
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-px">
                             <div className="p-4 bg-white/10 text-center">
@@ -133,7 +133,7 @@ export default function AffiliateGuide() {
                     <div className="space-y-2">
                         <h4 className="text-[10px] uppercase tracking-[0.25em] font-black text-white">Recruiting</h4>
                         <p className="text-white/40 text-xs leading-relaxed">
-                            Share your "Affiliate Link" found in the overview tab with other content creators. You will earn passive income from their profits forever.
+                            Share your "Affiliate Link" found in the overview tab with other content creators. You earn 2% of the profit on their referred sales, and 1% on sales by the affiliates they recruit.
                         </p>
                     </div>
                 </div>

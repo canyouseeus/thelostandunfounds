@@ -13,7 +13,7 @@ export default function KingMidasLeaderboard() {
     <>
       <SEOHead
         title="KING MIDAS Leaderboard"
-        description="Daily affiliate profit rankings and pool distributions. Top affiliates compete for 8% of daily profit at THE LOST+UNFOUNDS."
+        description="Daily affiliate profit rankings and pool distributions. Top affiliates compete for 8% of the profit from each day's affiliate sales at THE LOST+UNFOUNDS."
         canonicalPath="/king-midas-leaderboard"
       />
       <div className="min-h-screen bg-black text-white">
@@ -27,7 +27,7 @@ export default function KingMidasLeaderboard() {
               </h1>
             </div>
             <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest">
-              Daily Profit Rankings · 8% Of Daily Profit · Compete Daily
+              Daily Profit Rankings · 8% Of Daily Affiliate Profit · Compete Daily
             </p>
           </div>
 
