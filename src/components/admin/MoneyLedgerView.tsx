@@ -10,6 +10,12 @@
  *
  * Under the balances: in and out for a chosen period beside the one before,
  * cash against bills and spending (runway), and a tax set-aside estimate.
+ *
+ * Venmo and Cash App card spending comes in from their emails. Every logged
+ * entry is business or personal: both count as money out for cash and runway,
+ * only business counts for profit and the tax set-aside. Venmo and Cash App
+ * balances are set by hand, since no email states them. Bitcoin buys and
+ * sells sit in their own section, outside money in and out.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -28,9 +34,17 @@ interface Entry {
     counterparty: string | null;
     note: string | null;
     source: string;
+    scope: 'business' | 'personal';
 }
 
-interface Month { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number }
+interface Month { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number; personalExpenseCents: number }
+
+interface Account { id: string; name: string; balance_cents: number; as_of: string; notes: string | null }
+
+interface BitcoinRow {
+    id: string; occurred_on: string; platform: string; action: 'buy' | 'sell' | 'withdraw' | 'receive' | 'bonus';
+    usd_cents: number; fee_cents: number; sats: number | null; note: string | null; source: string;
+}
 
 interface CardSpend { id: string; day: string; merchant: string; category: string; cents: number }
 
@@ -38,6 +52,7 @@ interface Summary {
     totals: {
         incomeCents: number; expenseCents: number; netCents: number; photoIncomeCents: number;
         siteIncomeCents: number; directIncomeCents: number; stripeExpenseCents: number; ownerPayCents: number;
+        personalExpenseCents: number;
     };
     byCategory: { income: Record<string, number>; expense: Record<string, number> };
     monthly: Month[];
@@ -48,6 +63,8 @@ interface Summary {
 interface LedgerResponse {
     entries: Entry[];
     bills: Bill[];
+    accounts: Account[];
+    bitcoin: BitcoinRow[];
     summary: Summary;
     categories: { income: string[]; expense: string[] };
 }
@@ -380,7 +397,8 @@ const sumMonths = (monthly: Month[], keep: (_ym: string) => boolean) => {
     const inC = rows.reduce((n, m) => n + m.incomeCents, 0);
     const outC = rows.reduce((n, m) => n + m.expenseCents, 0);
     const owner = rows.reduce((n, m) => n + m.ownerPayCents, 0);
-    return { inC, outC, net: inC - outC, owner };
+    const personal = rows.reduce((n, m) => n + (m.personalExpenseCents ?? 0), 0);
+    return { inC, outC, net: inC - outC, owner, personal };
 };
 
 /** The last three whole months, not counting this one. */
@@ -432,9 +450,9 @@ function RunwaySection({ cashCents, bills, monthly }: { cashCents: number | null
                 </div>
             </div>
             <p className="text-[11px] text-white/40 text-left">
-                Cash lasts is spendable cash divided by average monthly money out, with no new income. Spendable cash is the
-                Payments balance plus the Business account. King Midas, Secret Santa and Affiliate pay are left out, because
-                that money is owed to other people.
+                Cash lasts is spendable cash divided by average monthly money out, personal spending included, with no new
+                income. Spendable cash is the Payments balance, the Business account and the Venmo and Cash App balances you
+                set below. King Midas, Secret Santa and Affiliate pay are left out, because that money is owed to other people.
             </p>
         </section>
     );
@@ -522,6 +540,11 @@ function PeriodSection({ s }: { s: Summary }) {
                 <Stat label="Net" cents={cur.net} accent={cur.net < 0 ? 'text-red-400' : 'text-white'} />
                 <Stat label="Of which owner pay" cents={cur.owner} accent="text-white/60" />
             </div>
+            {cur.personal > 0 && (
+                <p className="text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
+                    Money out includes {usd(cur.personal)} tagged personal. It counts for cash, not for profit or tax.
+                </p>
+            )}
             {prior && (
                 <p className="text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
                     Vs {range.priorLabel}: in <Delta now={cur.inC} before={prior.inC} />
@@ -555,8 +578,9 @@ function TaxSection({ monthly }: { monthly: Month[] }) {
     const [rate, setRate] = useState<number>(readRate);
     const year = today().slice(0, 4);
     const ytd = sumMonths(monthly, ym => ym.startsWith(year));
-    // Owner pay is the owner's draw, not a business cost, so it is added back.
-    const profit = ytd.net + ytd.owner;
+    // Owner pay is the owner's draw and personal spending is not a business
+    // cost, so both are added back.
+    const profit = ytd.net + ytd.owner + ytd.personal;
     const setAside = Math.max(0, Math.round(profit * rate / 100));
 
     const change = (v: string) => {
@@ -587,8 +611,136 @@ function TaxSection({ monthly }: { monthly: Month[] }) {
                 <Stat label="Set aside" cents={setAside} accent="text-amber-500" />
             </div>
             <p className="text-[11px] text-white/40 text-left">
-                An estimate, not tax advice. Profit is money in minus money out for {year}, with owner pay added back because
-                it is your draw, not a business cost. Check the rate with whoever does your taxes.
+                An estimate, not tax advice. Profit is money in minus business money out for {year}. Owner pay and anything
+                tagged personal are left out, because they are not business costs. Check the rate with whoever does your taxes.
+            </p>
+        </section>
+    );
+}
+
+const DEFAULT_ACCOUNTS = ['Venmo', 'Cash App'];
+
+/**
+ * Balances the site cannot read, set by hand with the day they were true.
+ * No Venmo or Cash App email states a balance, so these are never guessed.
+ */
+function AccountsSection({ accounts, onChange, onError }: { accounts: Account[]; onChange: () => Promise<void>; onError: (_m: string) => void }) {
+    const names = [...new Set([...DEFAULT_ACCOUNTS, ...accounts.map(a => a.name)])];
+    const [draft, setDraft] = useState<Record<string, { balance: string; as_of: string }>>({});
+    const [saving, setSaving] = useState<string | null>(null);
+
+    const save = async (name: string) => {
+        const d = draft[name];
+        if (!d || d.balance === '') return;
+        setSaving(name);
+        try {
+            await authFetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ action: 'account-save', account: { name, balance: d.balance, as_of: d.as_of || today() } }) });
+            setDraft(x => { const n = { ...x }; delete n[name]; return n; });
+            await onChange();
+        } catch (err: any) {
+            logError(err.message);
+            onError(err.message);
+        } finally {
+            setSaving(null);
+        }
+    };
+
+    return (
+        <section data-tour="money-accounts" className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Venmo and Cash App balances</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {names.map(name => {
+                    const a = accounts.find(x => x.name === name);
+                    const d = draft[name];
+                    const stale = a ? daysUntil(a.as_of) < -7 : false;
+                    return (
+                        <div key={name} className="bg-white/5 p-4 space-y-2" style={surface}>
+                            <div className="flex items-baseline justify-between gap-2">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">{name}</p>
+                                <p className={cn('text-[10px] uppercase tracking-widest', stale ? 'text-amber-500' : 'text-white/40')}>
+                                    {a ? `as of ${a.as_of}` : 'not set'}
+                                </p>
+                            </div>
+                            <p className={cn('text-xl font-black tabular-nums', a && a.balance_cents < 0 ? 'text-red-400' : 'text-white')}>
+                                {a ? usd(a.balance_cents) : '—'}
+                            </p>
+                            <div className="flex gap-2">
+                                <input className={input} style={surface} type="number" step="0.01" placeholder="New balance"
+                                    aria-label={`${name} balance`}
+                                    value={d?.balance ?? ''}
+                                    onChange={e => setDraft(x => ({ ...x, [name]: { balance: e.target.value, as_of: x[name]?.as_of ?? today() } }))} />
+                                <input className={input} style={surface} type="date" aria-label={`${name} balance date`}
+                                    value={d?.as_of ?? today()}
+                                    onChange={e => setDraft(x => ({ ...x, [name]: { balance: x[name]?.balance ?? '', as_of: e.target.value } }))} />
+                                <button
+                                    onClick={() => save(name)}
+                                    disabled={!d || d.balance === '' || saving === name}
+                                    className="shrink-0 px-3 py-2 text-[10px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors disabled:opacity-40"
+                                    style={surface}
+                                >
+                                    {saving === name ? 'Saving…' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <p className="text-[11px] text-white/40 text-left">
+                Their emails show spending but never a balance, so type what each app shows. These add to spendable cash.
+            </p>
+        </section>
+    );
+}
+
+const btcLabel: Record<BitcoinRow['action'], string> = { buy: 'Bought', sell: 'Sold', withdraw: 'Sent out', receive: 'Received', bonus: 'Bonus' };
+
+/**
+ * Bitcoin from Cash App and Venmo emails, outside money in and out: buying is
+ * not spending and selling is not income. Withdrawals are moves between the
+ * owner's own wallets, so they show here but count in neither total.
+ */
+function BitcoinSection({ rows }: { rows: BitcoinRow[] }) {
+    if (rows.length === 0) return null;
+    const year = today().slice(0, 4);
+    const ytd = rows.filter(r => r.occurred_on.startsWith(year));
+    const sum = (list: BitcoinRow[], action: BitcoinRow['action'], f: (_r: BitcoinRow) => number) =>
+        list.filter(r => r.action === action).reduce((n, r) => n + f(r), 0);
+    // A Cash App buy is the purchase amount plus the fee; a sale is the sale
+    // amount before the fee (Venmo's emails give the amount after it).
+    const bought = sum(ytd, 'buy', r => r.usd_cents + r.fee_cents);
+    const sold = sum(ytd, 'sell', r => r.usd_cents - r.fee_cents);
+    const fees = ytd.reduce((n, r) => n + r.fee_cents, 0);
+    const putIn = bought - sold;
+
+    return (
+        <section data-tour="money-bitcoin" className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Bitcoin · {year}</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Stat label="Bought, with fees" cents={bought} />
+                <Stat label="Sold, after fees" cents={sold} accent="text-green-400" />
+                <Stat label="Fees paid" cents={fees} accent="text-amber-500" />
+                <Stat label={putIn >= 0 ? 'Net cash put in' : 'Net cash taken out'} cents={Math.abs(putIn)} accent="text-white/60" />
+            </div>
+            <div className="space-y-1">
+                {rows.slice(0, 15).map(r => (
+                    <div key={r.id} className="flex items-center gap-3 bg-white/5 px-3 py-2 text-xs" style={surface}>
+                        <span className="w-20 shrink-0 text-white/40 tabular-nums">{r.occurred_on}</span>
+                        <span className="flex-1 min-w-0 truncate text-white">
+                            {btcLabel[r.action]}
+                            <span className="text-white/40">
+                                {' · '}{r.platform}
+                                {r.sats ? ` · ${r.sats.toLocaleString('en-US')} sats` : ''}
+                                {r.fee_cents ? ` · ${usd(r.fee_cents)} fee` : ''}
+                            </span>
+                        </span>
+                        <span className={cn('shrink-0 font-bold tabular-nums', r.action === 'sell' ? 'text-green-400' : 'text-white')}>
+                            {r.usd_cents ? usd(r.usd_cents) : '—'}
+                        </span>
+                    </div>
+                ))}
+            </div>
+            <p className="text-[11px] text-white/40 text-left">
+                From your Cash App and Venmo emails. Not counted in money in or out, profit or tax.
             </p>
         </section>
     );
@@ -625,9 +777,9 @@ export default function MoneyLedgerView() {
     const [data, setData] = useState<LedgerResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
-    const [cashCents, setCashCents] = useState<number | null>(null);
-    const onBalances = useCallback((d: StripeBalances) => setCashCents(spendableCents(d)), []);
+    const [filter, setFilter] = useState<'all' | 'income' | 'expense' | 'personal'>('all');
+    const [stripeCashCents, setStripeCashCents] = useState<number | null>(null);
+    const onBalances = useCallback((d: StripeBalances) => setStripeCashCents(spendableCents(d)), []);
     const [form, setForm] = useState({
         kind: 'income' as 'income' | 'expense',
         amount: '',
@@ -636,6 +788,7 @@ export default function MoneyLedgerView() {
         method: 'Venmo',
         counterparty: '',
         note: '',
+        scope: 'business' as 'business' | 'personal',
     });
 
     const load = useCallback(async () => {
@@ -651,7 +804,17 @@ export default function MoneyLedgerView() {
     useEffect(() => { load(); }, [load]);
 
     const setKind = (kind: 'income' | 'expense') =>
-        setForm(f => ({ ...f, kind, category: kind === 'income' ? 'photos' : 'gear' }));
+        setForm(f => ({ ...f, kind, category: kind === 'income' ? 'photos' : 'gear', scope: 'business' }));
+
+    const flipScope = async (entry: Entry) => {
+        try {
+            await authFetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ action: 'scope', id: entry.id, scope: entry.scope === 'personal' ? 'business' : 'personal' }) });
+            await load();
+        } catch (err: any) {
+            logError(err.message);
+            setError(err.message);
+        }
+    };
 
     const save = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -686,7 +849,10 @@ export default function MoneyLedgerView() {
     const incomeCats = Object.entries(s?.byCategory.income ?? {}).sort((a, b) => b[1] - a[1]);
     const expenseCats = Object.entries(s?.byCategory.expense ?? {}).sort((a, b) => b[1] - a[1]);
     const catMax = Math.max(1, ...incomeCats.map(c => c[1]), ...expenseCats.map(c => c[1]));
-    const entries = (data?.entries ?? []).filter(e => filter === 'all' || e.kind === filter);
+    const entries = (data?.entries ?? []).filter(e =>
+        filter === 'all' || (filter === 'personal' ? e.scope === 'personal' : e.kind === filter));
+    const accountCents = (data?.accounts ?? []).reduce((n, a) => n + a.balance_cents, 0);
+    const cashCents = stripeCashCents === null ? null : stripeCashCents + accountCents;
     const categories = data?.categories[form.kind] ?? [];
 
     return (
@@ -696,6 +862,8 @@ export default function MoneyLedgerView() {
             <StripeBalancesSection onLoaded={onBalances} />
 
             {s && <PeriodSection s={s} />}
+
+            {data && <AccountsSection accounts={data.accounts ?? []} onChange={load} onError={setError} />}
 
             {s && data && <RunwaySection cashCents={cashCents} bills={data.bills ?? []} monthly={s.monthly} />}
 
@@ -736,6 +904,13 @@ export default function MoneyLedgerView() {
                         onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
                         {METHODS.map(m => <option key={m} value={m} className="bg-black">{m}</option>)}
                     </select>
+                    {form.kind === 'expense' && (
+                        <select className={input} style={surface} value={form.scope} aria-label="Business or personal"
+                            onChange={e => setForm(f => ({ ...f, scope: e.target.value as 'business' | 'personal' }))}>
+                            <option value="business" className="bg-black">Business</option>
+                            <option value="personal" className="bg-black">Personal</option>
+                        </select>
+                    )}
                     <input className={cn(input, 'col-span-2')} style={surface} placeholder={form.kind === 'income' ? 'Who paid' : 'Paid to'}
                         value={form.counterparty} onChange={e => setForm(f => ({ ...f, counterparty: e.target.value }))} />
                     <input className={cn(input, 'col-span-2')} style={surface} placeholder="Note"
@@ -789,11 +964,13 @@ export default function MoneyLedgerView() {
 
             {s && <CardSpendSection rows={s.cardSpend ?? []} />}
 
+            {data && <BitcoinSection rows={data.bitcoin ?? []} />}
+
             <section className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Logged entries</h3>
                     <div className="flex gap-1">
-                        {(['all', 'income', 'expense'] as const).map(f => (
+                        {(['all', 'income', 'expense', 'personal'] as const).map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
@@ -803,7 +980,7 @@ export default function MoneyLedgerView() {
                                 )}
                                 style={surface}
                             >
-                                {f === 'all' ? 'All' : f === 'income' ? 'In' : 'Out'}
+                                {f === 'all' ? 'All' : f === 'income' ? 'In' : f === 'expense' ? 'Out' : 'Personal'}
                             </button>
                         ))}
                     </div>
@@ -821,6 +998,20 @@ export default function MoneyLedgerView() {
                                     {e.counterparty || e.note || e.category}
                                     <span className="text-white/40"> · {catLabel(e.category)}{e.method ? ` · ${e.method}` : ''}</span>
                                 </span>
+                                {e.kind === 'expense' && (
+                                    <button
+                                        onClick={() => flipScope(e)}
+                                        data-tour="money-scope"
+                                        className={cn(
+                                            'shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                                            e.scope === 'personal' ? 'bg-white/10 text-white/50 hover:text-white' : 'bg-white text-black hover:bg-white/60',
+                                        )}
+                                        style={surface}
+                                        title={e.scope === 'personal' ? 'Personal: counts for cash, not profit. Tap for business.' : 'Business: counts for profit and tax. Tap for personal.'}
+                                    >
+                                        {e.scope === 'personal' ? 'Personal' : 'Business'}
+                                    </button>
+                                )}
                                 <span className={cn('shrink-0 font-bold tabular-nums', e.kind === 'income' ? 'text-green-400' : 'text-white')}>
                                     {e.kind === 'income' ? '+' : '−'}{usd(e.amount_cents)}
                                 </span>
