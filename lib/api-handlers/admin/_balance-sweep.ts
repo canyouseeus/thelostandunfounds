@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { createHash } from 'crypto'
 import { getStripe } from '../_booking-payment-utils.js'
 
 /** Available USD in the platform's Payments balance, in cents. */
@@ -172,17 +173,34 @@ export async function sweepBlocker(supabase: SupabaseClient): Promise<string | n
   return null
 }
 
+/**
+ * A short hash of everything a plan is computed from. The "Sweep now" button
+ * shows a plan, and its confirm sends this back: if the balance, a reserve or
+ * a pot changed in between, the hashes differ and nothing is queued, so the
+ * amounts moved are always the amounts the owner saw.
+ */
+export function sweepFingerprint(inputs: SweepInputs): string {
+  const reserves = Object.keys(inputs.reserves).sort().map((k) => [k, inputs.reserves[k]])
+  const basis = JSON.stringify([inputs.availableCents, inputs.kingMidasTargetCents, inputs.secretSantaTargetCents, inputs.movedCents.king_midas, inputs.movedCents.secret_santa, reserves])
+  return createHash('sha256').update(basis).digest('hex').slice(0, 16)
+}
+
 export interface SweepRun {
   trigger: string
   skipped?: string
   plan?: SweepPlan
+  fingerprint?: string
+  /** Set when `expectFingerprint` no longer matches; nothing was queued. */
+  stale?: boolean
   queued: Array<{ to: string; amount: number; jobId?: string; duplicate?: boolean }>
 }
 
 /**
  * Plan and queue one sweep. Called by the Stripe webhook when funds become
- * available (`trigger` = the event id) and by the daily cron backstop
- * (`trigger` = `cron-<Central date>`).
+ * available (`trigger` = the event id), by the daily cron backstop
+ * (`trigger` = `cron-<Central date>`) and by the admin "Sweep now" button
+ * (`trigger` = `manual-<request id>`, with `expectFingerprint` from the plan
+ * the owner confirmed).
  *
  * No double moves, even when two runs overlap:
  *  - a pot move's idempotency key is the amount already moved plus the
@@ -195,7 +213,7 @@ export interface SweepRun {
 export async function runBalanceSweep(
   supabase: SupabaseClient,
   getAvailableCents: () => Promise<number>,
-  opts: { trigger: string; dryRun?: boolean }
+  opts: { trigger: string; dryRun?: boolean; expectFingerprint?: string }
 ): Promise<SweepRun> {
   const run: SweepRun = { trigger: opts.trigger, queued: [] }
   const blocker = await sweepBlocker(supabase)
@@ -205,6 +223,12 @@ export async function runBalanceSweep(
   const inputs = await loadSweepInputs(supabase, availableCents)
   const plan = planSweep(inputs)
   run.plan = plan
+  run.fingerprint = sweepFingerprint(inputs)
+  if (opts.expectFingerprint && opts.expectFingerprint !== run.fingerprint) {
+    run.stale = true
+    console.warn('[balance-sweep] stale confirm, nothing queued:', JSON.stringify({ trigger: opts.trigger, expected: opts.expectFingerprint, now: run.fingerprint }))
+    return run
+  }
   console.log('[balance-sweep] plan:', JSON.stringify({ trigger: opts.trigger, dryRun: !!opts.dryRun, ...plan }))
   if (opts.dryRun || plan.moves.length === 0) return run
 

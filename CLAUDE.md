@@ -226,6 +226,8 @@ The Stripe webhook (`balance.available`, each time payments clear) and the daily
 backstop queue `move_funds` jobs themselves (`requested_by: 'balance-sweep'`); see `runBalanceSweep` in
 `lib/api-handlers/admin/_balance-sweep.ts` for the keys that stop double moves. It stops while a
 move is queued/running or one timed out, so mark a timed-out move `cancelled` once Stripe is checked.
+The money tab's **Sweep now** button (`/api/admin/balance-sweep`) runs the same sweep on demand: GET
+shows the plan, POST queues it only for a signed-in admin (not `x-admin-secret`). Agents never POST it.
 
 - Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
   Each calls the same function as the admin-panel route.

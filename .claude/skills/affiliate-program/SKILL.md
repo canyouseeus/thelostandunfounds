@@ -132,7 +132,8 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
     (`balance.available`, each time payments clear) and `/api/cron/balance-sweep` (daily backstop,
     22:30 UTC = 4:30 PM CST, 5:30 PM CDT) queue those jobs themselves: pots funded cumulatively from the recorded
     8% / 3% splits, money still owed to people reserved, the rest to `business`
-    (`lib/api-handlers/admin/_balance-sweep.ts`). Never claim a sweep happened without reading
+    (`lib/api-handlers/admin/_balance-sweep.ts`). The owner can also press **Sweep now** on
+    the admin money tab, which shows the amounts and queues them on confirm. Never claim a sweep happened without reading
     the `move_funds` job's result.
 -   **Database Schema**:
     -   `affiliates` (Profiles, points)

@@ -319,6 +319,136 @@ const spendableCents = (d: StripeBalances) =>
         .filter(a => a.name === 'Business')
         .reduce((n, a) => n + a.available, 0)) * 100);
 
+interface SweepPlanView {
+    trigger: string;
+    skipped?: string;
+    fingerprint?: string;
+    plan?: { availableCents: number; reservedCents: number; moves: { to: 'king_midas' | 'secret_santa' | 'business'; cents: number }[]; held: string[] };
+    queued: { to: string; amount: number; duplicate?: boolean }[];
+}
+
+const POT_LABEL: Record<string, string> = { king_midas: 'KING MIDAS', secret_santa: 'Secret Santa', business: 'Business' };
+
+/**
+ * "Sweep now": the same split the webhook and the 4:30 PM run do, on demand.
+ * First press shows exactly what would move; nothing moves until Confirm, and
+ * Confirm only queues those amounts (the server refuses if the numbers changed).
+ */
+function SweepNowSection({ onDone }: { onDone: () => void }) {
+    const [preview, setPreview] = useState<SweepPlanView | null>(null);
+    const [requestId, setRequestId] = useState('');
+    const [busy, setBusy] = useState<'plan' | 'run' | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadPlan = async () => {
+        setBusy('plan');
+        setError(null);
+        setMessage(null);
+        try {
+            setPreview(await authFetch('/api/admin/balance-sweep'));
+            setRequestId(crypto.randomUUID());
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            logError(msg);
+            setError(msg);
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    const confirm = async () => {
+        if (!preview?.fingerprint || !requestId) return;
+        setBusy('run');
+        setError(null);
+        try {
+            const run: SweepPlanView = await authFetch('/api/admin/balance-sweep', {
+                method: 'POST',
+                body: JSON.stringify({ fingerprint: preview.fingerprint, requestId }),
+            });
+            setPreview(null);
+            if (run.skipped) setMessage(`Nothing moved: ${run.skipped}.`);
+            else if (!run.queued.length) setMessage('Nothing to move right now.');
+            else setMessage(`Queued ${run.queued.map(q => `${usd(Math.round(q.amount * 100))} to ${POT_LABEL[q.to] || q.to}`).join(', ')}. Stripe moves it within a minute.`);
+            onDone();
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            logError(msg);
+            setError(msg);
+            // The numbers changed or the request failed: show a fresh plan to confirm.
+            setPreview(null);
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    const moves = preview?.plan?.moves ?? [];
+
+    return (
+        <div data-tour="money-sweep-now" className="bg-white/5 p-4 space-y-3 text-left" style={surface}>
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                    Split and sweep the available balance to the pots and business
+                </p>
+                {!preview && (
+                    <button
+                        onClick={loadPlan}
+                        disabled={busy !== null}
+                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/80 transition-colors disabled:opacity-50 shrink-0"
+                    >
+                        {busy === 'plan' ? 'Checking…' : 'Sweep now'}
+                    </button>
+                )}
+            </div>
+            {preview && (
+                <div className="space-y-2">
+                    {preview.skipped && <p className="text-xs text-amber-400">Can't sweep yet: {preview.skipped}.</p>}
+                    {preview.plan && (
+                        <p className="text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
+                            {usd(preview.plan.availableCents)} available · {usd(preview.plan.reservedCents)} held for money owed
+                        </p>
+                    )}
+                    {moves.length > 0 ? (
+                        <ul className="space-y-1">
+                            {moves.map(m => (
+                                <li key={m.to} className="flex justify-between text-sm text-white tabular-nums">
+                                    <span>{POT_LABEL[m.to]}</span>
+                                    <span className="font-black">{usd(m.cents)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        !preview.skipped && <p className="text-xs text-white/60">Nothing to move right now.</p>
+                    )}
+                    {(preview.plan?.held ?? []).map(h => (
+                        <p key={h} className="text-[10px] uppercase tracking-widest text-white/40">{h}</p>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                        {moves.length > 0 && !preview.skipped && (
+                            <button
+                                onClick={confirm}
+                                disabled={busy !== null}
+                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-green-500 text-black hover:bg-green-400 transition-colors disabled:opacity-50"
+                            >
+                                {busy === 'run' ? 'Queueing…' : `Confirm ${usd(moves.reduce((n, m) => n + m.cents, 0))}`}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setPreview(null)}
+                            disabled={busy !== null}
+                            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white/60 hover:text-white transition-colors disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+            {message && <p className="text-xs text-green-400">{message}</p>}
+            {error && <p className="text-xs text-red-400">{error}</p>}
+        </div>
+    );
+}
+
 /** Live Stripe money: the Payments balance (card income) and every financial account. */
 function StripeBalancesSection({ onLoaded }: { onLoaded?: (_balances: StripeBalances) => void }) {
     const [data, setData] = useState<StripeBalances | null>(null);
@@ -386,6 +516,7 @@ function StripeBalancesSection({ onLoaded }: { onLoaded?: (_balances: StripeBala
                     {data.financialAccountsError && (
                         <p className="text-[10px] uppercase tracking-widest text-red-400">Financial accounts: {data.financialAccountsError}</p>
                     )}
+                    <SweepNowSection onDone={load} />
                 </>
             )}
         </section>
