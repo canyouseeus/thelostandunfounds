@@ -35,7 +35,7 @@ export default function AffiliateGuide() {
                             <div className="flex items-start gap-3 p-3 bg-white/5">
                                 <UserGroupIcon className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
                                 <div>
-                                    <h4 className="text-white text-[10px] uppercase tracking-[0.25em] font-black mb-1">Multi-Level Earning</h4>
+                                    <h4 className="text-white text-[10px] uppercase tracking-[0.25em] font-black mb-1">Team Earnings</h4>
                                     <p className="text-white/40 text-xs">Earn 2% from affiliates you recruit (Level 1) and 1% from their recruits (Level 2).</p>
                                 </div>
                             </div>
@@ -77,15 +77,15 @@ export default function AffiliateGuide() {
             </div>
 
             <AdminBentoCard
-                title="The King Midas Pot"
+                title="KING MIDAS"
                 icon={<TrophyIcon className="w-4 h-4" />}
                 colSpan={12}
             >
                 <div className="flex flex-col md:flex-row gap-6 items-center">
                     <div className="flex-1 space-y-4">
                         <p className="text-white/50 text-xs leading-relaxed tracking-wide">
-                            We gamify sales with a daily profit pool called the <strong className="text-white font-black uppercase tracking-widest">King Midas Pot</strong>.
-                            8% of the profit from each day's affiliate sales goes into this pot, paid out to that day's ranked affiliates.
+                            We gamify sales with <strong className="text-white font-black uppercase tracking-widest">KING MIDAS</strong>.
+                            Every day, 8% of the profit from that day's affiliate sales is split between that day's ranked affiliates.
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-px">
                             <div className="p-4 bg-white/10 text-center">

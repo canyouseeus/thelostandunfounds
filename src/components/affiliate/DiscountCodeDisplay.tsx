@@ -85,7 +85,7 @@ export default function DiscountCodeDisplay({ affiliateCode, discountPercent, cr
           <li>Use code <span className="font-mono font-bold text-white">{discountCode}</span> at checkout</li>
           <li>Discount is {discountPercent}% of profit (not retail price)</li>
           <li>Credit accumulates with each discounted purchase</li>
-          <li>Your upline still earns MLM bonuses on remaining profit</li>
+          <li>The affiliate who brought you in still earns their team bonus on the remaining profit</li>
         </ul>
       </div>
     </div>

@@ -190,7 +190,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
             </li>
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">02</span>
-              <span>Share affiliate link to earn MLM bonuses (2% Level 1, 1% Level 2).</span>
+              <span>Share your affiliate link to earn team bonuses (2% Level 1, 1% Level 2).</span>
             </li>
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">03</span>

@@ -227,7 +227,7 @@ export function DirectBookingForm({ onDone, onCancel }: { onDone: () => void; on
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-px bg-white/5 text-center">
               {[
                 ['Total', total], ['Profit', profit], ['Affiliate 42%', profit * 0.42],
-                ['MLM L1 2%', profit * 0.02], ['King Midas 8%', profit * 0.08], ['Secret Santa 3%', profit * 0.03],
+                ['Team L1 2%', profit * 0.02], ['King Midas 8%', profit * 0.08], ['Secret Santa 3%', profit * 0.03],
               ].map(([k, v]) => (
                 <div key={k as string} className="bg-black p-2">
                   <p className="text-[8px] text-white/40 uppercase tracking-widest">{k}</p>

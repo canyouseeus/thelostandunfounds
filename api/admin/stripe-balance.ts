@@ -25,7 +25,7 @@ const usd = (cents: number) => Math.round(cents) / 100
 /** The platform's storage financial accounts, named the way the owner knows them. */
 const ACCOUNT_LABELS: Record<string, string> = {
   fa_65UbOiP49XIyCjVLt9w16UbOGOJESQ1Wd0tevkXEB3w5km: 'Business',
-  fa_65Vc0ZpAuxheTRvd98q16UbOGOJESQ1Wd0tevkXEB3wDSi: 'King Midas pot',
+  fa_65Vc0ZpAuxheTRvd98q16UbOGOJESQ1Wd0tevkXEB3wDSi: 'KING MIDAS',
   fa_65Vc0ZPs07Y7q1ibQPv16UbOGOJESQ1Wd0tevkXEB3wOEa: 'Secret Santa',
   fa_65Vc0aUTLSwK4YumRSn16UbOGOJESQ1Wd0tevkXEB3wPCa: 'Affiliate pay',
 }

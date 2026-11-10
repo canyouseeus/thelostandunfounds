@@ -66,18 +66,18 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <CurrencyDollarIcon className="text-green-400 w-6 h-6" />
-          <h3 className="text-xl font-bold text-white">MLM Earnings History</h3>
+          <h3 className="text-xl font-bold text-white">Team Earnings History</h3>
         </div>
       </div>
 
       {loading ? (
-        <p className="text-white/60 text-center py-8">Loading MLM data...</p>
+        <p className="text-white/60 text-center py-8">Loading team earnings...</p>
       ) : mlmData && mlmData.totals.total_transactions > 0 ? (
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-green-500/10 rounded-none p-4 text-center">
-              <p className="text-green-400 text-sm mb-1">Total MLM</p>
+              <p className="text-green-400 text-sm mb-1">Total Team Earnings</p>
               <p className="text-white text-2xl font-bold">${mlmData.totals.total_earnings.toFixed(2)}</p>
             </div>
             <div className="bg-purple-500/10 rounded-none p-4 text-center">
@@ -160,8 +160,8 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
       ) : (
         <div className="text-center py-8">
           <CurrencyDollarIcon className="text-white/20 mx-auto mb-3 w-12 h-12" />
-          <p className="text-white/60 text-sm">No MLM earnings yet</p>
-          <p className="text-white/40 text-xs mt-1">Build your affiliate network to earn MLM bonuses!</p>
+          <p className="text-white/60 text-sm">No team earnings yet</p>
+          <p className="text-white/40 text-xs mt-1">Bring in other affiliates to earn team bonuses on their sales.</p>
         </div>
       )}
     </div>

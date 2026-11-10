@@ -728,7 +728,7 @@ const memberAffiliateTour: Tour = {
     inApp('affiliate', { target: 'm-aff-copy', title: 'Copy Your Link', body: 'Your link. When someone buys through it, you earn a share of the profit.' }),
     inApp('affiliate', { target: 'm-aff-back', action: 'click', title: 'Back', body: 'Tap ALL SECTIONS to go back.' }),
     inApp('affiliate', { target: 'm-aff-network', title: 'Network', body: 'People you brought in, and what their sales earn you.' }),
-    inApp('affiliate', { target: 'm-aff-kingmidas', title: 'King Midas', body: 'The daily leaderboard and its prize pot.' }),
+    inApp('affiliate', { target: 'm-aff-kingmidas', title: 'KING MIDAS', body: 'Daily rankings and the 8% split.' }),
     inApp('affiliate', { target: 'm-aff-rewards', title: 'Rewards', body: 'Your reward points and store credit.' }),
     inApp('affiliate', { target: 'm-aff-payouts', action: 'click', title: 'Payouts', body: 'Tap PAYOUTS.' }),
     inApp('affiliate', { target: 'm-aff-available', action: 'click', title: 'Available To Payout', body: 'What you can be paid now. Tap it.' }),
