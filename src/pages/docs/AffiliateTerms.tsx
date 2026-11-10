@@ -70,7 +70,7 @@ export default function AffiliateTerms() {
           <List>
             <li><strong className="text-white">Direct commission:</strong> 42% of the profit on each sale you refer.</li>
             <li><strong className="text-white">Affiliates you recruit:</strong> 2% of the profit on their referred sales (Level 1), and 1% on the sales of affiliates they recruit (Level 2).</li>
-            <li><strong className="text-white">King Midas:</strong> 8% of each day's profit goes into a pot paid to that day's top-ranked affiliates. Days run on Central time. The <Link to="/king-midas-leaderboard" className="underline hover:text-white">leaderboard</Link> shows the rankings.</li>
+            <li><strong className="text-white">King Midas:</strong> 8% of each day's profit goes into a pot, ranked by the profit each affiliate brought in that day. 1st place gets 50% of the pot, 2nd 30% and 3rd 10%; everyone else on the board splits the last 10%. Whatever isn't claimed goes to the Secret Santa pot. Days run on Central time. The <Link to="/king-midas-leaderboard" className="underline hover:text-white">leaderboard</Link> shows the rankings.</li>
             <li><strong className="text-white">Secret Santa:</strong> 3% of profit goes into a yearly pot, shared on December 25 among active affiliates in proportion to the reward points they earned that year (1 point per $10 of profit).</li>
           </List>
           <p>
