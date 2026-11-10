@@ -4,10 +4,6 @@
  * Public companion page for the book club. Thirteen principles, what each one
  * asks of you, and the actions to run — as checkboxes with a progress bar.
  *
- * Where Hill's claims are not supported (the subconscious as something you can
- * program, thought as a radio signal, the sixth sense), the chapter says so
- * rather than repeating it quietly. That honesty is the point of the page.
- *
  * Noir: black ground, no borders, no shadows, square corners, UPPERCASE h1 and
  * chapter titles, body text left-aligned. Progress is a per-viewer convenience
  * in localStorage — every read and write is guarded, and the page renders
@@ -31,7 +27,6 @@ interface Chapter {
   rules?: string[];
   fears?: [string, string][];
   acts: string[];
-  care?: string;
   notes?: string;
   placeholder?: string;
 }
@@ -73,7 +68,6 @@ const CHAPTERS: Chapter[] = [
       'Add one line to your statement about why you will get it.',
       'Read it with real feeling for seven days straight.',
     ],
-    care: 'Picturing success alone can reduce effort. Research on goal-setting suggests pairing the picture with the obstacles you expect, and a plan for each.',
   },
   {
     id: 'auto',
@@ -90,7 +84,6 @@ const CHAPTERS: Chapter[] = [
       'Put your statement where you’ll see it every day.',
       'Set two daily reminders to read it.',
     ],
-    care: 'The claim that this rewrites your subconscious isn’t supported. The part that works is the habit: a daily cue that keeps your goal in front of you.',
   },
   {
     id: 'knowledge',
@@ -174,7 +167,6 @@ const CHAPTERS: Chapter[] = [
       'Tell one person who will hold you to your goal.',
       'Decide now what you’ll do on a bad week.',
     ],
-    care: 'Persistence matters, but so does knowing when to change tactics or stop. The book leans heavily on stories of people who kept going and won.',
   },
   {
     id: 'master',
@@ -207,7 +199,6 @@ const CHAPTERS: Chapter[] = [
       'Find when your energy peaks and put your hardest work there.',
       'Give your strongest current feeling a project to go into.',
     ],
-    care: 'The physiology in this chapter is Hill’s theory, not science. The takeaway that holds up: put your peak energy on the important work.',
   },
   {
     id: 'sub',
@@ -224,7 +215,6 @@ const CHAPTERS: Chapter[] = [
       'For one day, write down your top three negative self-talk phrases.',
       'Rewrite each into a specific, useful instruction.',
     ],
-    care: 'Same caution as autosuggestion. The literal model isn’t supported, but noticing and rewriting self-talk is a real, useful practice.',
   },
   {
     id: 'brain',
@@ -237,7 +227,6 @@ const CHAPTERS: Chapter[] = [
       'Spend time around people whose state you want.',
     ],
     acts: ['Before an important call, spend two minutes getting into the state you want.'],
-    care: 'There is no evidence that thoughts are broadcast. The practical point is that your state affects the people around you.',
   },
   {
     id: 'sixth',
@@ -252,7 +241,6 @@ const CHAPTERS: Chapter[] = [
     acts: [
       'Pick three people whose judgment you respect and ask what each would tell you about a real problem.',
     ],
-    care: 'The mystical framing is unproven. The advisor exercise is a perspective-taking technique, and that part works.',
   },
   {
     id: 'fear',
@@ -357,7 +345,7 @@ export default function ThinkAndGrowRichWorkbook() {
         <title>THE LOST+UNFOUNDS | Think and Grow Rich Workbook</title>
         <meta
           name="description"
-          content="A free companion workbook for Think and Grow Rich. All thirteen principles, the actions to run for each, and an honest note on which of Hill's claims hold up."
+          content="A free companion workbook for Think and Grow Rich. All thirteen principles, what each one asks of you, and the actions to run — as a checklist you can work while you read."
         />
         <link
           rel="canonical"
@@ -382,8 +370,7 @@ export default function ThinkAndGrowRichWorkbook() {
         </p>
         <p className="text-sm text-white/55 text-left leading-relaxed max-w-[62ch]">
           Paraphrased from the book's ideas, not a transcript. Chapter order and titles vary
-          slightly by edition. Where a chapter's claims don't hold up, we say so instead of quietly
-          repeating them.
+          slightly by edition.
         </p>
 
         {/* Audible offer */}
@@ -504,17 +491,6 @@ export default function ThinkAndGrowRichWorkbook() {
                       </>
                     )}
 
-                    {c.care && (
-                      <div className="bg-[#0a0a0a] p-4 mt-6" style={{ borderRadius: 0 }}>
-                        <span className="block text-[10px] font-bold uppercase tracking-[0.22em] text-white/35 mb-1.5">
-                          Read with care
-                        </span>
-                        <p className="text-[15px] text-white/[0.87] text-left leading-relaxed">
-                          {c.care}
-                        </p>
-                      </div>
-                    )}
-
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/35 mt-6 mb-2.5">
                       Do this
                     </h3>
@@ -589,54 +565,6 @@ export default function ThinkAndGrowRichWorkbook() {
               </div>
             );
           })}
-        </div>
-
-        {/* Verdict */}
-        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mt-14 mb-4">
-          What holds up, what doesn't
-        </h2>
-        <div className="flex flex-col gap-1.5">
-          <div className="bg-white/5 p-5" style={{ borderRadius: 0 }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/35 mb-3">
-              Solid, practical advice
-            </h3>
-            <ul className="list-disc pl-5 space-y-2 max-w-[64ch]">
-              <li className="text-base text-white/[0.87] text-left">
-                Writing a specific goal with a number and a deadline.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                Reviewing it every day so it stays in front of you.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                Learning the specific skills your goal needs.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                Deciding quickly, changing your mind slowly, and adjusting plans instead of
-                quitting.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                Meeting regularly with people who fill your gaps and keep you accountable.
-              </li>
-            </ul>
-          </div>
-          <div className="bg-white/5 p-5" style={{ borderRadius: 0 }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/35 mb-3">
-              Unproven or overstated
-            </h3>
-            <ul className="list-disc pl-5 space-y-2 max-w-[64ch]">
-              <li className="text-base text-white/[0.87] text-left">
-                The subconscious as something you can program, and the brain as a thought
-                transmitter. Hill offers no evidence for either.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                The physiology behind the energy-channeling chapter, and the sixth sense.
-              </li>
-              <li className="text-base text-white/[0.87] text-left">
-                The success stories. They are anecdotes with survivorship bias, and some of Hill's
-                claims about his ties to famous industrialists are disputed.
-              </li>
-            </ul>
-          </div>
         </div>
 
         {/* Colophon */}
