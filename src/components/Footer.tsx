@@ -53,6 +53,7 @@ const COLUMNS: { heading: string; links: { to: string; label: string }[] }[] = [
       { to: '/terms', label: 'Terms of Use' },
       { to: '/shipping', label: 'Shipping & Returns' },
       { to: '/terms/photographers', label: 'Photographer Terms' },
+      { to: '/terms/affiliates', label: 'Affiliate Terms' },
     ],
   },
 ]

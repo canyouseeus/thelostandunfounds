@@ -306,7 +306,7 @@ export function KingMidasView() {
             <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
               <li>8% of daily profit is distributed to top affiliates</li>
               <li>Rankings are based on profit generated each day</li>
-              <li>Top 3 affiliates receive: 50%, 30%, and 20% of the pool</li>
+              <li>1st place gets 50% of the pool, 2nd 30%, 3rd 10%, and everyone else ranked splits the last 10%</li>
               <li>Rankings are calculated daily and payouts are processed automatically</li>
             </ul>
           </div>

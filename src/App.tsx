@@ -30,6 +30,7 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import ShippingPolicy from './pages/ShippingPolicy'
 import PhotographerTerms from './pages/PhotographerTerms'
+import AffiliateTerms from './pages/AffiliateTerms'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import Blog from './pages/Blog'
@@ -222,8 +223,10 @@ function App() {
               <Route path="/terms" element={<Layout />}>
                 <Route index element={<Terms />} />
                 <Route path="photographers" element={<PhotographerTerms />} />
+                <Route path="affiliates" element={<AffiliateTerms />} />
               </Route>
               <Route path="/photographer-terms" element={<Navigate to="/terms/photographers" replace />} />
+              <Route path="/affiliate-terms" element={<Navigate to="/terms/affiliates" replace />} />
               <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
               <Route path="/tools" element={<Layout />}>
                 <Route index element={<ToolsDashboard />} />

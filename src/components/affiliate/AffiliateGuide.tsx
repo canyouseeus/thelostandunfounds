@@ -85,9 +85,9 @@ export default function AffiliateGuide() {
                     <div className="flex-1 space-y-4">
                         <p className="text-white/50 text-xs leading-relaxed tracking-wide">
                             We gamify sales with a daily profit pool called the <strong className="text-white font-black uppercase tracking-widest">King Midas Pot</strong>.
-                            A portion of every sale's profit goes into this pot.
+                            8% of each day's profit goes into this pot, paid out to that day's ranked affiliates.
                         </p>
-                        <div className="grid grid-cols-3 gap-px">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-px">
                             <div className="p-4 bg-white/10 text-center">
                                 <div className="text-2xl font-black text-white mb-1">50%</div>
                                 <div className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black">1st Place</div>
@@ -97,12 +97,16 @@ export default function AffiliateGuide() {
                                 <div className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-black">2nd Place</div>
                             </div>
                             <div className="p-4 bg-white/[0.03] text-center">
-                                <div className="text-2xl font-black text-white/30 mb-1">20%</div>
+                                <div className="text-2xl font-black text-white/30 mb-1">10%</div>
                                 <div className="text-[9px] uppercase tracking-[0.3em] text-white/20 font-black">3rd Place</div>
+                            </div>
+                            <div className="p-4 bg-white/[0.02] text-center">
+                                <div className="text-2xl font-black text-white/30 mb-1">10%</div>
+                                <div className="text-[9px] uppercase tracking-[0.3em] text-white/20 font-black">Split by 4th+</div>
                             </div>
                         </div>
                         <p className="text-[10px] text-white/25 uppercase tracking-[0.2em]">
-                            Rankings reset every 24 hours at midnight. Winners paid instantly to pending balance.
+                            Days run midnight to midnight Central. Winnings are added to your balance shortly after midnight.
                         </p>
                     </div>
                 </div>
@@ -123,7 +127,7 @@ export default function AffiliateGuide() {
                     <div className="space-y-2">
                         <h4 className="text-[10px] uppercase tracking-[0.25em] font-black text-white">Blogs &amp; Newsletters</h4>
                         <p className="text-white/40 text-xs leading-relaxed">
-                            Write a review of your favorite pieces. Embed the images from the Marketing Assets tab and link them with your affiliate ID.
+                            Write about your favorite pieces. Use the Deep Link Generator to link each one straight to its page with your code.
                         </p>
                     </div>
                     <div className="space-y-2">
