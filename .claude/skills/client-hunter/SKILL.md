@@ -80,7 +80,7 @@ For each candidate, open their **own website** with WebFetch and confirm:
 
 1. The business is real, open, US-based, and the signal is current (dated within 60 days, or an event still in the future).
 2. A contact email **printed on their own site** (contact page, footer, about, team page), or in a press release they issued. Record the exact URL as `email_source_url`.
-   - **Never guess an address** (`firstname@domain`), never use a pattern-matching tool, never scrape one from a data broker. No published email means no email: insert the lead with `contact_email` null only if the signal is unusually strong, so the owner can call or DM. Otherwise skip it.
+   - **Never guess an address** (`firstname@domain`), never use a pattern-matching tool, never scrape one from a data broker. **No published email means no lead** (owner rule, 2026-10-30): skip it, however strong the signal. A contact form, a phone number or a DM handle is not enough, because the owner sends from the Prospects panel and SEND needs an address. Never insert a row with `contact_email` null.
    - Prefer a named person (owner, founder, events or marketing lead) over `info@`. Use the name only if the site says it.
 3. Not on the never-pitch list.
 
