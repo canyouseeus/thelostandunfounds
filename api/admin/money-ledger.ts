@@ -324,6 +324,14 @@ async function importEmails(supabase: ReturnType<typeof getSupabaseAdmin>, email
     const own = await supabase.from('money_ledger').select('id').eq('source', a.source).eq('source_ref', a.source_ref).limit(1);
     if (own.error) throw own.error;
     if ((done.data ?? []).length || (own.data ?? []).length) continue;
+    // A "Completed" copy of a purchase whose pending email is not on file is
+    // logged as the purchase itself.
+    if (a.fromCents === a.toCents) {
+      const { error } = await supabase.from('money_ledger').insert(toRow(a.fallback).row);
+      if (error) throw error;
+      adjusted++;
+      continue;
+    }
     const orig = await match(a.fromCents);
     if (orig.error) throw orig.error;
     const row = orig.data?.[0];

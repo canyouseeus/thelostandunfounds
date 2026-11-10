@@ -71,4 +71,29 @@ assert.equal(p(C, 'Your $26.94 payment at Scentbird was declined').type, 'skip')
 assert.equal(p(C, 'You borrowed $30').type, 'skip');
 assert.equal(p('cash-app@messages.cash.app', 'You spent $5.00 at Shell').type, 'skip');
 
+// Shapes seen in the first real import.
+r = p(C, 'You spent $6 at Electric Church', 'Electric Church $6.00 Transaction details Pending The merchant is finalizing this purchase.');
+assert.deepEqual([r.type, r.row.amount, r.row.counterparty], ['ledger', 6, 'Electric Church']);
+r = p(C, "You spent $51.19 at Jerry's Artarama Austi", "Jerry's Artarama Austi Yesterday at 3:16 PM $51.19 Completed Amount $51.19 Source Cash App Card");
+assert.deepEqual([r.type, r.adjust.fromCents, r.adjust.toCents], ['adjust', 5119, 5119]);
+r = p(C, 'The total for your transaction at Liberty New has been updated from $5 to $7');
+assert.deepEqual([r.type, r.adjust.fromCents, r.adjust.toCents], ['adjust', 500, 700]);
+r = p(C, 'You received 0.00007138 BTC ($5.00)');
+assert.deepEqual([r.type, r.row.action, r.row.usd_cents, r.row.sats], ['bitcoin', 'receive', 500, 7138]);
+r = p(C, 'You paid ₿8,292 ($7.00)');
+assert.deepEqual([r.row.action, r.row.usd_cents, r.row.sats], ['withdraw', 700, 8292]);
+r = p(C, 'You paid 0.00028243\u00a0BTC ($20.01)');
+assert.deepEqual([r.row.action, r.row.usd_cents, r.row.sats], ['withdraw', 2001, 28243]);
+r = p(C, 'You earned a weekly bitcoin bonus', 'Weekly bitcoin bonus Nov 03 at 3:07 PM $0.00 ₿1 Trade details Exchange rate $77647.45 Bitcoin amount ₿1 Fees $0.00');
+assert.deepEqual([r.row.action, r.row.sats], ['bonus', 1]);
+r = p(C, 'Payment sent', 'You paid Kaitlyn Cleary $20 Kaitlyn Cleary Today For Food $20.00 Transaction details Complete');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.scope], ['expense', 20, 'Kaitlyn Cleary', 'Food', 'personal']);
+r = p(C, 'Repayment Overdue', 'Repayment Overdue An interest charge of $0.26 has been applied to your $25.20 overdue repayment.');
+assert.deepEqual([r.row.amount, r.row.category, r.row.counterparty], [0.26, 'fees', 'Cash App Borrow']);
+assert.equal(p(C, 'Repayment Reminder', 'An interest charge of $0.26 will be applied tomorrow.').type, 'skip');
+r = p(C, '$0.07 late fee added');
+assert.deepEqual([r.row.amount, r.row.counterparty], [0.07, 'Afterpay']);
+r = p(V, 'McKaylyn z paid $7.00 to your Venmo account. Leave it in Venmo or transfer it to your bank account.', 'Mckaylyn z paid you $7.00 Mckaylyn z paid you $ 7 . 00 Photo See transaction Money credited to your Venmo account. Transaction details Date Oct 31, 2026 Transaction ID 5', '2026-11-01T03:33:04Z');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on], ['income', 7, 'McKaylyn z', 'Photo', '2026-10-31']);
+
 console.log('money email parser: all checks passed');

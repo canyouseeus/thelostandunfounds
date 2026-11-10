@@ -8,8 +8,9 @@
  *
  * What it reads:
  *   Venmo     card receipts, updated totals, "X paid you", Bitcoin sales
- *   Cash App  card spending, updated totals, payments received, Bitcoin buys,
- *             sells, withdrawals and coins received, refunds
+ *   Cash App  card spending, updated totals, payments received and sent,
+ *             Bitcoin buys, sells, withdrawals, Lightning payments, coins
+ *             received and bonuses, refunds, Borrow interest, Afterpay fees
  *
  * What it leaves out on purpose: declined payments, transfers between the
  * owner's own accounts (Apple Cash in, cash out to the bank), loan proceeds
@@ -183,6 +184,17 @@ function parseVenmo(e: MoneyEmail, day: string): Parsed {
     return income(e, VENMO_SOURCE, 'Venmo', m[1], toCents(m[2]), note, when);
   }
 
+  // The other wording of the same payment: "McKaylyn z paid $7.00 to your
+  // Venmo account. Leave it in Venmo or transfer it to your bank account."
+  if ((m = s.match(/^(.+?) paid \$([\d,]+\.\d{2}) to your Venmo account/))) {
+    const before = t.split(/ See transaction/i)[0] ?? '';
+    const tail = before.split(/paid you \$ ?[\d,]+ ?\. ?\d{2}/i).pop()?.trim();
+    const note = tail && tail !== before.trim() ? tail : null;
+    const dated = t.match(/Transaction details Date ([A-Z][a-z]{2} \d{1,2}, \d{4})/)?.[1];
+    const when = dated ? centralDay(`${dated} 12:00 GMT-0600`) || day : day;
+    return income(e, VENMO_SOURCE, 'Venmo', m[1], toCents(m[2]), note, when);
+  }
+
   if ((m = s.match(/^You received \$([\d,]+\.\d{2}) USD for selling ([\d.]+) Bitcoin/i))) {
     return {
       type: 'bitcoin',
@@ -204,11 +216,24 @@ function parseCashApp(e: MoneyEmail, day: string): Parsed {
 
   if (/declined/i.test(s)) return { type: 'skip', reason: 'declined' };
 
-  if ((m = s.match(/^You spent \$([\d,]+\.\d{2}) at (.+)$/))) {
-    return { type: 'ledger', row: spend(e, CASHAPP_SOURCE, 'Cash App', m[2], toCents(m[1]), day) };
+  if ((m = s.match(/^You spent \$([\d,]+(?:\.\d{2})?) at (.+)$/))) {
+    const row = spend(e, CASHAPP_SOURCE, 'Cash App', m[2], toCents(m[1]), day);
+    // Cash App sometimes sends a second, "Completed" email for a purchase it
+    // already sent as "Pending". It goes through as an updated total to the
+    // same amount, which the import skips when the pending one is on file.
+    if (/ Completed Amount /.test(` ${t} `)) {
+      return {
+        type: 'adjust',
+        adjust: {
+          source: CASHAPP_SOURCE, merchant: row.counterparty ?? '', fromCents: toCents(m[1]), toCents: toCents(m[1]),
+          occurred_on: day, source_ref: e.id, fallback: row,
+        },
+      };
+    }
+    return { type: 'ledger', row };
   }
 
-  if ((m = s.match(/^The total for your transaction at (.+) has been updated from \$([\d,]+\.\d{2}) to \$([\d,]+\.\d{2})$/))) {
+  if ((m = s.match(/^The total for your transaction at (.+) has been updated from \$([\d,]+(?:\.\d{2})?) to \$([\d,]+(?:\.\d{2})?)$/))) {
     const toC = toCents(m[3]);
     return {
       type: 'adjust',
@@ -262,6 +287,68 @@ function parseCashApp(e: MoneyEmail, day: string): Parsed {
         occurred_on: day, platform: 'Cash App', action: bonus ? 'bonus' : 'receive',
         usd_cents: usd ? toCents(usd[1] ?? usd[2]) : 0, fee_cents: 0, sats: sats(m[1]), note: null,
         source: CASHAPP_SOURCE, source_ref: e.id,
+      },
+    };
+  }
+
+  // Lightning receives and payments, in BTC or in sats:
+  // "You received 0.00007138 BTC ($5.00)", "You paid ₿8,292 ($7.00)".
+  if ((m = s.match(/^You (received|paid) (?:([\d.]+)\s+BTC|₿([\d,]+)) \(\$([\d,]+\.\d{2})\)/i))) {
+    const coins = m[2] ? Math.round(Number(m[2]) * 1e8) : sats(m[3]);
+    const paid = /paid/i.test(m[1]);
+    return {
+      type: 'bitcoin',
+      row: {
+        occurred_on: day, platform: 'Cash App', action: paid ? 'withdraw' : 'receive', usd_cents: toCents(m[4]), fee_cents: 0,
+        sats: coins, note: paid ? 'Bitcoin payment sent' : null, source: CASHAPP_SOURCE, source_ref: e.id,
+      },
+    };
+  }
+
+  if (/^You earned a weekly bitcoin bonus/i.test(s)) {
+    const coins = t.match(/Bitcoin amount ₿([\d,]+)/)?.[1];
+    return {
+      type: 'bitcoin',
+      row: {
+        occurred_on: day, platform: 'Cash App', action: 'bonus', usd_cents: 0, fee_cents: 0,
+        sats: coins ? sats(coins) : null, note: 'Weekly bitcoin bonus', source: CASHAPP_SOURCE, source_ref: e.id,
+      },
+    };
+  }
+
+  // Money sent to a person: "You paid Kaitlyn Cleary $20 … For Food $20.00".
+  if (/^Payment sent$/i.test(s)) {
+    const p = t.match(/^You paid (.+?) \$([\d,]+(?:\.\d{2})?)\b/);
+    if (!p) return { type: 'skip', reason: 'payment sent without amount' };
+    const note = t.match(/ For (.+?) \$[\d,]+\.\d{2}/)?.[1] ?? null;
+    return {
+      type: 'ledger',
+      row: {
+        kind: 'expense', amount: toCents(p[2]) / 100, occurred_on: day, category: 'other', method: 'Cash App',
+        counterparty: p[1].trim(), note, source: CASHAPP_SOURCE, source_ref: e.id, scope: 'personal',
+      },
+    };
+  }
+
+  // What borrowing costs: interest on an overdue Borrow repayment and
+  // Afterpay late fees. The loan itself is neither income nor spending.
+  if (/^Repayment Overdue$/i.test(s)) {
+    const fee = t.match(/interest charge of \$([\d,]+\.\d{2}) has been applied/i)?.[1];
+    if (!fee) return { type: 'skip', reason: 'loan reminder' };
+    return {
+      type: 'ledger',
+      row: {
+        kind: 'expense', amount: toCents(fee) / 100, occurred_on: day, category: 'fees', method: 'Cash App',
+        counterparty: 'Cash App Borrow', note: 'Interest on an overdue repayment', source: CASHAPP_SOURCE, source_ref: e.id, scope: 'personal',
+      },
+    };
+  }
+  if ((m = s.match(/^\$([\d,]+\.\d{2}) late fee added$/i))) {
+    return {
+      type: 'ledger',
+      row: {
+        kind: 'expense', amount: toCents(m[1]) / 100, occurred_on: day, category: 'fees', method: 'Cash App',
+        counterparty: 'Afterpay', note: 'Late fee', source: CASHAPP_SOURCE, source_ref: e.id, scope: 'personal',
       },
     };
   }
