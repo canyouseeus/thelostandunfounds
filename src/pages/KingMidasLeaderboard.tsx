@@ -12,8 +12,8 @@ export default function KingMidasLeaderboard() {
   return (
     <>
       <SEOHead
-        title="KING MIDAS Leaderboard"
-        description="Daily affiliate profit rankings and pool distributions. Top affiliates compete for 8% of the profit from each day's affiliate sales at THE LOST+UNFOUNDS."
+        title="KING MIDAS"
+        description="Daily affiliate profit rankings for KING MIDAS. Top affiliates compete for 8% of the profit from each day's affiliate sales at THE LOST+UNFOUNDS."
         canonicalPath="/king-midas-leaderboard"
       />
       <div className="min-h-screen bg-black text-white">
@@ -23,7 +23,7 @@ export default function KingMidasLeaderboard() {
             <div className="flex items-center gap-3 mb-3">
               <StarIcon className="w-6 h-6 md:w-8 md:h-8 text-white" />
               <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">
-                King Midas Leaderboard
+                KING MIDAS
               </h1>
             </div>
             <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest">

@@ -8,6 +8,8 @@ import {
 import KingMidasTicker from '../components/KingMidasTicker';
 import SEOHead from '../components/SEOHead';
 import BrandName from '../components/ui/BrandName';
+import { AnimatedNumber } from '../components/ui/animated-number';
+import { Sparkline } from '../components/ui/viz';
 import AuthModal from '../components/auth/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -90,10 +92,15 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
 interface ProgramStats {
     total_affiliates: number;
     total_paid_out: number;
+    /** Running totals per month, oldest first. */
+    history?: { month: string; affiliates: number; paid_out: number }[];
 }
 
-const formatPaidOut = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+/** "2025-11" -> "Nov 2025" */
+const formatMonth = (key: string) => {
+    const [y, m] = key.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+};
 
 function ProgramStatsStrip() {
     const [stats, setStats] = useState<ProgramStats | null>(null);
@@ -118,22 +125,42 @@ function ProgramStatsStrip() {
     // A failed fetch hides the strip rather than showing zeros that read as real numbers.
     if (failed) return null;
 
+    const history = stats?.history ?? [];
+    const since = history.length > 1 ? `Since ${formatMonth(history[0].month)}` : null;
     const tiles = [
-        { label: 'Total Paid Out', value: stats ? formatPaidOut(stats.total_paid_out) : '—' },
-        { label: 'Affiliates Enrolled', value: stats ? stats.total_affiliates.toLocaleString('en-US') : '—' },
+        {
+            label: 'Total Paid Out',
+            value: stats ? <AnimatedNumber value={stats.total_paid_out} decimals={2} format="currency" duration={1500} /> : '—',
+            trend: history.map((h) => h.paid_out),
+        },
+        {
+            label: 'Affiliates Enrolled',
+            value: stats ? <AnimatedNumber value={stats.total_affiliates} duration={1500} /> : '—',
+            trend: history.map((h) => h.affiliates),
+        },
     ];
 
     return (
         <div className="px-4 md:px-8 lg:px-12 pt-2 pb-4 md:pb-6">
-            <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-2xl">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto">
                 {tiles.map((tile) => (
-                    <div key={tile.label} className="bg-white/5 p-4 md:p-6 text-left" style={{ borderRadius: 0 }}>
+                    <div key={tile.label} className="bg-white/5 p-4 md:p-6 text-center" style={{ borderRadius: 0 }}>
                         <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mb-2">
                             {tile.label}
                         </div>
                         <div className="text-white text-2xl md:text-4xl font-black tracking-tighter tabular-nums">
                             {tile.value}
                         </div>
+                        {tile.trend.length > 1 && (
+                            <>
+                                <Sparkline values={tile.trend} className="h-12 md:h-16 mt-4 text-white" />
+                                {since && (
+                                    <div className="text-white/40 text-[9px] font-bold uppercase tracking-[0.3em] mt-2">
+                                        {since}
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 ))}
             </div>
@@ -165,7 +192,7 @@ export default function BecomeAffiliate() {
         />
         <SEOHead
             title="Join THE AFFILIATE PROGRAM - Earn 42% of Profit"
-            description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% of the profit on every sale, compete for the King Midas 8% profit pool, and build your earning network."
+            description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% of the profit on every sale, compete daily in KING MIDAS for a share of 8% of the profit from affiliate sales, and build your earning network."
             canonicalPath="/become-affiliate"
         />
         <div className="min-h-screen bg-black text-white">
@@ -189,7 +216,7 @@ export default function BecomeAffiliate() {
                         </h1>
 
                         <p className="text-lg md:text-xl text-white mb-8 max-w-2xl leading-relaxed">
-                            Join the <BrandName /> affiliate network. Get lifetime commissions on referred customers, compete for the King Midas 8% profit pool, and build your own earning network.
+                            Join the <BrandName /> affiliate network. Get lifetime commissions on referred customers, compete daily in <strong className="font-black uppercase tracking-wider">KING MIDAS</strong> for a share of 8% of the profit from affiliate sales, and build your own earning network.
                         </p>
 
                         <div className="flex flex-row items-stretch justify-start gap-3 sm:gap-4">
@@ -203,7 +230,7 @@ export default function BecomeAffiliate() {
                                 to="/king-midas-leaderboard"
                                 className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-black text-white font-bold text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest outline outline-1 outline-white hover:bg-white hover:text-black transition-colors flex items-center justify-center text-center whitespace-nowrap"
                             >
-                                View Prize Pool
+                                View KING MIDAS
                             </Link>
                         </div>
                     </div>
@@ -221,12 +248,12 @@ export default function BecomeAffiliate() {
                         body="Earn 42% of the profit on every sale you refer. Your referrals are locked to you for life."
                     />
                     <ExpandableInfoCard
-                        title="King Midas Pool"
+                        title="KING MIDAS"
                         body="Top affiliates compete daily for a share of 8% of the profit from that day's affiliate sales. Rankings reset every 24 hours."
                     />
                     <ExpandableInfoCard
-                        title="2-Tier MLM"
-                        body="Recruit other affiliates and earn 2% of profits on their sales (Level 1) and 1% of profits on their recruits' sales (Level 2)."
+                        title="Build Your Team"
+                        body="Bring in other affiliates and earn 2% of the profit on their sales (Level 1) and 1% on sales from the people they bring in (Level 2)."
                     />
                 </div>
             </div>

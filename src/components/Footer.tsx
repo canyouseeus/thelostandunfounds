@@ -42,7 +42,7 @@ const COLUMNS: { heading: string; links: { to: string; label: string }[] }[] = [
     heading: 'Program',
     links: [
       { to: '/become-affiliate', label: 'Affiliate Program' },
-      { to: '/king-midas-leaderboard', label: 'King Midas Leaderboard' },
+      { to: '/king-midas-leaderboard', label: 'KING MIDAS' },
       { to: '/docs', label: 'Documentation' },
     ],
   },

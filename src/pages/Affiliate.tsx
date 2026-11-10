@@ -1510,7 +1510,7 @@ export default function Affiliate() {
                                   <AdminBentoCard title="Level 2" icon={<UsersIcon className="w-4 h-4" />}>
                                     <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.level2_affiliates}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">INDIRECT</p></div>
                                   </AdminBentoCard>
-                                  <AdminBentoCard title="MLM Earnings" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
+                                  <AdminBentoCard title="Team Earnings" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
                                     <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">${dashData.mlm.earnings.total_mlm.toFixed(2)}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">TOTAL</p></div>
                                   </AdminBentoCard>
                                 </div>
@@ -1527,7 +1527,7 @@ export default function Affiliate() {
                           {expandedCard === 'kingmidas' && (
                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
                               <ExpandableBentoCard
-                                title="King Midas Performance"
+                                title="KING MIDAS Performance"
                                 icon={<TrophyIcon className="w-4 h-4" />}
                                 details={
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1540,7 +1540,7 @@ export default function Affiliate() {
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Earned</div><div className="text-xl font-black text-white tracking-tighter">${dashData.overview.total_king_midas_earnings.toFixed(2)}</div></div>
                                     <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">1st Place</div><div className="text-xl font-black text-white tracking-tighter">{dashData.overview.first_place_finishes}</div></div>
-                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Current Pool</div><div className="text-xl font-black text-white tracking-tighter">${(dashData.overview.current_rank && dashData.overview.current_rank <= 3) ? (dashData.king_midas?.recent_stats?.[0]?.pool_share || 0).toFixed(2) : '0.00'}</div></div>
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Latest Share</div><div className="text-xl font-black text-white tracking-tighter">${(dashData.overview.current_rank && dashData.overview.current_rank <= 3) ? (dashData.king_midas?.recent_stats?.[0]?.pool_share || 0).toFixed(2) : '0.00'}</div></div>
                                   </div>
                                 </div>
                               </ExpandableBentoCard>
@@ -1703,9 +1703,9 @@ export default function Affiliate() {
                               <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
                                 {dashData.mlm.network.total_network}
                               </div>
-                              <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Downline</div>
+                              <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Your Team</div>
                               <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                                {dashData.mlm.network.total_customers} customers · ${dashData.mlm.earnings.total_mlm.toFixed(2)} MLM
+                                {dashData.mlm.network.total_customers} customers · ${dashData.mlm.earnings.total_mlm.toFixed(2)} team
                               </div>
                             </button>
                           )}
@@ -1722,7 +1722,7 @@ export default function Affiliate() {
                             <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
                               ${dashData.overview.total_king_midas_earnings.toFixed(2)}
                             </div>
-                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">King Midas</div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">KING MIDAS</div>
                             <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
                               {dashData.overview.top_3_finishes} top-3 finishes
                             </div>

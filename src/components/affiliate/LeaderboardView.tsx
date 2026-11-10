@@ -145,7 +145,7 @@ export default function LeaderboardView({
             icon={<ArrowTrendingUpIcon className="w-4 h-4 text-white/40" />}
           />
           <StatTile
-            label="Pool Size"
+            label="KING MIDAS Today"
             value={`$${stats.totalPool.toFixed(2)}`}
             sublabel="8% of profit"
             icon={<CurrencyDollarIcon className="w-4 h-4 text-white/40" />}
@@ -314,7 +314,7 @@ function RankingsByDate({
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <Stat label="Profit" value={`$${ranking.profit_generated.toFixed(2)}`} />
-                <Stat label="Pool Share" value={`$${ranking.pool_share.toFixed(2)}`} />
+                <Stat label="Share" value={`$${ranking.pool_share.toFixed(2)}`} />
                 <PayoutBadge eligible={ranking.pool_share > 0} />
               </div>
             </div>
@@ -330,7 +330,7 @@ function RankingsByDate({
               <th className="px-6 py-3 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Rank</th>
               <th className="px-6 py-3 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Affiliate</th>
               <th className="px-6 py-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
-              <th className="px-6 py-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Pool Share</th>
+              <th className="px-6 py-3 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Share</th>
               <th className="px-6 py-3 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Payout</th>
             </tr>
           </thead>
@@ -414,15 +414,15 @@ function HowItWorks() {
         How KING MIDAS Works
       </h4>
       <ul className="space-y-3 text-white/60 text-xs leading-relaxed">
-        <Bullet label="8% Pool">8% of the profit from each day's affiliate sales is set aside for the KING MIDAS prize pool.</Bullet>
+        <Bullet label="8% Split">8% of the profit from each day's affiliate sales goes to KING MIDAS.</Bullet>
         <Bullet label="Daily Rankings">Rankings are based on profit generated each day.</Bullet>
         <Bullet label="Top 3 Distribution">
-          <span className="block mt-1 text-white/40">90% of pool — #1 takes 50%, #2 takes 30%, #3 takes 10%.</span>
+          <span className="block mt-1 text-white/40">#1 takes 50%, #2 takes 30% and #3 takes 10% of it.</span>
         </Bullet>
         <Bullet label="Remaining Affiliates">
-          The other 10% of the pool is split equally among everyone else who made the board.
+          The last 10% is split equally among everyone else who made a sale that day.
         </Bullet>
-        <Bullet label="Automatic Payouts">Calculated daily, processed automatically.</Bullet>
+        <Bullet label="Straight To Your Balance">Calculated daily and added to your affiliate balance automatically.</Bullet>
         <Bullet label="Compete Daily">Every day is a fresh competition. Rankings reset daily.</Bullet>
       </ul>
     </div>

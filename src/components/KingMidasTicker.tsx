@@ -149,7 +149,7 @@ export default function KingMidasTicker() {
       </span>
       <span className="inline-flex items-center gap-2 mx-8">
         <TrophyIcon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
-        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>KING MIDAS POT:</span>
+        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>KING MIDAS TODAY:</span>
         <span className="font-mono font-bold text-[11px]" style={{ color: '#fbbf24', textShadow: LED_GLOW }}>
           ${tickerData.king_midas_pot.toFixed(2)}
         </span>

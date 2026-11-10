@@ -130,7 +130,7 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
           <p className="text-yellow-400 text-sm font-medium mb-2">⚠️ Important:</p>
           <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
             <li>When using employee discount, all downstream commissions are calculated on remaining profit</li>
-            <li>MLM bonuses still apply to your upline even in discount mode</li>
+            <li>The affiliate who brought you in still earns their team bonus in discount mode</li>
             <li>After switching modes, you must wait 30 days before switching again</li>
           </ul>
         </div>
