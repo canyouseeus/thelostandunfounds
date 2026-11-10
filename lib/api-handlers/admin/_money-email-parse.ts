@@ -9,11 +9,12 @@
  * What it reads:
  *   Venmo     card receipts, updated totals, "X paid you", Bitcoin sales
  *   Cash App  card spending, updated totals, payments received, Bitcoin buys,
- *             sells, withdrawals and coins received, partial loan payments
+ *             sells, withdrawals and coins received, refunds
  *
  * What it leaves out on purpose: declined payments, transfers between the
  * owner's own accounts (Apple Cash in, cash out to the bank), loan proceeds
- * (money borrowed is not income) and anything it does not recognise.
+ * (money borrowed is not income), Afterpay installments (the purchase is
+ * already counted in full) and anything it does not recognise.
  *
  * Pure: no database, no network. The ledger endpoint does the writing.
  */
@@ -265,19 +266,27 @@ function parseCashApp(e: MoneyEmail, day: string): Parsed {
     };
   }
 
-  if (/^You made a partial payment$/i.test(s)) {
-    const paid = t.match(/You only paid \$([\d,]+\.\d{2})/)?.[1];
-    if (!paid || toCents(paid) <= 0) return { type: 'skip', reason: 'partial payment without amount' };
-    const left = t.match(/The \$([\d,]+\.\d{2}) left over/)?.[1];
+  // Afterpay installments on a Cash App Card purchase. The purchase itself is
+  // already logged in full from its "You spent" email, so counting each
+  // installment as well would count the same money twice. The plan's balance
+  // lives on the bills list instead.
+  if (/^You made a partial payment$/i.test(s)) return { type: 'skip', reason: 'Afterpay installment (purchase already logged)' };
+
+  // A refund back to the Cash App balance is money in. Only the "now
+  // available" email counts; the "being processed" one comes first and would
+  // log it twice.
+  if ((m = s.match(/^Your refund for \$([\d,]+\.\d{2}) from (.+?) is now available/i))) {
+    const merchant = cleanMerchant(m[2]);
     return {
       type: 'ledger',
       row: {
-        kind: 'expense', amount: toCents(paid) / 100, occurred_on: day, category: 'loan', method: 'Cash App',
-        counterparty: 'Cash App payment', note: left ? `Partial payment, $${left} carried to the next one` : 'Partial payment',
-        source: CASHAPP_SOURCE, source_ref: e.id, scope: 'personal',
+        kind: 'income', amount: toCents(m[1]) / 100, occurred_on: day, category: 'other', method: 'Cash App',
+        counterparty: merchant, note: 'Refund', source: CASHAPP_SOURCE, source_ref: e.id,
+        scope: guessExpense(merchant).scope,
       },
     };
   }
+  if (/^Your refund for .+ is being processed/i.test(s)) return { type: 'skip', reason: 'refund still processing' };
 
   return { type: 'skip', reason: 'not a money email' };
 }

@@ -60,7 +60,12 @@ r = p(C, 'You received ₿7,442 ($6.00)');
 assert.deepEqual([r.row.action, r.row.usd_cents, r.row.sats], ['receive', 600, 7442]);
 
 r = p(C, 'You made a partial payment', 'You only paid $0.15 of your payment because of insufficient funds. The $8.81 left over will be added to your next payment.');
-assert.deepEqual([r.row.kind, r.row.amount, r.row.category, r.row.scope], ['expense', 0.15, 'loan', 'personal']);
+assert.equal(r.type, 'skip'); // Afterpay installment: the purchase is already logged
+
+r = p(C, "Your refund for $33.70 from Jerry's Artarama Austi is now available in Cash App.");
+assert.deepEqual([r.type, r.row.kind, r.row.amount, r.row.counterparty, r.row.note], ['ledger', 'income', 33.7, "Jerry's Artarama Austi", 'Refund']);
+assert.equal(p(C, "Your refund for $33.70 from Jerry's Artarama Austi is being processed. Most refunds are available within 24 hours.").type, 'skip');
+assert.equal(p(C, 'Payment scheduled for tomorrow').type, 'skip');
 
 assert.equal(p(C, 'Your $26.94 payment at Scentbird was declined').type, 'skip');
 assert.equal(p(C, 'You borrowed $30').type, 'skip');
