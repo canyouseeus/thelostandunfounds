@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
 
 /**
  * The revenue picture in one call, computed server-side from the source
@@ -16,6 +17,11 @@ import { createClient } from '@supabase/supabase-js'
  *  5. receivables (unpaid invoices) and liabilities (unpaid commissions)
  *  6. order count, average order value, new vs returning customers
  *  7. test-data filtering per revenue-data-validator, applied once, here
+ *
+ * Admin only. It reads every sale with the service-role key, and used to answer
+ * anyone who asked. Both callers (the revenue widget and the admin block on the
+ * member dashboard) run in the browser, where src/lib/api-auth.ts attaches the
+ * signed-in session to every /api/ call, so the gate costs them nothing.
  */
 
 /** revenue-data-validator: test/demo/admin traffic is not revenue. */
@@ -35,6 +41,7 @@ interface Txn {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+    if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' })
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!url || !key) return res.status(500).json({ error: 'Missing Supabase credentials' })
