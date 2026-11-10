@@ -1316,7 +1316,25 @@ const moneyInsightsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+/* ── SEO audit (2026-11-10) ── */
+
+const seoAuditTour: Tour = {
+  id: 'seo-audit',
+  title: 'SEO Audit',
+  summary: 'A daily crawl of the site that finds broken links, redirects, title and description problems, missing schema, orphan pages and slow pages, and shows what changed since the last run.',
+  group: 'new',
+  announce: '2026-11-10',
+  steps: [
+    openFromDock('seo', 'SEO', 'Tap SEO to open the site audit.'),
+    inPanel('seo', { target: 'seo-run', title: 'Run It Now', body: 'The audit runs on its own every night around 2 AM Central. Tap here to run one now; keep the panel open while it crawls.' }),
+    inPanel('seo', { target: 'seo-summary', title: 'Health and Counts', body: 'Health is the share of crawled URLs with no errors. The small numbers show the change since the run before.', missingNote: 'This shows up once the first audit finishes.' }),
+    inPanel('seo', { target: 'seo-filters', title: 'Filter by Severity', body: 'Show only errors, warnings or notices.', missingNote: 'This shows up once the first audit finishes.' }),
+    inPanel('seo', { target: 'seo-issue', title: 'Open an Issue', body: 'Tap an issue to see what it means and every URL that has it. NEW marks URLs that were fine last run; FIXED lists the ones that cleared.', missingNote: 'No issues to show yet.' }),
+    inPanel('seo', { target: 'seo-gsc', title: 'Search Console', body: 'Clicks, impressions, top searches and Google\'s index status for a URL, once Search Console is connected.' }),
+  ],
+};
+
+export const TOURS: Tour[] = [moneyWalletsTour, moneyInsightsTour, seoAuditTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

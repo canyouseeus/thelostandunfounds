@@ -168,6 +168,8 @@ export default async function handler(
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
         return await handlePostToNostr(req, res)
+      case 'seo-audit':
+        return await handleSeoAudit(req, res)
       default:
         console.error('Admin route not found:', fullRoute, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${fullRoute}` })
@@ -342,6 +344,14 @@ async function handleEnvVars(req: VercelRequest, res: VercelResponse) {
  */
 async function handlePostToNostr(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/post-to-nostr.js')
+  return handler.default(req, res)
+}
+
+/**
+ * SEO audit (Admin → SEO): our own site crawl results and Search Console data
+ */
+async function handleSeoAudit(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/seo-audit.js')
   return handler.default(req, res)
 }
 

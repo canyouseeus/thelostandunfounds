@@ -23,6 +23,9 @@
     "api/cron/sync-photos.ts": {
       "maxDuration": 300
     },
+    "api/cron/seo-audit.ts": {
+      "maxDuration": 300
+    },
     "api/cron/sync-gallery.ts": {
       "maxDuration": 250
     },
@@ -95,6 +98,10 @@
     {
       "path": "/api/cron/indexnow",
       "schedule": "40 7 * * *"
+    },
+    {
+      "path": "/api/cron/seo-audit",
+      "schedule": "*/10 8 * * *"
     }
   ],
   "redirects": [

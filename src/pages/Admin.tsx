@@ -105,6 +105,7 @@ import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminSupportView from '../components/admin/AdminSupportView';
 import { AdminProspectsView } from '../components/admin/AdminProspectsView';
 import MoneyLedgerView from '../components/admin/MoneyLedgerView';
+import AdminSeoView from '../components/admin/AdminSeoView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -2066,6 +2067,7 @@ export default function Admin() {
                 { id: 'money', icon: ScaleIcon, title: 'Money In / Out' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
+                { id: 'seo', icon: MagnifyingGlassIcon, title: 'SEO' },
                 { id: 'support', icon: LifebuoyIcon, title: 'Support', badge: supportWaiting },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
@@ -2151,6 +2153,7 @@ export default function Admin() {
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('crm')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">← CRM</button> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
+                  seo:         { title: 'SEO Audit',                icon: <MagnifyingGlassIcon className="w-5 h-5 text-white/40" /> },
                   support:     { title: 'Support Tickets',          icon: <LifebuoyIcon className="w-5 h-5 text-white/40" />, extra: supportWaiting > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{supportWaiting} WAITING</span> : null },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
@@ -2184,6 +2187,11 @@ export default function Admin() {
                 {activePanelSection === 'clientuploads' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Content Requests</div>}>
                     <AdminClientUploadsView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'seo' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading SEO Audit</div>}>
+                    <AdminSeoView />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'money' && (
