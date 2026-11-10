@@ -144,7 +144,7 @@ function ProgramStatsStrip() {
         <div className="px-4 md:px-8 lg:px-12 pt-2 pb-4 md:pb-6">
             <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto">
                 {tiles.map((tile) => (
-                    <div key={tile.label} className="bg-white/5 p-4 md:p-6 text-center" style={{ borderRadius: 0 }}>
+                    <div key={tile.label} className="p-4 md:p-6 text-center">
                         <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mb-2">
                             {tile.label}
                         </div>
