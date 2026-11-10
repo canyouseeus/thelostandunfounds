@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { getProdigiOrder } from './_prodigi-client.js'
 
 const STAGE_TO_STATUS: Record<string, string> = {
     InProgress: 'in_production',
@@ -14,6 +15,11 @@ const STAGE_TO_STATUS: Record<string, string> = {
  * (callbackUrl set at order creation — see _stripe-webhook-handler.ts /
  * _strike-webhook-handler.ts). Updates the matching prodigi_orders row's
  * status and, when present, shipment/tracking info.
+ *
+ * Prodigi callbacks are not signed, so the request body is only used to learn
+ * which order changed. The status and tracking written here come from
+ * Prodigi's own API (GET /orders/{id}), so a forged POST can't mark an order
+ * shipped or cancelled.
  *
  * Docs: https://www.prodigi.com/print-api/docs/reference/#webhooks
  */
@@ -31,8 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const event = req.body || {}
-        const order = event.data?.order
-        const prodigiOrderId: string | undefined = order?.id || event.subject
+        const prodigiOrderId: string | undefined = event.data?.order?.id || event.subject
 
         console.log('🔔 Prodigi webhook received:', { type: event.type, prodigiOrderId })
 
@@ -49,6 +54,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (!row) {
             console.warn('⚠️ Prodigi webhook for unknown order:', prodigiOrderId)
+            return res.status(200).json({ received: true })
+        }
+
+        // Trust Prodigi's API, not the unsigned callback body.
+        let order: any
+        try {
+            const fetched = await getProdigiOrder(prodigiOrderId)
+            order = fetched?.order
+        } catch (fetchErr: any) {
+            console.error('❌ Could not confirm Prodigi order from API:', prodigiOrderId, fetchErr?.message)
+            return res.status(200).json({ received: true, error: 'could not confirm order' })
+        }
+        if (!order || order.id !== prodigiOrderId) {
+            console.warn('⚠️ Prodigi API returned no matching order for webhook:', prodigiOrderId)
             return res.status(200).json({ received: true })
         }
 
