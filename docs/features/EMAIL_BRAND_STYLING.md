@@ -42,6 +42,10 @@ All emails sent from THE LOST+UNFOUNDS must follow these strict brand guidelines
   - Color: `rgba(255, 255, 255, 0.6)`
   - Text Align: `center`
 
+### Brand Terms
+- Brand terms are always uppercase and bold: **THE LOST+UNFOUNDS**, **KING MIDAS**, **SCOT33** and **CAN YOU SEE US?**
+- In email HTML, wrap each one in `<strong>` wherever it appears in the copy.
+
 ### Layout
 - **Max Width**: `600px`
 - **Padding**: `40px 20px` (outer container)
@@ -134,3 +138,4 @@ When creating a new email template, verify:
 - [ ] Max width is 600px
 - [ ] Text is centered
 - [ ] Font is Arial or sans-serif
+- [ ] Brand terms (THE LOST+UNFOUNDS, KING MIDAS, SCOT33, CAN YOU SEE US?) are uppercase and bold
