@@ -187,7 +187,13 @@ async function getZohoAccessToken(): Promise<string> {
     throw new Error(`Failed to refresh Zoho token: ${response.status} ${errorText}`)
   }
 
-  const data: ZohoTokenResponse = await response.json()
+  const data: ZohoTokenResponse & { error?: string } = await response.json()
+  // Zoho answers a bad refresh with HTTP 200 and {"error": "..."} instead of a
+  // token. Without this check the next call goes out as "Zoho-oauthtoken
+  // undefined" and fails with a misleading INVALID_OAUTHTOKEN.
+  if (!data.access_token) {
+    throw new Error(`Failed to refresh Zoho token: ${data.error || 'no access_token in response'}`)
+  }
   const ttlSeconds = typeof data.expires_in === 'number' && data.expires_in > 60 ? data.expires_in : 3600
   cachedToken = { token: data.access_token, expiresAt: Date.now() + (ttlSeconds - 60) * 1000 }
   return data.access_token
