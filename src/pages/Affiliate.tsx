@@ -1567,7 +1567,7 @@ export default function Affiliate() {
                                 <AdminBentoCard title="Pending Balance" icon={<CalendarIcon className="w-4 h-4" />}>
                                   <div className="mt-2 text-center py-6 opacity-60">
                                     <div className="text-4xl font-black text-white tracking-tighter mb-2">${(dashData.balance?.pending_balance || 0).toFixed(2)}</div>
-                                    <div className="text-[10px] font-bold text-white uppercase tracking-widest">Held for Security (30 Days)</div>
+                                    <div className="text-[10px] font-bold text-white uppercase tracking-widest">Print orders held 30 days</div>
                                   </div>
                                 </AdminBentoCard>
                               </div>
@@ -1814,7 +1814,7 @@ export default function Affiliate() {
                               </div>
                             ) : (
                             <>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Instant Payout</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Request Payout</h3>
 
                             {payoutRequestError && (
                               <div className="bg-white/10 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
@@ -1880,8 +1880,8 @@ export default function Affiliate() {
                               </div>
 
                               <div className="bg-white/5 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
-                                <p className="mb-2"><strong>Instant payout:</strong> Transferred to your Stripe Connect account.</p>
-                                <p>Physical products: 30-day hold · Digital products: 7-day hold</p>
+                                <p className="mb-2">Sent to your Stripe Connect account when you request it. Your bank usually has it in 1–2 business days.</p>
+                                <p>Print orders: 30-day hold · Everything else: payable once the payment settles</p>
                               </div>
                             </div>
 

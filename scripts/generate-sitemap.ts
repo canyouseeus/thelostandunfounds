@@ -265,6 +265,14 @@ async function generateSitemap() {
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
+  </url>
+
+  <!-- Affiliate Terms -->
+  <url>
+    <loc>${baseUrl}/terms/affiliates</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
   </url>`;
 
     // Add individual galleries

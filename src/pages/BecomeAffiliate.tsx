@@ -180,7 +180,7 @@ export default function BecomeAffiliate() {
                 <div className="px-4 md:px-8 lg:px-12 pt-12 pb-10 md:pt-20 md:pb-16 relative z-10">
                     <div className="max-w-4xl text-left">
                         <div className="text-white text-[10px] font-black uppercase tracking-[0.4em] mb-6">
-                            Join The #1 Creator Affiliate Program
+                            The Affiliate Program
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter uppercase leading-none">
@@ -218,7 +218,7 @@ export default function BecomeAffiliate() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl items-start">
                     <ExpandableInfoCard
                         title="High Commissions"
-                        body="Earn an industry-leading 42% of the profit on every sale you refer. Your referrals are locked to you for life."
+                        body="Earn 42% of the profit on every sale you refer. Your referrals are locked to you for life."
                     />
                     <ExpandableInfoCard
                         title="King Midas Pool"
@@ -236,23 +236,29 @@ export default function BecomeAffiliate() {
                 <div className="max-w-4xl">
                     <ExpandableFeatureList
                         title="Everything You Need To Succeed"
-                        intro="We provide all the tools, tracking, and assets you need to maximize your earnings from day one."
+                        intro="Your dashboard has the links, tracking and payouts you need from day one."
                         features={[
-                            'Real-time link tracking & analytics',
-                            'Instant payouts via Stripe Connect',
-                            'Custom referral codes',
-                            'Automated tax handling',
-                            'Marketing assets & banners',
-                            'Dedicated affiliate support',
+                            'Click and sale tracking in your dashboard',
+                            'Your own custom affiliate code',
+                            'A link generator for any print, gallery, event or service',
+                            'Customers you refer stay tied to you for life',
+                            'Payouts through Stripe Connect from $10',
+                            'Tax records through your Stripe account',
                         ]}
                     />
-                    <div className="mt-6 text-left">
+                    <div className="mt-6 text-left flex flex-wrap items-center gap-x-6 gap-y-3">
                         <button
                             onClick={handleJoin}
                             className="text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
                         >
                             Start Earning Today
                         </button>
+                        <Link
+                            to="/terms/affiliates"
+                            className="text-white/60 text-sm uppercase tracking-widest underline underline-offset-4 hover:text-white"
+                        >
+                            Affiliate Terms
+                        </Link>
                     </div>
                 </div>
             </div>

@@ -123,7 +123,7 @@ export default function AffiliateGuide() {
                     <div className="space-y-2">
                         <h4 className="text-[10px] uppercase tracking-[0.25em] font-black text-white">Blogs &amp; Newsletters</h4>
                         <p className="text-white/40 text-xs leading-relaxed">
-                            Write a review of your favorite pieces. Embed the images from the Marketing Assets tab and link them with your affiliate ID.
+                            Write about your favorite pieces. Use the Deep Link Generator to link each one straight to its page with your code.
                         </p>
                     </div>
                     <div className="space-y-2">
