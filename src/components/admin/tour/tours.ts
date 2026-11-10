@@ -1283,7 +1283,24 @@ const stripeBalancesTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+/* ── Money insights (2026-11-10) ── */
+
+const moneyInsightsTour: Tour = {
+  id: 'money-insights',
+  title: 'Money Insights',
+  summary: 'Money In / Out now counts card spending and Stripe fees, compares periods, shows how long cash lasts, and estimates what to set aside for taxes.',
+  group: 'new',
+  announce: '2026-11-10',
+  steps: [
+    openFromDock('money', 'Money In / Out', 'Tap Money In / Out to open it.'),
+    inPanel('money', { target: 'money-period', title: 'Pick a Period', body: 'Tap a period to see money in, out and net. The line under it compares the period before.' }),
+    inPanel('money', { target: 'money-runway', title: 'Cash and Runway', body: 'Spendable cash against bills due in 30, 60 and 90 days, and how many months it lasts at your average spending.' }),
+    inPanel('money', { target: 'money-tax', title: 'Tax Set-Aside', body: 'Type the rate you set aside. It shows what to keep from this year\'s profit.' }),
+    inPanel('money', { target: 'money-card-spend', title: 'Card Spending', body: 'Business card purchases come in from Stripe on their own and count as money out.', missingNote: 'No card purchases yet. They show up here once Stripe records one.' }),
+  ],
+};
+
+export const TOURS: Tour[] = [moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

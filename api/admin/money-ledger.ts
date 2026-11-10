@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin, resolveVerifiedAdmin } from '../../lib/api-handlers/crew/_shared.js';
+import { getSupabaseAdmin } from '../../lib/api-handlers/crew/_shared.js';
+import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js';
+import { OWNER_AFFILIATE_CODE } from '../../lib/api-handlers/affiliates/_referral-tie.js';
+import { stripeMoneyOut, type CardSpend } from '../../lib/api-handlers/admin/_stripe-money-out.js';
 
 /**
  * Money in and money out, in one place.
@@ -15,16 +18,18 @@ import { getSupabaseAdmin, resolveVerifiedAdmin } from '../../lib/api-handlers/c
  *                                 and for a loan, pay down the balance
  *   DELETE ?bill=               → stop tracking a bill
  *
- * The summary folds in what the site already records — gallery sales, invoice
- * payments, photographer payouts, print costs — so the ledger only has to hold
- * what the site never sees: direct payments and expenses.
+ * The summary folds in what the site already records — gallery, shop, ticket,
+ * street and invoice income; photographer payouts, print costs, refunds — and
+ * what Stripe records — business card spending, Stripe's fees, commissions,
+ * the owner's pay — so the ledger only has to hold what neither sees: direct
+ * payments and cash or outside-card expenses.
  *
- * Financial records, so the gate is a verified Supabase session, not the
- * spoofable x-admin-email header that `isAdmin` accepts.
+ * Financial records, so the gate is verifyAdmin: a verified admin session or
+ * ADMIN_SECRET, never the spoofable x-admin-email header or a Host header.
  */
 
-export const INCOME_CATEGORIES = ['photos', 'services', 'other'] as const;
-export const EXPENSE_CATEGORIES = ['gear', 'software', 'website', 'loan', 'travel', 'crew', 'prints', 'marketing', 'fees', 'other'] as const;
+export const INCOME_CATEGORIES = ['photos', 'services', 'shop', 'tickets', 'street', 'other'] as const;
+export const EXPENSE_CATEGORIES = ['gear', 'software', 'website', 'loan', 'travel', 'food', 'supplies', 'crew', 'prints', 'marketing', 'fees', 'commissions', 'owner_pay', 'refunds', 'other'] as const;
 export const BILL_PRIORITIES = ['critical', 'high', 'normal', 'low'] as const;
 const BILL_FREQUENCIES = ['monthly', 'yearly', 'once'] as const;
 const BILL_SELECT = 'id, name, kind, category, amount_cents, balance_cents, frequency, next_due, priority, pay_from, notes, active';
@@ -72,14 +77,6 @@ const PHOTO_WORK = /(photo|shoot|headshot|portrait|wedding|gallery|video)/i;
 
 const paidish = (s: string | null) => !!s && ['paid', 'completed', 'succeeded', 'confirmed'].includes(s.toLowerCase());
 
-async function authorized(req: VercelRequest): Promise<boolean> {
-  const secret = req.headers['x-admin-secret'];
-  if (secret && secret === process.env.ADMIN_SECRET) return true;
-  const host = req.headers.host || '';
-  if (host.includes('localhost') || host.includes('127.0.0.1')) return true;
-  return (await resolveVerifiedAdmin(req)) !== null;
-}
-
 interface EntryInput {
   kind?: string;
   amount?: number | string;
@@ -116,13 +113,29 @@ function toRow(e: EntryInput): { row?: Record<string, unknown>; error?: string }
   };
 }
 
-interface Line { month: string; kind: 'income' | 'expense'; category: string; cents: number; origin: 'site' | 'ledger' }
+interface Line { month: string; kind: 'income' | 'expense'; category: string; cents: number; origin: 'site' | 'ledger' | 'stripe' }
 
+/**
+ * Every dollar in and out, from every place the site records one. The income
+ * side reads the same tables, with the same rules, as /api/admin/revenue-summary
+ * (the revenue widget), so the two agree. The money-out side adds what Stripe
+ * knows and the site never wrote down: card spending, Stripe's fees, affiliate
+ * commissions and the owner's pay.
+ */
 async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledger: any[]) {
-  const [gallery, payments, prodigi] = await Promise.all([
+  const [gallery, payments, prodigi, shop, tickets, nights, streetDeposits, refunds, owner] = await Promise.all([
     supabase.from('photo_orders').select('email, total_amount_cents, payment_status, created_at'),
     supabase.from('invoice_payments').select('amount, paid_at, invoice_id, invoices ( description, contractor_payout )'),
     supabase.from('prodigi_orders').select('unit_cost, copies, status, paid_at').not('status', 'eq', 'cancelled'),
+    supabase.from('shop_orders').select('customer_email, amount_total_cents, paid_at, status'),
+    supabase.from('event_tickets').select('customer_email, purchase_amount_cents, status, created_at'),
+    supabase.from('field_sales').select('night, total'),
+    // Outside deposits tagged street. Ones tagged invoice are already counted
+    // as the invoice payment, so they are left out here, as in revenue-summary.
+    supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
+    supabase.from('refunds').select('amount_cents, created_at'),
+    supabase.from('affiliates').select('stripe_account_id')
+      .or(`code.eq.${OWNER_AFFILIATE_CODE},affiliate_code.eq.${OWNER_AFFILIATE_CODE}`).maybeSingle(),
   ]);
 
   const lines: Line[] = [];
@@ -131,6 +144,28 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
   for (const o of gallery.data ?? []) {
     if (!paidish(o.payment_status) || TEST_EMAIL.test(o.email ?? '')) continue;
     lines.push({ month: month(o.created_at), kind: 'income', category: 'photos', cents: o.total_amount_cents ?? 0, origin: 'site' });
+  }
+
+  for (const o of shop.data ?? []) {
+    if (!paidish(o.status) || TEST_EMAIL.test(o.customer_email ?? '')) continue;
+    lines.push({ month: month(o.paid_at), kind: 'income', category: 'shop', cents: o.amount_total_cents ?? 0, origin: 'site' });
+  }
+
+  for (const t of tickets.data ?? []) {
+    if (!paidish(t.status) || TEST_EMAIL.test(t.customer_email ?? '')) continue;
+    lines.push({ month: month(t.created_at), kind: 'income', category: 'tickets', cents: t.purchase_amount_cents ?? 0, origin: 'site' });
+  }
+
+  for (const n of nights.data ?? []) {
+    lines.push({ month: month(n.night), kind: 'income', category: 'street', cents: Math.round(Number(n.total ?? 0) * 100), origin: 'site' });
+  }
+
+  for (const d of streetDeposits.data ?? []) {
+    lines.push({ month: month(d.received_at), kind: 'income', category: 'street', cents: d.amount_cents ?? 0, origin: 'site' });
+  }
+
+  for (const r of refunds.data ?? []) {
+    lines.push({ month: month(r.created_at), kind: 'expense', category: 'refunds', cents: r.amount_cents ?? 0, origin: 'site' });
   }
 
   // A photographer is owed once per invoice, not once per instalment — the
@@ -161,18 +196,37 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
     lines.push({ month: month(e.occurred_on), kind: e.kind, category: e.category, cents: e.amount_cents, origin: 'ledger' });
   }
 
-  const months = new Map<string, { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number }>();
+  // Stripe is read live. If it fails, the rest of the summary still loads and
+  // the page says money out is missing Stripe, rather than quietly showing less.
+  let stripeError: string | null = null;
+  let cardSpend: CardSpend[] = [];
+  try {
+    const out = await stripeMoneyOut(owner.data?.stripe_account_id ?? null);
+    cardSpend = out.cardSpend.slice(0, 50);
+    for (const l of out.lines) {
+      lines.push({ month: l.day.slice(0, 7), kind: 'expense', category: l.category, cents: l.cents, origin: 'stripe' });
+    }
+  } catch (err: any) {
+    stripeError = err?.message || 'Stripe lookup failed';
+  }
+
+  type Month = { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number };
+  const months = new Map<string, Month>();
   const byCategory = { income: {} as Record<string, number>, expense: {} as Record<string, number> };
-  let siteIncome = 0, ledgerIncome = 0;
+  let siteIncome = 0, ledgerIncome = 0, stripeExpense = 0;
   for (const l of lines) {
-    if (!l.month || l.cents <= 0) continue;
-    const m = months.get(l.month) ?? { month: l.month, incomeCents: 0, expenseCents: 0, photoIncomeCents: 0 };
+    // Negative lines are real: a refund on the business card brings money back.
+    if (!l.month || !l.cents) continue;
+    const m = months.get(l.month) ?? { month: l.month, incomeCents: 0, expenseCents: 0, photoIncomeCents: 0, ownerPayCents: 0 };
     if (l.kind === 'income') {
+      if (l.cents < 0) continue;
       m.incomeCents += l.cents;
       if (l.category === 'photos') m.photoIncomeCents += l.cents;
-      if (l.origin === 'site') siteIncome += l.cents; else ledgerIncome += l.cents;
+      if (l.origin === 'ledger') ledgerIncome += l.cents; else siteIncome += l.cents;
     } else {
       m.expenseCents += l.cents;
+      if (l.category === 'owner_pay') m.ownerPayCents += l.cents;
+      if (l.origin === 'stripe') stripeExpense += l.cents;
     }
     byCategory[l.kind][l.category] = (byCategory[l.kind][l.category] ?? 0) + l.cents;
     months.set(l.month, m);
@@ -189,14 +243,18 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
       photoIncomeCents: byCategory.income.photos ?? 0,
       siteIncomeCents: siteIncome,
       directIncomeCents: ledgerIncome,
+      stripeExpenseCents: stripeExpense,
+      ownerPayCents: byCategory.expense.owner_pay ?? 0,
     },
     byCategory,
     monthly,
+    cardSpend,
+    stripeError,
   };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!(await authorized(req))) return res.status(401).json({ error: 'Unauthorized' });
+  if (!(await verifyAdmin(req))) return res.status(401).json({ error: 'Unauthorized' });
   const supabase = getSupabaseAdmin();
 
   try {

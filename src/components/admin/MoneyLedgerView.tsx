@@ -1,18 +1,22 @@
 /**
  * Money In / Money Out
  *
- * Income and expenses on one page. Site income (gallery sales, invoice
- * payments) and site costs (photographer payouts, print orders) come in on
- * their own; the form below covers what the site never sees — a Venmo payment
- * for photos, a lens, a software subscription. Bills and loans sit on top,
- * ordered by priority, and land on the admin calendar as red dots.
+ * Income and expenses on one page. Site income (gallery, shop, tickets,
+ * street, invoice payments), site costs (photographer payouts, prints,
+ * refunds) and Stripe's money out (business card spending, Stripe fees,
+ * commissions, owner pay) come in on their own; the form covers what neither
+ * sees — a Venmo payment for photos, a cash purchase. Bills and loans sit on
+ * top, ordered by priority, and land on the admin calendar as red dots.
+ *
+ * Under the balances: in and out for a chosen period beside the one before,
+ * cash against bills and spending (runway), and a tax set-aside estimate.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { logApiCall, logError } from '../../lib/adminErrorLog';
 import { cn } from '../ui/utils';
 import { DepositAccounting } from './DepositCheckIn';
-import { type Bill, type BillPriority, daysUntil, PRIORITY_ORDER, PRIORITY_TEXT } from '../../lib/bills';
+import { type Bill, type BillPriority, daysUntil, dueDatesInRange, PRIORITY_ORDER, PRIORITY_TEXT } from '../../lib/bills';
 
 interface Entry {
     id: string;
@@ -26,10 +30,19 @@ interface Entry {
     source: string;
 }
 
+interface Month { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number }
+
+interface CardSpend { id: string; day: string; merchant: string; category: string; cents: number }
+
 interface Summary {
-    totals: { incomeCents: number; expenseCents: number; netCents: number; photoIncomeCents: number; siteIncomeCents: number; directIncomeCents: number };
+    totals: {
+        incomeCents: number; expenseCents: number; netCents: number; photoIncomeCents: number;
+        siteIncomeCents: number; directIncomeCents: number; stripeExpenseCents: number; ownerPayCents: number;
+    };
     byCategory: { income: Record<string, number>; expense: Record<string, number> };
-    monthly: { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number }[];
+    monthly: Month[];
+    cardSpend: CardSpend[];
+    stripeError: string | null;
 }
 
 interface LedgerResponse {
@@ -52,7 +65,26 @@ const monthLabel = (ym: string) => {
     return new Date(Date.UTC(y, m - 1, 1)).toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** Today as YYYY-MM-DD on the viewer's own clock (the owner is on Central time). */
+const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** YYYY-MM shifted by n months. */
+const shiftMonth = (ym: string, n: number) => {
+    const [y, m] = ym.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + n, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+};
+
+const addDays = (ymd: string, n: number) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+};
+
+/** owner_pay → owner pay */
+const catLabel = (c: string) => c.replace(/_/g, ' ');
 
 async function authFetch(url: string, init: RequestInit = {}) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -74,7 +106,7 @@ async function authFetch(url: string, init: RequestInit = {}) {
 function Bar({ label, cents, max, accent }: { label: string; cents: number; max: number; accent: string }) {
     return (
         <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest tabular-nums">
-            <span className="w-20 shrink-0 text-white/40 truncate">{label}</span>
+            <span className="w-20 shrink-0 text-white/40 truncate">{catLabel(label)}</span>
             <span className={cn('relative flex-1 h-1.5', accent)}>
                 <span className="absolute inset-0 bg-current opacity-10" />
                 <span className="absolute top-0 bottom-0 left-0 bg-current" style={{ width: `${max > 0 ? (cents / max) * 100 : 0}%` }} />
@@ -260,8 +292,18 @@ interface StripeBalances {
 
 const dollars = (d: number) => usd(Math.round(d * 100));
 
+/**
+ * Money the business can spend: the Payments balance plus the Business
+ * financial account. King Midas, Secret Santa and Affiliate pay hold money
+ * already owed to other people, so runway leaves them out.
+ */
+const spendableCents = (d: StripeBalances) =>
+    Math.round((d.balance.available + d.balance.pending + d.financialAccounts
+        .filter(a => a.name === 'Business')
+        .reduce((n, a) => n + a.available, 0)) * 100);
+
 /** Live Stripe money: the Payments balance (card income) and every financial account. */
-function StripeBalancesSection() {
+function StripeBalancesSection({ onLoaded }: { onLoaded?: (_balances: StripeBalances) => void }) {
     const [data, setData] = useState<StripeBalances | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -269,7 +311,9 @@ function StripeBalancesSection() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            setData(await authFetch('/api/admin/stripe-balance'));
+            const fresh: StripeBalances = await authFetch('/api/admin/stripe-balance');
+            setData(fresh);
+            onLoaded?.(fresh);
             setError(null);
         } catch (err: any) {
             logError(err.message);
@@ -277,7 +321,7 @@ function StripeBalancesSection() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [onLoaded]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -331,11 +375,259 @@ function StripeBalancesSection() {
     );
 }
 
+const sumMonths = (monthly: Month[], keep: (_ym: string) => boolean) => {
+    const rows = monthly.filter(m => keep(m.month));
+    const inC = rows.reduce((n, m) => n + m.incomeCents, 0);
+    const outC = rows.reduce((n, m) => n + m.expenseCents, 0);
+    const owner = rows.reduce((n, m) => n + m.ownerPayCents, 0);
+    return { inC, outC, net: inC - outC, owner };
+};
+
+/** The last three whole months, not counting this one. */
+function threeMonthAverage(monthly: Month[], thisMonth: string) {
+    const window = [1, 2, 3].map(n => shiftMonth(thisMonth, -n));
+    const t = sumMonths(monthly, ym => window.includes(ym));
+    return { inC: Math.round(t.inC / 3), outC: Math.round(t.outC / 3), net: Math.round(t.net / 3) };
+}
+
+/** Cash on hand against what is coming due, and how long it lasts. */
+function RunwaySection({ cashCents, bills, monthly }: { cashCents: number | null; bills: Bill[]; monthly: Month[] }) {
+    const now = today();
+    const avg = threeMonthAverage(monthly, now.slice(0, 7));
+    // Overdue bills are still owed, so every window counts them.
+    const dueWithin = (days: number) => bills.reduce((n, b) =>
+        n + dueDatesInRange(b, '0000-01-01', addDays(now, days)).length * (b.amount_cents ?? 0), 0);
+    const windows = [30, 60, 90].map(d => ({ days: d, cents: dueWithin(d) }));
+    const months = cashCents !== null && avg.outC > 0 ? cashCents / avg.outC : null;
+
+    return (
+        <section data-tour="money-runway" className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Cash and runway</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Spendable cash</p>
+                    <p className="text-xl font-black tabular-nums text-white">{cashCents === null ? '…' : usd(cashCents)}</p>
+                </div>
+                {windows.map(w => (
+                    <div key={w.days} className="bg-white/5 p-4 text-left" style={surface}>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Bills due · {w.days} days</p>
+                        <p className="text-xl font-black tabular-nums text-white">{usd(w.cents)}</p>
+                        {cashCents !== null && (
+                            <p className={cn('text-[10px] uppercase tracking-widest mt-1 tabular-nums', cashCents - w.cents < 0 ? 'text-red-400 font-bold' : 'text-white/40')}>
+                                {usd(cashCents - w.cents)} left
+                            </p>
+                        )}
+                    </div>
+                ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Stat label="Avg in · last 3 months" cents={avg.inC} accent="text-green-400" />
+                <Stat label="Avg out · last 3 months" cents={avg.outC} />
+                <Stat label="Avg net · last 3 months" cents={avg.net} accent={avg.net < 0 ? 'text-red-400' : 'text-white'} />
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Cash lasts</p>
+                    <p className="text-xl font-black tabular-nums text-white">
+                        {months === null ? '—' : months >= 24 ? '24+ months' : `${months.toFixed(1)} months`}
+                    </p>
+                </div>
+            </div>
+            <p className="text-[11px] text-white/40 text-left">
+                Cash lasts is spendable cash divided by average monthly money out, with no new income. Spendable cash is the
+                Payments balance plus the Business account. King Midas, Secret Santa and Affiliate pay are left out, because
+                that money is owed to other people.
+            </p>
+        </section>
+    );
+}
+
+type PeriodId = 'month' | 'last' | 'ytd' | '12m' | 'all';
+const PERIODS: { id: PeriodId; label: string }[] = [
+    { id: 'month', label: 'This month' },
+    { id: 'last', label: 'Last month' },
+    { id: 'ytd', label: 'Year to date' },
+    { id: '12m', label: '12 months' },
+    { id: 'all', label: 'All time' },
+];
+
+/** The months in a period, and the period it is compared with. */
+function periodRange(id: PeriodId, thisMonth: string): { keep: (_ym: string) => boolean; prior: ((_ym: string) => boolean) | null; priorLabel: string } {
+    const year = thisMonth.slice(0, 4);
+    const monthNo = thisMonth.slice(5, 7);
+    switch (id) {
+        case 'month': {
+            const prev = shiftMonth(thisMonth, -1);
+            return { keep: ym => ym === thisMonth, prior: ym => ym === prev, priorLabel: 'all of last month' };
+        }
+        case 'last': {
+            const last = shiftMonth(thisMonth, -1);
+            const before = shiftMonth(thisMonth, -2);
+            return { keep: ym => ym === last, prior: ym => ym === before, priorLabel: 'the month before' };
+        }
+        case 'ytd': {
+            const lastYear = String(Number(year) - 1);
+            return {
+                keep: ym => ym.startsWith(year) && ym <= thisMonth,
+                prior: ym => ym.startsWith(lastYear) && ym.slice(5, 7) <= monthNo,
+                priorLabel: `the same months of ${lastYear}`,
+            };
+        }
+        case '12m': {
+            const start = shiftMonth(thisMonth, -11);
+            const priorStart = shiftMonth(thisMonth, -23);
+            return { keep: ym => ym >= start && ym <= thisMonth, prior: ym => ym >= priorStart && ym < start, priorLabel: 'the 12 months before' };
+        }
+        default:
+            return { keep: () => true, prior: null, priorLabel: '' };
+    }
+}
+
+function Delta({ now, before, invert }: { now: number; before: number; invert?: boolean }) {
+    const diff = now - before;
+    if (!diff) return <span className="text-white/40">same</span>;
+    const good = invert ? diff < 0 : diff > 0;
+    return <span className={good ? 'text-green-400' : 'text-red-400'}>{diff > 0 ? '+' : ''}{usd(diff)}</span>;
+}
+
+/** In, out and net for a chosen period, beside the period before it. */
+function PeriodSection({ s }: { s: Summary }) {
+    const [period, setPeriod] = useState<PeriodId>('month');
+    const thisMonth = today().slice(0, 7);
+    const range = periodRange(period, thisMonth);
+    const cur = sumMonths(s.monthly, range.keep);
+    const prior = range.prior ? sumMonths(s.monthly, range.prior) : null;
+
+    return (
+        <section data-tour="money-period" className="space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Money in and out</h3>
+                <div className="flex gap-1 flex-wrap">
+                    {PERIODS.map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => setPeriod(p.id)}
+                            className={cn(
+                                'px-2 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                                period === p.id ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:text-white',
+                            )}
+                            style={surface}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Stat label="Money in" cents={cur.inC} accent="text-green-400" />
+                <Stat label="Money out" cents={cur.outC} />
+                <Stat label="Net" cents={cur.net} accent={cur.net < 0 ? 'text-red-400' : 'text-white'} />
+                <Stat label="Of which owner pay" cents={cur.owner} accent="text-white/60" />
+            </div>
+            {prior && (
+                <p className="text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
+                    Vs {range.priorLabel}: in <Delta now={cur.inC} before={prior.inC} />
+                    {' · '}out <Delta now={cur.outC} before={prior.outC} invert />
+                    {' · '}net <Delta now={cur.net} before={prior.net} />
+                </p>
+            )}
+            <p className="text-[10px] uppercase tracking-widest text-white/40">
+                All time: site {usd(s.totals.siteIncomeCents)} · direct {usd(s.totals.directIncomeCents)} · Stripe money out {usd(s.totals.stripeExpenseCents)}
+            </p>
+            {s.stripeError && (
+                <p className="bg-red-500/10 text-red-400 text-xs p-3">
+                    Money out is missing Stripe card spending and fees right now: {s.stripeError}
+                </p>
+            )}
+        </section>
+    );
+}
+
+const TAX_RATE_KEY = 'tlu_tax_set_aside_rate';
+
+function readRate(): number {
+    try {
+        const n = Number(window.localStorage.getItem(TAX_RATE_KEY));
+        return Number.isFinite(n) && n > 0 && n < 100 ? n : 25;
+    } catch { return 25; }
+}
+
+/** What to keep aside for taxes on this year's profit, at a rate the owner sets. */
+function TaxSection({ monthly }: { monthly: Month[] }) {
+    const [rate, setRate] = useState<number>(readRate);
+    const year = today().slice(0, 4);
+    const ytd = sumMonths(monthly, ym => ym.startsWith(year));
+    // Owner pay is the owner's draw, not a business cost, so it is added back.
+    const profit = ytd.net + ytd.owner;
+    const setAside = Math.max(0, Math.round(profit * rate / 100));
+
+    const change = (v: string) => {
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < 0 || n >= 100) return;
+        setRate(n);
+        try { window.localStorage.setItem(TAX_RATE_KEY, String(n)); } catch { /* the rate just resets next visit */ }
+    };
+
+    return (
+        <section data-tour="money-tax" className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Tax set-aside · {year}</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Stat label="Profit so far" cents={profit} accent={profit < 0 ? 'text-red-400' : 'text-white'} />
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Rate</p>
+                    <div className="flex items-center gap-1">
+                        <input
+                            type="number" min="0" max="99" step="1" value={rate}
+                            onChange={e => change(e.target.value)}
+                            className="w-16 bg-white/10 text-white text-xl font-black tabular-nums px-2 outline-none"
+                            style={surface}
+                            aria-label="Tax set-aside rate in percent"
+                        />
+                        <span className="text-xl font-black text-white/60">%</span>
+                    </div>
+                </div>
+                <Stat label="Set aside" cents={setAside} accent="text-amber-500" />
+            </div>
+            <p className="text-[11px] text-white/40 text-left">
+                An estimate, not tax advice. Profit is money in minus money out for {year}, with owner pay added back because
+                it is your draw, not a business cost. Check the rate with whoever does your taxes.
+            </p>
+        </section>
+    );
+}
+
+/** Business card purchases Stripe recorded, newest first. */
+function CardSpendSection({ rows }: { rows: CardSpend[] }) {
+    if (rows.length === 0) return null;
+    return (
+        <section data-tour="money-card-spend" className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Business card spending</h3>
+            <div className="space-y-1">
+                {rows.map(r => (
+                    <div key={r.id} className="flex items-center gap-3 bg-white/5 px-3 py-2 text-xs" style={surface}>
+                        <span className="w-20 shrink-0 text-white/40 tabular-nums">{r.day}</span>
+                        <span className="flex-1 min-w-0 truncate text-white">
+                            {r.merchant}
+                            <span className="text-white/40"> · {catLabel(r.category)}</span>
+                        </span>
+                        <span className={cn('shrink-0 font-bold tabular-nums', r.cents < 0 ? 'text-green-400' : 'text-white')}>
+                            {r.cents < 0 ? '+' : '−'}{usd(Math.abs(r.cents))}
+                        </span>
+                    </div>
+                ))}
+            </div>
+            <p className="text-[11px] text-white/40 text-left">
+                Pulled from Stripe on its own. The category is a guess from the merchant type.
+            </p>
+        </section>
+    );
+}
+
 export default function MoneyLedgerView() {
     const [data, setData] = useState<LedgerResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
+    const [cashCents, setCashCents] = useState<number | null>(null);
+    const onBalances = useCallback((d: StripeBalances) => setCashCents(spendableCents(d)), []);
     const [form, setForm] = useState({
         kind: 'income' as 'income' | 'expense',
         amount: '',
@@ -390,7 +682,6 @@ export default function MoneyLedgerView() {
     if (!data && !error) return <p className="text-white/40 text-xs uppercase tracking-widest p-4">Loading ledger…</p>;
 
     const s = data?.summary;
-    const thisMonth = s?.monthly.find(m => m.month === today().slice(0, 7));
     const monthMax = Math.max(1, ...(s?.monthly ?? []).flatMap(m => [m.incomeCents, m.expenseCents]));
     const incomeCats = Object.entries(s?.byCategory.income ?? {}).sort((a, b) => b[1] - a[1]);
     const expenseCats = Object.entries(s?.byCategory.expense ?? {}).sort((a, b) => b[1] - a[1]);
@@ -402,27 +693,17 @@ export default function MoneyLedgerView() {
         <div className="space-y-8 text-left">
             {error && <p className="bg-red-500/10 text-red-400 text-xs p-3">{error}</p>}
 
-            <StripeBalancesSection />
+            <StripeBalancesSection onLoaded={onBalances} />
+
+            {s && <PeriodSection s={s} />}
+
+            {s && data && <RunwaySection cashCents={cashCents} bills={data.bills ?? []} monthly={s.monthly} />}
 
             {data && <BillsSection bills={data.bills ?? []} onChange={load} onError={setError} />}
 
-            <DepositAccounting />
+            {s && <TaxSection monthly={s.monthly} />}
 
-            {s && (
-                <section className="space-y-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">All time</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <Stat label="Money in" cents={s.totals.incomeCents} accent="text-green-400" />
-                        <Stat label="From photos" cents={s.totals.photoIncomeCents} accent="text-green-400" />
-                        <Stat label="Money out" cents={s.totals.expenseCents} />
-                        <Stat label="Net" cents={s.totals.netCents} accent={s.totals.netCents < 0 ? 'text-red-400' : 'text-white'} />
-                    </div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/40">
-                        This month: {usd(thisMonth?.incomeCents ?? 0)} in · {usd(thisMonth?.expenseCents ?? 0)} out
-                        {' · '}Site {usd(s.totals.siteIncomeCents)} · Direct {usd(s.totals.directIncomeCents)}
-                    </p>
-                </section>
-            )}
+            <DepositAccounting />
 
             {/* Add entry */}
             <form onSubmit={save} className="bg-white/5 p-4 space-y-3" style={surface}>
@@ -449,7 +730,7 @@ export default function MoneyLedgerView() {
                         value={form.occurred_on} onChange={e => setForm(f => ({ ...f, occurred_on: e.target.value }))} />
                     <select className={input} style={surface} value={form.category}
                         onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                        {categories.map(c => <option key={c} value={c} className="bg-black">{c}</option>)}
+                        {categories.map(c => <option key={c} value={c} className="bg-black">{catLabel(c)}</option>)}
                     </select>
                     <select className={input} style={surface} value={form.method}
                         onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
@@ -506,6 +787,8 @@ export default function MoneyLedgerView() {
                 </section>
             )}
 
+            {s && <CardSpendSection rows={s.cardSpend ?? []} />}
+
             <section className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Logged entries</h3>
@@ -527,7 +810,7 @@ export default function MoneyLedgerView() {
                 </div>
                 {entries.length === 0 ? (
                     <p className="text-xs text-white/40">
-                        Nothing logged yet. Site sales and invoice payments are already counted above.
+                        Nothing logged yet. Site sales, invoice payments and Stripe money out are already counted above.
                     </p>
                 ) : (
                     <div className="space-y-1">
@@ -536,7 +819,7 @@ export default function MoneyLedgerView() {
                                 <span className="w-20 shrink-0 text-white/40 tabular-nums">{e.occurred_on}</span>
                                 <span className="flex-1 min-w-0 truncate text-white">
                                     {e.counterparty || e.note || e.category}
-                                    <span className="text-white/40"> · {e.category}{e.method ? ` · ${e.method}` : ''}</span>
+                                    <span className="text-white/40"> · {catLabel(e.category)}{e.method ? ` · ${e.method}` : ''}</span>
                                 </span>
                                 <span className={cn('shrink-0 font-bold tabular-nums', e.kind === 'income' ? 'text-green-400' : 'text-white')}>
                                     {e.kind === 'income' ? '+' : '−'}{usd(e.amount_cents)}
