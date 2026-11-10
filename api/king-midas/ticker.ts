@@ -97,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     });
 
-    // Calculate site-wide profit today (sum of all commissions today)
+    // Profit from today's affiliate sales (sum of profit on today's commissions)
     const { data: commissionsData, error: commissionsError } = await supabase
       .from('affiliate_commissions')
       .select('profit_generated')
