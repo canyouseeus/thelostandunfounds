@@ -100,8 +100,11 @@ export function useToast() {
 }
 
 function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) {
+  // Must sit above ExpandableScreen (z-[99999]). At z-[10000] every toast fired
+  // from inside a fullscreen view (e.g. "Please provide a reason for rejection")
+  // rendered underneath it, so those buttons looked like they did nothing.
   return (
-    <div className="fixed top-4 sm:top-20 right-4 left-4 sm:left-auto z-[10000] flex flex-col gap-2 max-w-md pointer-events-none transition-all">
+    <div className="fixed top-4 sm:top-20 right-4 left-4 sm:left-auto z-[100001] flex flex-col gap-2 max-w-md pointer-events-none transition-all">
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastItem toast={toast} onClose={() => removeToast(toast.id)} />
