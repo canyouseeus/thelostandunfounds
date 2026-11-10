@@ -8,6 +8,10 @@
  * Auth is a verified Supabase JWT, not the `x-admin-email` header the older admin
  * endpoints use — that header is caller-supplied and this route can write to the
  * repository.
+ *
+ * GitHub auth uses SAGE_GITHUB_TOKEN, a fine-grained token scoped to Issues
+ * (read/write) on this repo only, kept separate from any token used for coding
+ * agents. GITHUB_TOKEN is read as a fallback until the old variable is removed.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -92,10 +96,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'comment is required' })
     }
 
-    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
+    const token = process.env.SAGE_GITHUB_TOKEN || process.env.GITHUB_TOKEN
     if (!token) {
         return res.status(500).json({
-            error: 'GITHUB_TOKEN is not configured — add it in the Vercel dashboard so SAGE MODE can open issues.',
+            error: 'SAGE_GITHUB_TOKEN is not configured — add it in the Vercel dashboard so SAGE MODE can open issues.',
         })
     }
 
