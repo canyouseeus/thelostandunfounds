@@ -414,7 +414,7 @@ function HowItWorks() {
         How KING MIDAS Works
       </h4>
       <ul className="space-y-3 text-white/60 text-xs leading-relaxed">
-        <Bullet label="8% Pool">8% of daily profit is set aside for the KING MIDAS prize pool.</Bullet>
+        <Bullet label="8% Pool">8% of the profit from each day's affiliate sales is set aside for the KING MIDAS prize pool.</Bullet>
         <Bullet label="Daily Rankings">Rankings are based on profit generated each day.</Bullet>
         <Bullet label="Top 3 Distribution">
           <span className="block mt-1 text-white/40">90% of pool — #1 takes 50%, #2 takes 30%, #3 takes 10%.</span>

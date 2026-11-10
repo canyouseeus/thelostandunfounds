@@ -222,7 +222,7 @@ export default function BecomeAffiliate() {
                     />
                     <ExpandableInfoCard
                         title="King Midas Pool"
-                        body="Top affiliates compete daily for a share of 8% of the entire site's daily profits. Rankings reset every 24 hours."
+                        body="Top affiliates compete daily for a share of 8% of the profit from that day's affiliate sales. Rankings reset every 24 hours."
                     />
                     <ExpandableInfoCard
                         title="2-Tier MLM"
@@ -270,7 +270,7 @@ export default function BecomeAffiliate() {
                         Ready to Rule?
                     </h2>
                     <p className="text-xl text-white mb-8 max-w-2xl">
-                        Join the ranks of top earners and start building your empire today.
+                        Pick your code, get your links and start sharing today.
                     </p>
                     <button
                         onClick={handleJoin}

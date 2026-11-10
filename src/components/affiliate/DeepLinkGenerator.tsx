@@ -386,7 +386,7 @@ export default function DeepLinkGenerator({
           <div className="bg-white/[0.03] p-4">
             <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-1">Pro Tip</h4>
             <p className="text-white/60 text-xs leading-relaxed">
-              Linking directly to a specific product increases conversion rates by up to 300% compared to the homepage. Use the Products tab to browse every item and grab an affiliate link in one click.
+              Link straight to the product you're talking about. Use the Products tab to browse every item and grab its affiliate link in one click.
             </p>
           </div>
         </div>
