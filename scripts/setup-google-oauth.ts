@@ -17,7 +17,13 @@ dotenv.config({ path: ENV_PATH });
 
 const CLIENT_ID = '817758642642-j65tb1kscmmaiaocg5jg1qc4qbu4rsbt.apps.googleusercontent.com';
 const REDIRECT_URI = 'http://localhost:9999/oauth2callback';
-const SCOPES = ['https://www.googleapis.com/auth/drive'];
+// --gsc: a separate read-only Search Console token for Admin → SEO, saved as
+// GSC_REFRESH_TOKEN so the Drive token the photo sync uses is not replaced.
+const GSC = process.argv.includes('--gsc');
+const SCOPES = GSC
+    ? ['https://www.googleapis.com/auth/webmasters.readonly']
+    : ['https://www.googleapis.com/auth/drive'];
+const TOKEN_KEY = GSC ? 'GSC_REFRESH_TOKEN' : 'GOOGLE_REFRESH_TOKEN';
 
 async function prompt(question: string, hidden = false): Promise<string> {
     return new Promise((resolve) => {
@@ -55,7 +61,7 @@ async function prompt(question: string, hidden = false): Promise<string> {
 }
 
 async function main() {
-    console.log('\n🔐 Google OAuth2 Setup for Photo Sync\n');
+    console.log(GSC ? '\n🔐 Google OAuth2 Setup for Search Console (read-only)\n' : '\n🔐 Google OAuth2 Setup for Photo Sync\n');
 
     // Get Client Secret
     let clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -101,7 +107,7 @@ async function main() {
                         const updates: Record<string, string> = {
                             GOOGLE_CLIENT_ID: CLIENT_ID,
                             GOOGLE_CLIENT_SECRET: clientSecret!,
-                            GOOGLE_REFRESH_TOKEN: refreshToken,
+                            [TOKEN_KEY]: refreshToken,
                         };
 
                         for (const [key, value] of Object.entries(updates)) {
@@ -119,8 +125,10 @@ async function main() {
                         res.end('<h1>✅ Success!</h1><p>You can close this window. Return to your terminal.</p>');
 
                         console.log('\n✅ OAuth2 credentials saved to .env.local!');
-                        console.log('   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN\n');
-                        console.log('You can now run ./organize_photos.sh to sync your photos.');
+                        console.log(`   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ${TOKEN_KEY}\n`);
+                        console.log(GSC
+                            ? 'Add GSC_REFRESH_TOKEN to Vercel (Production) and redeploy; Admin → SEO then shows Search Console data.'
+                            : 'You can now run ./organize_photos.sh to sync your photos.');
                     } else {
                         res.writeHead(400);
                         res.end('No refresh token received. Try again with prompt=consent.');
