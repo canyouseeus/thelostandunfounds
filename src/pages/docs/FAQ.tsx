@@ -5,41 +5,7 @@
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
-const faqs: FAQItem[] = [
-  {
-    question: 'How do I create an account?',
-    answer: 'Click the "LOG IN" button in the top right corner, then select "Sign Up". You can use your email address or sign in with Google.',
-  },
-  {
-    question: 'What are the subscription tiers?',
-    answer: 'We offer three tiers: Free (5 downloads/day), Premium ($9.99/month, unlimited downloads), and Pro ($19.99/month, unlimited downloads + API access).',
-  },
-  {
-    question: 'How do I download TikTok videos?',
-    answer: 'Navigate to the TikTok Downloader tool, paste the TikTok video URL, and click Download. The video will be processed and available for download.',
-  },
-  {
-    question: 'Are there download limits?',
-    answer: 'Free accounts have a limit of 5 downloads per day. Premium and Pro accounts have unlimited downloads.',
-  },
-  {
-    question: 'Can I cancel my subscription?',
-    answer: 'Yes, you can cancel your subscription at any time from your Settings page. Your access will continue until the end of your billing period.',
-  },
-  {
-    question: 'Do you store my data?',
-    answer: 'We only store the data necessary to provide our services. We do not store downloaded videos on our servers. See our Privacy Policy for more details.',
-  },
-  {
-    question: 'How do I contact support?',
-    answer: 'You can contact us through the Support page or email us directly at support@thelostandunfounds.com.',
-  },
-];
+import { DOCS_FAQ as faqs } from '../../data/faqs';
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);

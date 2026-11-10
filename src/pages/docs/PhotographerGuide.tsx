@@ -4,6 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { PHOTOGRAPHER_FAQ as faqs } from '../../data/faqs';
 import {
     EnvelopeIcon, UserPlusIcon, FolderOpenIcon, PhotoIcon, CurrencyDollarIcon,
     ArrowRightIcon, CheckCircleIcon, ArrowPathIcon, ShareIcon,
@@ -74,28 +75,7 @@ const steps = [
     }
 ];
 
-const faqs = [
-    {
-        question: 'How do I add new photos?',
-        answer: 'Simply add photos to your shared Google Drive folder. Click "Sync" in your dashboard to update your gallery.'
-    },
-    {
-        question: 'What file formats are supported?',
-        answer: 'We support JPG, PNG, and HEIC images. RAW files are converted automatically.'
-    },
-    {
-        question: 'How do I remove a photo?',
-        answer: 'Delete or move the photo out of your shared folder, then sync your gallery.'
-    },
-    {
-        question: 'When do I get paid?',
-        answer: 'Payments are processed through Stripe. You\'ll receive your commission within 24-48 hours of a sale.'
-    },
-    {
-        question: 'Can I have multiple galleries?',
-        answer: 'Yes! Contact us to set up additional galleries for different events or clients.'
-    }
-];
+
 
 export default function PhotographerGuide() {
     return (

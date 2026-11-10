@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { replacePreRenderBlock } from './lib/pre-render-shell';
+import { fitTitle, fitDescription, jsonLd } from './lib/seo-meta';
 
 async function preRenderBlogPosts() {
   console.log('🔄 Starting blog post pre-rendering...');
@@ -84,16 +85,17 @@ async function preRenderBlogPosts() {
           categoryName = post.subdomain.replace(/-/g, ' ').toUpperCase();
         }
 
-        // Keep title under 60 chars: "Article Title | THE LOST+UNFOUNDS"
-        const fullTitle = `${cleanTitle} | THE LOST+UNFOUNDS`;
+        // "Article Title | THE LOST+UNFOUNDS", at most 70 characters. Six posts
+        // ran past that with the suffix (Ahrefs, Nov 2026: "Title too long");
+        // fitTitle drops the suffix, then shortens to the headline before the
+        // colon, before it ever cuts words.
+        const fullTitle = fitTitle(cleanTitle);
 
-        let description = post.seo_description || post.excerpt ||
-          post.content.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\n/g, ' ').trim();
-
-        // Truncate description for SEO (optimal is ~155 chars)
-        if (description.length > 155) {
-          description = description.substring(0, 152) + '...';
-        }
+        const description = fitDescription(
+          post.seo_description || post.excerpt ||
+          post.content.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\n/g, ' ').trim(),
+          [`An article from ${categoryName} by THE LOST+UNFOUNDS.`],
+        );
 
         const ogImage = post.og_image_url || post.featured_image;
         const publishedDate = post.published_at || post.created_at;
@@ -134,7 +136,7 @@ async function preRenderBlogPosts() {
         // Replace title
         html = html.replace(
           /<title>.*?<\/title>/i,
-          `<title>${escapeAttr(fullTitle)}</title>`
+          () => `<title>${escapeAttr(fullTitle)}</title>`
         );
 
         // Add or replace canonical URL
@@ -231,14 +233,16 @@ async function preRenderBlogPosts() {
 
         // Replace structured data
         if (html.includes('application/ld+json')) {
+          // Function replacer: a "$" in a title or description must not be
+          // read as a replacement pattern.
           html = html.replace(
             /<script\s+type=["']application\/ld\+json["']>[\s\S]*?<\/script>/i,
-            `<script type="application/ld+json">\n    ${JSON.stringify(allSchema, null, 2)}\n    </script>`
+            () => `<script type="application/ld+json">\n    ${jsonLd(allSchema, 2)}\n    </script>`
           );
         } else {
           html = html.replace(
             '</head>',
-            `  <script type="application/ld+json">\n    ${JSON.stringify(allSchema, null, 2)}\n    </script>\n</head>`
+            () => `  <script type="application/ld+json">\n    ${jsonLd(allSchema, 2)}\n    </script>\n</head>`
           );
         }
 
@@ -339,11 +343,16 @@ async function preRenderBlogPosts() {
         const columnPosts = posts.filter((p) => p.subdomain === subdomain);
         const columnName = subdomain.replace(/-/g, ' ').toUpperCase();
         const columnUrl = `https://www.thelostandunfounds.com/blog/${subdomain}`;
-        const title = `${columnName} | THE LOST+UNFOUNDS`;
-        const description = `Every article in the ${columnName} collection on THE LOST ARCHIVES — ${columnPosts.length} ${columnPosts.length === 1 ? 'piece' : 'pieces'} from THE LOST+UNFOUNDS.`;
+        const title = fitTitle(columnName);
+        // The old one-line description ran about 96 characters (Ahrefs, Nov 2026:
+        // "Meta description too short"); the added sentence keeps it 110-160.
+        const description = fitDescription(
+          `Every article in the ${columnName} collection on THE LOST ARCHIVES: ${columnPosts.length} ${columnPosts.length === 1 ? 'piece' : 'pieces'} from THE LOST+UNFOUNDS.`,
+          ['Listed newest first, each linking to the full article.'],
+        );
 
         let html = htmlTemplate;
-        html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(title)}</title>`);
+        html = html.replace(/<title>.*?<\/title>/i, () => `<title>${escapeAttr(title)}</title>`);
 
         const canonicalTag = `<link rel="canonical" href="${escapeAttr(columnUrl)}" />`;
         html = html.includes('rel="canonical"')
@@ -357,6 +366,34 @@ async function preRenderBlogPosts() {
         html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeAttr(columnName)}" />`);
         html = html.replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${escapeAttr(description)}" />`);
         html = html.replace(/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${escapeAttr(columnUrl)}" />`);
+
+        // A column page is a category listing; Ahrefs (Nov 2026) flagged both
+        // column pages for "Category page missing ItemList schema".
+        const columnSchema = [
+          {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": columnName,
+            "url": columnUrl,
+            "numberOfItems": columnPosts.length,
+            "itemListElement": columnPosts.map((p, i) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "name": p.title,
+              "url": `https://www.thelostandunfounds.com/blog/${subdomain}/${p.slug}`,
+            })),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.thelostandunfounds.com" },
+              { "@type": "ListItem", "position": 2, "name": "THE LOST ARCHIVES", "item": "https://www.thelostandunfounds.com/thelostarchives" },
+              { "@type": "ListItem", "position": 3, "name": columnName, "item": columnUrl },
+            ],
+          },
+        ];
+        html = html.replace('</head>', () => `  <script type="application/ld+json">${jsonLd(columnSchema)}</script>\n</head>`);
 
         const listItems = columnPosts.map((p) => {
           const href = `/blog/${subdomain}/${p.slug}`;
