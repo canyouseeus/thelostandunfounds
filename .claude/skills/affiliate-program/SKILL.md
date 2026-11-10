@@ -128,9 +128,11 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
 -   **Pots**: King Midas Pot and Secret Santa are Stripe financial accounts
     (`fa_65Vc0ZpAuxheTRvd98q16UbOGOJESQ1Wd0tevkXEB3wDSi`, `fa_65Vc0ZPs07Y7q1ibQPv16UbOGOJESQ1Wd0tevkXEB3wOEa`).
     Money moves into them with a Payout whose `payout_method` is the financial account id, via
-    the `move_funds` admin job (`to: "king_midas" | "secret_santa"`). No automatic sweep is
-    built — the daily distribution writes commission rows, it doesn't fund the account. Never
-    claim a sweep happened.
+    the `move_funds` admin job (`to: "king_midas" | "secret_santa"`). `/api/cron/balance-sweep`
+    (daily, 20:00 UTC) queues those jobs itself: pots funded cumulatively from the recorded
+    8% / 3% splits, money still owed to people reserved, the rest to `business`
+    (`lib/api-handlers/admin/_balance-sweep.ts`). Never claim a sweep happened without reading
+    the `move_funds` job's result.
 -   **Database Schema**:
     -   `affiliates` (Profiles, points)
     -   `affiliate_customers` (Lifetime bindings)
