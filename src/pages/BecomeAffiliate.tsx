@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Expandable,
@@ -15,7 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface ExpandableInfoCardProps {
     title: string;
-    body: string;
+    body: ReactNode[];
 }
 
 function ExpandableInfoCard({ title, body }: ExpandableInfoCardProps) {
@@ -36,7 +36,11 @@ function ExpandableInfoCard({ title, body }: ExpandableInfoCardProps) {
                             {isExpanded ? '▲' : '▼'}
                         </span>
                         <ExpandableContent preset="fade" keepMounted={false}>
-                            <p className="text-white leading-relaxed text-center mt-3">{body}</p>
+                            <div className="mt-3 space-y-3 text-left">
+                                {body.map((para, i) => (
+                                    <p key={i} className="text-white leading-relaxed">{para}</p>
+                                ))}
+                            </div>
                         </ExpandableContent>
                     </div>
                 </ExpandableTrigger>
@@ -48,7 +52,7 @@ function ExpandableInfoCard({ title, body }: ExpandableInfoCardProps) {
 interface ExpandableFeatureListProps {
     title: string;
     intro: string;
-    features: string[];
+    features: { name: string; detail: string }[];
 }
 
 function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureListProps) {
@@ -65,15 +69,15 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
                         <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter text-center">
                             {title}
                         </h2>
-                        <p className="text-white text-base md:text-lg text-center mt-3">{intro}</p>
+                        <p className="text-white text-base md:text-lg text-left mt-3 max-w-2xl w-full mx-auto">{intro}</p>
                         <span className="text-white text-lg leading-none mt-4 self-center" aria-hidden="true">
                             {isExpanded ? '▲' : '▼'}
                         </span>
                         <ExpandableContent preset="fade" stagger staggerChildren={0.05} keepMounted={false}>
-                            <ul className="space-y-3 mt-4">
+                            <ul className="space-y-3 mt-4 max-w-2xl mx-auto list-disc pl-5 text-left">
                                 {features.map((feature, i) => (
-                                    <li key={i} className="text-white font-medium text-center">
-                                        {feature}
+                                    <li key={i} className="text-white leading-relaxed">
+                                        <span className="font-bold">{feature.name}:</span> {feature.detail}
                                     </li>
                                 ))}
                             </ul>
@@ -241,15 +245,27 @@ export default function BecomeAffiliate() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto items-start">
                     <ExpandableInfoCard
                         title="High Commissions"
-                        body="Earn 42% of the profit on every sale you refer. Your referrals are locked to you for life."
+                        body={[
+                            'Earn 42% of the profit on every sale you refer. Profit is the sale price minus what the item costs to make.',
+                            'Customers you refer stay tied to you for life, so you also earn on what they buy later.',
+                            'Your balance pays out through Stripe once it reaches $10. Print orders clear after a 30-day hold.',
+                        ]}
                     />
                     <ExpandableInfoCard
                         title="KING MIDAS"
-                        body="Top affiliates compete daily for a share of 8% of the profit from that day's affiliate sales. Rankings reset every 24 hours."
+                        body={[
+                            "Every day, 8% of the profit from that day's affiliate sales is split between the affiliates who made a sale.",
+                            'Affiliates are ranked by the profit they brought in. 1st gets 50%, 2nd gets 30%, 3rd gets 10%, and everyone else who made a sale shares the last 10%.',
+                            <>Winnings go straight to your affiliate balance. <strong className="font-black uppercase">KING MIDAS</strong> starts over every day at midnight Central time.</>,
+                        ]}
                     />
                     <ExpandableInfoCard
                         title="Build Your Team"
-                        body="Bring in other affiliates and earn 2% of the profit on their sales (Level 1) and 1% on sales from the people they bring in (Level 2)."
+                        body={[
+                            'Joining is free, with no purchase needed.',
+                            'Anyone who joins through your link is on your team. You earn 2% of the profit on their sales (Level 1) and 1% on sales by the affiliates they bring in (Level 2).',
+                            'Team earnings come from our share, not from your team\'s 42%.',
+                        ]}
                     />
                 </div>
             </div>
@@ -261,12 +277,12 @@ export default function BecomeAffiliate() {
                         title="Everything You Need To Succeed"
                         intro="Your dashboard has the links, tracking and payouts you need from day one."
                         features={[
-                            'Click and sale tracking in your dashboard',
-                            'Your own custom affiliate code',
-                            'A link generator for any print, gallery, event or service',
-                            'Customers you refer stay tied to you for life',
-                            'Payouts through Stripe Connect from $10',
-                            'Tax records through your Stripe account',
+                            { name: 'Click and sale tracking', detail: 'your dashboard shows how many people clicked your links and how many bought.' },
+                            { name: 'Your own code', detail: 'pick the code people use, and change it later from your dashboard.' },
+                            { name: 'Link generator', detail: 'make a link to any print, gallery, event or service on the site.' },
+                            { name: 'Lifetime customers', detail: 'anyone who buys through your link stays tied to you, and you earn on what they buy later.' },
+                            { name: 'Stripe payouts', detail: 'cash out once your balance reaches $10. Print orders clear after 30 days.' },
+                            { name: 'Tax forms', detail: 'Stripe handles your tax forms, ID check and direct deposits.' },
                         ]}
                     />
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
