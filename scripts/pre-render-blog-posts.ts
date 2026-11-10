@@ -271,7 +271,7 @@ async function preRenderBlogPosts() {
         const preRenderContent = `
           <article id="pre-render-blog" style="background: black; color: white; min-height: 100vh; padding: 4rem 2rem; max-width: 800px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">
             <header style="margin-bottom: 4rem;">
-              <span style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: bold;">${categoryName}</span>
+              <a href="${escapeAttr(post.subdomain ? `/blog/${post.subdomain}` : '/thelostarchives')}" style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: bold; text-decoration: none;">${categoryName}</a>
               <h1 style="font-size: 3.5rem; margin-top: 1rem; margin-bottom: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;">${escapeAttr(post.title)}</h1>
               <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; font-weight: 500; display: flex; gap: 1rem; align-items: center;">
                 <span>BY THE LOST+UNFOUNDS</span>
