@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '../../lib/api-handlers/crew/_shared.js';
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js';
 import { OWNER_AFFILIATE_CODE } from '../../lib/api-handlers/affiliates/_referral-tie.js';
 import { stripeMoneyOut, type CardSpend } from '../../lib/api-handlers/admin/_stripe-money-out.js';
+import { parseMoneyEmail, type MoneyEmail, type LedgerRow, type Adjustment, type BitcoinRow } from '../../lib/api-handlers/admin/_money-email-parse.js';
 
 /**
  * Money in and money out, in one place.
@@ -10,6 +11,10 @@ import { stripeMoneyOut, type CardSpend } from '../../lib/api-handlers/admin/_st
  *   GET                         → ledger entries + a monthly income/expense summary
  *   POST { action: 'create' }   → log one entry (a Venmo payment, a gear purchase)
  *   POST { action: 'import' }   → log many, skipping any source_ref already stored
+ *   POST { action: 'import-emails' } → read Venmo and Cash App emails into the
+ *                                 ledger and Bitcoin activity (see _money-email-parse)
+ *   POST { action: 'scope' }    → mark an entry business or personal
+ *   POST { action: 'account-save' } → set a balance the site cannot read (Venmo, Cash App)
  *   DELETE ?id=                 → remove an entry logged by mistake
  *
  *   GET ?view=bills             → active bills and loans only (the calendar's red dots)
@@ -33,6 +38,10 @@ export const EXPENSE_CATEGORIES = ['gear', 'software', 'website', 'loan', 'trave
 export const BILL_PRIORITIES = ['critical', 'high', 'normal', 'low'] as const;
 const BILL_FREQUENCIES = ['monthly', 'yearly', 'once'] as const;
 const BILL_SELECT = 'id, name, kind, category, amount_cents, balance_cents, frequency, next_due, priority, pay_from, notes, active';
+const ENTRY_SELECT = 'id, kind, amount_cents, occurred_on, category, method, counterparty, note, source, source_ref, scope, created_at';
+const ACCOUNT_SELECT = 'id, name, balance_cents, as_of, notes';
+const BITCOIN_SELECT = 'id, occurred_on, platform, action, usd_cents, fee_cents, sats, note, source';
+const SCOPES = ['business', 'personal'] as const;
 
 /** The next due date after `ymd`, keeping the day of month where the month allows. */
 function rollForward(ymd: string, frequency: string): string | null {
@@ -87,6 +96,7 @@ interface EntryInput {
   note?: string | null;
   source?: string;
   source_ref?: string | null;
+  scope?: string;
 }
 
 function toRow(e: EntryInput): { row?: Record<string, unknown>; error?: string } {
@@ -109,11 +119,12 @@ function toRow(e: EntryInput): { row?: Record<string, unknown>; error?: string }
       note: e.note?.trim() || null,
       source: e.source?.trim() || 'manual',
       source_ref: e.source_ref?.trim() || null,
+      scope: e.scope === 'personal' ? 'personal' : 'business',
     },
   };
 }
 
-interface Line { month: string; kind: 'income' | 'expense'; category: string; cents: number; origin: 'site' | 'ledger' | 'stripe' }
+interface Line { month: string; kind: 'income' | 'expense'; category: string; cents: number; origin: 'site' | 'ledger' | 'stripe'; personal?: boolean }
 
 /**
  * Every dollar in and out, from every place the site records one. The income
@@ -193,7 +204,7 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
   }
 
   for (const e of ledger) {
-    lines.push({ month: month(e.occurred_on), kind: e.kind, category: e.category, cents: e.amount_cents, origin: 'ledger' });
+    lines.push({ month: month(e.occurred_on), kind: e.kind, category: e.category, cents: e.amount_cents, origin: 'ledger', personal: e.scope === 'personal' });
   }
 
   // Stripe is read live. If it fails, the rest of the summary still loads and
@@ -210,14 +221,16 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
     stripeError = err?.message || 'Stripe lookup failed';
   }
 
-  type Month = { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number };
+  // personalExpenseCents is inside expenseCents: it is real money out for cash
+  // and runway, and is taken back out for profit and the tax set-aside.
+  type Month = { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number; personalExpenseCents: number };
   const months = new Map<string, Month>();
   const byCategory = { income: {} as Record<string, number>, expense: {} as Record<string, number> };
-  let siteIncome = 0, ledgerIncome = 0, stripeExpense = 0;
+  let siteIncome = 0, ledgerIncome = 0, stripeExpense = 0, personalExpense = 0;
   for (const l of lines) {
     // Negative lines are real: a refund on the business card brings money back.
     if (!l.month || !l.cents) continue;
-    const m = months.get(l.month) ?? { month: l.month, incomeCents: 0, expenseCents: 0, photoIncomeCents: 0, ownerPayCents: 0 };
+    const m = months.get(l.month) ?? { month: l.month, incomeCents: 0, expenseCents: 0, photoIncomeCents: 0, ownerPayCents: 0, personalExpenseCents: 0 };
     if (l.kind === 'income') {
       if (l.cents < 0) continue;
       m.incomeCents += l.cents;
@@ -227,6 +240,7 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
       m.expenseCents += l.cents;
       if (l.category === 'owner_pay') m.ownerPayCents += l.cents;
       if (l.origin === 'stripe') stripeExpense += l.cents;
+      if (l.personal) { m.personalExpenseCents += l.cents; personalExpense += l.cents; }
     }
     byCategory[l.kind][l.category] = (byCategory[l.kind][l.category] ?? 0) + l.cents;
     months.set(l.month, m);
@@ -245,11 +259,107 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
       directIncomeCents: ledgerIncome,
       stripeExpenseCents: stripeExpense,
       ownerPayCents: byCategory.expense.owner_pay ?? 0,
+      personalExpenseCents: personalExpense,
     },
     byCategory,
     monthly,
     cardSpend,
     stripeError,
+  };
+}
+
+const addDays = (ymd: string, n: number) => {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+};
+
+/**
+ * Venmo and Cash App emails into the ledger and Bitcoin activity. Safe to run
+ * again on the same emails: each email's id is its source_ref, so nothing is
+ * logged twice, and an updated total that was already applied is left alone.
+ */
+async function importEmails(supabase: ReturnType<typeof getSupabaseAdmin>, emails: MoneyEmail[]) {
+  const ledger: LedgerRow[] = [];
+  const adjusts: Adjustment[] = [];
+  const bitcoin: BitcoinRow[] = [];
+  const skipped: Record<string, number> = {};
+  const ordered = [...emails].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  for (const e of ordered) {
+    const p = parseMoneyEmail({ id: String(e?.id ?? ''), from: String(e?.from ?? ''), subject: String(e?.subject ?? ''), date: String(e?.date ?? ''), text: e?.text ? String(e.text) : '' });
+    if (p.type === 'ledger') ledger.push(p.row);
+    else if (p.type === 'adjust') adjusts.push(p.adjust);
+    else if (p.type === 'bitcoin') bitcoin.push(p.row);
+    else skipped[p.reason] = (skipped[p.reason] ?? 0) + 1;
+  }
+
+  // Ledger rows, minus what is already stored.
+  let inserted = 0;
+  const rows = ledger.map(r => toRow(r).row).filter(Boolean) as Record<string, unknown>[];
+  const refs = rows.map(r => r.source_ref as string);
+  const seen = new Set<string>();
+  for (let i = 0; i < refs.length; i += 200) {
+    const { data, error } = await supabase.from('money_ledger').select('source, source_ref').in('source_ref', refs.slice(i, i + 200));
+    if (error) throw error;
+    for (const d of data ?? []) seen.add(`${d.source}:${d.source_ref}`);
+  }
+  const fresh = rows.filter(r => !seen.has(`${r.source}:${r.source_ref}`));
+  for (let i = 0; i < fresh.length; i += 200) {
+    const { error } = await supabase.from('money_ledger').insert(fresh.slice(i, i + 200));
+    if (error) throw error;
+  }
+  inserted = fresh.length;
+
+  // An updated total replaces the amount of the purchase it corrects: the same
+  // merchant and the old amount, in the week before. If that purchase is not
+  // on file, the corrected purchase is logged on its own.
+  let adjusted = 0;
+  for (const a of adjusts) {
+    const window = { from: addDays(a.occurred_on, -7), to: a.occurred_on };
+    const match = (cents: number) => supabase.from('money_ledger').select('id, note')
+      .eq('source', a.source).eq('kind', 'expense').eq('counterparty', a.merchant).eq('amount_cents', cents)
+      .gte('occurred_on', window.from).lte('occurred_on', window.to)
+      .order('occurred_on', { ascending: false }).limit(1);
+    const done = await match(a.toCents);
+    if (done.error) throw done.error;
+    const own = await supabase.from('money_ledger').select('id').eq('source', a.source).eq('source_ref', a.source_ref).limit(1);
+    if (own.error) throw own.error;
+    if ((done.data ?? []).length || (own.data ?? []).length) continue;
+    const orig = await match(a.fromCents);
+    if (orig.error) throw orig.error;
+    const row = orig.data?.[0];
+    if (row) {
+      const note = `Total updated from $${(a.fromCents / 100).toFixed(2)}`;
+      const { error } = await supabase.from('money_ledger').update({ amount_cents: a.toCents, note: row.note ? `${row.note} · ${note}` : note }).eq('id', row.id);
+      if (error) throw error;
+    } else {
+      const { row: fallback } = toRow({ ...a.fallback, note: `Total updated from $${(a.fromCents / 100).toFixed(2)}` });
+      const { error } = await supabase.from('money_ledger').insert(fallback);
+      if (error) throw error;
+    }
+    adjusted++;
+  }
+
+  // Bitcoin activity, minus what is already stored.
+  const btcSeen = new Set<string>();
+  const btcRefs = bitcoin.map(b => b.source_ref);
+  for (let i = 0; i < btcRefs.length; i += 200) {
+    const { data, error } = await supabase.from('bitcoin_activity').select('source, source_ref').in('source_ref', btcRefs.slice(i, i + 200));
+    if (error) throw error;
+    for (const d of data ?? []) btcSeen.add(`${d.source}:${d.source_ref}`);
+  }
+  const btcFresh = bitcoin.filter(b => !btcSeen.has(`${b.source}:${b.source_ref}`));
+  if (btcFresh.length) {
+    const { error } = await supabase.from('bitcoin_activity').insert(btcFresh);
+    if (error) throw error;
+  }
+
+  return {
+    read: emails.length,
+    inserted,
+    alreadyLogged: rows.length - inserted,
+    adjusted,
+    bitcoinInserted: btcFresh.length,
+    skipped,
   };
 }
 
@@ -267,18 +377,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       const { data, error } = await supabase
         .from('money_ledger')
-        .select('id, kind, amount_cents, occurred_on, category, method, counterparty, note, source, source_ref, created_at')
+        .select(ENTRY_SELECT)
         .order('occurred_on', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
-      const [summary, bills] = await Promise.all([
+      const [summary, bills, accounts, bitcoin] = await Promise.all([
         buildSummary(supabase, data ?? []),
         supabase.from('bills').select(BILL_SELECT).eq('active', true).order('next_due'),
+        supabase.from('money_accounts').select(ACCOUNT_SELECT).eq('active', true).order('name'),
+        supabase.from('bitcoin_activity').select(BITCOIN_SELECT).order('occurred_on', { ascending: false }).limit(500),
       ]);
       if (bills.error) throw bills.error;
+      if (accounts.error) throw accounts.error;
+      if (bitcoin.error) throw bitcoin.error;
       return res.status(200).json({
         entries: data ?? [],
         bills: bills.data ?? [],
+        accounts: accounts.data ?? [],
+        bitcoin: bitcoin.data ?? [],
         summary,
         categories: { income: INCOME_CATEGORIES, expense: EXPENSE_CATEGORIES },
       });
@@ -331,6 +447,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (error) throw error;
       }
       return res.status(200).json({ inserted: fresh.length, skipped: rows.length - fresh.length });
+    }
+
+    if (action === 'import-emails') {
+      const emails: MoneyEmail[] = Array.isArray(req.body?.emails) ? req.body.emails : [];
+      if (emails.length > 2000) return res.status(400).json({ error: 'send at most 2000 emails at a time' });
+      const result = await importEmails(supabase, emails);
+      return res.status(200).json(result);
+    }
+
+    if (action === 'scope') {
+      const { id, scope } = req.body || {};
+      if (!id || !(SCOPES as readonly string[]).includes(scope)) return res.status(400).json({ error: 'id and scope (business or personal) are required' });
+      const { data, error } = await supabase.from('money_ledger').update({ scope }).eq('id', id).select(ENTRY_SELECT).maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'Entry not found' });
+      return res.status(200).json({ entry: data });
+    }
+
+    if (action === 'account-save') {
+      const a = req.body?.account ?? {};
+      const name = String(a.name ?? '').trim();
+      const cents = Math.round(Number(a.balance) * 100);
+      if (!name) return res.status(400).json({ error: 'name is required' });
+      if (!Number.isFinite(cents)) return res.status(400).json({ error: 'balance must be a number' });
+      const asOf = /^\d{4}-\d{2}-\d{2}$/.test(a.as_of ?? '') ? a.as_of : new Date().toISOString().slice(0, 10);
+      const { data, error } = await supabase.from('money_accounts')
+        .upsert({ name, balance_cents: cents, as_of: asOf, notes: a.notes?.trim() || null, active: true, updated_at: new Date().toISOString() }, { onConflict: 'name' })
+        .select(ACCOUNT_SELECT).single();
+      if (error) throw error;
+      return res.status(200).json({ account: data });
     }
 
     if (action === 'bill-save') {

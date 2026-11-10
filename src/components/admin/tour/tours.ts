@@ -1283,6 +1283,22 @@ const stripeBalancesTour: Tour = {
   ],
 };
 
+/* ── Venmo, Cash App and Bitcoin on the money tab (2026-11-10) ── */
+
+const moneyWalletsTour: Tour = {
+  id: 'money-wallets',
+  title: 'Venmo, Cash App and Bitcoin',
+  summary: 'Money In / Out now counts Venmo and Cash App card spending, tags each purchase business or personal, adds your Venmo and Cash App balances to cash, and shows Bitcoin on its own.',
+  group: 'new',
+  announce: '2026-11-10',
+  steps: [
+    openFromDock('money', 'Money In / Out', 'Tap Money In / Out to open it.'),
+    inPanel('money', { target: 'money-accounts', title: 'Venmo and Cash App', body: 'Type the balance each app shows and the day. Their emails never say, so this is how cash and runway stay true.' }),
+    inPanel('money', { target: 'money-scope', title: 'Business or Personal', body: 'Every purchase counts as money out. Tap the tag to switch it. Only business ones lower profit and the tax set-aside.', missingNote: 'No purchases logged yet. Each one shows a Business or Personal tag here.' }),
+    inPanel('money', { target: 'money-bitcoin', title: 'Bitcoin', body: 'Buys, sells and fees from Cash App and Venmo, kept out of money in and out.', missingNote: 'No Bitcoin activity logged yet.' }),
+  ],
+};
+
 /* ── Money insights (2026-11-10) ── */
 
 const moneyInsightsTour: Tour = {
@@ -1300,7 +1316,7 @@ const moneyInsightsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
