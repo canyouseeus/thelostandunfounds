@@ -76,9 +76,11 @@ const BRAND_LOGO_DOMAINS = [
 ]
 
 function getZohoEnv() {
-  const clientId = process.env.ZOHO_CLIENT_ID
-  const clientSecret = process.env.ZOHO_CLIENT_SECRET
-  const refreshToken = process.env.ZOHO_REFRESH_TOKEN
+  // Trimmed: a space or line break pasted in with a value makes Zoho's token
+  // endpoint answer with a generic HTML error page (400) instead of a token.
+  const clientId = process.env.ZOHO_CLIENT_ID?.trim()
+  const clientSecret = process.env.ZOHO_CLIENT_SECRET?.trim()
+  const refreshToken = process.env.ZOHO_REFRESH_TOKEN?.trim()
   const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
 
   if (!clientId || !clientSecret || !refreshToken || !fromEmail) {
