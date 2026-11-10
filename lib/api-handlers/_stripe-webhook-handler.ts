@@ -456,8 +456,8 @@ async function finalizeShopOrder(
         ...(downloadToken
             ? { downloadToken, downloadExpiresAt }
             : {}),
-        ...((session as any).shipping_details
-            ? { shippingDetails: (session as any).shipping_details }
+        ...(((session as any).collected_information?.shipping_details || (session as any).shipping_details)
+            ? { shippingDetails: (session as any).collected_information?.shipping_details || (session as any).shipping_details }
             : {}),
     }
 
@@ -548,7 +548,9 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
         return
     }
 
-    const shipping = (session as any).shipping_details
+    // Stripe API 2025-03-31 (basil) and later moved shipping_details under
+    // collected_information; the webhook endpoint is on a newer version.
+    const shipping = (session as any).collected_information?.shipping_details || (session as any).shipping_details
     const customerEmail = session.customer_details?.email || session.customer_email || order.customer_email
 
     if (!shipping?.address?.line1 || !shipping?.name) {
