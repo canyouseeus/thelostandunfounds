@@ -52,7 +52,7 @@ interface Summary {
     totals: {
         incomeCents: number; expenseCents: number; netCents: number; photoIncomeCents: number;
         siteIncomeCents: number; directIncomeCents: number; stripeExpenseCents: number; ownerPayCents: number;
-        personalExpenseCents: number;
+        personalExpenseCents: number; transfersCents?: number;
     };
     byCategory: { income: Record<string, number>; expense: Record<string, number> };
     monthly: Month[];
@@ -554,6 +554,7 @@ function PeriodSection({ s }: { s: Summary }) {
             )}
             <p className="text-[10px] uppercase tracking-widest text-white/40">
                 All time: site {usd(s.totals.siteIncomeCents)} · direct {usd(s.totals.directIncomeCents)} · Stripe money out {usd(s.totals.stripeExpenseCents)}
+                {(s.totals.transfersCents ?? 0) > 0 && <> · moved to your own accounts, not counted {usd(s.totals.transfersCents ?? 0)}</>}
             </p>
             {s.stripeError && (
                 <p className="bg-red-500/10 text-red-400 text-xs p-3">

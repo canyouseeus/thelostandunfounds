@@ -3,7 +3,7 @@
  * (amounts and names changed). Run: npx tsx scripts/check-money-email-parse.ts
  */
 import assert from 'node:assert/strict';
-import { parseMoneyEmail, toCents, cleanMerchant, centralDay } from '../lib/api-handlers/admin/_money-email-parse';
+import { parseMoneyEmail, toCents, cleanMerchant, centralDay, guessExpense, guessFromNote } from '../lib/api-handlers/admin/_money-email-parse';
 
 const V = 'venmo@venmo.com';
 const C = 'cash@square.com';
@@ -28,6 +28,13 @@ assert.deepEqual([r.adjust.merchant, r.adjust.fromCents, r.adjust.toCents], ['TH
 r = p(V, 'Nicole Kuhn paid you $10.00', 'Nicole Kuhn paid you $10.00 Nicole Kuhn paid you $ 10 . 00 Pics See transaction Money credited to your Venmo account. Transaction details Date Oct 31, 2026 Transaction ID 1', '2026-11-01T03:47:02Z');
 assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on, r.row.scope],
   ['income', 10, 'Nicole Kuhn', 'Pics', '2026-10-31', 'business']);
+
+r = p(V, 'You paid Craig Jackson $10.00', 'You paid Craig Jackson $10.00 You paid Craig Jackson $ 10 . 00 Pedicab See transaction Transaction details Date Apr 19, 2026 Status Pending Transaction ID 1 Payment Method Venmo', '2026-04-20T02:10:00Z');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on, r.row.scope],
+  ['expense', 10, 'Craig Jackson', 'Pedicab', '2026-04-19', 'personal']);
+
+r = p(V, 'Venmo Rewards paid you $0.43', 'Venmo Rewards paid you 0.43! Venmo Rewards paid you $ 0 . 43 Cash back on your purchase at TARGET STORE T3342 Like Comment See transaction');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.category, r.row.scope, r.row.note], ['income', 0.43, 'other', 'personal', 'Cash back at TARGET STORE T3342']);
 
 r = p(V, 'You received $72.13 USD for selling 0.00096908 Bitcoin (BTC)');
 assert.deepEqual([r.type, r.row.action, r.row.usd_cents, r.row.sats], ['bitcoin', 'sell', 7213, 96908]);
@@ -70,5 +77,64 @@ assert.equal(p(C, 'Payment scheduled for tomorrow').type, 'skip');
 assert.equal(p(C, 'Your $26.94 payment at Scentbird was declined').type, 'skip');
 assert.equal(p(C, 'You borrowed $30').type, 'skip');
 assert.equal(p('cash-app@messages.cash.app', 'You spent $5.00 at Shell').type, 'skip');
+
+// Shapes seen in the first real import.
+r = p(C, 'You spent $6 at Electric Church', 'Electric Church $6.00 Transaction details Pending The merchant is finalizing this purchase.');
+assert.deepEqual([r.type, r.row.amount, r.row.counterparty], ['ledger', 6, 'Electric Church']);
+r = p(C, "You spent $51.19 at Jerry's Artarama Austi", "Jerry's Artarama Austi Yesterday at 3:16 PM $51.19 Completed Amount $51.19 Source Cash App Card");
+assert.deepEqual([r.type, r.adjust.fromCents, r.adjust.toCents], ['adjust', 5119, 5119]);
+r = p(C, 'The total for your transaction at Liberty New has been updated from $5 to $7');
+assert.deepEqual([r.type, r.adjust.fromCents, r.adjust.toCents], ['adjust', 500, 700]);
+r = p(C, 'You received 0.00007138 BTC ($5.00)');
+assert.deepEqual([r.type, r.row.action, r.row.usd_cents, r.row.sats], ['bitcoin', 'receive', 500, 7138]);
+r = p(C, 'You paid ₿8,292 ($7.00)');
+assert.deepEqual([r.row.action, r.row.usd_cents, r.row.sats], ['withdraw', 700, 8292]);
+r = p(C, 'You paid 0.00028243\u00a0BTC ($20.01)');
+assert.deepEqual([r.row.action, r.row.usd_cents, r.row.sats], ['withdraw', 2001, 28243]);
+r = p(C, 'You earned a weekly bitcoin bonus', 'Weekly bitcoin bonus Nov 03 at 3:07 PM $0.00 ₿1 Trade details Exchange rate $77647.45 Bitcoin amount ₿1 Fees $0.00');
+assert.deepEqual([r.row.action, r.row.sats], ['bonus', 1]);
+r = p(C, 'Payment sent', 'You paid Kaitlyn Cleary $20 Kaitlyn Cleary Today For Food $20.00 Transaction details Complete');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.scope], ['expense', 20, 'Kaitlyn Cleary', 'Food', 'personal']);
+r = p(C, 'Repayment Overdue', 'Repayment Overdue An interest charge of $0.26 has been applied to your $25.20 overdue repayment.');
+assert.deepEqual([r.row.amount, r.row.category, r.row.counterparty], [0.26, 'fees', 'Cash App Borrow']);
+assert.equal(p(C, 'Repayment Reminder', 'An interest charge of $0.26 will be applied tomorrow.').type, 'skip');
+r = p(C, '$0.07 late fee added');
+assert.deepEqual([r.row.amount, r.row.counterparty], [0.07, 'Afterpay']);
+r = p(V, 'McKaylyn z paid $7.00 to your Venmo account. Leave it in Venmo or transfer it to your bank account.', 'Mckaylyn z paid you $7.00 Mckaylyn z paid you $ 7 . 00 Photo See transaction Money credited to your Venmo account. Transaction details Date Oct 31, 2026 Transaction ID 5', '2026-11-01T03:33:04Z');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on], ['income', 7, 'McKaylyn z', 'Photo', '2026-10-31']);
+
+// Merchants looked up in Austin, by the names the card statements use.
+const cat = (m: string) => guessExpense(cleanMerchant(m)).category;
+assert.equal(cat('TST*THE LIBERTY - NEW'), 'nightlife');
+assert.equal(cat('Mothers Ruin Aust'), 'nightlife');
+assert.equal(cat('SQ *THE ELECTRIC CHURC'), 'nightlife');
+assert.equal(cat('TST*THE USUAL'), 'nightlife');
+assert.equal(cat('Usual'), 'nightlife');
+assert.equal(cat('TST* THE ONE'), 'nightlife');
+assert.equal(cat('CONNOISSEUR SMOKE LLC'), 'smoke_shop');
+assert.equal(cat('WORLD LIQUOR AND TOBAC'), 'liquor');
+assert.equal(cat('TARGET STORE T3342'), 'shopping');
+assert.equal(cat('QT 4175 INSIDE 11112 S'), 'shopping');
+assert.equal(cat('WHOLEFDS ATX#10721'), 'food');
+assert.equal(cat('SQ *GOLDEN TIGER'), 'food');
+assert.equal(cat('ROPPOLOS PIZZERIA'), 'food');
+assert.equal(cat('Mint Mobile'), 'phone');
+assert.equal(cat('APPLE CASH BALANCE ADD'), 'transfers');
+assert.equal(cat('Coinbase'), 'transfers');
+assert.deepEqual(guessExpense("JERRY'S ARTARAMA AUSTI"), { category: 'supplies', scope: 'personal' });
+assert.deepEqual(guessExpense('Adobe'), { category: 'software', scope: 'business' });
+assert.equal(cat('Shell'), 'travel');
+assert.equal(cat('St David S S Austin'), 'other');
+assert.equal(cat('BENELUX CORP'), 'other');
+assert.equal(guessFromNote('PediCab'), 'travel');
+assert.equal(guessFromNote('Groceries'), 'food');
+assert.equal(guessFromNote('🌯'), 'food');
+assert.equal(guessFromNote('Chicken and Beer'), 'food');
+assert.equal(guessFromNote('🍺'), 'nightlife');
+assert.equal(guessFromNote('Smokes'), 'smoke_shop');
+assert.equal(guessFromNote('🏀'), 'other');
+assert.equal(guessFromNote(null), 'other');
+r = p(C, 'Payment sent', 'You paid Kaitlyn Cleary $20 Kaitlyn Cleary Today For Food $20.00 Transaction details Complete');
+assert.equal(r.row.category, 'food');
 
 console.log('money email parser: all checks passed');
