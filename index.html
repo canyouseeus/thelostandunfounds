@@ -94,6 +94,31 @@
           <a href="/privacy" style="color: rgba(255, 255, 255, 0.6);">Privacy Policy</a>
           <a href="/terms" style="color: rgba(255, 255, 255, 0.6);">Terms of Service</a>
         </div>
+        <!-- Every other public page in the sitemap. The Ahrefs audit (Nov 2026)
+             flagged 16 orphan pages: URLs in sitemap.xml whose only incoming links
+             lived in React components (Footer.tsx and the hub pages), which a
+             crawler that does not run JS never sees. This shell is on every
+             pre-rendered page, so a link here gives each URL an incoming internal
+             link. Any new public route added to scripts/generate-sitemap.ts needs a
+             link here too. Column pages (/blog/<column>) come from the database, so
+             each post's pre-render links its own column instead. -->
+        <div
+          style="margin-top: 1rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; font-size: 0.75rem;">
+          <a href="/services/airbnb-photography" style="color: rgba(255, 255, 255, 0.5);">Airbnb Photography</a>
+          <a href="/services/real-estate-photography" style="color: rgba(255, 255, 255, 0.5);">Real Estate Photography</a>
+          <a href="/services/web-design" style="color: rgba(255, 255, 255, 0.5);">Web Design</a>
+          <a href="/services/video" style="color: rgba(255, 255, 255, 0.5);">Video</a>
+          <a href="/thelostarchives/all" style="color: rgba(255, 255, 255, 0.5);">All Articles</a>
+          <a href="/book-club/think-and-grow-rich" style="color: rgba(255, 255, 255, 0.5);">Think and Grow Rich Workbook</a>
+          <a href="/tools" style="color: rgba(255, 255, 255, 0.5);">Tool Box</a>
+          <a href="/tools/tiktok-downloader" style="color: rgba(255, 255, 255, 0.5);">TikTok Downloader</a>
+          <a href="/advertise" style="color: rgba(255, 255, 255, 0.5);">Advertise</a>
+          <a href="/support" style="color: rgba(255, 255, 255, 0.5);">Support</a>
+          <a href="/become-affiliate" style="color: rgba(255, 255, 255, 0.5);">Affiliate Program</a>
+          <a href="/king-midas-leaderboard" style="color: rgba(255, 255, 255, 0.5);">King Midas Leaderboard</a>
+          <a href="/docs" style="color: rgba(255, 255, 255, 0.5);">Documentation</a>
+          <a href="/docs/photographer-guide" style="color: rgba(255, 255, 255, 0.5);">Photographer Guide</a>
+        </div>
       </div>
     </div>
   </noscript>
