@@ -29,11 +29,11 @@ function ExpandableInfoCard({ title, body }: ExpandableInfoCardProps) {
             {({ isExpanded }) => (
                 <ExpandableTrigger>
                     <div className="bg-black flex flex-col cursor-pointer transition-transform duration-300 hover:-translate-y-1">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
                             <h3 className="text-xl font-bold text-white uppercase tracking-widest text-left">
                                 {title}
                             </h3>
-                            <span className="text-white text-sm leading-none mt-1 flex-shrink-0">
+                            <span className="text-white text-sm leading-none flex-shrink-0">
                                 {isExpanded ? '▼' : '▶'}
                             </span>
                         </div>
@@ -64,19 +64,17 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
             {({ isExpanded }) => (
                 <ExpandableTrigger>
                     <div className="bg-black flex flex-col cursor-pointer transition-transform duration-300 hover:-translate-y-1">
-                        <div className="flex items-start justify-between gap-4">
-                            <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter text-left">
-                                {title}
-                            </h2>
-                            <span className="text-white text-lg leading-none mt-2 flex-shrink-0">
-                                {isExpanded ? '▼' : '▶'}
-                            </span>
-                        </div>
-                        <p className="text-white text-base md:text-lg text-left mt-3">{intro}</p>
+                        <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter text-center">
+                            {title}
+                        </h2>
+                        <p className="text-white text-base md:text-lg text-center mt-3">{intro}</p>
+                        <span className="text-white text-lg leading-none mt-4 self-center" aria-hidden="true">
+                            {isExpanded ? '▲' : '▼'}
+                        </span>
                         <ExpandableContent preset="fade" stagger staggerChildren={0.05} keepMounted={false}>
                             <ul className="space-y-3 mt-4">
                                 {features.map((feature, i) => (
-                                    <li key={i} className="text-white font-medium text-left">
+                                    <li key={i} className="text-white font-medium text-center">
                                         {feature}
                                     </li>
                                 ))}
@@ -260,7 +258,7 @@ export default function BecomeAffiliate() {
 
             {/* Features (single expandable card) */}
             <div className="py-10 md:py-14 px-4 md:px-8 lg:px-12">
-                <div className="max-w-4xl">
+                <div className="max-w-4xl mx-auto">
                     <ExpandableFeatureList
                         title="Everything You Need To Succeed"
                         intro="Your dashboard has the links, tracking and payouts you need from day one."
@@ -273,7 +271,7 @@ export default function BecomeAffiliate() {
                             'Tax records through your Stripe account',
                         ]}
                     />
-                    <div className="mt-6 text-left flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
                         <button
                             onClick={handleJoin}
                             className="text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
