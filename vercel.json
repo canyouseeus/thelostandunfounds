@@ -85,6 +85,10 @@
       "schedule": "15 6 * * *"
     },
     {
+      "path": "/api/cron/balance-sweep",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/distribute-secret-santa",
       "schedule": "15 14 25 12 *"
     },

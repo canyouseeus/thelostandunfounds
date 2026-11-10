@@ -222,6 +222,10 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | `record_field_sale` | `{night, location?, cashApp?, venmo?, applePay?, cash?, saleCount?, notes?}` — a street night as revenue (no affiliate split); queues `owner_pay` for 10% |
 | `owner_pay` | `{fieldSaleId?, amount}` — transfer to the owner's Stripe Connect account; checks the **available** balance, short → `waiting_funds`, retried hourly for 3 days |
 
+The daily `/api/cron/balance-sweep` queues `move_funds` jobs itself (`requested_by: 'balance-sweep'`,
+key `balance-sweep-<Central date>-<to>`); see `lib/api-handlers/admin/_balance-sweep.ts`. It stops while a
+move is queued/running or one timed out, so mark a timed-out move `cancelled` once Stripe is checked.
+
 - Only these actions exist; the list lives in `lib/api-handlers/admin/_jobs.ts` and grows by PR.
   Each calls the same function as the admin-panel route.
 - A job runs **at most once**. One stuck in `running` is marked failed, not retried. Check whether
