@@ -1,4 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getStripe } from '../_booking-payment-utils.js'
+
+/** Available USD in the platform's Payments balance, in cents. */
+export async function availablePaymentsCents(): Promise<number> {
+  const balance = await getStripe().balance.retrieve()
+  return (balance.available || []).filter((b) => b.currency === 'usd').reduce((s, b) => s + b.amount, 0)
+}
 
 /**
  * Daily Stripe balance sweep — what /api/cron/balance-sweep queues.
@@ -163,4 +170,65 @@ export async function sweepBlocker(supabase: SupabaseClient): Promise<string | n
   const stuck = await rows(supabase.from('admin_jobs').select('id').eq('action', 'move_funds').eq('status', 'failed').like('error', 'Timed out%'), 'admin_jobs timed-out moves')
   if (stuck.length) return `move_funds job ${stuck[0].id} timed out and may have taken effect — check Stripe and cancel or fix it before sweeps resume`
   return null
+}
+
+export interface SweepRun {
+  trigger: string
+  skipped?: string
+  plan?: SweepPlan
+  queued: Array<{ to: string; amount: number; jobId?: string; duplicate?: boolean }>
+}
+
+/**
+ * Plan and queue one sweep. Called by the Stripe webhook when funds become
+ * available (`trigger` = the event id) and by the daily cron backstop
+ * (`trigger` = `cron-<Central date>`).
+ *
+ * No double moves, even when two runs overlap:
+ *  - a pot move's idempotency key is the amount already moved plus the
+ *    target it funds up to, so two runs that see the same state write the
+ *    same key and the database refuses the second;
+ *  - a business move's key is the trigger, so a redelivered webhook event
+ *    queues nothing, and two different triggers racing can't both pay out
+ *    in full because move_funds re-checks the live balance before each payout.
+ */
+export async function runBalanceSweep(
+  supabase: SupabaseClient,
+  getAvailableCents: () => Promise<number>,
+  opts: { trigger: string; dryRun?: boolean }
+): Promise<SweepRun> {
+  const run: SweepRun = { trigger: opts.trigger, queued: [] }
+  const blocker = await sweepBlocker(supabase)
+  if (blocker) { run.skipped = blocker; console.warn('[balance-sweep] skipped:', JSON.stringify(run)); return run }
+
+  const availableCents = await getAvailableCents()
+  const inputs = await loadSweepInputs(supabase, availableCents)
+  const plan = planSweep(inputs)
+  run.plan = plan
+  console.log('[balance-sweep] plan:', JSON.stringify({ trigger: opts.trigger, dryRun: !!opts.dryRun, ...plan }))
+  if (opts.dryRun || plan.moves.length === 0) return run
+
+  const notes = { king_midas: 'King Midas pot (sweep)', secret_santa: 'Secret Santa pot (sweep)', business: 'Remainder to business (sweep)' }
+  for (const m of plan.moves) {
+    const amount = m.cents / 100
+    const key = m.to === 'business'
+      ? `balance-sweep-business-${opts.trigger}`
+      : `balance-sweep-${m.to}-from-${inputs.movedCents[m.to]}-to-${m.to === 'king_midas' ? inputs.kingMidasTargetCents : inputs.secretSantaTargetCents}`
+    const { data, error } = await supabase
+      .from('admin_jobs')
+      .insert({
+        action: 'move_funds',
+        payload: { to: m.to, amount, note: notes[m.to] },
+        requested_by: 'balance-sweep',
+        note: `Sweep (${opts.trigger}): $${amount.toFixed(2)} to ${m.to} of $${(availableCents / 100).toFixed(2)} available, $${(plan.reservedCents / 100).toFixed(2)} reserved`,
+        idempotency_key: key,
+      })
+      .select('id')
+      .single()
+    if (error?.code === '23505') { run.queued.push({ to: m.to, amount, duplicate: true }); continue }
+    if (error) throw new Error(`queue ${m.to} failed: ${error.message}`)
+    run.queued.push({ to: m.to, amount, jobId: data?.id })
+  }
+  console.log('[balance-sweep] queued:', JSON.stringify(run.queued))
+  return run
 }

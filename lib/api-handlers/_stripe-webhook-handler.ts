@@ -8,7 +8,8 @@ import {
     queueOwnerCut,
 } from './affiliates/_commission-trigger.js'
 import { stripeFundsAvailableAt } from './_prodigi-fulfillment.js'
-import { sendDepositConfirmationEmail, sendPhotographerAssignment } from './_booking-payment-utils.js'
+import { sendDepositConfirmationEmail, sendPhotographerAssignment, getSupabaseAdmin } from './_booking-payment-utils.js'
+import { availablePaymentsCents, runBalanceSweep } from './admin/_balance-sweep.js'
 import { accrueCrewPayout, accruePhotoSalePayouts } from './crew/_shared.js'
 
 /**
@@ -94,6 +95,18 @@ export default async function handler(
                 await recordRefund(stripe, charge)
                 // We don't currently auto-reverse affiliate commissions on refund,
                 // but logging here makes it easy to add later.
+                break
+            }
+            case 'balance.available': {
+                // Payments cleared: split the newly available money into the
+                // King Midas / Secret Santa pots and sweep the rest to business.
+                // Never fails the webhook: a redelivery would only re-run the
+                // same idempotent sweep, and the daily cron is the backstop.
+                try {
+                    await runBalanceSweep(getSupabaseAdmin(), availablePaymentsCents, { trigger: event.id })
+                } catch (err: any) {
+                    console.error('[balance-sweep] webhook sweep failed:', err?.message || err)
+                }
                 break
             }
             default:
