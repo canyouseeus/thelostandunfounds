@@ -3,7 +3,7 @@
  * (amounts and names changed). Run: npx tsx scripts/check-money-email-parse.ts
  */
 import assert from 'node:assert/strict';
-import { parseMoneyEmail, toCents, cleanMerchant, centralDay } from '../lib/api-handlers/admin/_money-email-parse';
+import { parseMoneyEmail, toCents, cleanMerchant, centralDay, guessExpense, guessFromNote } from '../lib/api-handlers/admin/_money-email-parse';
 
 const V = 'venmo@venmo.com';
 const C = 'cash@square.com';
@@ -102,5 +102,39 @@ r = p(C, '$0.07 late fee added');
 assert.deepEqual([r.row.amount, r.row.counterparty], [0.07, 'Afterpay']);
 r = p(V, 'McKaylyn z paid $7.00 to your Venmo account. Leave it in Venmo or transfer it to your bank account.', 'Mckaylyn z paid you $7.00 Mckaylyn z paid you $ 7 . 00 Photo See transaction Money credited to your Venmo account. Transaction details Date Oct 31, 2026 Transaction ID 5', '2026-11-01T03:33:04Z');
 assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on], ['income', 7, 'McKaylyn z', 'Photo', '2026-10-31']);
+
+// Merchants looked up in Austin, by the names the card statements use.
+const cat = (m: string) => guessExpense(cleanMerchant(m)).category;
+assert.equal(cat('TST*THE LIBERTY - NEW'), 'nightlife');
+assert.equal(cat('Mothers Ruin Aust'), 'nightlife');
+assert.equal(cat('SQ *THE ELECTRIC CHURC'), 'nightlife');
+assert.equal(cat('TST*THE USUAL'), 'nightlife');
+assert.equal(cat('Usual'), 'nightlife');
+assert.equal(cat('TST* THE ONE'), 'nightlife');
+assert.equal(cat('CONNOISSEUR SMOKE LLC'), 'smoke_shop');
+assert.equal(cat('WORLD LIQUOR AND TOBAC'), 'liquor');
+assert.equal(cat('TARGET STORE T3342'), 'shopping');
+assert.equal(cat('QT 4175 INSIDE 11112 S'), 'shopping');
+assert.equal(cat('WHOLEFDS ATX#10721'), 'food');
+assert.equal(cat('SQ *GOLDEN TIGER'), 'food');
+assert.equal(cat('ROPPOLOS PIZZERIA'), 'food');
+assert.equal(cat('Mint Mobile'), 'phone');
+assert.equal(cat('APPLE CASH BALANCE ADD'), 'transfers');
+assert.equal(cat('Coinbase'), 'transfers');
+assert.deepEqual(guessExpense("JERRY'S ARTARAMA AUSTI"), { category: 'supplies', scope: 'personal' });
+assert.deepEqual(guessExpense('Adobe'), { category: 'software', scope: 'business' });
+assert.equal(cat('Shell'), 'travel');
+assert.equal(cat('St David S S Austin'), 'other');
+assert.equal(cat('BENELUX CORP'), 'other');
+assert.equal(guessFromNote('PediCab'), 'travel');
+assert.equal(guessFromNote('Groceries'), 'food');
+assert.equal(guessFromNote('🌯'), 'food');
+assert.equal(guessFromNote('Chicken and Beer'), 'food');
+assert.equal(guessFromNote('🍺'), 'nightlife');
+assert.equal(guessFromNote('Smokes'), 'smoke_shop');
+assert.equal(guessFromNote('🏀'), 'other');
+assert.equal(guessFromNote(null), 'other');
+r = p(C, 'Payment sent', 'You paid Kaitlyn Cleary $20 Kaitlyn Cleary Today For Food $20.00 Transaction details Complete');
+assert.equal(r.row.category, 'food');
 
 console.log('money email parser: all checks passed');

@@ -34,7 +34,7 @@ import { parseMoneyEmail, type MoneyEmail, type LedgerRow, type Adjustment, type
  */
 
 export const INCOME_CATEGORIES = ['photos', 'services', 'shop', 'tickets', 'street', 'other'] as const;
-export const EXPENSE_CATEGORIES = ['gear', 'software', 'website', 'loan', 'travel', 'food', 'supplies', 'crew', 'prints', 'marketing', 'fees', 'commissions', 'owner_pay', 'refunds', 'other'] as const;
+export const EXPENSE_CATEGORIES = ['gear', 'software', 'website', 'loan', 'travel', 'food', 'supplies', 'crew', 'prints', 'marketing', 'fees', 'commissions', 'owner_pay', 'refunds', 'nightlife', 'liquor', 'smoke_shop', 'shopping', 'phone', 'transfers', 'other'] as const;
 export const BILL_PRIORITIES = ['critical', 'high', 'normal', 'low'] as const;
 const BILL_FREQUENCIES = ['monthly', 'yearly', 'once'] as const;
 const BILL_SELECT = 'id, name, kind, category, amount_cents, balance_cents, frequency, next_due, priority, pay_from, notes, active';
@@ -226,10 +226,13 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
   type Month = { month: string; incomeCents: number; expenseCents: number; photoIncomeCents: number; ownerPayCents: number; personalExpenseCents: number };
   const months = new Map<string, Month>();
   const byCategory = { income: {} as Record<string, number>, expense: {} as Record<string, number> };
-  let siteIncome = 0, ledgerIncome = 0, stripeExpense = 0, personalExpense = 0;
+  let siteIncome = 0, ledgerIncome = 0, stripeExpense = 0, personalExpense = 0, transfers = 0;
   for (const l of lines) {
     // Negative lines are real: a refund on the business card brings money back.
     if (!l.month || !l.cents) continue;
+    // Money moved to his own Apple Cash or Coinbase is still his, so it is
+    // kept on the list but left out of money out.
+    if (l.kind === 'expense' && l.category === 'transfers') { transfers += l.cents; continue; }
     const m = months.get(l.month) ?? { month: l.month, incomeCents: 0, expenseCents: 0, photoIncomeCents: 0, ownerPayCents: 0, personalExpenseCents: 0 };
     if (l.kind === 'income') {
       if (l.cents < 0) continue;
@@ -260,6 +263,7 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
       stripeExpenseCents: stripeExpense,
       ownerPayCents: byCategory.expense.owner_pay ?? 0,
       personalExpenseCents: personalExpense,
+      transfersCents: transfers,
     },
     byCategory,
     monthly,

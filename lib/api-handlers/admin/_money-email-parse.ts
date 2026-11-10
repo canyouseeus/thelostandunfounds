@@ -112,19 +112,54 @@ const BUSINESS: [RegExp, string][] = [
   [/prodigi|printful|mpix|bay photo|whcc|vistaprint|moo\b|fedex|ups\b|usps|staples|office ?depot|uline/i, 'supplies'],
 ];
 
-const TRAVEL = /shell|chevron|exxon|mobil|valero|texaco|circle ?k|7-?eleven|buc-?ee|conoco|phillips 66|citgo|gulf|sunoco|lime|uber|lyft|parking|park ?mobile|metro|capmetro|airline|southwest|american air|delta|united/i;
-const FOOD = /whole ?foods|h-?e-?b|grocery|market|trader joe|taco|terry|burger|pizza|coffee|cafe|caf[eé]|kitchen|bar\b|pub|tavern|brew|lucky duck|glassmith|volstead|industry|doordash|uber ?eats|grubhub|restaurant|grill|diner|bakery|donut|chipotle|starbucks|mcdonald|wendy|sonic|whataburger|7-?eleven/i;
+const TRAVEL = /shell|chevron|exxon|mobil|valero|texaco|circle ?k|7-?eleven|buc-?ee|conoco|phillips 66|citgo|gulf|sunoco|lime|uber|lyft|parking|park ?mobile|metro|capmetro|airline|southwest|american air|delta|united|pedicab/i;
+const FOOD = /whole ?foods|wholefds|h-?e-?b|grocery|grocer\b|market|trader joe|taco|taqueria|terry|burger|pizza|pizzeria|coffee|cafe|caf[eé]|kitchen|bar\b|pub|tavern|brew|lucky duck|glassmith|volstead|industry|doordash|uber ?eats|grubhub|restaurant|grill|diner|bakery|donut|chipotle|starbucks|mcdonald|wendy|sonic|whataburger|7-?eleven|juiceland|halal|hopdoddy|torchy|two goose|fish shop|roppolo|jimmy john|espadas|chilantro|steak and fri|golden tiger|la colombe|bussin.?buns|hot dog/i;
+
+// Austin bars, clubs and music or comedy venues, each one looked up by name
+// and street (mostly East 6th, Rainey and downtown) before it went on this
+// list. Bank descriptors cut names short, so these match the start of a name.
+const NIGHTLIFE = /\bliberty\b|mothers? ruin|electric chur|twins (room|nightclub)|latchkey|creek (&|and) the cave|shangri-?la|hotel vegas|rose room|bluff'?s|mala fama|white horse|^(the )?usual$|white tiger|lovebirds|half step|violet crown|^the one$|^the nook$|yellow jacket|coyote ugly|low down lounge|austin garden|blind pig|saloon|lounge|nightclub/i;
+const LIQUOR = /liquor/i;
+const SMOKE = /smoke|tobacco|vape|cigar/i;
+const SHOPPING = /^target\b|nike|scentbird|shop ?24|scruffy|walgreens|\bcvs\b|^qt \d+ inside/i;
+const PHONE = /mint mobile|t-?mobile|verizon|cricket wireless/i;
+// Money moved to his own accounts elsewhere, not money spent.
+const TRANSFERS = /apple cash balance add|^coinbase$/i;
+const ART_SUPPLIES = /jerry'?s artarama/i;
+
+/** Square, Toast and Snack card prefixes: "TST* LATCHKEY" → "LATCHKEY". */
+const bare = (merchant: string) => merchant.replace(/^(sq|tst|snack|py)\s*\*\s*|^py\s+/i, '').replace(/\s*-\s*(new|aus\w*)$/i, '').trim();
 
 /**
  * A first guess from the merchant's name. Software, camera gear and print or
  * shipping costs read as business; everything else as personal. The owner can
- * flip any row on the money tab.
+ * flip any row on the money tab. Merchants that only a lookup could place
+ * (bars, smoke shops) were checked by name and address in Austin first.
  */
 export function guessExpense(merchant: string): { category: string; scope: Scope } {
-  for (const [re, category] of BUSINESS) if (re.test(merchant)) return { category, scope: 'business' };
-  if (TRAVEL.test(merchant) && !/7-?eleven/i.test(merchant)) return { category: 'travel', scope: 'personal' };
-  if (FOOD.test(merchant)) return { category: 'food', scope: 'personal' };
+  const name = bare(merchant);
+  for (const [re, category] of BUSINESS) if (re.test(name)) return { category, scope: 'business' };
+  if (TRANSFERS.test(name)) return { category: 'transfers', scope: 'personal' };
+  if (PHONE.test(name)) return { category: 'phone', scope: 'personal' };
+  if (ART_SUPPLIES.test(name)) return { category: 'supplies', scope: 'personal' };
+  if (LIQUOR.test(name)) return { category: 'liquor', scope: 'personal' };
+  if (SMOKE.test(name)) return { category: 'smoke_shop', scope: 'personal' };
+  if (SHOPPING.test(name)) return { category: 'shopping', scope: 'personal' };
+  if (TRAVEL.test(name) && !/7-?eleven/i.test(name)) return { category: 'travel', scope: 'personal' };
+  if (FOOD.test(name)) return { category: 'food', scope: 'personal' };
+  if (NIGHTLIFE.test(name)) return { category: 'nightlife', scope: 'personal' };
   return { category: 'other', scope: 'personal' };
+}
+
+/** Money sent to a person goes by its note: "Pedicab", "Groceries", "🍺". */
+export function guessFromNote(note: string | null): string {
+  const n = (note ?? '').trim();
+  if (!n) return 'other';
+  if (/pedicab|uber|lyft|\bride\b|\bgas\b|🚕|🚗/iu.test(n)) return 'travel';
+  if (/food|grocer|lunch|dinner|breakfast|pizza|coffee|chicken|pb&j|🍔|🌮|🌯|☕|🍕|🍟|🥪/iu.test(n)) return 'food';
+  if (/drinks?\b|beer|shots?\b|🍺|🍻|🍸|🍹|🥃/iu.test(n)) return 'nightlife';
+  if (/smokes?\b|cigs?\b|cigarettes?/iu.test(n)) return 'smoke_shop';
+  return 'other';
 }
 
 function income(email: MoneyEmail, source: string, method: string, who: string, cents: number, note: string | null, day: string): Parsed {
@@ -199,7 +234,7 @@ function parseVenmo(e: MoneyEmail, day: string): Parsed {
     return {
       type: 'ledger',
       row: {
-        kind: 'expense', amount: toCents(m[2]) / 100, occurred_on: when, category: 'other', method: 'Venmo',
+        kind: 'expense', amount: toCents(m[2]) / 100, occurred_on: when, category: guessFromNote(note), method: 'Venmo',
         counterparty: m[1].trim(), note, source: VENMO_SOURCE, source_ref: e.id, scope: 'personal',
       },
     };
@@ -356,7 +391,7 @@ function parseCashApp(e: MoneyEmail, day: string): Parsed {
     return {
       type: 'ledger',
       row: {
-        kind: 'expense', amount: toCents(p[2]) / 100, occurred_on: day, category: 'other', method: 'Cash App',
+        kind: 'expense', amount: toCents(p[2]) / 100, occurred_on: day, category: guessFromNote(note), method: 'Cash App',
         counterparty: p[1].trim(), note, source: CASHAPP_SOURCE, source_ref: e.id, scope: 'personal',
       },
     };
