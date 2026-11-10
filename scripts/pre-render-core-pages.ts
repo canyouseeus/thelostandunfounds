@@ -9,12 +9,66 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { replacePreRenderBlock } from './lib/pre-render-shell';
+import { fitDescription, jsonLd } from './lib/seo-meta';
+import { DOCS_FAQ, PHOTOGRAPHER_FAQ, type FAQItem } from '../src/data/faqs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const SITE_URL = 'https://www.thelostandunfounds.com';
+const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+
+/** ItemList for listing pages (Ahrefs: "Category page missing ItemList schema"). */
+function itemListSchema(name: string, items: { name: string; url: string }[]) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": name,
+        "numberOfItems": items.length,
+        "itemListElement": items.map((item, i) => ({
+            "@type": "ListItem",
+            "position": i + 1,
+            "name": item.name,
+            "url": item.url,
+        })),
+    };
+}
+
+/** FAQPage built from the same list the React page renders (src/data/faqs.ts). */
+function faqPageSchema(faqs: FAQItem[], url: string) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "url": url,
+        "mainEntity": faqs.map((f) => ({
+            "@type": "Question",
+            "name": f.question,
+            "acceptedAnswer": { "@type": "Answer", "text": f.answer },
+        })),
+    };
+}
+
+/** Article node for long-form guide pages. Author and publisher are the site organization. */
+function articleSchema(type: 'Article' | 'TechArticle', headline: string, description: string, url: string) {
+    return {
+        "@context": "https://schema.org",
+        "@type": type,
+        "headline": headline.substring(0, 110),
+        "description": description,
+        "url": url,
+        "inLanguage": "en-US",
+        "image": `${SITE_URL}/og-image.png`,
+        "author": { "@type": "Organization", "@id": ORGANIZATION_ID, "name": "THE LOST+UNFOUNDS", "url": SITE_URL },
+        "publisher": {
+            "@type": "Organization",
+            "@id": ORGANIZATION_ID,
+            "name": "THE LOST+UNFOUNDS",
+            "logo": { "@type": "ImageObject", "url": `${SITE_URL}/logo.png`, "width": 512, "height": 512 },
+        },
+        "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+    };
+}
 
 const CORE_PAGES = [
     { path: 'about', title: 'ABOUT | THE LOST+UNFOUNDS', description: 'Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision.' },
@@ -42,7 +96,7 @@ const CORE_PAGES = [
     { path: 'services/web-design', title: 'AUSTIN SMALL BUSINESS WEB DESIGN | THE LOST+UNFOUNDS', description: 'Website design and development for Austin small businesses, artists and brands. Starter sites from $1,500 to custom builds with booking and payments.' },
     { path: 'services/video', title: 'AUSTIN VIDEO CONTENT & BRAND REELS | THE LOST+UNFOUNDS', description: 'Short-form video and brand reels in Austin, TX. Reels shot alongside stills on half- and full-day content days, plus event highlight reels in 48 hours.' },
     { path: 'capabilities', title: 'CAPABILITIES | THE LOST+UNFOUNDS', description: 'Fabrication, photography, and build capabilities from THE LOST+UNFOUNDS. See what we can produce, from editorial shoots to full web development.' },
-    { path: 'terms/affiliates', title: 'AFFILIATE TERMS | THE LOST+UNFOUNDS', description: 'Terms for THE LOST+UNFOUNDS affiliate program: how you earn 42% of profit, how referrals are tracked, how payouts work through Stripe Connect, and the promotion rules.' },
+    { path: 'terms/affiliates', title: 'AFFILIATE TERMS | THE LOST+UNFOUNDS', description: 'Terms for THE LOST+UNFOUNDS affiliate program: how you earn 42% of profit, how referrals are tracked, how Stripe Connect payouts work, and promotion rules.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
     { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' },
@@ -92,8 +146,6 @@ async function preRenderCorePages() {
                 .replace(/>/g, '&gt;');
         };
 
-        const storefrontToken = process.env.FOURTHWALL_STOREFRONT_TOKEN || process.env.VITE_FOURTHWALL_STOREFRONT_TOKEN;
-
         for (const page of CORE_PAGES) {
             const pageDir = join(distPath, page.path);
             await mkdir(pageDir, { recursive: true });
@@ -101,100 +153,136 @@ async function preRenderCorePages() {
             let html = htmlTemplate;
 
             let shadowContent = '';
+            // One JSON-LD node, or an array of them.
             let shadowSchema: any = null;
 
-            // Handle shop specific pre-rendering
-            if (page.path === 'shop' && storefrontToken) {
+            // Shop pre-render. Products come from our own /api/shop/products,
+            // the same endpoint the React shop reads, on the deployment that is
+            // live while this build runs. The old block called Fourthwall directly
+            // and only when FOURTHWALL_STOREFRONT_TOKEN was set at build time; it
+            // was not, so /shop shipped with no products and no Product schema
+            // (Ahrefs, Nov 2026: "Product page missing Product schema").
+            if (page.path === 'shop') {
                 try {
-                    console.log('🛒 Fetching products for shadow pre-rendering...');
-                    const part1 = 'https://storefront-api.fourthwall.com/v1/collections/all/products?storefront_token=';
-                    const fwUrl = `${part1}${storefrontToken}`;
+                    const response = await fetch(`${SITE_URL}/api/shop/products`, { headers: { Accept: 'application/json' } });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data: any = await response.json();
+                    const products: any[] = (Array.isArray(data?.products) ? data.products : [])
+                        .filter((p: any) => p && p.title && p.price !== undefined && p.price !== null && p.price !== '');
 
-                    const response = await fetch(fwUrl);
-                    if (response.ok) {
-                        const data: any = await response.json();
-                        const products = data.offers || data.products || data.items || [];
+                    if (products.length > 0) {
+                        console.log(`✅ Found ${products.length} products for shop pre-rendering.`);
+                        const firstImage = (p: any): string | undefined => {
+                            const img = Array.isArray(p.images) ? p.images[0] : p.image;
+                            const url = typeof img === 'string' ? img : img?.url;
+                            return typeof url === 'string' && url.startsWith('https://') ? url : undefined;
+                        };
+                        const productUrl = (p: any): string =>
+                            typeof p.url === 'string' && p.url.startsWith('https://') ? p.url : `${SITE_URL}/shop`;
+                        const plainText = (v: unknown): string =>
+                            String(v ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-                        if (products.length > 0) {
-                            console.log(`✅ Found ${products.length} products for shadow pre-rendering.`);
+                        shadowSchema = {
+                            "@context": "https://schema.org",
+                            "@type": "ItemList",
+                            "name": "THE LOST+UNFOUNDS shop",
+                            "numberOfItems": products.length,
+                            "itemListElement": products.map((p: any, i: number) => {
+                                const image = firstImage(p);
+                                const description = plainText(p.description);
+                                const product: Record<string, any> = {
+                                    "@type": "Product",
+                                    "name": plainText(p.title),
+                                    "url": productUrl(p),
+                                    "brand": { "@type": "Brand", "name": "THE LOST+UNFOUNDS" },
+                                    "offers": {
+                                        "@type": "Offer",
+                                        "price": String(p.price),
+                                        "priceCurrency": p.currency || 'USD',
+                                        "availability": p.available === false
+                                            ? "https://schema.org/OutOfStock"
+                                            : "https://schema.org/InStock",
+                                        "url": productUrl(p),
+                                    },
+                                };
+                                if (description) product.description = description;
+                                if (image) product.image = image;
+                                return { "@type": "ListItem", "position": i + 1, "item": product };
+                            }),
+                        };
 
-                            shadowSchema = {
-                                "@context": "https://schema.org",
-                                "@type": "ItemList",
-                                "numberOfItems": products.length,
-                                "itemListElement": products.map((p: any, i: number) => ({
-                                    "@type": "ListItem",
-                                    "position": i + 1,
-                                    "item": {
-                                        "@type": "Product",
-                                        "name": p.title,
-                                        "description": p.description,
-                                        "url": `https://www.thelostandunfounds.com/shop`,
-                                        "image": p.images?.[0]?.url || p.images?.[0],
-                                        "offers": {
-                                            "@type": "Offer",
-                                            "price": p.price / 100 || p.price,
-                                            "priceCurrency": "USD",
-                                            "availability": "https://schema.org/InStock"
-                                        }
-                                    }
-                                }))
-                            };
-
-                            shadowContent = `
-                                <div id="shop-shadow-data" style="display: none;" aria-hidden="true">
-                                    ${products.map((p: any) => `
-                                        <article>
-                                            <h2>${escapeHtml(p.title)}</h2>
-                                            <p>${escapeHtml(p.description)}</p>
-                                            <img src="${p.images?.[0]?.url || p.images?.[0]}" alt="${escapeHtml(p.title)}" />
-                                            <span>Price: $${(p.price / 100 || p.price).toFixed(2)}</span>
-                                        </article>
-                                    `).join('\n')}
-                                </div>
+                        shadowContent = `
+                                <section id="static-shop-list" style="margin-top: 3rem;">
+                                    <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Products</h2>
+                                    ${products.map((p: any) => {
+                                        const image = firstImage(p);
+                                        const description = plainText(p.description);
+                                        return `
+                                        <article style="margin-bottom: 3rem;">
+                                            <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem; font-weight: bold;">${escapeHtml(plainText(p.title))}</h3>
+                                            ${description ? `<p style="color: rgba(255,255,255,0.6);">${escapeHtml(description)}</p>` : ''}
+                                            ${image ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(plainText(p.title))}" loading="lazy" decoding="async" style="max-width: 300px; height: auto;" />` : ''}
+                                            <p style="color: rgba(255,255,255,0.8);">$${escapeHtml(String(p.price))} ${escapeHtml(p.currency || 'USD')}</p>
+                                        </article>`;
+                                    }).join('\n')}
+                                </section>
                             `;
-                        }
                     }
                 } catch (err) {
-                    console.warn('⚠️  Could not fetch products for shadow pre-rendering:', err);
+                    console.warn('⚠️  Could not fetch products for shop pre-rendering:', err);
                 }
             }
 
-            // Handle Blog/Category listing pre-rendering
-            const isBlogCategory = page.path === 'thelostarchives';
-            if (isBlogCategory && supabase) {
+            // Blog listing pre-render: /thelostarchives (latest main-column posts)
+            // and /thelostarchives/all (every published post). /all used to ship
+            // with no list at all, so "the only page linking every post" linked
+            // none of them in its HTML, and neither page carried ItemList schema
+            // (Ahrefs, Nov 2026: "Category page missing ItemList schema", and
+            // posts with only one dofollow incoming internal link).
+            const isBlogListing = page.path === 'thelostarchives' || page.path === 'thelostarchives/all';
+            if (isBlogListing && supabase) {
                 try {
-                    const blogColumnMap: Record<string, string> = {
-                        'thelostarchives': 'main',
-                    };
-
-                    const column = blogColumnMap[page.path];
-                    const { data: posts } = await supabase
+                    let query = supabase
                         .from('blog_posts')
-                        .select('title, slug, excerpt, subdomain, created_at')
-                        .eq('published', true)
-                        .eq(column === 'main' ? 'blog_column' : 'blog_column', column) // Dummy check for main vs specific
-                        .order('created_at', { ascending: false })
-                        .limit(20);
+                        .select('title, slug, excerpt, subdomain, created_at, published_at')
+                        .eq('published', true);
+                    query = page.path === 'thelostarchives'
+                        ? query.eq('blog_column', 'main').order('created_at', { ascending: false }).limit(20)
+                        : query.order('published_at', { ascending: false });
+                    const { data: posts, error } = await query;
+                    if (error) throw error;
 
                     if (posts && posts.length > 0) {
+                        const postPath = (p: any) => p.subdomain ? `/blog/${p.subdomain}/${p.slug}` : `/thelostarchives/${p.slug}`;
+                        shadowSchema = itemListSchema(
+                            page.title.split(' | ')[0],
+                            posts.map((p: any) => ({ name: p.title, url: `${SITE_URL}${postPath(p)}` })),
+                        );
+                        // Contributor column pages (/blog/<subdomain>) were otherwise
+                        // linked only from their own posts' breadcrumbs.
+                        const columns = page.path === 'thelostarchives/all'
+                            ? [...new Set(posts.map((p: any) => p.subdomain).filter(Boolean))] as string[]
+                            : [];
+                        const columnLinks = columns.length === 0 ? '' : `
+                                <h2 style="font-size: 1.5rem; margin: 3rem 0 1.5rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Columns</h2>
+                                <ul style="list-style: none; padding: 0;">
+                                    ${columns.map((c) => `<li style="margin-bottom: 1rem;"><a href="/blog/${escapeAttr(c)}" style="color: white;">${escapeHtml(c.toUpperCase())}</a></li>`).join('\n')}
+                                </ul>`;
                         shadowContent = `
                             <nav id="static-blog-list" style="margin-top: 3rem;">
-                                <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Latest Articles</h2>
+                                <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">${page.path === 'thelostarchives' ? 'Latest Articles' : 'Every Article'}</h2>
                                 <ul style="list-style: none; padding: 0;">
-                                    ${posts.map((p: any) => {
-                            const url = p.subdomain ? `/blog/${p.subdomain}/${p.slug}` : `/thelostarchives/${p.slug}`;
-                            return `
+                                    ${posts.map((p: any) => `
                                         <li style="margin-bottom: 3rem;">
-                                            <a href="${url}" style="color: white; text-decoration: none; display: block;">
+                                            <a href="${escapeAttr(postPath(p))}" style="color: white; text-decoration: none; display: block;">
                                                 <h3 style="font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: bold; border-left: 2px solid white; padding-left: 1.5rem;">${escapeHtml(p.title)}</h3>
                                                 <p style="color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 1rem; padding-left: 1.5rem;">${escapeHtml(p.excerpt || '')}</p>
                                                 <span style="font-size: 0.8rem; color: rgba(255,255,255,0.3); padding-left: 1.5rem; font-weight: bold; text-transform: uppercase;">READ ARTICLE →</span>
                                             </a>
                                         </li>
-                                        `;
-                        }).join('\n')}
+                                        `).join('\n')}
                                 </ul>
+                                ${columnLinks}
                             </nav>
                         `;
                     }
@@ -232,6 +320,10 @@ async function preRenderCorePages() {
                     }
 
                     if (libraries && libraries.length > 0) {
+                        shadowSchema = itemListSchema(
+                            'THE GALLERY',
+                            libraries.map((lib: any) => ({ name: lib.name, url: `${SITE_URL}/gallery/${lib.slug}` })),
+                        );
                         shadowContent = `
                             <nav id="static-gallery-list" style="margin-top: 3rem;">
                                 <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Public Collections</h2>
@@ -329,7 +421,9 @@ async function preRenderCorePages() {
                     "name": "THE LOST+UNFOUNDS",
                     "description": page.description,
                     "url": `https://www.thelostandunfounds.com/${page.path}`,
-                    "areaServed": { "@type": "City", "name": "Austin", "addressRegion": "TX", "addressCountry": "US" },
+                    // City has no addressRegion/addressCountry properties; putting them
+                    // here failed schema.org validation on all five service pages.
+                    "areaServed": { "@type": "City", "name": "Austin", "containedInPlace": { "@type": "State", "name": "Texas" } },
                     "address": { "@type": "PostalAddress", "addressLocality": "Austin", "addressRegion": "TX", "addressCountry": "US" },
                     "priceRange": "$195–$6,000+",
                     "hasOfferCatalog": {
@@ -361,6 +455,36 @@ async function preRenderCorePages() {
                         <a href="/contact" style="display: inline-block; margin-top: 1.5rem; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.2em; color: black; background: white; padding: 1rem 2rem; text-decoration: none;">SCHEDULE A SESSION</a>
                     </section>
                 `;
+            }
+
+            // FAQ and guide pages. The FAQ copy lives in src/data/faqs.ts so the
+            // FAQPage markup always matches the questions the page shows, and
+            // the pre-render prints the same questions for crawlers without JS.
+            // Ahrefs (Nov 2026) reported "FAQ page missing FAQPage schema" and
+            // "Article page missing Article schema" on these guide pages.
+            const pageUrlForSchema = `${SITE_URL}/${page.path}`;
+            const faqsForPage: FAQItem[] | null =
+                page.path === 'docs' ? DOCS_FAQ :
+                page.path === 'docs/photographer-guide' ? PHOTOGRAPHER_FAQ : null;
+            if (faqsForPage) {
+                const nodes: any[] = [faqPageSchema(faqsForPage, pageUrlForSchema)];
+                if (page.path === 'docs/photographer-guide') {
+                    nodes.push(articleSchema('TechArticle', page.title.split(' | ')[0], page.description, pageUrlForSchema));
+                }
+                shadowSchema = nodes;
+                shadowContent = `
+                    <section id="static-faq" style="margin-top: 3rem;">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em;">Frequently Asked Questions</h2>
+                        ${faqsForPage.map((f) => `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: bold;">${escapeHtml(f.question)}</h3>
+                            <p style="color: rgba(255,255,255,0.7); font-size: 1rem; line-height: 1.6;">${escapeHtml(f.answer)}</p>
+                        </div>`).join('\n')}
+                    </section>
+                `;
+            }
+            if (page.path === 'book-club/think-and-grow-rich') {
+                shadowSchema = articleSchema('Article', page.title.split(' | ')[0], page.description, pageUrlForSchema);
             }
 
             // Breadcrumb Schema
@@ -399,8 +523,7 @@ async function preRenderCorePages() {
             }
 
             // Replace description
-            let description = page.description;
-            if (description.length > 155) description = description.substring(0, 152) + '...';
+            const description = fitDescription(page.description);
             const metaDescription = `<meta name="description" content="${escapeAttr(description)}" />`;
             if (html.includes('name="description"')) {
                 html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, metaDescription);
@@ -409,9 +532,9 @@ async function preRenderCorePages() {
             }
 
             // Inject Schemas
-            let allSchema = `<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>`;
-            if (shadowSchema) {
-                allSchema += `\n  <script type="application/ld+json">${JSON.stringify(shadowSchema)}</script>`;
+            let allSchema = `<script type="application/ld+json">${jsonLd(breadcrumbSchema)}</script>`;
+            for (const node of (Array.isArray(shadowSchema) ? shadowSchema : shadowSchema ? [shadowSchema] : [])) {
+                allSchema += `\n  <script type="application/ld+json">${jsonLd(node)}</script>`;
             }
             html = html.replace('</head>', `  ${allSchema}\n</head>`);
 

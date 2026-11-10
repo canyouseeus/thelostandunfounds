@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { replacePreRenderBlock } from './lib/pre-render-shell';
+import { fitTitle, fitDescription, jsonLd } from './lib/seo-meta';
 
 /**
  * Every image URL emitted below must be on this domain, served through
@@ -66,8 +67,27 @@ async function preRenderGalleries() {
       if (photoError) continue;
 
       const slug = lib.slug;
-      const title = `${lib.name} | The Gallery | THE LOST+UNFOUNDS`;
-      const description = lib.description || `Examine the findings in the ${lib.name} collection.`;
+      const escapeAttr = (str: string) => String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+      const rawTitle = fitTitle(`${lib.name} | The Gallery`);
+      // Every gallery description in the database is under 110 characters, so
+      // all three gallery pages were "Meta description too short" (Ahrefs,
+      // Nov 2026). The added sentences are true of every collection.
+      const photoCount = photos?.length || 0;
+      const rawDescription = fitDescription(
+        lib.description || `Examine the findings in the ${lib.name} collection.`,
+        [
+          `${photoCount > 0 ? `${photoCount} photographs` : 'Photographs'} from the ${lib.name} collection by THE LOST+UNFOUNDS.`,
+          'Browse the full set online.',
+        ],
+      );
+      const title = escapeAttr(rawTitle);
+      const description = escapeAttr(rawDescription);
       const galleryUrl = `https://www.thelostandunfounds.com/gallery/${slug}`;
 
       let html = htmlTemplate;
@@ -134,11 +154,12 @@ async function preRenderGalleries() {
         "contentUrl": `${SITE_URL}/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id)}&size=1600`,
         "name": p.title,
         "caption": p.description || p.title,
-        "author": "THE LOST+UNFOUNDS"
+        "author": { "@type": "Organization", "name": "THE LOST+UNFOUNDS", "url": SITE_URL },
+        "creditText": "THE LOST+UNFOUNDS"
       })) || [];
 
       const allSchema = [breadcrumbSchema, ...imageSchemas];
-      html = html.replace('</head>', `  <script type="application/ld+json">\n    ${JSON.stringify(allSchema)}\n    </script>\n</head>`);
+      html = html.replace('</head>', () => `  <script type="application/ld+json">\n    ${jsonLd(allSchema)}\n    </script>\n</head>`);
 
       // Pre-render content
       const photosHtml = photos?.map(p => `
