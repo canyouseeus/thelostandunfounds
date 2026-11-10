@@ -142,7 +142,7 @@ export default function KingMidasTicker() {
         </span>
       )}
       <span className="inline-flex items-center gap-2 mx-8">
-        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>SITE PROFIT TODAY:</span>
+        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>AFFILIATE PROFIT TODAY:</span>
         <span className="font-mono font-bold text-[11px]" style={{ color: '#4ade80', textShadow: GREEN_GLOW }}>
           ${tickerData.site_profit_today.toFixed(2)}
         </span>
