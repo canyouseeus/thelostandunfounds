@@ -29,16 +29,14 @@ function ExpandableInfoCard({ title, body }: ExpandableInfoCardProps) {
             {({ isExpanded }) => (
                 <ExpandableTrigger>
                     <div className="bg-black flex flex-col cursor-pointer transition-transform duration-300 hover:-translate-y-1">
-                        <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-white uppercase tracking-widest text-left">
-                                {title}
-                            </h3>
-                            <span className="text-white text-sm leading-none flex-shrink-0">
-                                {isExpanded ? '▼' : '▶'}
-                            </span>
-                        </div>
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest text-center">
+                            {title}
+                        </h3>
+                        <span className="text-white text-sm leading-none mt-3 self-center" aria-hidden="true">
+                            {isExpanded ? '▲' : '▼'}
+                        </span>
                         <ExpandableContent preset="fade" keepMounted={false}>
-                            <p className="text-white leading-relaxed text-left mt-3">{body}</p>
+                            <p className="text-white leading-relaxed text-center mt-3">{body}</p>
                         </ExpandableContent>
                     </div>
                 </ExpandableTrigger>
@@ -240,7 +238,7 @@ export default function BecomeAffiliate() {
 
             {/* Benefits Grid (expandable cards) */}
             <div className="py-10 md:py-14 px-4 md:px-8 lg:px-12">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl items-start">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto items-start">
                     <ExpandableInfoCard
                         title="High Commissions"
                         body="Earn 42% of the profit on every sale you refer. Your referrals are locked to you for life."
