@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '../../lib/api-handlers/crew/_shared.js';
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js';
 import { OWNER_AFFILIATE_CODE } from '../../lib/api-handlers/affiliates/_referral-tie.js';
 import { stripeMoneyOut, type CardSpend } from '../../lib/api-handlers/admin/_stripe-money-out.js';
+import { loadAcquisition, type Acquisition } from '../../lib/api-handlers/admin/_acquisition-cost.js';
 import { parseMoneyEmail, type MoneyEmail, type LedgerRow, type Adjustment, type BitcoinRow } from '../../lib/api-handlers/admin/_money-email-parse.js';
 
 /**
@@ -145,7 +146,7 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
     // as the invoice payment, so they are left out here, as in revenue-summary.
     supabase.from('deposit_checkins').select('amount_cents, received_at').eq('category', 'street'),
     supabase.from('refunds').select('amount_cents, created_at'),
-    supabase.from('affiliates').select('stripe_account_id')
+    supabase.from('affiliates').select('id, stripe_account_id')
       .or(`code.eq.${OWNER_AFFILIATE_CODE},affiliate_code.eq.${OWNER_AFFILIATE_CODE}`).maybeSingle(),
   ]);
 
@@ -211,14 +212,26 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
   // the page says money out is missing Stripe, rather than quietly showing less.
   let stripeError: string | null = null;
   let cardSpend: CardSpend[] = [];
+  const stripeUpkeep: { amount_cents: number; occurred_on: string }[] = [];
   try {
     const out = await stripeMoneyOut(owner.data?.stripe_account_id ?? null);
     cardSpend = out.cardSpend.slice(0, 50);
     for (const l of out.lines) {
       lines.push({ month: l.day.slice(0, 7), kind: 'expense', category: l.category, cents: l.cents, origin: 'stripe' });
+      if (l.category === 'website') stripeUpkeep.push({ amount_cents: l.cents, occurred_on: l.day });
     }
   } catch (err: any) {
     stripeError = err?.message || 'Stripe lookup failed';
+  }
+
+  // Cost per new customer. Read on its own, so a failure here leaves the rest
+  // of the summary standing and the page says the figure is missing.
+  let acquisition: Acquisition | null = null;
+  let acquisitionError: string | null = null;
+  try {
+    acquisition = await loadAcquisition(supabase, owner.data?.id ?? null, ledger, stripeUpkeep);
+  } catch (err: any) {
+    acquisitionError = err?.message || 'Could not work out cost per customer';
   }
 
   // personalExpenseCents is inside expenseCents: it is real money out for cash
@@ -269,6 +282,8 @@ async function buildSummary(supabase: ReturnType<typeof getSupabaseAdmin>, ledge
     monthly,
     cardSpend,
     stripeError,
+    acquisition,
+    acquisitionError,
   };
 }
 
