@@ -290,11 +290,11 @@ export default function BecomeAffiliate() {
 
             {/* CTA */}
             <div className="py-10 md:py-14 px-4 md:px-8 lg:px-12">
-                <div className="text-left max-w-4xl">
+                <div className="text-center max-w-4xl mx-auto">
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter">
                         Ready to Rule?
                     </h2>
-                    <p className="text-xl text-white mb-8 max-w-2xl">
+                    <p className="text-xl text-white mb-8 max-w-2xl mx-auto">
                         Pick your code, get your links and start sharing today.
                     </p>
                     <button
