@@ -7,7 +7,8 @@
  * reads appears in the first two hundred characters.
  *
  * What it reads:
- *   Venmo     card receipts, updated totals, "X paid you", Bitcoin sales
+ *   Venmo     card receipts, updated totals, "X paid you", "You paid X",
+ *             card cash back, Bitcoin sales
  *   Cash App  card spending, updated totals, payments received and sent,
  *             Bitcoin buys, sells, withdrawals, Lightning payments, coins
  *             received and bonuses, refunds, Borrow interest, Afterpay fees
@@ -169,6 +170,37 @@ function parseVenmo(e: MoneyEmail, day: string): Parsed {
       adjust: {
         source: VENMO_SOURCE, merchant, fromCents: toCents(a[1]), toCents: toC, occurred_on: day,
         source_ref: e.id, fallback: spend(e, VENMO_SOURCE, 'Venmo', m[1], toC, day),
+      },
+    };
+  }
+
+  // Card cash back: "Venmo Rewards paid you $0.43 … Cash back on your purchase
+  // at TARGET STORE T3342". Personal money back, not a photo sale.
+  if ((m = s.match(/^Venmo Rewards paid you \$([\d,]+\.\d{2})$/i))) {
+    const at = t.match(/Cash back on your purchase at (.+?) (?:Like|See transaction)/i)?.[1];
+    return {
+      type: 'ledger',
+      row: {
+        kind: 'income', amount: toCents(m[1]) / 100, occurred_on: day, category: 'other', method: 'Venmo',
+        counterparty: 'Venmo Rewards', note: at ? `Cash back at ${cleanMerchant(at)}` : 'Cash back',
+        source: VENMO_SOURCE, source_ref: e.id, scope: 'personal',
+      },
+    };
+  }
+
+  // Money sent to a person from the Venmo balance or a linked card:
+  // "You paid Craig Jackson $ 10 . 00 Pedicab See transaction … Date Apr 19, 2026".
+  if ((m = s.match(/^You paid (.+?) \$([\d,]+\.\d{2})$/))) {
+    const before = t.split(/ See transaction/i)[0] ?? '';
+    const tail = before.split(/You paid .+? \$ ?[\d,]+ ?\. ?\d{2}/i).pop()?.trim();
+    const note = tail && tail !== before.trim() ? tail : null;
+    const dated = t.match(/Transaction details Date ([A-Z][a-z]{2} \d{1,2}, \d{4})/)?.[1];
+    const when = dated ? centralDay(`${dated} 12:00 GMT-0600`) || day : day;
+    return {
+      type: 'ledger',
+      row: {
+        kind: 'expense', amount: toCents(m[2]) / 100, occurred_on: when, category: 'other', method: 'Venmo',
+        counterparty: m[1].trim(), note, source: VENMO_SOURCE, source_ref: e.id, scope: 'personal',
       },
     };
   }

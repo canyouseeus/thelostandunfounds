@@ -29,6 +29,13 @@ r = p(V, 'Nicole Kuhn paid you $10.00', 'Nicole Kuhn paid you $10.00 Nicole Kuhn
 assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on, r.row.scope],
   ['income', 10, 'Nicole Kuhn', 'Pics', '2026-10-31', 'business']);
 
+r = p(V, 'You paid Craig Jackson $10.00', 'You paid Craig Jackson $10.00 You paid Craig Jackson $ 10 . 00 Pedicab See transaction Transaction details Date Apr 19, 2026 Status Pending Transaction ID 1 Payment Method Venmo', '2026-04-20T02:10:00Z');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.counterparty, r.row.note, r.row.occurred_on, r.row.scope],
+  ['expense', 10, 'Craig Jackson', 'Pedicab', '2026-04-19', 'personal']);
+
+r = p(V, 'Venmo Rewards paid you $0.43', 'Venmo Rewards paid you 0.43! Venmo Rewards paid you $ 0 . 43 Cash back on your purchase at TARGET STORE T3342 Like Comment See transaction');
+assert.deepEqual([r.row.kind, r.row.amount, r.row.category, r.row.scope, r.row.note], ['income', 0.43, 'other', 'personal', 'Cash back at TARGET STORE T3342']);
+
 r = p(V, 'You received $72.13 USD for selling 0.00096908 Bitcoin (BTC)');
 assert.deepEqual([r.type, r.row.action, r.row.usd_cents, r.row.sats], ['bitcoin', 'sell', 7213, 96908]);
 
