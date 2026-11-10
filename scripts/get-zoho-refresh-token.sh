@@ -1,11 +1,14 @@
 #!/bin/bash
 
 # Zoho Refresh Token Generator
-# Gets a refresh token for the Zoho Mail API.
-# The client secret is hidden as you type, and the refresh token is copied
-# to your clipboard instead of being printed.
+# Opens Zoho's consent page, catches the redirect on localhost, exchanges the
+# code and copies the refresh token to your clipboard. Nothing secret is shown.
+#
+# One-time setup: the Zoho client must list this Authorized Redirect URI:
+#   http://localhost:8765/zoho/callback
 
-REDIRECT_URI="https://thelostandunfounds.com/auth/callback"
+PORT=8765
+REDIRECT_URI="http://localhost:${PORT}/zoho/callback"
 
 echo "🔐 Zoho Mail Refresh Token Generator"
 echo "===================================="
@@ -27,40 +30,53 @@ fi
 AUTH_URL="https://accounts.zoho.com/oauth/v2/auth?scope=ZohoMail.messages.CREATE,ZohoMail.accounts.READ,ZohoMail.organization.READ&client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&access_type=offline&prompt=consent"
 
 echo ""
-echo "📋 Step 1: Authorize the application"
-echo "===================================="
-echo ""
-echo "1. Open this URL in your browser:"
-echo ""
+echo "🌐 Opening Zoho in your browser. Click Accept, then come back here."
+echo "   (If it doesn't open, open this link yourself:)"
 echo "   $AUTH_URL"
 echo ""
-echo "2. Sign in and click 'Accept'."
-echo ""
-echo "3. The site will send you on to another page. Press Cmd+Y, right-click the"
-echo "   newest thelostandunfounds.com entry ('Not Found'), choose Copy link address."
-echo ""
-echo "4. Paste that whole link below (or just the code). The code expires in about 2 minutes."
-echo ""
 
-read -s -p "Paste the callback link or code (hidden): " AUTH_INPUT
-echo ""
+# Wait for Zoho to redirect back to localhost and grab the code.
+CODE_FILE=$(mktemp)
+python3 - "$PORT" "$CODE_FILE" <<'PY' &
+import sys, http.server, urllib.parse
+port, out = int(sys.argv[1]), sys.argv[2]
+class H(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        code = q.get("code", [""])[0]
+        err = q.get("error", [""])[0]
+        with open(out, "w") as f:
+            f.write(code if code else "ERROR:" + (err or "no code"))
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+        msg = "Done. You can close this tab and go back to the terminal." if code else "Zoho didn't return a code. Check the terminal."
+        self.wfile.write(f"<html><body style='font-family:sans-serif;padding:40px'><h2>{msg}</h2></body></html>".encode())
+    def log_message(self, *a):
+        pass
+srv = http.server.HTTPServer(("127.0.0.1", port), H)
+srv.timeout = 300
+srv.handle_request()
+PY
+SERVER_PID=$!
+sleep 0.5
 
-if [ -z "$AUTH_INPUT" ]; then
-  echo "❌ Authorization code is required"
+if command -v open >/dev/null 2>&1; then
+  open "$AUTH_URL"
+fi
+
+echo "⏳ Waiting for you to approve in the browser (5 minutes max)..."
+wait $SERVER_PID
+AUTH_CODE=$(cat "$CODE_FILE" 2>/dev/null)
+rm -f "$CODE_FILE"
+
+if [ -z "$AUTH_CODE" ] || [[ "$AUTH_CODE" == ERROR:* ]]; then
+  echo "❌ Didn't get a code from Zoho (${AUTH_CODE#ERROR:})."
+  echo "   Check that http://localhost:${PORT}/zoho/callback is an Authorized Redirect URI on the client."
   exit 1
 fi
 
-# Accept either the full callback URL or the bare code.
-if [[ "$AUTH_INPUT" == *"code="* ]]; then
-  AUTH_CODE="${AUTH_INPUT#*code=}"
-  AUTH_CODE="${AUTH_CODE%%&*}"
-else
-  AUTH_CODE="$AUTH_INPUT"
-fi
-
-echo ""
-echo "🔄 Step 2: Exchanging code for refresh token..."
-echo ""
+echo "🔄 Exchanging code for refresh token..."
 
 RESPONSE=$(curl -s -X POST "https://accounts.zoho.com/oauth/v2/token" \
   --data-urlencode "grant_type=authorization_code" \
@@ -69,11 +85,9 @@ RESPONSE=$(curl -s -X POST "https://accounts.zoho.com/oauth/v2/token" \
   --data-urlencode "redirect_uri=${REDIRECT_URI}" \
   --data-urlencode "code=${AUTH_CODE}")
 
-# Show only the error message, never tokens.
 if echo "$RESPONSE" | grep -q '"error"'; then
   ERR=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('error', 'unknown error'))" 2>/dev/null)
   echo "❌ Zoho returned an error: ${ERR:-unknown error}"
-  echo "   If it says invalid_code, the code expired. Run the script again and be quicker."
   exit 1
 fi
 
@@ -88,14 +102,13 @@ if command -v pbcopy >/dev/null 2>&1; then
   printf '%s' "$REFRESH_TOKEN" | pbcopy
   echo "✅ Refresh token copied to your clipboard (not shown)."
 else
-  echo "✅ Got a refresh token, but pbcopy isn't available to copy it."
-  read -p "Show it on screen? (y/N): " SHOW
+  read -p "✅ Got a refresh token, but can't copy it here. Show it on screen? (y/N): " SHOW
   if [[ "$SHOW" == "y" || "$SHOW" == "Y" ]]; then
     echo "$REFRESH_TOKEN"
   fi
 fi
 
-unset CLIENT_SECRET REFRESH_TOKEN RESPONSE AUTH_CODE AUTH_INPUT
+unset CLIENT_SECRET REFRESH_TOKEN RESPONSE AUTH_CODE
 
 echo ""
 echo "📋 Next: paste it into ZOHO_REFRESH_TOKEN in Vercel (Sensitive), then redeploy."
