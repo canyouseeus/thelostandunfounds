@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServiceSupabaseClient } from '../../lib/api-handlers/_supabase-admin-client';
+import { createServiceSupabaseClient } from '../../lib/api-handlers/_supabase-admin-client.js';
 
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 

@@ -8,5 +8,5 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // adjust the import in [...path].ts to point to ../../api/admin/sync-library.js
 
 // Let's stick to the pattern: logic in lib/api-handlers
-import handler from '../../api/admin/sync-library';
+import handler from '../../api/admin/sync-library.js';
 export default handler;
