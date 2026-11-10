@@ -1299,6 +1299,22 @@ const moneyWalletsTour: Tour = {
   ],
 };
 
+/* ── Cost per new customer on the money tab (2026-11-10) ── */
+
+const moneyAcquisitionTour: Tour = {
+  id: 'money-acquisition',
+  title: 'Cost per New Customer',
+  summary: 'Money In / Out now shows what each new customer cost you: spend to win them, divided by the customers who paid for the first time.',
+  group: 'new',
+  announce: '2026-11-10',
+  steps: [
+    openFromDock('money', 'Money In / Out', 'Tap Money In / Out to open it.'),
+    inPanel('money', { target: 'money-acquisition', title: 'Cost per New Customer', body: 'Commissions to other affiliates, KING MIDAS payouts, marketing and website upkeep, divided by new customers. The line under it splits it by channel.' }),
+    inPanel('money', { target: 'money-acquisition-upkeep', title: 'Website Upkeep', body: 'The site helps bring people in, so hosting, database and software count by default. Tap to see acquisition spend on its own.' }),
+    inPanel('money', { target: 'money-acquisition-months', title: 'By Month', body: 'Each month: what you spent, how many paid for the first time, and the cost of each.', missingNote: 'No months yet. They show up once someone pays.' }),
+  ],
+};
+
 /* ── Money insights (2026-11-10) ── */
 
 const moneyInsightsTour: Tour = {
@@ -1316,7 +1332,7 @@ const moneyInsightsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [moneyAcquisitionTour, moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 

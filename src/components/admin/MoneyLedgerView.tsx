@@ -48,6 +48,22 @@ interface BitcoinRow {
 
 interface CardSpend { id: string; day: string; merchant: string; category: string; cents: number }
 
+interface AcquisitionMonth { month: string; spendCents: number; upkeepCents: number; newCustomers: number; newAffiliates: number }
+
+interface Acquisition {
+    spendCents: number; newCustomers: number; costPerCustomerCents: number | null; newAffiliates: number;
+    upkeepCents: number; costPerCustomerWithUpkeepCents: number | null;
+    channels: {
+        affiliates: { spendCents: number; customers: number };
+        marketing: { spendCents: number };
+        kingMidas: { spendCents: number };
+        website: { spendCents: number };
+        organic: { customers: number };
+    };
+    ownerCommissionCents: number;
+    monthly: AcquisitionMonth[];
+}
+
 interface Summary {
     totals: {
         incomeCents: number; expenseCents: number; netCents: number; photoIncomeCents: number;
@@ -58,6 +74,8 @@ interface Summary {
     monthly: Month[];
     cardSpend: CardSpend[];
     stripeError: string | null;
+    acquisition?: Acquisition | null;
+    acquisitionError?: string | null;
 }
 
 interface LedgerResponse {
@@ -750,6 +768,87 @@ function TaxSection({ monthly }: { monthly: Month[] }) {
     );
 }
 
+/** Spend to win customers ÷ new customers, all time and by month. */
+function AcquisitionSection({ a, error }: { a: Acquisition | null | undefined; error: string | null | undefined }) {
+    // The website brings people in, so its upkeep counts by default.
+    const [withUpkeep, setWithUpkeep] = useState(true);
+    if (!a) {
+        return error ? (
+            <section data-tour="money-acquisition" className="space-y-3">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Cost per new customer</h3>
+                <p className="bg-red-500/10 text-red-400 text-xs p-3">Cost per new customer is missing right now: {error}</p>
+            </section>
+        ) : null;
+    }
+    const per = (spend: number, n: number) => (n ? usd(Math.round(spend / n)) : '—');
+    const recent = a.monthly.slice(0, 6);
+    const perCustomer = withUpkeep ? a.costPerCustomerWithUpkeepCents : a.costPerCustomerCents;
+    const spent = withUpkeep ? a.spendCents + a.upkeepCents : a.spendCents;
+    const upkeepMonths = a.monthly.filter(m => m.upkeepCents > 0).length;
+    return (
+        <section data-tour="money-acquisition" className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Cost per new customer · all time</h3>
+                <button
+                    type="button"
+                    data-tour="money-acquisition-upkeep"
+                    onClick={() => setWithUpkeep(v => !v)}
+                    aria-pressed={withUpkeep}
+                    className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-2 ${withUpkeep ? 'bg-white text-black' : 'bg-white/5 text-white/60'}`}
+                    style={surface}
+                >
+                    {withUpkeep ? 'Website upkeep counted' : 'Acquisition only'}
+                </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Per customer</p>
+                    <p className="text-xl font-black tabular-nums text-white">{perCustomer === null ? '—' : usd(perCustomer)}</p>
+                </div>
+                <Stat label={withUpkeep ? 'Spent, with upkeep' : 'Spent to get them'} cents={spent} accent="text-white/60" />
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">New customers</p>
+                    <p className="text-xl font-black tabular-nums text-white">{a.newCustomers.toLocaleString('en-US')}</p>
+                </div>
+                <div className="bg-white/5 p-4 text-left" style={surface}>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">New affiliates</p>
+                    <p className="text-xl font-black tabular-nums text-white">{a.newAffiliates.toLocaleString('en-US')}</p>
+                </div>
+            </div>
+            <p className="text-[10px] uppercase tracking-widest text-white/40 tabular-nums">
+                Affiliates {usd(a.channels.affiliates.spendCents)} for {a.channels.affiliates.customers} · {per(a.channels.affiliates.spendCents, a.channels.affiliates.customers)} each
+                {' · '}KING MIDAS {usd(a.channels.kingMidas.spendCents)}
+                {' · '}marketing {usd(a.channels.marketing.spendCents)}
+                {withUpkeep && <>{' · '}website {usd(a.channels.website.spendCents)}{upkeepMonths ? ` (${usd(Math.round(a.channels.website.spendCents / upkeepMonths))} a month)` : ''}</>}
+                {' · '}everyone else {a.channels.organic.customers} at $0.00
+            </p>
+            {recent.length > 0 && (
+                <div data-tour="money-acquisition-months" className="space-y-1">
+                    {recent.map(m => {
+                        const mSpent = withUpkeep ? m.spendCents + m.upkeepCents : m.spendCents;
+                        return (
+                            <div key={m.month} className="flex items-center gap-3 text-[10px] uppercase tracking-widest tabular-nums bg-white/5 px-3 py-2" style={surface}>
+                                <span className="w-20 shrink-0 text-white/40">{monthLabel(m.month)}</span>
+                                <span className="flex-1 text-white/60">
+                                    {usd(mSpent)} spent{withUpkeep && m.upkeepCents ? ` (${usd(m.upkeepCents)} website)` : ''} · {m.newCustomers} new{m.newAffiliates ? ` · ${m.newAffiliates} affiliate${m.newAffiliates === 1 ? '' : 's'}` : ''}
+                                </span>
+                                <span className="w-20 shrink-0 text-right font-bold text-white">{per(mSpent, m.newCustomers)}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            <p className="text-[11px] text-white/40 text-left">
+                Spend is commissions and MLM shares paid to other affiliates, KING MIDAS once paid, and anything logged as business
+                marketing. Website upkeep is business software and website costs in money out: Vercel and Supabase on the Stripe card,
+                and anything logged as software or website. Charges billed through Apple, like Claude and Google storage, only count
+                once they are logged. Your own affiliate code pays you, so its {usd(a.ownerCommissionCents)} is left out. A customer counts once,
+                in the month they first paid. Venmo and Cash App only give a name, so someone who also paid an invoice counts twice.
+            </p>
+        </section>
+    );
+}
+
 const DEFAULT_ACCOUNTS = ['Venmo', 'Cash App'];
 
 /**
@@ -1002,6 +1101,7 @@ export default function MoneyLedgerView() {
             {data && <BillsSection bills={data.bills ?? []} onChange={load} onError={setError} />}
 
             {s && <TaxSection monthly={s.monthly} />}
+            {s && <AcquisitionSection a={s.acquisition} error={s.acquisitionError} />}
 
             <DepositAccounting />
 
