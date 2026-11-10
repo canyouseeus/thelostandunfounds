@@ -285,20 +285,6 @@ export default function BecomeAffiliate() {
                             { name: 'Tax forms', detail: 'Stripe handles your tax forms, ID check and direct deposits.' },
                         ]}
                     />
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-                        <button
-                            onClick={handleJoin}
-                            className="text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
-                        >
-                            Start Earning Today
-                        </button>
-                        <Link
-                            to="/terms/affiliates"
-                            className="text-white/60 text-sm uppercase tracking-widest underline underline-offset-4 hover:text-white"
-                        >
-                            Affiliate Terms
-                        </Link>
-                    </div>
                 </div>
             </div>
 
