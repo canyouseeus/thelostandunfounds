@@ -84,13 +84,17 @@ export function AnimatedNumber({
         formatted = `${Math.round(num).toLocaleString()}%`;
       }
     } else {
-      const parts = formatted.split('.');
-      parts[0] = parseInt(parts[0]).toLocaleString();
-      formatted = parts.join('.');
+      // Split the bare number, not `formatted`: by now that already carries
+      // the currency sign, and parseInt('$190') is NaN.
+      const parts = num.toFixed(decimals).split('.');
+      parts[0] = Number(parts[0]).toLocaleString();
+      const body = parts.join('.');
       if (format === 'currency') {
-        formatted = `${currency}${parts[0]}.${parts[1]}`;
+        formatted = `${currency}${body}`;
       } else if (format === 'percentage') {
-        formatted = `${parts[0]}.${parts[1]}%`;
+        formatted = `${body}%`;
+      } else {
+        formatted = body;
       }
     }
 
