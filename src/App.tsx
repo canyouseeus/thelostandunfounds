@@ -55,6 +55,7 @@ import SageModeReports from './pages/SageModeReports'
 import BecomeAffiliate from './pages/BecomeAffiliate'
 import ScrollToTop from './components/ScrollToTop'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
+import Game from './pages/Game'
 import AdminAffiliates from './pages/AdminAffiliates'
 import Unsubscribe from './pages/Unsubscribe'
 import PhotoLibraryPage from './pages/PhotoLibraryPage'
@@ -399,6 +400,9 @@ function App() {
               </Route>
               <Route path="/king-midas-leaderboard" element={<Layout />}>
                 <Route index element={<KingMidasLeaderboard />} />
+              </Route>
+              <Route path="/game" element={<Layout />}>
+                <Route index element={<Game />} />
               </Route>
               <Route path="/gallery" element={<Layout />}>
                 <Route index element={<Gallery />} />

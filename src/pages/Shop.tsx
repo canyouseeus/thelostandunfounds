@@ -105,6 +105,14 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
     initAffiliateTracking();
   }, []);
 
+  // Deep link: /shop?item=<handle> opens that product (FR33DOM INC. merch drops link here).
+  const itemHandle = searchParams.get('item');
+  useEffect(() => {
+    if (!itemHandle || loading || products.length === 0) return;
+    const match = products.find((p) => p.handle === itemHandle);
+    if (match) setSelectedProduct(match);
+  }, [itemHandle, loading, products]);
+
   // Restore scroll position + the clicked product after the user returns
   // (browser back) from an external product page. ProductCard writes
   // 'shopReturn' to sessionStorage right before navigating to Fourthwall.

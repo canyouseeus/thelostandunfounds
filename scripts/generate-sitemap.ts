@@ -206,6 +206,14 @@ async function generateSitemap() {
     <priority>0.5</priority>
   </url>
 
+  <!-- FR33DOM INC. text RPG -->
+  <url>
+    <loc>${baseUrl}/game</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
   <!-- Full article index. The only page linking every post, so it carries the
        crawl path to the back catalogue. -->
   <url>

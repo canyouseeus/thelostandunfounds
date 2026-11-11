@@ -99,6 +99,7 @@ const CORE_PAGES = [
     { path: 'terms/affiliates', title: 'AFFILIATE TERMS | THE LOST+UNFOUNDS', description: 'Terms for THE LOST+UNFOUNDS affiliate program: how you earn 42% of profit, how referrals are tracked, how Stripe Connect payouts work, and promotion rules.' },
     { path: 'become-affiliate', title: 'AFFILIATE PROGRAM | THE LOST+UNFOUNDS', description: 'Earn up to 42% of profits with THE LOST+UNFOUNDS affiliate program. Share what you love, track your referrals, and get paid for every sale you drive.' },
     { path: 'docs', title: 'DOCUMENTATION | THE LOST+UNFOUNDS', description: 'Guides and documentation for THE LOST+UNFOUNDS platform, including the photographer guide, gallery workflows, and contributor resources.' },
+    { path: 'game', title: 'FR33DOM INC. | THE LOST+UNFOUNDS', description: 'FR33DOM INC. is a free text RPG from THE LOST+UNFOUNDS. Help SCOT33 build a world where everyone can be positive, and earn gold for real site credit.' },
     { path: 'king-midas-leaderboard', title: 'KING MIDAS LEADERBOARD | THE LOST+UNFOUNDS', description: 'Live standings for the King Midas affiliate competition. See top earners, pot distribution, and where you rank in the program.' },
     // Same omission as the note above, caught again in the August crawl: these
     // four are public, linked from pages that are themselves indexed, and were
