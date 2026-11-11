@@ -1,7 +1,7 @@
-import { CHAPTERS, FIRST_CHAPTER } from './story';
-import { ITEMS } from './items';
-import type { Choice, Effect, GameEvent, GameState, Requirement, Stat, StepResult, StoryNode } from './types';
-import { STATS } from './types';
+import { CHAPTERS, FIRST_CHAPTER } from './story.js';
+import { ITEMS } from './items.js';
+import type { Choice, Effect, GameEvent, GameState, Requirement, Stat, StepResult, StoryNode } from './types.js';
+import { STATS } from './types.js';
 
 /** Engine version stored in each save; bump when state shape changes. */
 export const ENGINE_VERSION = 1;

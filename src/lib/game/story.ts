@@ -1,4 +1,4 @@
-import type { Chapter, StoryNode } from './types';
+import type { Chapter, StoryNode } from './types.js';
 
 /**
  * FR33DOM INC. — story content.

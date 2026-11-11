@@ -1,4 +1,4 @@
-import type { Item } from './types';
+import type { Item } from './types.js';
 
 /**
  * Gear. Items with a `shopHandle` are merch drops: the same piece is sold for
