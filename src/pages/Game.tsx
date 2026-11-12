@@ -278,7 +278,7 @@ export default function Game() {
               <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-center leading-none">FR33 D. OHM INC.</h1>
               <button
                 onClick={() => setPhase('play')}
-                className="px-10 py-4 text-base font-black uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
+                className="game-start-blink px-10 py-4 text-base font-black uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
                 style={SQUARE}
                 data-tour="game-start"
               >
