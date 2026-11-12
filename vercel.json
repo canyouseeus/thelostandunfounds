@@ -95,6 +95,10 @@
     {
       "path": "/api/cron/indexnow",
       "schedule": "40 7 * * *"
+    },
+    {
+      "path": "/api/cron/zoho-gmail-copy",
+      "schedule": "*/30 * * * *"
     }
   ],
   "redirects": [
