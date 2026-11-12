@@ -272,27 +272,10 @@ export default function Game() {
 
           {phase !== 'play' ? (
             <section
-              className="min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center text-center gap-6"
+              className="min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center text-center gap-10"
               aria-label="Title screen"
             >
-              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center">FR33 D. OHM INC.</h1>
-              <picture className="block">
-                <source
-                  type="image/webp"
-                  srcSet="/game-art/wrld-bldr-3000-poster-600.webp 600w, /game-art/wrld-bldr-3000-poster-1200.webp 1200w"
-                  sizes="(min-width: 768px) 360px, min(300px, calc(100vw - 2rem))"
-                />
-                <img
-                  src="/game-art/wrld-bldr-3000-poster-600.png"
-                  width={600}
-                  height={800}
-                  alt="WRLD BLDR 3000 poster: BUILD YOUR OWN REALITY! A boxy robot, Model 666, pops out of its FR33 D. OHM INC. WRLD BLDR 3000 Deluxe Edition box, with the THE LOST+UNFOUNDS logo below."
-                  className="block h-auto w-auto max-w-[min(300px,calc(100vw-2rem))] md:max-w-[360px] max-h-[50vh] mx-auto"
-                  style={SQUARE}
-                  decoding="async"
-                  fetchPriority="high"
-                />
-              </picture>
+              <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-center leading-none">FR33 D. OHM INC.</h1>
               <button
                 onClick={() => setPhase('play')}
                 className="px-10 py-4 text-base font-black uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
