@@ -210,6 +210,11 @@ select status, http_status, result, error from admin_jobs where id = '<id>';
 | action | payload |
 |---|---|
 | `stripe_balance` | `{}` — read-only |
+| `mail_folders` | `{}` — read-only. The Zoho mailbox's folders and their ids |
+| `mail_list` | `{folderId, limit?, start?}` — read-only. Newest messages in a folder |
+| `mail_search` | `{query, folderId?, limit?}` — read-only. Zoho syntax: `sender:example.com`, `entire:word` (plain words 400) |
+| `mail_read` | `{messageId, folderId?}` — read-only. One message's body (ids as strings) |
+| `mail_send` | `{to, cc?, bcc?, subject, content, from?, branded?, inReplyTo?}` — sends as admin@ unless `from` (a thelostandunfounds.com address); plain text unless `branded: true`; needs `idempotency_key`; 10 per hour. Only on the owner's yes to the exact draft and recipients |
 | `create_invoice` | `{clientName, clientEmail, clientPhone?, description, eventDate?, lineItems[]}` |
 | `create_payment_link` | `{invoiceNumber}` |
 | `send_invoice` | `{invoice_number \| invoice_id, to_email?, message?, test?}` — a real send CCs media@; `test:true` goes to `to_email` only, no CC |
