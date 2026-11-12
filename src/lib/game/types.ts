@@ -49,9 +49,25 @@ export interface Choice {
   requires?: Requirement;
 }
 
+/** Poster art shown in a scene (files in public/game-art/cutouts). */
+export interface SceneArt {
+  /** File stem: `/game-art/cutouts/<stem>.webp` (1200w) and `<stem>-600.webp`. */
+  stem: string;
+  alt: string;
+  /** Intrinsic size of the 1200w file, to reserve space while it loads. */
+  width: number;
+  height: number;
+  /** Black-on-white art sits on a white card; white art sits on the dark page. */
+  card: boolean;
+  /** Max display width in px. */
+  maxWidth: number;
+}
+
 export interface StoryNode {
   id: string;
   title?: string;
+  /** Optional art shown above the scene text. */
+  art?: SceneArt;
   text: string[];
   /** Applied once, on arrival. */
   onEnter?: Effect;

@@ -348,6 +348,24 @@ export default function Game() {
               CHAPTER {chapter.number}: {chapter.title}
             </div>
             {node.title && <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight mb-4">{node.title}</h2>}
+            {node.art && (
+              <figure
+                className={`mx-auto mb-5 w-full ${node.art.card ? 'bg-white p-3 sm:p-5' : ''}`}
+                style={{ ...SQUARE, maxWidth: node.art.maxWidth }}
+              >
+                <img
+                  src={`/game-art/cutouts/${node.art.stem}.webp`}
+                  srcSet={`/game-art/cutouts/${node.art.stem}-600.webp 600w, /game-art/cutouts/${node.art.stem}.webp 1200w`}
+                  sizes={`(max-width: 480px) 90vw, ${node.art.maxWidth}px`}
+                  width={node.art.width}
+                  height={node.art.height}
+                  alt={node.art.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="block w-full h-auto"
+                />
+              </figure>
+            )}
             <div className="space-y-3 text-white/90 leading-relaxed text-left">
               {node.text.map((p, i) => <p key={i}>{p}</p>)}
             </div>

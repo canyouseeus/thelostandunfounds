@@ -29,6 +29,14 @@ const ch1: Chapter = {
     {
       id: 'ch1.start',
       title: 'THE BOX',
+      art: {
+        stem: 'wrld-bldr-3000-robot-and-box',
+        alt: 'The WRLD BLDR 3000 Deluxe Edition by FR33 D. OHM INC.: a boxy robot with antennae pops out of its package beside the box label.',
+        width: 1200,
+        height: 995,
+        card: true,
+        maxWidth: 420,
+      },
       text: [
         'The box is taller than SCOT33. Across the side, in big friendly letters: FR33 D. OHM INC. PRESENTS THE WRLD BLDR 3000 DELUXE EDITION. PERSONAL WORLD GENERATOR. SOME ASSEMBLY REQUIRED.',
         'SCOT33 has wanted one of these his whole life. Not for himself. He wants to build a world where everyone gets to feel the way he feels right now.',
@@ -69,6 +77,14 @@ const ch1: Chapter = {
     {
       id: 'ch1.lostfound',
       title: 'DELUXE EDITION EXTRAS',
+      art: {
+        stem: 'build-your-own-reality-headline-white',
+        alt: 'BUILD YOUR OWN REALITY!',
+        width: 1200,
+        height: 1105,
+        card: false,
+        maxWidth: 300,
+      },
       text: [
         'At the bottom of the box is the Deluxe Edition bonus: a black tee with SCOT33\'s own face on it. He puts it on at once. The WRLD BLDR\'s sad face flips into a smile.',
         'WORLD SEED ACCEPTED. GENERATING WORLD ONE.',
@@ -137,6 +153,14 @@ const ch1: Chapter = {
     {
       id: 'ch1.end',
       title: 'WORLD ONE IS LIVE',
+      art: {
+        stem: 'wrld-bldr-3000-artwork',
+        alt: 'The WRLD BLDR 3000 poster: BUILD YOUR OWN REALITY! above the robot and its Deluxe Edition box, signed THE LOST+UNFOUNDS.',
+        width: 1200,
+        height: 1787,
+        card: true,
+        maxWidth: 360,
+      },
       text: [
         'The visitor steps off the boat, looks around and smiles without meaning to. SCOT33 puts up a sign: WORLD ONE. EVERYONE WELCOME. BE AS POSITIVE AS YOU LIKE.',
         'The WRLD BLDR chimes. NEW MESSAGE: "Congratulations! Your world has been selected for the WRLD BLDR EXPO. A collector called THE GILDED MAN would like to make you an offer."',
