@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   UserIcon,
   DocumentTextIcon,
@@ -238,6 +239,98 @@ function RecordPaymentForm({
   );
 }
 
+/**
+ * Confirm step for the invoice Send button (SAGE request #206). A click on
+ * Send only opens this; nothing is emailed until Confirm is pressed here.
+ * Cancel, Escape or a click outside closes it and sends nothing. Enter does
+ * not submit, so a stray keypress can't send.
+ */
+function SendInvoiceConfirm({
+  invoice,
+  onCancel,
+  onConfirm,
+}: {
+  invoice: Invoice;
+  onCancel: () => void;
+  onConfirm: (toEmail: string) => void;
+}) {
+  const clientEmail = invoice.clients?.email || '';
+  const clientName = invoice.clients?.name || '';
+  const [email, setEmail] = useState(clientEmail);
+  const to = email.trim();
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to);
+  const alreadySent = invoice.status === 'sent' || invoice.status === 'paid' || invoice.status === 'overdue';
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100005] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="send-invoice-title"
+      onClick={onCancel}
+    >
+      <div className="w-full max-w-md bg-black p-8 text-left" style={{ borderRadius: 0 }} onClick={(e) => e.stopPropagation()}>
+        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-4">
+          <PaperAirplaneIcon className="w-4 h-4" />
+          Confirm before sending
+        </p>
+        <h2 id="send-invoice-title" className="text-2xl font-black uppercase tracking-widest text-white mb-2">
+          Send {invoice.invoice_number}?
+        </h2>
+        <p className="text-sm text-white/70 mb-6">
+          {clientName ? `${clientName} · ` : ''}{fmtUSD(invoice.total)}
+        </p>
+
+        <label className="block mb-2">
+          <span className="block text-[9px] text-white/40 uppercase tracking-widest mb-1.5">Email it to</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+            placeholder="client@example.com"
+            className="w-full bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:bg-white/10 transition-colors"
+          />
+        </label>
+        {!clientEmail && (
+          <p className="text-[10px] uppercase tracking-widest text-amber-400/80 mb-2">No email on file for this client</p>
+        )}
+        {alreadySent && (
+          <p className="text-[10px] uppercase tracking-widest text-amber-400/80 mb-2">
+            This invoice was already sent. Confirming emails it again.
+          </p>
+        )}
+
+        <div className="flex items-center gap-3 flex-wrap mt-6">
+          <button
+            onClick={() => valid && onConfirm(to)}
+            disabled={!valid}
+            className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Confirm &amp; send
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white/5 text-white hover:bg-white/10 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+        <p className="mt-6 text-xs text-white/40 leading-relaxed break-all">
+          {valid ? `One email goes to ${to} when you press Confirm.` : 'Enter a valid email address to send.'}
+        </p>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function AdminInvoices() {
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -252,19 +345,12 @@ export default function AdminInvoices() {
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
 
-  async function sendInvoice(inv: Invoice) {
+  // Send never emails on the first click: it opens SendInvoiceConfirm, which
+  // names the recipient and only calls the API on an explicit confirm.
+  const [confirmInv, setConfirmInv] = useState<Invoice | null>(null);
+
+  async function sendInvoice(inv: Invoice, to_email: string) {
     if (sendingId) return;
-    const clientEmail = (inv.clients as any)?.email || '';
-    const promptMsg = clientEmail
-      ? `Send ${inv.invoice_number} to ${clientEmail}?\n\n(Leave blank to use that address, or enter a different email to override.)`
-      : `No email on file for this client. Enter an email to send ${inv.invoice_number} to:`;
-    const override = window.prompt(promptMsg, clientEmail);
-    if (override === null) return;
-    const to_email = override.trim() || clientEmail;
-    if (!to_email) {
-      alert('No recipient email provided.');
-      return;
-    }
     setSendingId(inv.id);
     try {
       const res = await fetch('/api/invoices/send', {
@@ -469,7 +555,7 @@ export default function AdminInvoices() {
                       </a>
                     )}
                     <button data-tour="inv-send"
-                      onClick={(e) => { e.stopPropagation(); sendInvoice(inv); }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmInv(inv); }}
                       disabled={sendingId === inv.id}
                       title="Send invoice email to client"
                       className={cn(
@@ -832,6 +918,18 @@ export default function AdminInvoices() {
             </div>
           )}
         </section>
+
+        {confirmInv && (
+          <SendInvoiceConfirm
+            invoice={confirmInv}
+            onCancel={() => setConfirmInv(null)}
+            onConfirm={(toEmail) => {
+              const inv = confirmInv;
+              setConfirmInv(null);
+              sendInvoice(inv, toEmail);
+            }}
+          />
+        )}
 
     </div>
   );
