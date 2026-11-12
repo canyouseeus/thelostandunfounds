@@ -35,6 +35,9 @@
     "api/admin/drive-ingest.ts": {
       "maxDuration": 300
     },
+    "api/newsletter/[...path].ts": {
+      "maxDuration": 300
+    },
     "api/**/*.ts": {
       "maxDuration": 60
     }

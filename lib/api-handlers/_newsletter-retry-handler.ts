@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { processEmailContent } from '../email-template.js'
-import { delay, getZohoAuthContext, sendZohoEmail as sendZohoEmailUtil } from './_zoho-email-utils.js'
+import { createNewsletterSender } from './_newsletter-delivery.js'
 
 /**
  * Build recipient HTML with unsubscribe link
@@ -11,60 +11,14 @@ function buildRecipientHtml(rawHtml: string, email: string): string {
   return processEmailContent(rawHtml, email)
 }
 
-// Check if Resend is configured
-function isResendConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY
-}
-
-interface ResendEmailResult {
-  success: boolean
-  id?: string
-  error?: string
-}
-
-// Send email via Resend API
-async function sendResendEmail(
-  to: string,
-  subject: string,
-  html: string
-): Promise<ResendEmailResult> {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: to,
-        subject: subject,
-        html: html,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.message || data.error?.message || `Resend error: ${response.status}`
-      }
-    }
-
-    return { success: true, id: data.id }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to send email' }
-  }
-}
+// Stop with this much of the function's 300s limit left so logs get written.
+const TIME_BUDGET_MS = 250_000
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  const startedAt = Date.now()
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -152,104 +106,82 @@ export default async function handler(
       return res.status(400).json({ error: 'No failed emails to retry. All subscribers may have already received this newsletter.' })
     }
 
-    // Determine which email provider to use
-    const useResend = isResendConfigured()
-    console.log(`Retry using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
+    // Resend first, Zoho when Resend is out of room or refuses, held when
+    // neither has room. See _newsletter-delivery.ts.
+    const sender = await createNewsletterSender(supabase, {
+      allowZoho: !!(process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL),
+    })
 
-    // Initialize Zoho if needed
-    let zohoAuth: any = null
+    let emailsSent = 0
+    let emailsFailed = 0
+    let emailsHeld = 0
+    let holdReason = ''
+    let providerColumn = true
+    const results: { email: string; status: 'sent' | 'failed' | 'pending'; provider?: string; error?: string }[] = []
 
-    if (!useResend) {
-      try {
-        zohoAuth = await getZohoAuthContext()
-        console.log('Zoho auth context initialized:', {
-          accountId: zohoAuth.accountId,
-          fromEmail: zohoAuth.fromEmail
-        })
-      } catch (error: any) {
-        throw new Error(`Failed to authenticate with Zoho: ${error.message}`)
+    const writeLog = async (email: string, fields: Record<string, any>) => {
+      const run = (f: Record<string, any>) =>
+        isLegacyRetry
+          ? supabase.from('newsletter_send_logs').insert({ campaign_id: campaignId, subscriber_email: email, ...f })
+          : supabase.from('newsletter_send_logs').update(f).eq('campaign_id', campaignId).eq('subscriber_email', email)
+      const strip = (f: Record<string, any>) => {
+        const { provider: _provider, ...rest } = f
+        return rest
+      }
+      let { error } = await run(providerColumn ? fields : strip(fields))
+      if (error && providerColumn && 'provider' in fields && /provider/i.test(error.message || '')) {
+        // Migration not applied yet: log without the provider.
+        providerColumn = false
+        ;({ error } = await run(strip(fields)))
+      }
+      if (error) console.error(`[newsletter-retry] could not log ${email}:`, error.message)
+    }
+
+    const holdRest = async (from: number, reason: string) => {
+      holdReason = reason
+      for (const rest of emailsToRetry.slice(from)) {
+        emailsHeld++
+        results.push({ email: rest, status: 'pending', error: reason })
+        await writeLog(rest, { status: 'pending', error_message: reason, sent_at: null })
       }
     }
 
-    // Send emails
-    let emailsSent = 0
-    let emailsFailed = 0
-    const results: { email: string; status: 'sent' | 'failed'; error?: string }[] = []
+    for (let i = 0; i < emailsToRetry.length; i++) {
+      const email = emailsToRetry[i]
 
-    for (const email of emailsToRetry) {
-      try {
-        const recipientHtml = buildRecipientHtml(campaign.content_html, email)
-
-        // Use Resend or Zoho based on configuration
-        const result = useResend
-          ? await sendResendEmail(email, campaign.subject, recipientHtml)
-          : await sendZohoEmailUtil({
-            auth: zohoAuth,
-            to: email,
-            subject: campaign.subject,
-            htmlContent: recipientHtml
-          })
-
-        if (result.success) {
-          emailsSent++
-          results.push({ email, status: 'sent' })
-
-          // Upsert log entry (insert if not exists, update if exists)
-          if (isLegacyRetry) {
-            await supabase
-              .from('newsletter_send_logs')
-              .insert({
-                campaign_id: campaignId,
-                subscriber_email: email,
-                status: 'sent',
-                error_message: null,
-                sent_at: new Date().toISOString()
-              })
-          } else {
-            await supabase
-              .from('newsletter_send_logs')
-              .update({
-                status: 'sent',
-                error_message: null,
-                sent_at: new Date().toISOString()
-              })
-              .eq('campaign_id', campaignId)
-              .eq('subscriber_email', email)
-          }
-        } else {
-          emailsFailed++
-          results.push({ email, status: 'failed', error: result.error })
-
-          // Upsert log entry with error
-          if (isLegacyRetry) {
-            await supabase
-              .from('newsletter_send_logs')
-              .insert({
-                campaign_id: campaignId,
-                subscriber_email: email,
-                status: 'failed',
-                error_message: result.error,
-                sent_at: null
-              })
-          } else {
-            await supabase
-              .from('newsletter_send_logs')
-              .update({
-                error_message: result.error
-              })
-              .eq('campaign_id', campaignId)
-              .eq('subscriber_email', email)
-          }
-        }
-      } catch (error: any) {
-        emailsFailed++
-        results.push({ email, status: 'failed', error: error.message })
+      if (Date.now() - startedAt > TIME_BUDGET_MS) {
+        await holdRest(i, 'Held: the retry ran out of time and resumes automatically')
+        break
       }
 
-      // Rate limiting delay
-      const throttleDelay = useResend ? 550 : 750
-      if (emailsSent + emailsFailed < emailsToRetry.length) {
-        await delay(throttleDelay)
+      let outcome
+      try {
+        outcome = await sender.send(email, campaign.subject, buildRecipientHtml(campaign.content_html, email))
+      } catch (error: any) {
+        outcome = { status: 'failed' as const, provider: undefined, error: error?.message || 'Unknown error' }
+      }
+
+      if (outcome.status === 'sent') {
+        emailsSent++
+        results.push({ email, status: 'sent', provider: outcome.provider })
+        await writeLog(email, {
+          status: 'sent',
+          error_message: null,
+          sent_at: new Date().toISOString(),
+          provider: outcome.provider,
+        })
+      } else if (outcome.status === 'failed') {
+        emailsFailed++
+        results.push({ email, status: 'failed', provider: outcome.provider, error: outcome.error })
+        await writeLog(
+          email,
+          isLegacyRetry
+            ? { status: 'failed', error_message: outcome.error, sent_at: null, provider: outcome.provider ?? null }
+            : { status: 'failed', error_message: outcome.error, provider: outcome.provider ?? null }
+        )
+      } else {
+        await holdRest(i, outcome.reason)
+        break
       }
     }
 
@@ -261,24 +193,47 @@ export default async function handler(
 
     const newSentCount = updatedCounts?.filter(l => l.status === 'sent').length || 0
     const newFailedCount = updatedCounts?.filter(l => l.status === 'failed').length || 0
+    const newPendingCount = updatedCounts?.filter(l => l.status === 'pending').length || 0
+
+    // Held recipients finish automatically: the hourly scheduled-newsletter
+    // cron resumes a 'scheduled' campaign's pending recipients.
+    let resumeAt: Date | null = null
+    if (newPendingCount > 0) {
+      resumeAt = emailsHeld > 0 && holdReason.includes('ran out of time')
+        ? new Date(Date.now() + 60_000)
+        : sender.resumeAt()
+      if (!Number.isFinite(resumeAt.getTime())) resumeAt = null
+    }
 
     await supabase
       .from('newsletter_campaigns')
       .update({
         emails_sent: newSentCount,
         emails_failed: newFailedCount,
-        status: newFailedCount === 0 ? 'sent' : 'sent'
+        status: newPendingCount > 0 ? (resumeAt ? 'scheduled' : 'sending') : 'sent',
+        ...(resumeAt ? { scheduled_for: resumeAt.toISOString() } : {}),
       })
       .eq('id', campaignId)
 
+    const parts = [`Retry completed: ${emailsSent} sent, ${emailsFailed} failed`]
+    if (emailsHeld > 0) {
+      parts.push(resumeAt
+        ? `${emailsHeld} waiting to send automatically after ${resumeAt.toISOString()}`
+        : `${emailsHeld} waiting: ${holdReason}`)
+    }
+
     return res.status(200).json({
       success: true,
-      message: `Retry completed: ${emailsSent} sent, ${emailsFailed} failed`,
+      message: parts.join(', '),
       stats: {
         attempted: emailsToRetry.length,
         sent: emailsSent,
         failed: emailsFailed,
+        held: emailsHeld,
+        sentByResend: sender.sentBy.resend,
+        sentByZoho: sender.sentBy.zoho,
       },
+      resumeAt: resumeAt ? resumeAt.toISOString() : undefined,
       results
     })
 

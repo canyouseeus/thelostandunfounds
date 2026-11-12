@@ -392,7 +392,11 @@ export async function sendZohoEmail({
       statusText: response.statusText,
       error: errorText
     })
-    return { success: false, error: `Failed to send email: ${response.status}` }
+    // Keep a short piece of Zoho's own text: it is how a caller tells a
+    // sending-limit refusal ("You have reached your email sending limit")
+    // from a bad address.
+    const detail = errorText.replace(/\s+/g, ' ').trim().slice(0, 200)
+    return { success: false, error: `Failed to send email: ${response.status}${detail ? ` ${detail}` : ''}` }
   }
 
   return { success: true }
