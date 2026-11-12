@@ -10,6 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/SEOHead';
 import AuthModal from '../components/auth/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
+import { getAffiliateRef } from '../utils/affiliate-tracking';
 import { availableChoices, currentNode, effectiveStat, isValidState, newGame, startChapter, step } from '../lib/game/engine';
 import { CHAPTERS, CHAPTER_ORDER } from '../lib/game/story';
 import { ITEMS } from '../lib/game/items';
@@ -202,7 +203,7 @@ export default function Game() {
     if (!signedIn) { setAuthOpen(true); return; }
     setBusy(true);
     try {
-      const r = await api<{ url: string }>('buy', { chapterId });
+      const r = await api<{ url: string }>('buy', { chapterId, affiliateRef: getAffiliateRef() });
       if (r.ok && r.data.url) window.location.href = r.data.url;
       else setNotice(r.data.error || 'Could not start checkout.');
     } finally { setBusy(false); }

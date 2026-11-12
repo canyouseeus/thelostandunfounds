@@ -21,7 +21,7 @@ import { randomInt, randomBytes } from 'crypto';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { verifiedUser } from './_turnstile.js';
 import { getStripe, getSiteOrigin } from './affiliates/_stripe-client.js';
-import { grantChapterUnlock, GAME_CHECKOUT_SOURCE } from './_game-unlock.js';
+import { cleanAffiliateRef, grantChapterUnlock, GAME_CHECKOUT_SOURCE } from './_game-unlock.js';
 import { isValidState, newGame, startChapter, step } from '../../src/lib/game/engine.js';
 import { CHAPTERS, STORY_REWARDS } from '../../src/lib/game/story.js';
 import {
@@ -240,7 +240,13 @@ async function buyChapter(req: VercelRequest, user: User, chapterId: string) {
   if (!chapter || chapter.priceCents <= 0) return { status: 400, body: { error: 'That chapter is not for sale.' } };
   const origin = getSiteOrigin(req.headers.host as string | undefined, (req.headers['x-forwarded-proto'] as string) || 'https');
   const stripe = getStripe();
-  const meta = { source: GAME_CHECKOUT_SOURCE, user_id: user.id, chapter_id: chapter.id };
+  // The referrer's code, as other checkouts carry it: the affiliate_ref cookie,
+  // else what the page sent. Used only when the buyer has no tie yet.
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+  const cookieRef = (req.headers.cookie || '').match(/affiliate_ref=([^;]+)/)?.[1];
+  const affiliateRef = cleanAffiliateRef(cookieRef ? decodeURIComponent(cookieRef) : body.affiliateRef);
+  const meta: Record<string, string> = { source: GAME_CHECKOUT_SOURCE, user_id: user.id, chapter_id: chapter.id };
+  if (affiliateRef) meta.affiliateRef = affiliateRef;
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: [
