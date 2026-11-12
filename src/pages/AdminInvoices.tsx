@@ -269,13 +269,13 @@ function SendInvoiceConfirm({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100005] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[100005] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="send-invoice-title"
       onClick={onCancel}
     >
-      <div className="w-full max-w-md bg-black p-8 text-left" style={{ borderRadius: 0 }} onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md bg-black p-6 sm:p-8 text-left my-8 max-h-[calc(100vh-4rem)] overflow-y-auto" style={{ borderRadius: 0 }} onClick={(e) => e.stopPropagation()}>
         <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-4">
           <PaperAirplaneIcon className="w-4 h-4" />
           Confirm before sending
