@@ -355,7 +355,7 @@ export default function NewsletterManagement() {
         throw new Error(data.error || 'Failed to retry emails');
       }
 
-      success(`Retry complete: ${data.stats.sent} sent, ${data.stats.failed} failed`);
+      success(data.message || `Retry complete: ${data.stats.sent} sent, ${data.stats.failed} failed`);
 
       // Reload logs and campaigns to show updated status
       await loadCampaignLogs(campaignId);
@@ -520,7 +520,9 @@ export default function NewsletterManagement() {
       if (scheduledDateTime) {
         success(`Newsletter scheduled for ${formatScheduledTime(scheduledDateTime)}!`);
       } else {
-        success(`Newsletter sent to ${data.stats.emailsSent} subscribers!`);
+        // The server says how it went: sent, failed, and any held until a
+        // provider has room again (they finish automatically).
+        success(data.message || `Newsletter sent to ${data.stats.emailsSent} subscribers!`);
       }
 
       // Reset form

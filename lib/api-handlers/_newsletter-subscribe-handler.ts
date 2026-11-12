@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { clientIp, verifyTurnstile } from './_turnstile.js'
 import { createClient } from '@supabase/supabase-js'
+import { resendHasRoom, sendViaResend } from './_email-quota.js'
 
 function generateWelcomeHtml(email: string): string {
   return `
@@ -292,21 +293,17 @@ export default async function handler(
         if (resendApiKey) {
           console.log(`Zoho failed for ${email}. Falling back to Resend...`)
           try {
-            const resendResp = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${resendApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
+            // Counted against Resend's daily quota; skipped when it's used up.
+            const resendResp = (await resendHasRoom(1, 0))
+              ? await sendViaResend({
                 from: resendFromEmail,
                 to: email,
                 subject: 'Welcome to THE LOST+UNFOUNDS',
                 html: generateWelcomeHtml(email),
-              }),
-            })
+              })
+              : { success: false, error: "Resend's daily limit is used up" }
 
-            if (resendResp.ok) {
+            if (resendResp.success) {
               console.log(`Resend fallback successful for ${email}`)
               // Track successful fallback send
               try {
@@ -325,8 +322,7 @@ export default async function handler(
                 emailSent: true
               })
             } else {
-              const resendErr = await resendResp.text()
-              console.error(`Resend fallback failed for ${email}:`, resendErr)
+              console.error(`Resend fallback failed for ${email}:`, resendResp.error)
             }
           } catch (resendError: any) {
             console.error(`Resend fallback error for ${email}:`, resendError.message)
