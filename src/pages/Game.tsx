@@ -5,14 +5,14 @@
  * through /api/game: the server rolls the dice and owns the gold, which
  * redeems into single-use credit codes for the site's Stripe checkouts.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/SEOHead';
 import AuthModal from '../components/auth/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { getAffiliateRef } from '../utils/affiliate-tracking';
 import { availableChoices, currentNode, effectiveStat, isValidState, newGame, startChapter, step } from '../lib/game/engine';
-import { CHAPTERS, CHAPTER_ORDER, FIRST_CHAPTER } from '../lib/game/story';
+import { CHAPTERS, CHAPTER_ORDER } from '../lib/game/story';
 import { ITEMS } from '../lib/game/items';
 import {
   AFFILIATE_QUEST_GOLD,
@@ -112,8 +112,11 @@ export default function Game() {
   const [notice, setNotice] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [newCredit, setNewCredit] = useState<{ code: string; amountCents: number; minOrderCents: number } | null>(null);
-  // Title screen with the WRLD BLDR 3000 poster. Skipped when coming back from Stripe Checkout.
-  const [onTitle, setOnTitle] = useState(() => !new URLSearchParams(location.search).get('purchase'));
+  // Pre-credits (the THE LOST+UNFOUNDS logo animation), then the title screen, then play.
+  // Coming back from Stripe Checkout goes straight to play.
+  const [phase, setPhase] = useState<'intro' | 'title' | 'play'>(() =>
+    new URLSearchParams(location.search).get('purchase') ? 'play' : 'intro',
+  );
 
   const unlocked = useMemo(() => new Set(snap?.unlocked ?? []), [snap]);
 
@@ -252,7 +255,6 @@ export default function Game() {
   const node = currentNode(state);
   const choices = availableChoices(state);
   const lockedChapter = locked ? CHAPTERS[locked] : null;
-  const isFreshGame = state.chapter === FIRST_CHAPTER && state.node === CHAPTERS[FIRST_CHAPTER].start && state.xp === 0 && state.completed.length === 0;
   const hpPct = Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100));
   const shownEvents = events.map((e) => describe(e, signedIn)).filter(Boolean) as { text: string; shopHandle?: string }[];
   const referralLink = snap?.quests.code ? `https://www.thelostandunfounds.com/?ref=${encodeURIComponent(snap.quests.code)}` : null;
@@ -265,7 +267,42 @@ export default function Game() {
         canonicalPath="/game"
       />
       <div className="min-h-screen bg-black text-white text-left">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 pb-48">
+        <div className={`max-w-5xl mx-auto px-4 sm:px-6 ${phase === 'play' ? 'pt-12 pb-48' : 'py-8'}`}>
+          {phase === 'intro' && <GameIntro onDone={() => setPhase('title')} />}
+
+          {phase !== 'play' ? (
+            <section
+              className="min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center text-center gap-6"
+              aria-label="Title screen"
+            >
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center">FR33 D. OHM INC.</h1>
+              <picture className="block">
+                <source
+                  type="image/webp"
+                  srcSet="/game-art/wrld-bldr-3000-poster-600.webp 600w, /game-art/wrld-bldr-3000-poster-1200.webp 1200w"
+                  sizes="(min-width: 768px) 360px, min(300px, calc(100vw - 2rem))"
+                />
+                <img
+                  src="/game-art/wrld-bldr-3000-poster-600.png"
+                  width={600}
+                  height={800}
+                  alt="WRLD BLDR 3000 poster: BUILD YOUR OWN REALITY! A boxy robot, Model 666, pops out of its FR33 D. OHM INC. WRLD BLDR 3000 Deluxe Edition box, with the THE LOST+UNFOUNDS logo below."
+                  className="block h-auto w-auto max-w-[min(300px,calc(100vw-2rem))] md:max-w-[360px] max-h-[50vh] mx-auto"
+                  style={SQUARE}
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </picture>
+              <button
+                onClick={() => setPhase('play')}
+                className="px-10 py-4 text-base font-black uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
+                style={SQUARE}
+                data-tour="game-start"
+              >
+                <span className="whitespace-nowrap">START</span>
+              </button>
+            </section>
+          ) : (<>
           <header className="mb-8">
             <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">FR33 D. OHM INC.</h1>
             <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-2">
@@ -273,43 +310,6 @@ export default function Game() {
             </p>
           </header>
 
-          {onTitle && (
-            <section className="mb-8 flex flex-col md:flex-row md:items-start gap-6 md:gap-10" aria-label="Title screen">
-              <picture className="block w-full max-w-[420px] md:max-w-[360px] shrink-0">
-                <source
-                  type="image/webp"
-                  srcSet="/game-art/wrld-bldr-3000-poster-600.webp 600w, /game-art/wrld-bldr-3000-poster-1200.webp 1200w"
-                  sizes="(min-width: 768px) 360px, min(420px, calc(100vw - 2rem))"
-                />
-                <img
-                  src="/game-art/wrld-bldr-3000-poster-600.png"
-                  width={600}
-                  height={800}
-                  alt="WRLD BLDR 3000 poster: BUILD YOUR OWN REALITY! A boxy robot, Model 666, pops out of its FR33 D. OHM INC. WRLD BLDR 3000 Deluxe Edition box, with the THE LOST+UNFOUNDS logo below."
-                  className="block w-full h-auto"
-                  style={SQUARE}
-                  decoding="async"
-                  fetchPriority="high"
-                />
-              </picture>
-              <div className="flex-1 min-w-0">
-                <p className="text-xl md:text-3xl font-black uppercase tracking-tight">BUILD YOUR OWN REALITY!</p>
-                <p className="text-sm text-white/80 mt-3 max-w-prose">
-                  SCOT33's brand-new WRLD BLDR 3000 DELUXE EDITION just arrived from FR33 D. OHM INC. Help him build a world where everyone can be positive. Chapter 1 is free.
-                </p>
-                <button
-                  onClick={() => setOnTitle(false)}
-                  className="mt-6 px-6 py-3 text-sm font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors text-left"
-                  style={SQUARE}
-                  data-tour="game-start"
-                >
-                  <span className="whitespace-nowrap">{isFreshGame ? 'PRESS START' : 'CONTINUE'}</span>
-                </button>
-              </div>
-            </section>
-          )}
-
-          {!onTitle && (<>
 
           {!signedIn && !authLoading && (
             <div className="bg-white/5 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3" data-tour="game-signin">
@@ -566,5 +566,65 @@ export default function Game() {
       </div>
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </>
+  );
+}
+
+/**
+ * Pre-credits: the THE LOST+UNFOUNDS logo animation from the old site's preloader
+ * (public/preloader-video.mp4), full screen and centered. Ends on its own, on SKIP,
+ * on a playback error, or after a safety timeout. Skipped for reduced motion.
+ */
+function GameIntro({ onDone }: { onDone: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const doneRef = useRef(false);
+  const finish = useCallback(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    onDone();
+  }, [onDone]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      finish();
+      return;
+    }
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.play().catch(() => finish());
+    }
+    const safety = window.setTimeout(finish, 12000);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') finish();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(safety);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [finish]);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center" role="presentation">
+      <video
+        ref={videoRef}
+        className="w-full h-full object-contain object-center bg-black pointer-events-none"
+        src="/preloader-video.mp4"
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        onEnded={finish}
+        onError={finish}
+        aria-label="THE LOST+UNFOUNDS logo animation"
+      />
+      <button
+        onClick={finish}
+        className="absolute bottom-6 right-6 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white"
+        style={SQUARE}
+      >
+        <span className="whitespace-nowrap">SKIP</span>
+      </button>
+    </div>
   );
 }
