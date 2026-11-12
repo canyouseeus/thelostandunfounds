@@ -13,6 +13,7 @@ import { sendPhotographerInvite } from './photographer-invite.js'
 import { sendGalleryInvites } from '../_gallery-invite.js'
 import { ADMIN_EMAILS } from '../_admin-auth.js'
 import { stripeMoneyKey } from '../_stripe-money-key.js'
+import { MAIL_JOB_ACTIONS } from './_mail-jobs.js'
 
 /**
  * The admin actions an agent may queue in `admin_jobs` (see the migration and
@@ -131,6 +132,9 @@ async function invokeUngated(
 }
 
 export const ADMIN_JOB_ACTIONS: Record<string, Action> = {
+  // Zoho mailbox: mail_folders, mail_list, mail_search, mail_read, mail_send.
+  ...MAIL_JOB_ACTIONS,
+
   /** Read-only. { } */
   async stripe_balance() {
     return ok({ availableUsd: await availableUsd() })
