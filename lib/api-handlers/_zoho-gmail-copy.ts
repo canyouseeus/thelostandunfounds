@@ -204,8 +204,13 @@ function cleanBody(html: string): string {
 function formatCentral(ms: number): string {
   return new Date(ms).toLocaleString('en-US', {
     timeZone: 'America/Chicago',
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    // dateStyle/timeStyle can't be combined with timeZoneName (throws
+    // "Invalid option : option"), so spell the fields out.
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
     timeZoneName: 'short',
   });
 }
