@@ -1,5 +1,5 @@
 /**
- * FR33DOM INC. — the WORLD BUILD3R text RPG.
+ * FR33 D. OHM INC. — the WRLD BLDR text RPG.
  *
  * Guests play in the browser (localStorage) to try it. Signed-in players play
  * through /api/game: the server rolls the dice and owns the gold, which
@@ -12,7 +12,7 @@ import AuthModal from '../components/auth/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { getAffiliateRef } from '../utils/affiliate-tracking';
 import { availableChoices, currentNode, effectiveStat, isValidState, newGame, startChapter, step } from '../lib/game/engine';
-import { CHAPTERS, CHAPTER_ORDER } from '../lib/game/story';
+import { CHAPTERS, CHAPTER_ORDER, FIRST_CHAPTER } from '../lib/game/story';
 import { ITEMS } from '../lib/game/items';
 import {
   AFFILIATE_QUEST_GOLD,
@@ -112,6 +112,8 @@ export default function Game() {
   const [notice, setNotice] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [newCredit, setNewCredit] = useState<{ code: string; amountCents: number; minOrderCents: number } | null>(null);
+  // Title screen with the WRLD BLDR 3000 poster. Skipped when coming back from Stripe Checkout.
+  const [onTitle, setOnTitle] = useState(() => !new URLSearchParams(location.search).get('purchase'));
 
   const unlocked = useMemo(() => new Set(snap?.unlocked ?? []), [snap]);
 
@@ -250,6 +252,7 @@ export default function Game() {
   const node = currentNode(state);
   const choices = availableChoices(state);
   const lockedChapter = locked ? CHAPTERS[locked] : null;
+  const isFreshGame = state.chapter === FIRST_CHAPTER && state.node === CHAPTERS[FIRST_CHAPTER].start && state.xp === 0 && state.completed.length === 0;
   const hpPct = Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100));
   const shownEvents = events.map((e) => describe(e, signedIn)).filter(Boolean) as { text: string; shopHandle?: string }[];
   const referralLink = snap?.quests.code ? `https://www.thelostandunfounds.com/?ref=${encodeURIComponent(snap.quests.code)}` : null;
@@ -257,18 +260,56 @@ export default function Game() {
   return (
     <>
       <SEOHead
-        title="FR33DOM INC."
-        description="FR33DOM INC. is a free text RPG from THE LOST+UNFOUNDS. Help SCOT33 build a world where everyone can be positive with his WORLD BUILD3R 3000, and earn gold for real site credit."
+        title="FR33 D. OHM INC."
+        description="FR33 D. OHM INC. is a free text RPG from THE LOST+UNFOUNDS. Help SCOT33 build a world where everyone can be positive with his WRLD BLDR 3000, and earn gold for real site credit."
         canonicalPath="/game"
       />
       <div className="min-h-screen bg-black text-white text-left">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 pb-48">
           <header className="mb-8">
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">FR33DOM INC.</h1>
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">FR33 D. OHM INC.</h1>
             <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-2">
-              THE WORLD BUILD3R RPG · PLAY FREE · EARN GOLD · SPEND IT AS SITE CREDIT
+              THE WRLD BLDR RPG · PLAY FREE · EARN GOLD · SPEND IT AS SITE CREDIT
             </p>
           </header>
+
+          {onTitle && (
+            <section className="mb-8 flex flex-col md:flex-row md:items-start gap-6 md:gap-10" aria-label="Title screen">
+              <picture className="block w-full max-w-[420px] md:max-w-[360px] shrink-0">
+                <source
+                  type="image/webp"
+                  srcSet="/game-art/wrld-bldr-3000-poster-600.webp 600w, /game-art/wrld-bldr-3000-poster-1200.webp 1200w"
+                  sizes="(min-width: 768px) 360px, min(420px, calc(100vw - 2rem))"
+                />
+                <img
+                  src="/game-art/wrld-bldr-3000-poster-600.png"
+                  width={600}
+                  height={800}
+                  alt="WRLD BLDR 3000 poster: BUILD YOUR OWN REALITY! A boxy robot, Model 666, pops out of its FR33 D. OHM INC. WRLD BLDR 3000 Deluxe Edition box, with the THE LOST+UNFOUNDS logo below."
+                  className="block w-full h-auto"
+                  style={SQUARE}
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </picture>
+              <div className="flex-1 min-w-0">
+                <p className="text-xl md:text-3xl font-black uppercase tracking-tight">BUILD YOUR OWN REALITY!</p>
+                <p className="text-sm text-white/80 mt-3 max-w-prose">
+                  SCOT33's brand-new WRLD BLDR 3000 DELUXE EDITION just arrived from FR33 D. OHM INC. Help him build a world where everyone can be positive. Chapter 1 is free.
+                </p>
+                <button
+                  onClick={() => setOnTitle(false)}
+                  className="mt-6 px-6 py-3 text-sm font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors text-left"
+                  style={SQUARE}
+                  data-tour="game-start"
+                >
+                  <span className="whitespace-nowrap">{isFreshGame ? 'PRESS START' : 'CONTINUE'}</span>
+                </button>
+              </div>
+            </section>
+          )}
+
+          {!onTitle && (<>
 
           {!signedIn && !authLoading && (
             <div className="bg-white/5 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3" data-tour="game-signin">
@@ -520,6 +561,7 @@ export default function Game() {
               )}
             </div>
           </div>
+          </>)}
         </div>
       </div>
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />

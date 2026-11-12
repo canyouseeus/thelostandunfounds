@@ -105,7 +105,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
     initAffiliateTracking();
   }, []);
 
-  // Deep link: /shop?item=<handle> opens that product (FR33DOM INC. merch drops link here).
+  // Deep link: /shop?item=<handle> opens that product (FR33 D. OHM INC. merch drops link here).
   const itemHandle = searchParams.get('item');
   useEffect(() => {
     if (!itemHandle || loading || products.length === 0) return;

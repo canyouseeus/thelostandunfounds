@@ -74,7 +74,7 @@ const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
  * tickets for events the owner created. Street nights pay 10% of the night
  * through recordFieldSale (no split there).
  *
- * Owner decision, 2026-11-12: FR33DOM INC. paid chapters (source 'game') take
+ * Owner decision, 2026-11-12: FR33 D. OHM INC. paid chapters (source 'game') take
  * the same split as everything else, with no cost (a digital good), so the
  * profit is the whole price; the 10% comes after the splits like the rest.
  */

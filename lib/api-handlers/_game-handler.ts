@@ -1,5 +1,5 @@
 /**
- * FR33DOM INC. — /api/game?action=…
+ * FR33 D. OHM INC. — /api/game?action=…
  *
  * Signed-in players only (verified Supabase token). The browser never tells
  * the server what happened: it sends a choice id, the server rolls the dice
@@ -180,7 +180,7 @@ async function couponFor(stripe: ReturnType<typeof getStripe>, amountCents: numb
       amount_off: amountCents,
       currency: 'usd',
       duration: 'once',
-      name: `FR33DOM INC. CREDIT $${amountCents / 100}`,
+      name: `FR33 D. OHM INC. CREDIT $${amountCents / 100}`,
       metadata: { source: GAME_CHECKOUT_SOURCE },
     });
   }
@@ -256,7 +256,7 @@ async function buyChapter(req: VercelRequest, user: User, chapterId: string) {
           currency: 'usd',
           unit_amount: chapter.priceCents,
           product_data: {
-            name: `FR33DOM INC. — CHAPTER ${chapter.number}: ${chapter.title}`,
+            name: `FR33 D. OHM INC. — CHAPTER ${chapter.number}: ${chapter.title}`,
             description: chapter.tagline,
           },
         },
@@ -264,7 +264,7 @@ async function buyChapter(req: VercelRequest, user: User, chapterId: string) {
     ],
     customer_email: user.email ?? undefined,
     metadata: meta,
-    payment_intent_data: { description: `FR33DOM INC. chapter ${chapter.number}`, metadata: meta },
+    payment_intent_data: { description: `FR33 D. OHM INC. chapter ${chapter.number}`, metadata: meta },
     success_url: `${origin}/game?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/game?purchase=cancelled`,
   });

@@ -1,5 +1,5 @@
 /**
- * FR33DOM INC. — the text RPG at /game.
+ * FR33 D. OHM INC. — the text RPG at /game.
  *
  * The same engine runs in two places:
  *   - the browser, for guests (progress in localStorage, gold is only a preview);

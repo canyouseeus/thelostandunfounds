@@ -171,7 +171,7 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
     } else if (session.metadata?.source === 'tlau-events') {
         await finalizeEventOrder(supabase, session)
     } else if (session.metadata?.source === GAME_CHECKOUT_SOURCE) {
-        // FR33DOM INC. paid chapter. A throw returns 500 so Stripe retries.
+        // FR33 D. OHM INC. paid chapter. A throw returns 500 so Stripe retries.
         await grantChapterUnlock(supabase, session)
     } else if (session.payment_link) {
         // Booking deposit / final-balance payments are made through Stripe

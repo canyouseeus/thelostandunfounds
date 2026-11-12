@@ -1,5 +1,5 @@
 /**
- * FR33DOM INC. content check: npx tsx scripts/check-game-story.ts
+ * FR33 D. OHM INC. content check: npx tsx scripts/check-game-story.ts
  * Fails (exit 1) on a broken link, a duplicate gold id, a node that can't
  * reach its chapter's end, or a random playthrough that gets stuck.
  */

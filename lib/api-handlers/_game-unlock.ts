@@ -4,7 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { CHAPTERS } from '../../src/lib/game/story.js';
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js';
 
-/** Checkout metadata.source for FR33DOM INC. chapter purchases. */
+/** Checkout metadata.source for FR33 D. OHM INC. chapter purchases. */
 export const GAME_CHECKOUT_SOURCE = 'tlau-game';
 
 /**

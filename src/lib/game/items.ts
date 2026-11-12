@@ -16,7 +16,7 @@ export const ITEMS: Record<string, Item> = {
   'toulous3-trucker': {
     id: 'toulous3-trucker',
     name: '"TOULOUS3" FOAM TRUCKER HAT',
-    blurb: 'Official FR33DOM INC. tech support headwear. +1 WITS.',
+    blurb: 'Official FR33 D. OHM INC. tech support headwear. +1 WITS.',
     bonus: { wits: 1 },
     shopHandle: 'toulous3-foam-trucker-hat',
   },
@@ -52,17 +52,17 @@ export const ITEMS: Record<string, Item> = {
   'warranty-card': {
     id: 'warranty-card',
     name: 'WARRANTY CARD',
-    blurb: 'WORLD BUILD3R 3000 DELUXE EDITION. Lifetime coverage. Read the back.',
+    blurb: 'WRLD BLDR 3000 DELUXE EDITION. Lifetime coverage. Read the back.',
   },
   'film': {
     id: 'film',
     name: 'INSTANT CAMERA',
-    blurb: 'Snap a moment and the BUILD3R can build it again. People see themselves honestly in it.',
+    blurb: 'Snap a moment and the BLDR can build it again. People see themselves honestly in it.',
   },
   'gilded-key': {
     id: 'gilded-key',
     name: 'MASTER BUILD KEY',
-    blurb: 'Unlocks every setting on any WORLD BUILD3R ever made.',
+    blurb: 'Unlocks every setting on any WRLD BLDR ever made.',
   },
 };
 

@@ -1,10 +1,10 @@
 import type { Chapter, StoryNode } from './types.js';
 
 /**
- * FR33DOM INC. — story content.
+ * FR33 D. OHM INC. — story content.
  *
- * FR33DOM INC. makes THE WORLD BUILD3R, a line of personal world generators.
- * SCOT33 (a tiger, always positive) has just got his brand-new WORLD BUILD3R
+ * FR33 D. OHM INC. makes THE WRLD BLDR, a line of personal world generators.
+ * SCOT33 (a tiger, always positive) has just got his brand-new WRLD BLDR
  * 3000 DELUXE EDITION, and he can't wait to build a world where everyone else
  * can be positive too.
  *
@@ -22,7 +22,7 @@ const ch1: Chapter = {
   id: 'ch1',
   number: 1,
   title: 'UNBOXING',
-  tagline: 'SCOT33\'s brand-new WORLD BUILD3R 3000 DELUXE EDITION just arrived. Time to build a world.',
+  tagline: 'SCOT33\'s brand-new WRLD BLDR 3000 DELUXE EDITION just arrived. Time to build a world.',
   priceCents: 0,
   start: 'ch1.start',
   nodes: nodes([
@@ -30,7 +30,7 @@ const ch1: Chapter = {
       id: 'ch1.start',
       title: 'THE BOX',
       text: [
-        'The box is taller than SCOT33. Across the side, in big friendly letters: FR33DOM INC. PRESENTS THE WORLD BUILD3R 3000 DELUXE EDITION. PERSONAL WORLD GENERATOR. SOME ASSEMBLY REQUIRED.',
+        'The box is taller than SCOT33. Across the side, in big friendly letters: FR33 D. OHM INC. PRESENTS THE WRLD BLDR 3000 DELUXE EDITION. PERSONAL WORLD GENERATOR. SOME ASSEMBLY REQUIRED.',
         'SCOT33 has wanted one of these his whole life. Not for himself. He wants to build a world where everyone gets to feel the way he feels right now.',
         'Taped to the lid, the quick-start card asks one question: HOW DO YOU LIKE TO BUILD?',
       ],
@@ -45,7 +45,7 @@ const ch1: Chapter = {
       id: 'ch1.desk',
       title: 'FIRST BOOT',
       text: [
-        'Under a sea of packing peanuts: the WORLD BUILD3R itself, a chrome dome with one big round button, plus a warranty card. SCOT33 presses the button. It hums, glows, and shows a sad face.',
+        'Under a sea of packing peanuts: the WRLD BLDR itself, a chrome dome with one big round button, plus a warranty card. SCOT33 presses the button. It hums, glows, and shows a sad face.',
         'ERROR 33: NO WORLD SEED FOUND.',
         '"That\'s okay," SCOT33 tells it. "Everybody has a rough first day."',
       ],
@@ -60,7 +60,7 @@ const ch1: Chapter = {
       id: 'ch1.vents',
       title: 'DEVELOPER MODE',
       text: [
-        'Hold the button, tap it three times, hold again. The screen flips to DEVELOPER MODE. Someone at FR33DOM INC. left a note in the code: "FOR WHOEVER FINDS THIS. BUILD SOMETHING KIND."',
+        'Hold the button, tap it three times, hold again. The screen flips to DEVELOPER MODE. Someone at FR33 D. OHM INC. left a note in the code: "FOR WHOEVER FINDS THIS. BUILD SOMETHING KIND."',
         'A compartment clicks open. Inside are an instant camera and a little pouch of starter gold.',
       ],
       onEnter: { item: 'film', gold: { id: 'ch1.vents', amount: 25 } },
@@ -70,7 +70,7 @@ const ch1: Chapter = {
       id: 'ch1.lostfound',
       title: 'DELUXE EDITION EXTRAS',
       text: [
-        'At the bottom of the box is the Deluxe Edition bonus: a black tee with SCOT33\'s own face on it. He puts it on at once. The WORLD BUILD3R\'s sad face flips into a smile.',
+        'At the bottom of the box is the Deluxe Edition bonus: a black tee with SCOT33\'s own face on it. He puts it on at once. The WRLD BLDR\'s sad face flips into a smile.',
         'WORLD SEED ACCEPTED. GENERATING WORLD ONE.',
       ],
       onEnter: { item: 'scot33-band-tee', gold: { id: 'ch1.lostfound', amount: 25 } },
@@ -82,7 +82,7 @@ const ch1: Chapter = {
       text: [
         'World One is an island the size of a backyard, and it is completely grey: grey grass, grey sky, a grey tree waiting to be told what color to be.',
         'Over the horizon drifts the Gloom, a low grey cloud that makes everything it touches feel a little pointless.',
-        'On the grey tree sits a cat in a foam trucker hat with a FR33DOM INC. badge. He\'s eating a taco.',
+        'On the grey tree sits a cat in a foam trucker hat with a FR33 D. OHM INC. badge. He\'s eating a taco.',
       ],
       choices: [
         { id: 'cat', label: '"HI! ARE YOU PART OF THE WORLD?"', to: 'ch1.toulous3' },
@@ -93,7 +93,7 @@ const ch1: Chapter = {
       id: 'ch1.toulous3',
       title: 'TECH SUPPORT',
       text: [
-        '"TOULOUS3, FR33DOM INC. Customer Support." He waves the taco. "Every new BUILD3R gets a support cat. Most people build a world just for themselves. A castle, a moat, keep out."',
+        '"TOULOUS3, FR33 D. OHM INC. Customer Support." He waves the taco. "Every new BLDR gets a support cat. Most people build a world just for themselves. A castle, a moat, keep out."',
         '"So what\'s yours for, tiger?"',
       ],
       choices: [
@@ -139,7 +139,7 @@ const ch1: Chapter = {
       title: 'WORLD ONE IS LIVE',
       text: [
         'The visitor steps off the boat, looks around and smiles without meaning to. SCOT33 puts up a sign: WORLD ONE. EVERYONE WELCOME. BE AS POSITIVE AS YOU LIKE.',
-        'The WORLD BUILD3R chimes. NEW MESSAGE: "Congratulations! Your world has been selected for the WORLD BUILD3R EXPO. A collector called THE GILDED MAN would like to make you an offer."',
+        'The WRLD BLDR chimes. NEW MESSAGE: "Congratulations! Your world has been selected for the WRLD BLDR EXPO. A collector called THE GILDED MAN would like to make you an offer."',
         'END OF CHAPTER 1.',
       ],
       end: true,
@@ -153,7 +153,7 @@ const ch2: Chapter = {
   id: 'ch2',
   number: 2,
   title: 'THE GILDED MAN',
-  tagline: 'At the WORLD BUILD3R EXPO, a collector wants to buy SCOT33\'s world and cover it in gold.',
+  tagline: 'At the WRLD BLDR EXPO, a collector wants to buy SCOT33\'s world and cover it in gold.',
   priceCents: 300,
   start: 'ch2.start',
   nodes: nodes([
@@ -173,7 +173,7 @@ const ch2: Chapter = {
       id: 'ch2.loophole',
       title: 'CLAUSE 33',
       text: [
-        'Tiny print on the warranty card: "CLAUSE 33. A world built for everyone belongs to everyone in it. It cannot be sold, gilded or locked. — FR33DOM INC."',
+        'Tiny print on the warranty card: "CLAUSE 33. A world built for everyone belongs to everyone in it. It cannot be sold, gilded or locked. — FR33 D. OHM INC."',
         'SCOT33 laughs out loud. Of course they thought of that. They make world builders.',
       ],
       onEnter: { flag: 'loophole', gold: { id: 'ch2.loophole', amount: 25 } },
@@ -183,7 +183,7 @@ const ch2: Chapter = {
       id: 'ch2.tower',
       title: 'THE EXPO',
       text: [
-        'The WORLD BUILD3R EXPO fills FR33DOM INC. HQ, a tower of glass and blinking build lights. Every floor shows off someone\'s world. The top floor belongs to THE GILDED MAN, and everything on it is gold: the carpet, the plants, the people standing very still.',
+        'The WRLD BLDR EXPO fills FR33 D. OHM INC. HQ, a tower of glass and blinking build lights. Every floor shows off someone\'s world. The top floor belongs to THE GILDED MAN, and everything on it is gold: the carpet, the plants, the people standing very still.',
       ],
       choices: [
         { id: 'blend', label: 'MINGLE WITH THE CROWD', check: { stat: 'style', dc: 13, pass: 'ch2.lobby', fail: 'ch2.guards', passEffect: { xp: 25 }, failEffect: { hp: -4 } } },
@@ -194,7 +194,7 @@ const ch2: Chapter = {
       id: 'ch2.lobby',
       title: 'THE GIFT BOOTH',
       text: [
-        'The FR33DOM INC. booth is handing out exhibitor swag. Someone hands SCOT33 a black dad hat with his name stitched on the front. "Saw your world on the feed," they say. "Made my whole week."',
+        'The FR33 D. OHM INC. booth is handing out exhibitor swag. Someone hands SCOT33 a black dad hat with his name stitched on the front. "Saw your world on the feed," they say. "Made my whole week."',
       ],
       onEnter: { item: 'scot33-dad-hat', gold: { id: 'ch2.lobby', amount: 25 } },
       choices: [{ id: 'up', label: 'RIDE THE ELEVATOR TO THE TOP', to: 'ch2.floor33' }],
@@ -226,7 +226,7 @@ const ch2: Chapter = {
         'The top floor is one gold door with a lock shaped like a smile that doesn\'t reach its eyes.',
       ],
       choices: [
-        { id: 'pick', label: 'REWIRE THE LOCK WITH YOUR BUILD3R', check: { stat: 'wits', dc: 13, pass: 'ch2.vault', fail: 'ch2.vault', passEffect: { xp: 30 }, failEffect: { hp: -4, xp: 10 } } },
+        { id: 'pick', label: 'REWIRE THE LOCK WITH YOUR BLDR', check: { stat: 'wits', dc: 13, pass: 'ch2.vault', fail: 'ch2.vault', passEffect: { xp: 30 }, failEffect: { hp: -4, xp: 10 } } },
         { id: 'clause', label: 'HOLD UP THE WARRANTY CARD: CLAUSE 33', to: 'ch2.vault', effect: { xp: 30 }, requires: { flag: 'loophole' } },
       ],
     },
@@ -267,8 +267,8 @@ const ch2: Chapter = {
       id: 'ch2.end',
       title: 'BEST IN SHOW',
       text: [
-        'World One takes BEST IN SHOW. THE GILDED MAN leaves the EXPO without a word, but on his way out he picks up a starter BUILD3R.',
-        'That night, World One has a hundred new citizens. Then, from somewhere under FR33DOM INC. HQ, a bassline starts. Wherever it reaches, people stop smiling and forget why they ever did.',
+        'World One takes BEST IN SHOW. THE GILDED MAN leaves the EXPO without a word, but on his way out he picks up a starter BLDR.',
+        'That night, World One has a hundred new citizens. Then, from somewhere under FR33 D. OHM INC. HQ, a bassline starts. Wherever it reaches, people stop smiling and forget why they ever did.',
         'END OF CHAPTER 2.',
       ],
       end: true,
@@ -322,7 +322,7 @@ const ch3: Chapter = {
       id: 'ch3.soundcheck',
       title: 'BACKSTAGE',
       text: [
-        'TOULOUS3 is waiting by the bus\'s generator with a heavy black crewneck. "FR33DOM INC. sent a care package. Your name\'s on it, of course." It fits like armor.',
+        'TOULOUS3 is waiting by the bus\'s generator with a heavy black crewneck. "FR33 D. OHM INC. sent a care package. Your name\'s on it, of course." It fits like armor.',
         '"Two ways to do this," he says. "Cut their power, or out-play them."',
       ],
       onEnter: { item: 'scot33-crewneck', gold: { id: 'ch3.soundcheck', amount: 25 } },
@@ -367,7 +367,7 @@ const ch3: Chapter = {
       id: 'ch3.end',
       title: 'A WORLD FOR EVERYONE',
       text: [
-        'Sunrise over World One. TOULOUS3, the citizens freed from the gold worlds, and a band with a brand-new song all crowd around the WORLD BUILD3R. SCOT33 hands out crew shirts.',
+        'Sunrise over World One. TOULOUS3, the citizens freed from the gold worlds, and a band with a brand-new song all crowd around the WRLD BLDR. SCOT33 hands out crew shirts.',
         'He presses the big round button one more time. NEW WORLD SEED ACCEPTED: EVERYONE\'S.',
         'END OF CHAPTER 3. MORE CHAPTERS SOON.',
       ],

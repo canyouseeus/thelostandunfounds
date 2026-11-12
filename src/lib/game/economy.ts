@@ -1,5 +1,5 @@
 /**
- * FR33DOM INC. economy — every number that turns into money lives here.
+ * FR33 D. OHM INC. economy — every number that turns into money lives here.
  *
  * Gold is not cash. It redeems into a single-use Stripe promotion code
  * (fixed amount off, minimum order, expiry), usable at any Stripe checkout on

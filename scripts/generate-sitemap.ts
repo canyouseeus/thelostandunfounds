@@ -206,7 +206,7 @@ async function generateSitemap() {
     <priority>0.5</priority>
   </url>
 
-  <!-- FR33DOM INC. text RPG -->
+  <!-- FR33 D. OHM INC. text RPG -->
   <url>
     <loc>${baseUrl}/game</loc>
     <lastmod>${currentDate}</lastmod>
