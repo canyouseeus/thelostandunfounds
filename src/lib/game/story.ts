@@ -1,4 +1,4 @@
-import type { Chapter, StoryNode } from './types.js';
+import type { Chapter, ExploreSpec, StoryNode } from './types.js';
 
 /**
  * FR33 D. OHM INC. — story content.
@@ -11,12 +11,63 @@ import type { Chapter, StoryNode } from './types.js';
  * Gold reward ids (`gold.id`) are ledger refs: a player earns each one once,
  * ever, even if they replay. Never rename a live id — that would pay it again.
  * Fail branches always move the story forward (at a cost in HP), so nobody
- * gets stuck; running out of HP restarts the chapter with gear kept.
+ * gets stuck. Running out of HP sends you back to the last checkpoint
+ * (chapter start, or THE GREY TREE in chapter 1) with gear and XP kept.
+ *
+ * Chapter 1 is the RPG tutorial and the free hook: turn-based fights, three
+ * areas to search, three mini-bosses guarding COLOR SHARDS, and THE GLOOM.
  */
 
 function nodes(list: StoryNode[]): Record<string, StoryNode> {
   return Object.fromEntries(list.map((n) => [n.id, n]));
 }
+
+/** Where SCOT33 searches in chapter 1. Fights drop SCRAP, never GOLD. */
+const MEADOW: ExploreSpec = {
+  fightChance: 0.75,
+  encounters: [
+    { enemy: 'meh-mite', weight: 4 },
+    { enemy: 'sigh-slime', weight: 3 },
+    { enemy: 'gnat-swarm', weight: 3 },
+  ],
+  finds: [
+    { weight: 6, text: 'A HANDFUL OF SCRAP IN THE GREY GRASS.', scrap: [5, 12] },
+    { weight: 2, text: 'A TACO, STILL WARM. TOULOUS3 LEAVES THEM EVERYWHERE.', item: 'taco' },
+    { weight: 1, text: 'SOMETHING GLINTS: A LITTLE ENAMEL SUN.', item: 'sunny-pin' },
+  ],
+};
+
+const WOODS: ExploreSpec = {
+  fightChance: 0.8,
+  encounters: [
+    { enemy: 'why-wisp', weight: 4 },
+    { enemy: 'doomscroll-bat', weight: 3 },
+    { enemy: 'stump-of-doubt', weight: 2 },
+  ],
+  finds: [
+    { weight: 6, text: 'SCRAP CAUGHT IN THE ROOTS.', scrap: [10, 20] },
+    { weight: 2, text: 'A PEP SODA, UNOPENED, IN A HOLLOW LOG.', item: 'pep-soda' },
+    { weight: 1, text: 'AN EXTRA SPICY TACO ON A STUMP. NOBODY\'S LOOKING.', item: 'spicy-taco' },
+  ],
+};
+
+const SHORE: ExploreSpec = {
+  fightChance: 0.8,
+  encounters: [
+    { enemy: 'static-crab', weight: 4 },
+    { enemy: 'naysayer-gull', weight: 3 },
+    { enemy: 'riptide-of-meh', weight: 2 },
+  ],
+  finds: [
+    { weight: 6, text: 'SCRAP WASHED UP IN THE FOAM.', scrap: [12, 24] },
+    { weight: 2, text: 'A PAINT BOMB, BOBBING IN THE SHALLOWS.', item: 'paint-bomb' },
+    { weight: 2, text: 'A TACO IN A TIDE POOL. STILL GOOD, SOMEHOW.', item: 'taco' },
+  ],
+};
+
+const SHOP = ['taco', 'spicy-taco', 'pep-soda', 'paint-bomb', 'spare-battery', 'foam-hammer', 'hard-hat', 'cardboard-armor', 'color-cannon'];
+
+const BACK_TO_TREE = { id: 'back', label: 'BACK TO THE TREE', to: 'ch1.tree' };
 
 const ch1: Chapter = {
   id: 'ch1',
@@ -40,12 +91,12 @@ const ch1: Chapter = {
       text: [
         'The box is taller than SCOT33. Across the side, in big friendly letters: FR33 D. OHM INC. PRESENTS THE WRLD BLDR 3000 DELUXE EDITION. PERSONAL WORLD GENERATOR. SOME ASSEMBLY REQUIRED.',
         'SCOT33 has wanted one of these his whole life. Not for himself. He wants to build a world where everyone gets to feel the way he feels right now.',
-        'Taped to the lid, the quick-start card asks one question: HOW DO YOU LIKE TO BUILD?',
+        'Taped to the lid, the quick-start card asks one question: HOW DO YOU LIKE TO BUILD? (This is your class. It sets your starting stats and your first skill.)',
       ],
       choices: [
-        { id: 'brawler', label: 'WITH MY OWN TWO HANDS. (BUILDER: +2 GRIT)', to: 'ch1.desk', effect: { stat: { grit: 2 }, flag: 'class' }, requires: { notFlag: 'class' } },
-        { id: 'sleuth', label: 'I READ THE WHOLE MANUAL FIRST. (THINKER: +2 WITS)', to: 'ch1.desk', effect: { stat: { wits: 2 }, flag: 'class' }, requires: { notFlag: 'class' } },
-        { id: 'icon', label: 'I FREESTYLE IT. (DREAMER: +2 STYLE)', to: 'ch1.desk', effect: { stat: { style: 2 }, flag: 'class' }, requires: { notFlag: 'class' } },
+        { id: 'brawler', label: 'WITH MY OWN TWO HANDS', hint: 'BUILDER · +2 GRIT · SKILL: HAMMER TIME', to: 'ch1.desk', effect: { stat: { grit: 2 }, flag: 'class', flags: ['class_builder'], cls: 'builder' }, requires: { notFlag: 'class' } },
+        { id: 'sleuth', label: 'I READ THE WHOLE MANUAL FIRST', hint: 'THINKER · +2 WITS · SKILL: DEBUG', to: 'ch1.desk', effect: { stat: { wits: 2 }, flag: 'class', flags: ['class_thinker'], cls: 'thinker' }, requires: { notFlag: 'class' } },
+        { id: 'icon', label: 'I FREESTYLE IT', hint: 'DREAMER · +2 STYLE · SKILL: GOOD VIBES', to: 'ch1.desk', effect: { stat: { style: 2 }, flag: 'class', flags: ['class_dreamer'], cls: 'dreamer' }, requires: { notFlag: 'class' } },
         { id: 'again', label: 'OPEN THE BOX AGAIN', to: 'ch1.desk', requires: { flag: 'class' } },
       ],
     },
@@ -53,15 +104,24 @@ const ch1: Chapter = {
       id: 'ch1.desk',
       title: 'FIRST BOOT',
       text: [
-        'Under a sea of packing peanuts: the WRLD BLDR itself, a chrome dome with one big round button, plus a warranty card. SCOT33 presses the button. It hums, glows, and shows a sad face.',
-        'ERROR 33: NO WORLD SEED FOUND.',
-        '"That\'s okay," SCOT33 tells it. "Everybody has a rough first day."',
+        'Under a sea of packing peanuts: the WRLD BLDR itself, a chrome dome with one big round button, a warranty card, and a pair of bubble wrap gloves. SCOT33 pulls the gloves on and presses the button. It hums, glows, and shows a sad face.',
+        'ERROR 33: NO WORLD SEED FOUND. Then something crackles out of the vent: a STATIC GREMLIN, the kind that lives in brand-new electronics.',
+        'HOW FIGHTS WORK: ATTACK builds 1 VIBE. GUARD halves the next hit and builds 2. Skills spend VIBE. Your class skill is ready at 2.',
       ],
-      onEnter: { item: 'warranty-card' },
+      onEnter: { items: ['warranty-card', 'bubble-gloves'] },
       choices: [
-        { id: 'shove', label: 'GIVE IT A FRIENDLY THUMP', check: { stat: 'grit', dc: 11, pass: 'ch1.lostfound', fail: 'ch1.lostfound', passEffect: { xp: 20 }, failEffect: { hp: -5, xp: 5 } } },
-        { id: 'talk', label: 'TELL IT WHAT KIND OF WORLD YOU WANT', check: { stat: 'style', dc: 11, pass: 'ch1.lostfound', fail: 'ch1.lostfound', passEffect: { xp: 20 }, failEffect: { hp: -4, xp: 5 } } },
+        { id: 'fight', label: 'SHOO THE GREMLIN', fight: { enemies: ['static-gremlin'], win: 'ch1.reboot', noFlee: true } },
+      ],
+    },
+    {
+      id: 'ch1.reboot',
+      title: 'REBOOT',
+      text: [
+        'The gremlin pops like a soap bubble. The WRLD BLDR blinks: still ERROR 33. "That\'s okay," SCOT33 tells it. "Everybody has a rough first day."',
+      ],
+      choices: [
         { id: 'vent', label: 'FIND THE HIDDEN SETTINGS MENU', check: { stat: 'wits', dc: 12, pass: 'ch1.vents', fail: 'ch1.lostfound', passEffect: { xp: 20 }, failEffect: { hp: -3, xp: 5 } } },
+        { id: 'box', label: 'CHECK THE BOTTOM OF THE BOX', to: 'ch1.lostfound' },
       ],
     },
     {
@@ -69,9 +129,9 @@ const ch1: Chapter = {
       title: 'DEVELOPER MODE',
       text: [
         'Hold the button, tap it three times, hold again. The screen flips to DEVELOPER MODE. Someone at FR33 D. OHM INC. left a note in the code: "FOR WHOEVER FINDS THIS. BUILD SOMETHING KIND."',
-        'A compartment clicks open. Inside are an instant camera and a little pouch of starter gold.',
+        'A compartment clicks open. Inside: an instant camera, a developer visor and a little pouch of starter gold.',
       ],
-      onEnter: { item: 'film', gold: { id: 'ch1.vents', amount: 25 } },
+      onEnter: { items: ['film', 'dev-visor'], gold: { id: 'ch1.vents', amount: 25 } },
       choices: [{ id: 'drop', label: 'BACK TO THE MAIN MENU', to: 'ch1.lostfound' }],
     },
     {
@@ -86,36 +146,34 @@ const ch1: Chapter = {
         maxWidth: 300,
       },
       text: [
-        'At the bottom of the box is the Deluxe Edition bonus: a black tee with SCOT33\'s own face on it. He puts it on at once. The WRLD BLDR\'s sad face flips into a smile.',
+        'At the bottom of the box is the Deluxe Edition bonus: a black tee with SCOT33\'s own face on it, and two tacos in a FR33 D. OHM INC. lunch bag. He puts the tee on at once. The WRLD BLDR\'s sad face flips into a smile.',
         'WORLD SEED ACCEPTED. GENERATING WORLD ONE.',
       ],
-      onEnter: { item: 'scot33-band-tee', gold: { id: 'ch1.lostfound', amount: 25 } },
+      onEnter: { item: 'scot33-band-tee', bag: { taco: 2 }, gold: { id: 'ch1.lostfound', amount: 25 } },
       choices: [{ id: 'out', label: 'STEP INTO WORLD ONE', to: 'ch1.street' }],
     },
     {
       id: 'ch1.street',
       title: 'WORLD ONE',
       text: [
-        'World One is an island the size of a backyard, and it is completely grey: grey grass, grey sky, a grey tree waiting to be told what color to be.',
-        'Over the horizon drifts the Gloom, a low grey cloud that makes everything it touches feel a little pointless.',
+        'World One is an island, and it is completely grey: grey meadow, grey woods, grey shore, grey sky. In the middle stands one grey tree, waiting to be told what color to be.',
+        'Over all of it hangs the Gloom, a low grey cloud that makes everything feel a little pointless. Wherever it touches the ground, grey creatures crawl out.',
         'On the grey tree sits a cat in a foam trucker hat with a FR33 D. OHM INC. badge. He\'s eating a taco.',
       ],
-      choices: [
-        { id: 'cat', label: '"HI! ARE YOU PART OF THE WORLD?"', to: 'ch1.toulous3' },
-        { id: 'run', label: 'START BUILDING BEFORE THE GLOOM ARRIVES', check: { stat: 'grit', dc: 12, pass: 'ch1.static', fail: 'ch1.static', passEffect: { xp: 15 }, failEffect: { hp: -4 } } },
-      ],
+      choices: [{ id: 'cat', label: '"HI! ARE YOU PART OF THE WORLD?"', to: 'ch1.toulous3' }],
     },
     {
       id: 'ch1.toulous3',
       title: 'TECH SUPPORT',
       text: [
-        '"TOULOUS3, FR33 D. OHM INC. Customer Support." He waves the taco. "Every new BLDR gets a support cat. Most people build a world just for themselves. A castle, a moat, keep out."',
-        '"So what\'s yours for, tiger?"',
+        '"TOULOUS3, FR33 D. OHM INC. Customer Support." He waves the taco. "Every new BLDR gets a support cat. Bad news: the Gloom ate your world\'s color and split it into three COLOR SHARDS. Something big is sitting on each one: the meadow, the woods, the shore."',
+        '"Bring all three back here and the BLDR can push the Gloom out. I run the support desk under this tree. I sell supplies for SCRAP, which the grey things drop. Rest here any time."',
+        '"Most people build a world just for themselves," he adds. "So what\'s yours for, tiger?"',
       ],
       choices: [
-        { id: 'film', label: 'SNAP A PHOTO OF HIM SMILING AND SHOW HIM', to: 'ch1.recruit', effect: { xp: 30 }, requires: { item: 'film' } },
-        { id: 'pitch', label: '"FOR EVERYBODY. A WORLD WHERE ANYONE CAN BE POSITIVE."', check: { stat: 'style', dc: 12, pass: 'ch1.recruit', fail: 'ch1.static', passEffect: { xp: 30 }, failEffect: { hp: -3 } } },
-        { id: 'leave', label: '"TELL YOU LATER. THE GLOOM IS HERE!"', to: 'ch1.static' },
+        { id: 'film', label: 'SNAP A PHOTO OF HIM SMILING AND SHOW HIM', to: 'ch1.recruit', effect: { xp: 30 }, requires: { item: 'film', notFlag: 'crew_toulous3' } },
+        { id: 'pitch', label: '"FOR EVERYBODY. A WORLD WHERE ANYONE CAN BE POSITIVE."', check: { stat: 'style', dc: 12, pass: 'ch1.recruit', fail: 'ch1.tree', passEffect: { xp: 30 }, failEffect: { xp: 5 } }, requires: { notFlag: 'crew_toulous3' } },
+        { id: 'later', label: '"TELL YOU LATER. I\'VE GOT SHARDS TO FIND."', to: 'ch1.tree' },
       ],
     },
     {
@@ -123,29 +181,136 @@ const ch1: Chapter = {
       title: 'CO-BUILDER',
       text: [
         'TOULOUS3 is quiet for a second. Then he drops out of the tree and offers a paw. "Nobody\'s ever said that in the setup wizard before. I\'m in. Support cat, co-builder, whatever you need."',
-        'The grey tree turns a little bit green.',
+        'From now on he has your back in fights: a hat to the face for them, a taco for you when you\'re low. He hands you two more tacos for the road.',
       ],
-      onEnter: { flag: 'crew_toulous3', gold: { id: 'ch1.recruit', amount: 50 } },
-      choices: [{ id: 'go', label: 'FACE THE GLOOM TOGETHER', to: 'ch1.static' }],
+      onEnter: { flag: 'crew_toulous3', bag: { taco: 2 }, gold: { id: 'ch1.recruit', amount: 50 } },
+      choices: [{ id: 'go', label: 'TO THE SUPPORT DESK', to: 'ch1.tree' }],
+    },
+    {
+      id: 'ch1.tree',
+      title: 'THE GREY TREE',
+      checkpoint: true,
+      shop: SHOP,
+      text: [
+        'TOULOUS3\'s support desk is a folding table under the grey tree: tacos, sodas, spare parts, and a sign that says WE FIX WORLDS. If you fall in a fight, you wake up here (and drop half your SCRAP).',
+        'QUEST: bring back the GREEN, ORANGE and BLUE COLOR SHARDS. The meadow is gentle. The woods and the shore are not. Level up and gear up before you push in.',
+      ],
+      choices: [
+        { id: 'rest', label: 'REST UNDER THE TREE', hint: 'FULL HP', to: 'ch1.tree', effect: { fullHeal: true } },
+        { id: 'ask', label: 'ASK TOULOUS3 TO JOIN YOU', to: 'ch1.toulous3', requires: { notFlag: 'crew_toulous3' } },
+        { id: 'meadow', label: 'THE GREY MEADOW', hint: 'REC. LV 1–3', to: 'ch1.meadow' },
+        { id: 'woods', label: 'THE DRIZZLE WOODS', hint: 'REC. LV 3–4', to: 'ch1.woods' },
+        { id: 'shore', label: 'STATIC SHORE', hint: 'REC. LV 4–5', to: 'ch1.shore' },
+        { id: 'eye', label: 'THE GLOOM\'S EYE', hint: 'FINAL FIGHT · REC. LV 6', to: 'ch1.static', requires: { flags: ['shard_green', 'shard_orange', 'shard_blue'] } },
+      ],
+    },
+    {
+      id: 'ch1.meadow',
+      title: 'THE GREY MEADOW',
+      text: [
+        'Knee-high grey grass that rustles like a sigh. Small grey things move in it. In the middle of the field, a pile of grey boulders shrugs whenever the wind blows. Something green glows under it.',
+      ],
+      choices: [
+        { id: 'search', label: 'SEARCH THE MEADOW', hint: 'FIGHT OR FIND', explore: MEADOW },
+        { id: 'golem', label: 'CHALLENGE THE SHRUG GOLEM', hint: 'MINI-BOSS · REC. LV 3', requires: { notFlag: 'shard_green' }, fight: { enemies: ['shrug-golem'], win: 'ch1.meadow.won', reward: { items: ['shard-green', 'paint-roller'], flag: 'shard_green' } } },
+        BACK_TO_TREE,
+      ],
+    },
+    {
+      id: 'ch1.meadow.won',
+      title: 'GREEN',
+      text: [
+        'The golem crumbles into ordinary rocks, and the grass under it goes green in a perfect circle. SCOT33 picks up the GREEN COLOR SHARD. Tangled in the rocks: a PAINT ROLLER, still wet.',
+      ],
+      choices: [{ id: 'more', label: 'KEEP EXPLORING THE MEADOW', to: 'ch1.meadow' }, BACK_TO_TREE],
+    },
+    {
+      id: 'ch1.woods',
+      title: 'THE DRIZZLE WOODS',
+      text: [
+        'It is always drizzling in here. The trees lean together and whisper "why bother?" A narrow path that looks oddly dry splits off to the left. Deep in the woods, the oldest tree of all is holding something orange in its roots.',
+      ],
+      choices: [
+        { id: 'search', label: 'SEARCH THE WOODS', hint: 'FIGHT OR FIND', explore: WOODS },
+        { id: 'path', label: 'FOLLOW THE DRY PATH', hint: 'SIDE PATH', requires: { notFlag: 'grove_done' }, check: { stat: 'wits', dc: 12, pass: 'ch1.grove', fail: 'ch1.woods', passEffect: { xp: 15 }, failEffect: { hp: -4 } } },
+        { id: 'elder', label: 'FACE THE DOUBTWOOD ELDER', hint: 'MINI-BOSS · REC. LV 4', requires: { notFlag: 'shard_orange' }, fight: { enemies: ['doubtwood-elder'], win: 'ch1.woods.won', reward: { items: ['shard-orange', 'acorn-of-maybe'], flag: 'shard_orange' } } },
+        BACK_TO_TREE,
+      ],
+    },
+    {
+      id: 'ch1.grove',
+      title: 'THE DRY GROVE',
+      text: [
+        'The path ends in a clearing where it isn\'t raining at all. In the middle sits a FR33 D. OHM INC. FIELD SUPPLY crate. Above it, two DOOMSCROLL BATS stop scrolling and look at you.',
+      ],
+      choices: [
+        { id: 'open', label: 'GO FOR THE CRATE', hint: 'AMBUSH · 2 FIGHTS IN A ROW', fight: { enemies: ['doomscroll-bat', 'doomscroll-bat'], win: 'ch1.grove.loot', noFlee: true, reward: { item: 'steel-wrench', scrap: 30, flag: 'grove_done' } } },
+        { id: 'leave', label: 'BACK AWAY SLOWLY', to: 'ch1.woods' },
+      ],
+    },
+    {
+      id: 'ch1.grove.loot',
+      title: 'FIELD SUPPLY',
+      text: [
+        'Inside the crate: a STEEL-TOE WRENCH with a FR33 D. OHM INC. asset tag, and a coffee can of SCRAP. The note taped inside says: "FOR FIELD REPAIRS. THE WORLD IS ALWAYS WORTH FIXING."',
+      ],
+      choices: [{ id: 'back', label: 'BACK INTO THE WOODS', to: 'ch1.woods' }],
+    },
+    {
+      id: 'ch1.woods.won',
+      title: 'ORANGE',
+      text: [
+        'The Elder groans, stretches, and for the first time in a long time its leaves come in orange. It lets go of the ORANGE COLOR SHARD, and drops an acorn into SCOT33\'s paw like a thank-you.',
+      ],
+      choices: [{ id: 'more', label: 'KEEP EXPLORING THE WOODS', to: 'ch1.woods' }, BACK_TO_TREE],
+    },
+    {
+      id: 'ch1.shore',
+      title: 'STATIC SHORE',
+      text: [
+        'The waves here hiss like a TV between channels. Crabs click, gulls shout "NAH" at nothing. Out past the breakers sits a half-sunk shipping container with FR33 D. OHM INC. stenciled on it. On a rock in the surf, a crab the size of a car wears a crown of static, with something blue clutched in one claw.',
+      ],
+      choices: [
+        { id: 'search', label: 'SEARCH THE SHORE', hint: 'FIGHT OR FIND', explore: SHORE },
+        { id: 'wreck', label: 'WADE OUT TO THE WRECK', hint: 'SIDE PATH', requires: { notFlag: 'wreck_done' }, check: { stat: 'grit', dc: 12, pass: 'ch1.wreck', fail: 'ch1.shore', passEffect: { xp: 15 }, failEffect: { hp: -6 } } },
+        { id: 'king', label: 'CHALLENGE THE STATIC KING', hint: 'MINI-BOSS · REC. LV 5', requires: { notFlag: 'shard_blue' }, fight: { enemies: ['static-king'], win: 'ch1.shore.won', reward: { items: ['shard-blue', 'bubble-jacket'], flag: 'shard_blue' } } },
+        BACK_TO_TREE,
+      ],
+    },
+    {
+      id: 'ch1.wreck',
+      title: 'THE WRECK',
+      text: [
+        'The container is full of returned WRLD BLDRs, each with a sticky note: "TOO HARD." "GAVE UP." "WHAT\'S THE POINT." SCOT33 reads every one. In a box marked SPARES he finds a LUCKY BOLT, a SPARE BATTERY and a pile of SCRAP.',
+      ],
+      onEnter: { flag: 'wreck_done', item: 'lucky-bolt', bag: { 'spare-battery': 1 }, scrap: 40 },
+      choices: [{ id: 'back', label: 'WADE BACK TO SHORE', to: 'ch1.shore' }],
+    },
+    {
+      id: 'ch1.shore.won',
+      title: 'BLUE',
+      text: [
+        'The crown of static fizzles out. The STATIC KING is just a very large, slightly embarrassed crab. It sets down the BLUE COLOR SHARD and scuttles off, leaving behind a BUBBLE WRAP JACKET it had been using as a cape.',
+      ],
+      choices: [{ id: 'more', label: 'KEEP EXPLORING THE SHORE', to: 'ch1.shore' }, BACK_TO_TREE],
     },
     {
       id: 'ch1.static',
-      title: 'THE GLOOM',
+      title: 'THE GLOOM\'S EYE',
       text: [
-        'The Gloom rolls over the island. Under it, SCOT33 hears a small voice: "Why bother? It\'s just going to be grey anyway." The tree starts to droop.',
-        'SCOT33 grins. He has heard that voice before, and he has never once agreed with it.',
+        'SCOT33 sets the three COLOR SHARDS into the WRLD BLDR. It hums, and the Gloom notices. The whole cloud pulls down into one shape over the island, with one huge grey eye. A small voice comes out of it: "Why bother? It\'s just going to be grey anyway."',
+        'SCOT33 grins. He has heard that voice before, and he has never once agreed with it. (There\'s no running from this one.)',
       ],
       choices: [
-        { id: 'fight', label: 'BUILD A WINDMILL AND BLOW IT AWAY', check: { stat: 'grit', dc: 12, pass: 'ch1.win', fail: 'ch1.win', passEffect: { xp: 40 }, failEffect: { hp: -7, xp: 10 } } },
-        { id: 'flash', label: 'CODE A SUNRISE IN DEVELOPER MODE', check: { stat: 'wits', dc: 11, pass: 'ch1.win', fail: 'ch1.win', passEffect: { xp: 40 }, failEffect: { hp: -6, xp: 10 } } },
-        { id: 'crew', label: '"TOULOUS3, HIT THE COLOR BUTTON!"', to: 'ch1.win', effect: { xp: 40 }, requires: { flag: 'crew_toulous3' } },
+        { id: 'fight', label: 'FACE THE GLOOM', hint: 'FINAL FIGHT', fight: { enemies: ['the-gloom'], win: 'ch1.win', noFlee: true } },
+        { id: 'notyet', label: 'NOT YET. BACK TO THE TREE TO PREPARE.', to: 'ch1.tree' },
       ],
     },
     {
       id: 'ch1.win',
       title: 'FIRST COLOR',
       text: [
-        'The Gloom thins to mist, then to nothing. Color pours in: green grass, blue sky, and a tree that chooses orange because it can. Down on the shore, a little boat bumps the sand. World One has its first visitor.',
+        'The Gloom thins to mist, then to nothing. Color pours in from the three shards: green grass, blue sky, and a tree that chooses orange because it can. Down on the shore, a little boat bumps the sand. World One has its first visitor.',
       ],
       onEnter: { gold: { id: 'ch1.win', amount: 25 } },
       choices: [{ id: 'walk', label: 'GO SAY HELLO', to: 'ch1.end' }],
@@ -416,6 +581,7 @@ export const STORY_REWARDS: Record<string, number> = Object.fromEntries(
         if (ch.effect?.gold) out.push([ch.effect.gold.id, ch.effect.gold.amount]);
         if (ch.check?.passEffect?.gold) out.push([ch.check.passEffect.gold.id, ch.check.passEffect.gold.amount]);
         if (ch.check?.failEffect?.gold) out.push([ch.check.failEffect.gold.id, ch.check.failEffect.gold.amount]);
+        if (ch.fight?.reward?.gold) out.push([ch.fight.reward.gold.id, ch.fight.reward.gold.amount]);
       }
       return out;
     }),

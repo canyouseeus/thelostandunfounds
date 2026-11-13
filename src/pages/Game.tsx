@@ -5,15 +5,35 @@
  * through /api/game: the server rolls the dice and owns the gold, which
  * redeems into single-use credit codes for the site's Stripe checkouts.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/SEOHead';
 import AuthModal from '../components/auth/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { getAffiliateRef } from '../utils/affiliate-tracking';
-import { availableChoices, currentNode, effectiveStat, isValidState, newGame, startChapter, step } from '../lib/game/engine';
+import {
+  MAX_VIBE,
+  atkOf,
+  availableChoices,
+  classOf,
+  combatActions,
+  critOf,
+  currentNode,
+  defOf,
+  dodgeOf,
+  effectiveStat,
+  maxHpOf,
+  newGame,
+  normalizeState,
+  skillsFor,
+  startChapter,
+  step,
+  upcomingSkills,
+  xpForLevel,
+} from '../lib/game/engine';
+import { ENEMIES } from '../lib/game/enemies';
 import { CHAPTERS, CHAPTER_ORDER } from '../lib/game/story';
-import { ITEMS } from '../lib/game/items';
+import { ITEMS, gearSummary, itemName } from '../lib/game/items';
 import {
   AFFILIATE_QUEST_GOLD,
   CREDIT_EXPIRY_DAYS,
@@ -25,7 +45,7 @@ import {
   minOrderCents,
 } from '../lib/game/economy';
 import type { GameEvent, GameState, Stat } from '../lib/game/types';
-import { STATS } from '../lib/game/types';
+import { SLOTS, STATS } from '../lib/game/types';
 
 const GUEST_KEY = 'fr33dom-inc-guest-save';
 const SQUARE = { borderRadius: 0 } as const;
@@ -54,7 +74,9 @@ function loadGuest(): GameState {
     const raw = localStorage.getItem(GUEST_KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      if (isValidState(s)) return s;
+      // Older guest saves are upgraded, not thrown away.
+      const upgraded = normalizeState(s);
+      if (upgraded) return upgraded;
     }
   } catch { /* storage blocked: play without saving */ }
   return newGame();
@@ -73,6 +95,33 @@ async function api<T>(action: string, body?: Record<string, unknown>): Promise<{
 }
 
 const STAT_LABEL: Record<Stat, string> = { grit: 'GRIT', wits: 'WITS', style: 'STYLE' };
+const STAT_HELP: Record<Stat, string> = {
+  grit: 'ATTACK +1 · MAX HP +2',
+  wits: 'CRIT +4% · ACCURACY · ESCAPE',
+  style: 'DODGE +3% · PEP TALK',
+};
+const SLOT_LABEL: Record<string, string> = { weapon: 'WEAPON', head: 'HEAD', body: 'BODY', trinket: 'TRINKET' };
+const CLASS_LABEL: Record<string, string> = { builder: 'BUILDER', thinker: 'THINKER', dreamer: 'DREAMER' };
+
+const ERROR_TEXT: Record<string, string> = {
+  scrap: 'NOT ENOUGH SCRAP.',
+  in_combat: 'FINISH THE FIGHT FIRST.',
+  requirement: 'YOU CAN\'T DO THAT YET.',
+  bad_choice: 'THAT DIDN\'T WORK. TRY SOMETHING ELSE.',
+};
+
+function Bar({ value, max, thin }: { value: number; max: number; thin?: boolean }) {
+  const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100));
+  return (
+    <div className={`${thin ? 'h-1' : 'h-2'} bg-white/10`} style={SQUARE} role="presentation">
+      <div className={`${thin ? 'h-1' : 'h-2'} bg-white transition-all`} style={{ ...SQUARE, width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function Tag({ children }: { children: ReactNode }) {
+  return <span className="inline-block px-1.5 py-0.5 bg-white/10 text-[10px] font-bold uppercase tracking-widest mr-1 mb-1">{children}</span>;
+}
 
 function describe(e: ShownEvent, signedIn: boolean): { text: string; shopHandle?: string } | null {
   switch (e.type) {
@@ -90,9 +139,14 @@ function describe(e: ShownEvent, signedIn: boolean): { text: string; shopHandle?
     case 'xp':
       return { text: `+${e.amount} XP` };
     case 'level':
-      return { text: `LEVEL UP: LEVEL ${e.level}. MAX HP +3, FULLY HEALED.` };
+      return { text: `LEVEL UP: LEVEL ${e.level}. MAX HP +6, FULLY HEALED, +1 STAT POINT TO SPEND.` };
     case 'fallen':
-      return { text: 'OUT OF HP. SCOT33 DUSTS HIMSELF OFF AND STARTS THE CHAPTER AGAIN, GEAR KEPT. STILL POSITIVE.' };
+      if (e.revived) return { text: 'SPARE BATTERY KICKS IN. BACK UP AT HALF HP.' };
+      return { text: `OUT OF HP. SCOT33 WAKES UP AT THE LAST SAFE SPOT, HEALED, GEAR KEPT${e.scrapLost ? `, ${e.scrapLost} SCRAP DROPPED` : ''}. STILL POSITIVE.` };
+    case 'scrap':
+      return { text: e.amount < 0 ? `${e.amount} SCRAP` : `+${e.amount} SCRAP` };
+    case 'log':
+      return { text: e.text };
     case 'chapter_complete':
       return { text: `CHAPTER COMPLETE: ${CHAPTERS[e.chapter]?.title ?? e.chapter}` };
   }
@@ -161,6 +215,7 @@ export default function Game() {
       const r = step(state, choiceId, Math.random, new Set());
       if (!r.ok) {
         if (r.error === 'locked') setLocked(r.chapter ?? null);
+        else setNotice(ERROR_TEXT[r.error] ?? null);
         return;
       }
       setState(r.state);
@@ -179,7 +234,7 @@ export default function Game() {
       } else if (r.status === 409) {
         await refresh();
       } else {
-        setNotice(r.data.error || 'Something went wrong.');
+        setNotice((r.data.error && ERROR_TEXT[r.data.error]) || r.data.error || 'Something went wrong.');
       }
     } finally {
       setBusy(false);
@@ -255,7 +310,19 @@ export default function Game() {
   const node = currentNode(state);
   const choices = availableChoices(state);
   const lockedChapter = locked ? CHAPTERS[locked] : null;
-  const hpPct = Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100));
+  const maxHp = maxHpOf(state);
+  const combat = state.combat ?? null;
+  const foe = combat ? ENEMIES[combat.enemy] : null;
+  const actions = combat ? combatActions(state) : [];
+  const xpFloor = xpForLevel(state.level);
+  const xpNext = xpForLevel(state.level + 1);
+  const canTrain = state.statPoints > 0 && !combat;
+  const shop = !combat ? node.shop ?? [] : [];
+  const ownedGear = state.inventory.filter((id) => ITEMS[id]?.slot);
+  const keyItems = state.inventory.filter((id) => ITEMS[id] && !ITEMS[id].slot && !ITEMS[id].use);
+  const bag = Object.entries(state.bag).filter(([, n]) => n > 0);
+  const skills = skillsFor(state);
+  const nextSkills = upcomingSkills(state);
   const shownEvents = events.map((e) => describe(e, signedIn)).filter(Boolean) as { text: string; shopHandle?: string }[];
   const referralLink = snap?.quests.code ? `https://www.thelostandunfounds.com/?ref=${encodeURIComponent(snap.quests.code)}` : null;
 
@@ -313,33 +380,60 @@ export default function Game() {
           {notice && <div className="bg-white/10 p-3 mb-6 text-xs font-bold uppercase tracking-widest">{notice}</div>}
 
           {/* Status */}
-          <div className="bg-[#0a0a0a] p-4 mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4" aria-label="Character">
-            <div className="col-span-2">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">
-                SCOT33 · LEVEL {state.level} · {state.xp} XP
+          <div className="bg-[#0a0a0a] p-4 mb-6" aria-label="Character">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+                SCOT33 · {CLASS_LABEL[classOf(state)]} · LEVEL {state.level}
               </div>
-              <div className="h-2 bg-white/10" style={SQUARE}>
-                <div className="h-2 bg-white" style={{ ...SQUARE, width: `${hpPct}%` }} />
+              <div className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
+                <span>SCRAP <span className="text-white text-sm font-black">{state.scrap}</span></span>
+                <span>
+                  GOLD <span className="text-white text-sm font-black">{signedIn ? (snap ? snap.gold : '…') : '—'}</span>
+                  {signedIn && snap && <span className="text-white/60"> = {formatUsd(goldToCents(snap.gold))}</span>}
+                </span>
               </div>
-              <div className="text-xs font-bold mt-1">HP {state.hp}/{state.maxHp}</div>
             </div>
-            <div className="flex gap-4 text-xs font-bold uppercase">
-              {STATS.map((s) => (
-                <div key={s}>
-                  <div className="text-[10px] text-white/60 tracking-widest">{STAT_LABEL[s]}</div>
-                  <div className="text-lg">{effectiveStat(state, s)}</div>
+            <Bar value={state.hp} max={maxHp} />
+            <div className="flex justify-between text-xs font-bold mt-1 mb-2">
+              <span>HP {state.hp}/{maxHp}</span>
+              <span className="text-white/60 text-[10px] tracking-widest">XP {state.xp - xpFloor}/{xpNext - xpFloor} TO LV {state.level + 1}</span>
+            </div>
+            <Bar value={state.xp - xpFloor} max={xpNext - xpFloor} thin />
+            <div className="grid grid-cols-4 gap-2 mt-3 text-xs font-bold uppercase">
+              <div><div className="text-[10px] text-white/60 tracking-widest">ATK</div><div className="text-lg">{atkOf(state)}</div></div>
+              <div><div className="text-[10px] text-white/60 tracking-widest">DEF</div><div className="text-lg">{defOf(state)}</div></div>
+              <div><div className="text-[10px] text-white/60 tracking-widest">CRIT</div><div className="text-lg">{critOf(state)}%</div></div>
+              <div><div className="text-[10px] text-white/60 tracking-widest">DODGE</div><div className="text-lg">{dodgeOf(state)}%</div></div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3" data-tour="game-stats">
+              {STATS.map((st) => (
+                <div key={st} className="bg-white/5 p-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] font-bold text-white/60 tracking-widest">{STAT_LABEL[st]}</div>
+                      <div className="text-lg font-black">{effectiveStat(state, st)}</div>
+                    </div>
+                    {canTrain && (
+                      <button
+                        onClick={() => choose(`train:${st}`)}
+                        disabled={busy}
+                        aria-label={`Raise ${STAT_LABEL[st]}`}
+                        className="w-9 h-9 text-lg font-black bg-white text-black hover:bg-white/10 hover:text-white disabled:opacity-50"
+                        style={SQUARE}
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[9px] text-white/50 tracking-wider leading-tight mt-1 uppercase">{STAT_HELP[st]}</div>
                 </div>
               ))}
             </div>
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">GOLD</div>
-              <div className="text-lg font-black">
-                {signedIn ? (snap ? snap.gold : '…') : '—'}
+            {canTrain && (
+              <div className="mt-2 text-[10px] font-bold uppercase tracking-widest">
+                {state.statPoints} STAT POINT{state.statPoints > 1 ? 'S' : ''} TO SPEND. TAP +.
               </div>
-              {signedIn && snap && (
-                <div className="text-[10px] text-white/60 uppercase tracking-widest">= {formatUsd(goldToCents(snap.gold))} CREDIT</div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Story */}
@@ -347,6 +441,45 @@ export default function Game() {
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
               CHAPTER {chapter.number}: {chapter.title}
             </div>
+            {combat && foe ? (
+              <div data-tour="game-fight">
+                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">{foe.name}</h2>
+                <p className="text-sm text-white/70 mt-1 mb-3">{foe.blurb}</p>
+                <div className="mb-1"><Bar value={combat.hp} max={combat.maxHp} /></div>
+                <div className="flex justify-between text-xs font-bold mb-2">
+                  <span>{foe.boss ? 'BOSS · ' : ''}HP {combat.hp}/{combat.maxHp}</span>
+                  {combat.queue.length > 0 && <span className="text-white/60 text-[10px] tracking-widest">+{combat.queue.length} MORE WAITING</span>}
+                </div>
+                <div className="min-h-[1.5rem]">
+                  {combat.phase === 2 && <Tag>ANGRY</Tag>}
+                  {combat.foe.stun > 0 && <Tag>STUNNED</Tag>}
+                  {combat.foe.weak > 0 && <Tag>WEAKENED {combat.foe.weak}</Tag>}
+                  {combat.foe.guard && <Tag>GUARDING</Tag>}
+                </div>
+
+                <div className="mt-4 bg-black/60 p-3">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <span>YOU · HP {state.hp}/{maxHp}</span>
+                    <span>TURN {combat.turn}</span>
+                  </div>
+                  <Bar value={state.hp} max={maxHp} />
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest">VIBE</span>
+                    <div className="flex gap-1" aria-label={`VIBE ${combat.vibe} of ${MAX_VIBE}`}>
+                      {Array.from({ length: MAX_VIBE }, (_, i) => (
+                        <span key={i} className={`w-4 h-3 ${i < combat.vibe ? 'bg-white' : 'bg-white/15'}`} style={SQUARE} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-2 min-h-[1.5rem]">
+                    {combat.you.pumped > 0 && <Tag>PUMPED {combat.you.pumped}</Tag>}
+                    {combat.you.weak > 0 && <Tag>WEAKENED {combat.you.weak}</Tag>}
+                    {combat.you.grey > 0 && <Tag>GREYED {combat.you.grey}</Tag>}
+                    {(state.bag['spare-battery'] ?? 0) > 0 && <Tag>SPARE BATTERY READY</Tag>}
+                  </div>
+                </div>
+              </div>
+            ) : (<>
             {node.title && <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight mb-4">{node.title}</h2>}
             {node.art && (
               <figure
@@ -369,6 +502,7 @@ export default function Game() {
             <div className="space-y-3 text-white/90 leading-relaxed text-left">
               {node.text.map((p, i) => <p key={i}>{p}</p>)}
             </div>
+            </>)}
 
             {shownEvents.length > 0 && (
               <ul className="mt-5 space-y-1 bg-black/60 p-3 text-xs font-bold uppercase tracking-wider text-white/80">
@@ -401,6 +535,21 @@ export default function Game() {
                 </button>
                 {!signedIn && <p className="text-[10px] uppercase tracking-widest text-white/60 mt-2">SIGN IN FIRST SO THE CHAPTER IS SAVED TO YOUR ACCOUNT.</p>}
               </div>
+            ) : combat ? (
+              <div className="mt-5 grid grid-cols-2 gap-2" data-tour="game-actions">
+                {actions.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => choose(a.id)}
+                    disabled={busy || a.disabled}
+                    className={`${a.kind === 'attack' || a.kind === 'guard' ? '' : 'col-span-2'} w-full px-3 py-3 text-left bg-white/10 hover:bg-white hover:text-black transition-colors disabled:opacity-40 disabled:hover:bg-white/10 disabled:hover:text-white`}
+                    style={SQUARE}
+                  >
+                    <span className="block text-sm font-black uppercase tracking-wide">{a.label}</span>
+                    {a.detail && <span className="block text-[10px] font-bold uppercase tracking-wider opacity-60 mt-0.5">{a.detail}</span>}
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="mt-6 grid grid-cols-1 gap-2" data-tour="game-choices">
                 {choices.map((c) => (
@@ -414,6 +563,7 @@ export default function Game() {
                     <span>
                       {c.label}
                       {c.check && <span className="text-white/50 ml-2 text-[10px] tracking-widest">[{STAT_LABEL[c.check.stat]} {c.check.dc}]</span>}
+                      {c.hint && <span className="text-white/50 ml-2 text-[10px] tracking-widest">[{c.hint}]</span>}
                     </span>
                   </button>
                 ))}
@@ -421,30 +571,140 @@ export default function Game() {
             )}
           </div>
 
+          {shop.length > 0 && (
+            <div className="bg-white/5 p-5 mb-6" data-tour="game-shop">
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 className="text-sm font-black uppercase tracking-widest">SUPPORT DESK SHOP</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">YOU HAVE {state.scrap} SCRAP</span>
+              </div>
+              <ul className="space-y-2">
+                {shop.map((id) => {
+                  const it = ITEMS[id];
+                  if (!it) return null;
+                  const owned = !it.use && state.inventory.includes(id);
+                  const full = !!it.use && (state.bag[id] ?? 0) >= (it.carry ?? 9);
+                  const short = state.scrap < (it.price ?? 0);
+                  return (
+                    <li key={id} className="flex items-center gap-3 bg-black/40 p-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase">{it.name}{it.use ? ` · HAVE ${state.bag[id] ?? 0}` : ''}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-white/60">{it.slot ? `${SLOT_LABEL[it.slot]} · ${gearSummary(id)}` : it.blurb}</div>
+                      </div>
+                      <button
+                        onClick={() => choose(`buy:${id}`)}
+                        disabled={busy || owned || full || short}
+                        className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black"
+                        style={SQUARE}
+                      >
+                        <span className="whitespace-nowrap">{owned ? 'OWNED' : full ? 'FULL' : `${it.price} SCRAP`}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Inventory */}
-            <div className="bg-white/5 p-5">
+            {/* Gear */}
+            <div className="bg-white/5 p-5" data-tour="game-gear">
               <h2 className="text-sm font-black uppercase tracking-widest mb-3">GEAR</h2>
-              {state.inventory.length === 0 ? (
-                <p className="text-sm text-white/60">Nothing yet. Open the box.</p>
+              <ul className="space-y-3">
+                {SLOTS.map((slot) => {
+                  const on = state.equipped[slot];
+                  const spare = ownedGear.filter((id) => ITEMS[id].slot === slot && id !== on);
+                  return (
+                    <li key={slot}>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">{SLOT_LABEL[slot]}</div>
+                      {on ? (
+                        <div>
+                          <div className="text-xs font-bold uppercase">{itemName(on)}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/60">{gearSummary(on)}</div>
+                          {ITEMS[on]?.shopHandle && (
+                            <Link to={`/shop?item=${ITEMS[on].shopHandle}`} className="text-[10px] font-bold uppercase tracking-widest underline hover:text-white/60">
+                              MERCH DROP · SHOP IT
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-white/50 uppercase">EMPTY</div>
+                      )}
+                      {spare.map((id) => (
+                        <div key={id} className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 min-w-0 text-[10px] uppercase tracking-wider text-white/70">
+                            {itemName(id)} · {gearSummary(id)}
+                          </div>
+                          <button
+                            onClick={() => choose(`equip:${id}`)}
+                            disabled={busy || !!combat}
+                            className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/10 hover:bg-white hover:text-black disabled:opacity-40"
+                            style={SQUARE}
+                          >
+                            <span className="whitespace-nowrap">EQUIP</span>
+                          </button>
+                        </div>
+                      ))}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <h3 className="text-xs font-black uppercase tracking-widest mt-5 mb-2">BAG</h3>
+              {bag.length === 0 ? (
+                <p className="text-xs text-white/60">Empty.</p>
               ) : (
-                <ul className="space-y-3">
-                  {state.inventory.map((id) => {
+                <ul className="space-y-1">
+                  {bag.map(([id, n]) => {
                     const it = ITEMS[id];
-                    if (!it) return null;
+                    const usable = !!it?.use && !it.use.combatOnly && !combat && state.hp < maxHp;
                     return (
-                      <li key={id}>
-                        <div className="text-xs font-bold uppercase">{it.name}</div>
-                        <div className="text-xs text-white/60">{it.blurb}</div>
-                        {it.shopHandle && (
-                          <Link to={`/shop?item=${it.shopHandle}`} className="text-[10px] font-bold uppercase tracking-widest underline hover:text-white/60">
-                            MERCH DROP · SHOP IT
-                          </Link>
+                      <li key={id} className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold uppercase">{itemName(id)} ×{n}</div>
+                          <div className="text-[10px] text-white/60">{it?.blurb}</div>
+                        </div>
+                        {it?.use && !it.use.combatOnly && (
+                          <button
+                            onClick={() => choose(`use:${id}`)}
+                            disabled={busy || !usable}
+                            className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/10 hover:bg-white hover:text-black disabled:opacity-40"
+                            style={SQUARE}
+                          >
+                            <span className="whitespace-nowrap">USE</span>
+                          </button>
                         )}
                       </li>
                     );
                   })}
                 </ul>
+              )}
+
+              <h3 className="text-xs font-black uppercase tracking-widest mt-5 mb-2">SKILLS</h3>
+              <ul className="space-y-1">
+                {skills.map((sk) => (
+                  <li key={sk.id} className="text-[10px] uppercase tracking-wider">
+                    <span className="font-black text-xs">{sk.name}</span> · {sk.cost} VIBE · <span className="text-white/60">{sk.desc}</span>
+                  </li>
+                ))}
+                {nextSkills.map((sk) => (
+                  <li key={sk.id} className="text-[10px] uppercase tracking-wider text-white/40">
+                    {sk.name} · LEARNED AT LEVEL {sk.level}
+                  </li>
+                ))}
+              </ul>
+
+              {keyItems.length > 0 && (
+                <>
+                  <h3 className="text-xs font-black uppercase tracking-widest mt-5 mb-2">KEY ITEMS</h3>
+                  <ul className="space-y-2">
+                    {keyItems.map((id) => (
+                      <li key={id}>
+                        <div className="text-xs font-bold uppercase">{itemName(id)}</div>
+                        <div className="text-[10px] text-white/60">{ITEMS[id].blurb}</div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
 

@@ -22,7 +22,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { verifiedUser } from './_turnstile.js';
 import { getStripe, getSiteOrigin } from './affiliates/_stripe-client.js';
 import { cleanAffiliateRef, grantChapterUnlock, GAME_CHECKOUT_SOURCE } from './_game-unlock.js';
-import { isValidState, newGame, startChapter, step } from '../../src/lib/game/engine.js';
+import { newGame, normalizeState, startChapter, step } from '../../src/lib/game/engine.js';
 import { CHAPTERS, STORY_REWARDS } from '../../src/lib/game/story.js';
 import {
   AFFILIATE_QUEST_GOLD,
@@ -55,7 +55,9 @@ async function loadSave(supabase: SupabaseClient, userId: string) {
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (data && isValidState(data.state)) return data as { state: GameState; created_at: string; updated_at: string };
+  // Older saves (engine v1) are upgraded in place, so nobody loses progress.
+  const upgraded = data ? normalizeState(data.state) : null;
+  if (data && upgraded) return { ...data, state: upgraded } as { state: GameState; created_at: string; updated_at: string };
   const state = newGame();
   const now = new Date().toISOString();
   const { data: inserted, error: insErr } = await supabase
