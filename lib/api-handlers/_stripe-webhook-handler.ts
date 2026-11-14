@@ -11,6 +11,7 @@ import { stripeFundsAvailableAt } from './_prodigi-fulfillment.js'
 import { sendDepositConfirmationEmail, sendPhotographerAssignment, getSupabaseAdmin } from './_booking-payment-utils.js'
 import { availablePaymentsCents, runBalanceSweep } from './admin/_balance-sweep.js'
 import { accrueCrewPayout, accruePhotoSalePayouts } from './crew/_shared.js'
+import { GAME_CHECKOUT_SOURCE, grantChapterUnlock, revokeChapterUnlock } from './_game-unlock.js'
 
 /**
  * Stripe Webhook Handler
@@ -169,6 +170,9 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         await finalizeProdigiOrder(supabase, session)
     } else if (session.metadata?.source === 'tlau-events') {
         await finalizeEventOrder(supabase, session)
+    } else if (session.metadata?.source === GAME_CHECKOUT_SOURCE) {
+        // FR33 D. OHM INC. paid chapter. A throw returns 500 so Stripe retries.
+        await grantChapterUnlock(supabase, session)
     } else if (session.payment_link) {
         // Booking deposit / final-balance payments are made through Stripe
         // Payment Links (not Checkout Sessions), so they carry no metadata.source.
@@ -217,7 +221,7 @@ async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    let source: 'shop' | 'gallery' | 'booking' | 'event' | 'unknown' = 'unknown'
+    let source: 'shop' | 'gallery' | 'booking' | 'event' | 'game' | 'unknown' = 'unknown'
     let sourceId: string | null = null
 
     try {
@@ -252,6 +256,10 @@ async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
             } else if (session?.metadata?.source === 'tlau-events' && session.metadata?.eventOrderId) {
                 source = 'event'
                 sourceId = session.metadata.eventOrderId
+            } else if (session?.metadata?.source === GAME_CHECKOUT_SOURCE) {
+                // A refunded chapter stops unlocking. source_id is uuid-typed elsewhere, so keep it null.
+                source = 'game'
+                await revokeChapterUnlock(supabase, session.id)
             } else if (session?.payment_link) {
                 const paymentLinkId =
                     typeof session.payment_link === 'string' ? session.payment_link : session.payment_link.id

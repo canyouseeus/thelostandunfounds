@@ -359,6 +359,22 @@ html {
   }
 }
 
+/* FR33 D. OHM INC. title screen: arcade-style blinking START (steady on hover/focus and for reduced motion) */
+.game-start-blink {
+  animation: blink 1s infinite;
+}
+
+.game-start-blink:hover,
+.game-start-blink:focus-visible {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-start-blink {
+    animation: none;
+  }
+}
+
 .typing-cursor {
   color: #ffffff;
   font-weight: 300;
