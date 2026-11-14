@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import EmailSignup from '../components/EmailSignup'
 
 export default function Home() {
   const text = "CAN YOU SEE US?"
@@ -240,40 +239,8 @@ export default function Home() {
             </h1>
           )}
 
-          {/* Email Signup - slides up from bottom */}
-          <div
-            className="fixed flex flex-col items-center"
-            style={{
-              opacity: showSignup ? 1 : 0,
-              visibility: showSignup ? 'visible' : 'hidden',
-              left: '50%',
-              top: showSignup ? '50%' : '100%',
-              transform: showSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
-              width: '100%',
-              maxWidth: 'min(500px, 90vw)',
-              padding: '0 1rem',
-              zIndex: 40,
-              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
-              pointerEvents: showSignup ? 'auto' : 'none',
-              willChange: 'opacity, transform',
-              position: 'fixed',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem',
-            }}
-          >
-            <EmailSignup />
-            {/* Copy text below subscribe modal */}
-            <div style={{
-              textAlign: 'center',
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-              lineHeight: '1.5',
-              padding: '0 0.5rem',
-            }}>
-              Thanks for stopping by. Sign-up for updates and news!
-            </div>
-          </div>
+          {/* No email sign-up here: this intro only renders for a signed-in
+              admin (see RootPage), who doesn't need to subscribe. */}
         </main>
       </div>
     </>
