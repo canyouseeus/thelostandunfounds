@@ -72,6 +72,10 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
     // Show newsletter modal to visitors after 1.5s (homepage only, not logged in, not subscribed, not dismissed this session)
     useEffect(() => {
+        // Wait for the session to restore before starting the timer. Starting it
+        // while auth is still loading let the modal open for a signed-in admin
+        // whenever the session took longer than 1.5s to come back.
+        if (authLoading) return;
         if (!isHomepage || user || newsletterBarDismissed) return;
         if (hasNewsletterCookie()) return;
         if (sessionStorage.getItem('nl_dismissed')) return;
@@ -88,7 +92,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         if (new URLSearchParams(window.location.search).get('view')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
-    }, [isHomepage, user, newsletterBarDismissed]);
+    }, [isHomepage, user, authLoading, newsletterBarDismissed]);
 
     const handleNewsletterSuccess = () => {
         setNewsletterCookie();
@@ -492,8 +496,10 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         </div> {/* end gallery grid wrapper */}
 
             {/* Newsletter modal — slides up from bottom to center, like the old homepage */}
+            {/* Never shown to a signed-in user (admin included), even if the
+                timer already fired before the session finished restoring. */}
             <AnimatePresence>
-                {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && (
+                {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && !authLoading && !user && (
                     <motion.div
                         initial={{ top: '110%', opacity: 0 }}
                         animate={{ top: '50%', opacity: 1 }}
