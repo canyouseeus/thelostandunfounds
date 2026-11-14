@@ -512,8 +512,19 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   }
 
   // ── Footer ────────────────────────────────────────────────────────────────
-  // Kept above the bottom margin (≈736pt) so pdfkit doesn't auto-add a page.
-  const footerY = 696
+  // Sits at 696pt on a short invoice, but never above where the content ended:
+  // a fixed 696 drew the footer over the payment link whenever the scope text
+  // ran long (INV-017). The footer is ~32pt tall; it may use the bottom margin
+  // (the page is 792pt) and only moves to a new page if it would not fit there.
+  const FOOTER_H = 32
+  const PAGE_FLOOR = 792 - 20
+  let footerY = Math.max(696, y)
+  if (footerY + FOOTER_H > PAGE_FLOOR) {
+    doc.addPage()
+    footerY = 696
+  }
+  // Let the footer text sit inside the bottom margin without pdfkit paging.
+  doc.page.margins.bottom = 0
   doc.moveTo(LEFT, footerY).lineTo(RIGHT, footerY).lineWidth(0.5).strokeColor(HAIRLINE).stroke()
   doc
     .font('Helvetica')
