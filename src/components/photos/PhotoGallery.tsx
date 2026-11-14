@@ -138,12 +138,12 @@ const PhotoCard: React.FC<{
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full' : 'aspect-square'}`}
+            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full flex justify-center' : 'aspect-square'}`}
             style={{ perspective: '1000px' }}
             onContextMenu={(e) => e.preventDefault()}
         >
             <div
-                className={`w-full relative transition-transform duration-700 ${isSingle ? 'h-auto' : 'h-full'}`}
+                className={`relative transition-transform duration-700 ${isSingle ? 'max-w-full h-auto' : 'w-full h-full'}`}
                 style={{
                     transformStyle: 'preserve-3d',
                     WebkitTransformStyle: 'preserve-3d',
@@ -273,39 +273,42 @@ const PhotoCard: React.FC<{
 
                 {/* BACK SIDE (METADATA) */}
                 <div
-                    className="absolute inset-0 w-full h-full backface-hidden bg-black flex flex-col justify-between cursor-pointer"
+                    className="absolute inset-0 w-full h-full backface-hidden bg-black flex flex-col justify-between cursor-pointer overflow-hidden"
                     style={{
                         backfaceVisibility: 'hidden',
                         WebkitBackfaceVisibility: 'hidden',
                         transform: 'rotateY(180deg)',
                         zIndex: rotation % 360 === 180 ? 2 : 1,
-                        padding: isSingle ? '1.25rem' : '1.5vw'
+                        // Single view: text scales with the photo's own box (cqmin),
+                        // so a small or wide photo still fits its info side.
+                        ...(isSingle ? { containerType: 'size' as const } : {}),
+                        padding: isSingle ? 'clamp(12px, 5cqmin, 40px)' : '1.5vw'
                     }}
                     onClick={handleFlip}
                 >
-                    <div className={isSingle ? 'space-y-4 md:space-y-8' : 'space-y-[0.5vw] md:space-y-4'}>
+                    <div className={isSingle ? 'flex flex-col min-h-0 gap-[clamp(8px,4cqmin,32px)]' : 'space-y-[0.5vw] md:space-y-4'}>
                         <div className="space-y-[0.2vw] md:space-y-1">
-                            <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
-                            <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
+                            <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
+                            <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
                                 {photo.metadata?.cameraMake || photo.metadata?.camera_make || ''} {photo.metadata?.cameraModel || photo.metadata?.camera_model || 'Unknown'}
                             </p>
                         </div>
-                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.isoSpeed || photo.metadata?.iso || '-'}</p>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-[clamp(6px,3cqmin,20px)] gap-x-[clamp(12px,6cqmin,48px)]' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.isoSpeed || photo.metadata?.iso || '-'}</p>
                             </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
                             </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{(photo.metadata?.focalLength || photo.metadata?.focal_length) ? `${photo.metadata?.focalLength || photo.metadata?.focal_length}mm` : '-'}</p>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{(photo.metadata?.focalLength || photo.metadata?.focal_length) ? `${photo.metadata?.focalLength || photo.metadata?.focal_length}mm` : '-'}</p>
                             </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
                                     {(() => {
                                         const shutter = photo.metadata?.exposureTime || photo.metadata?.shutter_speed;
                                         if (!shutter) return '-';
@@ -316,19 +319,19 @@ const PhotoCard: React.FC<{
                                 </p>
                             </div>
                         </div>
-                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-[clamp(6px,3cqmin,20px)] gap-x-[clamp(12px,6cqmin,48px)]' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
                                     {(() => {
                                         const dateVal = photo.metadata?.time || photo.metadata?.date_taken;
                                         return dateVal ? new Date(dateVal).toLocaleDateString() : 'Unknown';
                                     })()}
                                 </p>
                             </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Location</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate whitespace-nowrap`}>
+                            <div className="min-w-0">
+                                <p className={`${isSingle ? 'text-[length:clamp(8px,3cqmin,16px)] mb-[clamp(2px,0.8cqmin,6px)]' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Location</p>
+                                <p className={`${isSingle ? 'text-[length:clamp(11px,5cqmin,24px)] truncate' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate whitespace-nowrap`}>
                                     {photo.metadata?.city || 'Austin, TX'}
                                 </p>
                             </div>
@@ -336,10 +339,10 @@ const PhotoCard: React.FC<{
                     </div>
 
                     <div className="pt-1 md:pt-4">
-                        <p className={`${isSingle ? 'text-[8px] md:text-sm' : 'text-[1.2vw] md:text-[10px]'} text-white font-medium tracking-widest uppercase mb-[0.1vw] md:mb-2 text-center w-full`}>
+                        <p className={`${isSingle ? 'text-[length:clamp(8px,2.4cqmin,14px)]' : 'text-[1.2vw] md:text-[10px]'} text-white font-medium tracking-widest uppercase mb-[0.1vw] md:mb-2 text-center w-full`}>
                             © {new Date(photo.metadata?.date_taken || photo.created_at).getFullYear()} {photo.metadata?.copyright || 'THE LOST+UNFOUNDS'}
                         </p>
-                        <p className={`${isSingle ? 'text-[7px] md:text-xs' : 'text-[1vw] md:text-[8px]'} text-white/50 uppercase tracking-wider text-center font-bold`}>
+                        <p className={`${isSingle ? 'text-[length:clamp(7px,2cqmin,12px)]' : 'text-[1vw] md:text-[8px]'} text-white/50 uppercase tracking-wider text-center font-bold`}>
                             TAP TO FLIP
                         </p>
                     </div>
