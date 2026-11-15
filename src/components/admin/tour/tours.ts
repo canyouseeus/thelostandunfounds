@@ -588,7 +588,8 @@ const qrWallpaperTour: Tour = {
     { target: 'qr-scheme', title: 'Colours', body: 'BLACK ON WHITE or WHITE ON BLACK.' },
     { target: 'qr-download', title: 'Download QR', body: 'Saves the plain code as a print-size PNG. Or keep going to make a wallpaper.' },
     { target: 'qr-make-wallpaper', action: 'click', title: 'Make A Wallpaper', body: 'Tap MAKE WALLPAPER.' },
-    { target: 'qr-choose-photo', title: 'Choose A Photo', body: 'Pick a photo. Then drag it to move it.' },
+    { target: 'qr-choose-photo', title: 'Upload A Photo', body: 'Upload a photo from your phone. Then drag it to move it.' },
+    { target: 'qr-my-galleries', title: 'From My Galleries', body: 'Or tap FROM MY GALLERIES to use a photo already in your galleries.' },
     { target: 'qr-zoom', title: 'Zoom', body: 'Zoom the photo here, or pinch it. The frame is a phone screen.' },
     {
       target: 'qr-to-place',
