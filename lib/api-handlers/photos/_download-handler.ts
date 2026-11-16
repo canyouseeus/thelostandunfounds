@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { GoogleAuth } from 'google-auth-library'
 import { Readable } from 'stream'
+import { getGoogleOAuthClient } from '../_google-oauth.js';
 
 export default async function handler(
     req: VercelRequest,
@@ -81,14 +82,11 @@ export default async function handler(
         }
 
         if (!accessToken) {
-            const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env
-            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+            const oauth = await getGoogleOAuthClient();
+            if (!oauth) {
                 console.error('No usable Google credentials for download');
                 return res.status(500).json({ error: 'Server configuration error' });
             }
-            const { google } = await import('googleapis');
-            const oauth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
-            oauth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
             const { token } = await oauth.getAccessToken();
             accessToken = token;
         }

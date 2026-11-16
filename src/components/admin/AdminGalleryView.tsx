@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PriceRow, BundleRows, PRICE_GROUP } from './PricingRows';
 import RetrogradeRenameTool from './RetrogradeRenameTool';
+import GoogleDriveConnection from './GoogleDriveConnection';
 import QrWallpaperModal from '@/components/qr/QrWallpaperModal';
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -1837,6 +1838,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false, h
                     <span>Asset system healthy — delivery verified.</span>
                 </div>
             )}
+
+            {/* Drive sign-in health + reconnect. Admin-only tool: it holds the
+                owner's Google credentials, so photographers never see it. */}
+            {!isPhotographerView && <GoogleDriveConnection />}
 
             {/* Tab bar — admin only */}
             {!isPhotographerView && (

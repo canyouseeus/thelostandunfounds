@@ -44,6 +44,7 @@ import {
     TERMS_REQUIRED_MESSAGE, TermsVersionError, type TermsParty,
 } from './_terms.js';
 import { normalizeHandle, normalizeText, reverseGeocode } from '../../scripts/claptrop-namer.js';
+import { getGoogleOAuthClient, isInvalidGrant, DRIVE_RECONNECT_HINT } from './_google-oauth.js';
 
 export { normalizeHandle };
 
@@ -152,7 +153,9 @@ async function createGalleryFolder(
             process.env.CLIENT_GALLERIES_DRIVE_FOLDER_ID || undefined,
         );
     } catch (err: any) {
-        throw new HttpError(502, `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`);
+        throw new HttpError(502, isInvalidGrant(err)
+            ? `Could not create the gallery's Google Drive folder. ${DRIVE_RECONNECT_HINT}`
+            : `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`, isInvalidGrant(err) ? 'drive_disconnected' : undefined);
     }
     // Only fill an empty slot: two first uploads racing must end on one folder.
     const { data: claimed, error } = await supabase
@@ -333,7 +336,9 @@ export async function createMyLiveGallery(
             process.env.PHOTOGRAPHER_LIVE_DRIVE_FOLDER_ID || process.env.LIVE_INBOX_DRIVE_FOLDER_ID || undefined,
         );
     } catch (err: any) {
-        throw new HttpError(502, `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`);
+        throw new HttpError(502, isInvalidGrant(err)
+            ? `Could not create the gallery's Google Drive folder. ${DRIVE_RECONNECT_HINT}`
+            : `Could not create the gallery's Google Drive folder: ${err?.message || driveStatus(err)}`, isInvalidGrant(err) ? 'drive_disconnected' : undefined);
     }
 
     // A short random suffix keeps two "Halloween" galleries from colliding.
@@ -384,12 +389,8 @@ export async function setMyLiveMode(
 
 async function getOAuthClient() {
     const { google } = await import('googleapis');
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
-        throw new HttpError(500, 'Google Drive credentials are not configured.');
-    }
-    const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
-    auth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+    const auth = await getGoogleOAuthClient();
+    if (!auth) throw new HttpError(500, 'Google Drive credentials are not configured.');
     return { google, auth };
 }
 

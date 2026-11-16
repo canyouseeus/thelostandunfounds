@@ -1299,6 +1299,24 @@ const moneyWalletsTour: Tour = {
   ],
 };
 
+/* ── Reconnect Google Drive (2026-11-16) ── */
+
+const driveConnectionTour: Tour = {
+  id: 'drive-connection',
+  title: 'Reconnect Google Drive',
+  summary: 'Gallery uploads need your Google Drive sign-in. When Google drops it, reconnect here from any device.',
+  group: 'new',
+  announce: '2026-11-16',
+  steps: [
+    openFromDock('gallery', 'Gallery', 'Tap Gallery to open it.'),
+    inPanel('gallery', { target: 'google-drive-connection', title: 'Drive Status', body: 'Green means uploads can reach Drive. Red means Google dropped the sign-in and uploads will fail.' }),
+    inPanel('gallery', { target: 'google-drive-reconnect', action: 'click', title: 'Reconnect', body: 'Tap RECONNECT to sign Drive in again.', missingNote: 'Drive is disconnected, so the steps are already open below.' }),
+    inPanel('gallery', { target: 'google-drive-connect', title: 'Connect', body: 'Tap CONNECT and sign in with the account that owns the gallery Drive. Allow every permission.' }),
+    inPanel('gallery', { target: 'google-drive-paste', title: 'Paste the Address', body: 'Google lands on a page that won\'t load. Copy its whole address and paste it here.' }),
+    inPanel('gallery', { target: 'google-drive-save', title: 'Save', body: 'Tap SAVE. The bar turns green when Drive is connected.' }),
+  ],
+};
+
 /* ── Cost per new customer on the money tab (2026-11-10) ── */
 
 const moneyAcquisitionTour: Tour = {
@@ -1332,7 +1350,7 @@ const moneyInsightsTour: Tour = {
   ],
 };
 
-export const TOURS: Tour[] = [moneyAcquisitionTour, moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
+export const TOURS: Tour[] = [driveConnectionTour, moneyAcquisitionTour, moneyWalletsTour, moneyInsightsTour, batchInvitesTour, memberBatchInvitesTour, photographerBatchInvitesTour, stripeBalancesTour, crmPhotosTour, depositsTour, freePhotosTour, memberFreePhotosTour, photographerFreePhotosTour, inviteListsTour, memberInviteListsTour, photographerInviteListsTour, bookingBrandAssetsTour, portfolioTour, profilePictureTour, brandKitTour, galleryPhotoActionsTour, memberPhotoActionsTour, photographerPhotoActionsTour, clientHunterTour, halftoneHistoryTour, matureBlurTour, screensFromGalleryTour, halftoneTour, supportTour, driveSyncTour, galleryPhotosTour, aLaCarteTour, albumPriceTour, memberAlbumPriceTour, photographerAlbumPriceTour, qrWallpaperTour, liveEventTour, dashboardTour, ...consoleTours,
   memberBasicsTour, memberAffiliateTour, memberGalleryTour, memberWriterTour, memberAccountTour,
   photographerBasicsTour, photographerLiveTour, photographerPayTour, photographerCalendarTour, photographerGalleriesTour, photographerAskTour];
 
