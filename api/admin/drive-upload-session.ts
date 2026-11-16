@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { google } from 'googleapis'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { getGoogleOAuthClient } from '../../lib/api-handlers/_google-oauth.js'
 /**
  * Open a Google Drive resumable upload session and hand back the session URI.
  *
@@ -43,10 +44,8 @@ import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
  * key or refresh handler callback is set."
  */
 async function getDriveAuth(): Promise<{ auth: any; token: string }> {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env
-  if (GOOGLE_REFRESH_TOKEN && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
-    const oauth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-    oauth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN })
+  const oauth = await getGoogleOAuthClient()
+  if (oauth) {
     const { token } = await oauth.getAccessToken()
     if (token) return { auth: oauth, token }
   }

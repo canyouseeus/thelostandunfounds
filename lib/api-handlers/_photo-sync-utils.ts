@@ -9,6 +9,7 @@ import {
     VenueTag,
 } from './_venue-match.js';
 import { reverseGeocodeNeighborhood } from './_reverse-geocode.js';
+import { getGoogleOAuthClient } from './_google-oauth.js';
 
 const MAX_DEPTH = 3;
 const SAMPLE_SIZE = 5;
@@ -741,7 +742,7 @@ function resolveCreds(): ResolvedCreds {
  * folders outright. The key is validated up front so a bad one degrades
  * instead of throwing from the signer.
  */
-function buildDrive(GOOGLE_EMAIL: string, GOOGLE_KEY: string) {
+async function buildDrive(GOOGLE_EMAIL: string, GOOGLE_KEY: string) {
     let serviceAccountUsable = Boolean(GOOGLE_EMAIL && GOOGLE_KEY);
     if (serviceAccountUsable) {
         try {
@@ -760,14 +761,12 @@ function buildDrive(GOOGLE_EMAIL: string, GOOGLE_KEY: string) {
         return google.drive({ version: 'v3', auth });
     }
 
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+    const auth = await getGoogleOAuthClient();
+    if (!auth) {
         throw new Error(
             'No usable Google credentials for sync — the service account key is missing or malformed and no OAuth refresh token is configured',
         );
     }
-    const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
-    auth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
     return google.drive({ version: 'v3', auth });
 }
 
@@ -790,7 +789,7 @@ async function buildCtx(
     const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
     if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
 
-    const drive = buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
+    const drive = await buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
 
     const { data: locationTagsRaw } = await supabase
         .from('tags')
@@ -855,7 +854,7 @@ export async function listLibrarySubfolders(librarySlug: string): Promise<{
     const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
     if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
 
-    const drive = buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
+    const drive = await buildDrive(GOOGLE_EMAIL, GOOGLE_KEY);
 
     const { photos, subfolders } = await listFolderEntries(drive, folderId);
 

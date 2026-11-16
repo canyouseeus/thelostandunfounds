@@ -12,6 +12,7 @@ import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
 import { buildName, isCurrentAnyHandle, isCurrentName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
+import { getGoogleRefreshToken } from './_google-oauth.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;
@@ -310,7 +311,7 @@ export async function retrogradeRename(opts: RetrogradeOptions = {}): Promise<Re
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-    const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN;
+    const { token: REFRESH_TOKEN } = await getGoogleRefreshToken();
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error('Missing Supabase credentials');

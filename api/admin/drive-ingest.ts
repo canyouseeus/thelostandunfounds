@@ -24,6 +24,7 @@ import { Readable } from 'stream';
 
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { getGoogleOAuthClient } from '../../lib/api-handlers/_google-oauth.js'
 /**
  * OAuth first: the refresh token acts as the account that owns the destination
  * folders, so it can write anywhere in that Drive. Matches drive-add.ts.
@@ -34,13 +35,9 @@ import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
  * scopes environment variables per environment, so a preview deployment can be
  * missing the OAuth refresh token that production has.
  */
-function getDrive(): { drive: ReturnType<typeof google.drive>; auth: 'oauth' | 'service_account' } {
-    if (process.env.GOOGLE_REFRESH_TOKEN) {
-        const oauth2Client = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET,
-        );
-        oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+async function getDrive(): Promise<{ drive: ReturnType<typeof google.drive>; auth: 'oauth' | 'service_account' }> {
+    const oauth2Client = await getGoogleOAuthClient();
+    if (oauth2Client) {
         return { drive: google.drive({ version: 'v3', auth: oauth2Client }), auth: 'oauth' };
     }
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -101,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { drive, auth } = getDrive();
+        const { drive, auth } = await getDrive();
 
         // Re-running a rescue must not double the folder. Drive happily keeps two
         // files with one name in a folder and nothing downstream would flag it.

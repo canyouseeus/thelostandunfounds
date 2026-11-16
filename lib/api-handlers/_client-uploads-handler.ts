@@ -26,6 +26,7 @@ import sharp from 'sharp';
 import { createServiceSupabaseClient, type ServiceSupabaseClient } from './_supabase-admin-client.js';
 import { sendTransactionalEmail } from './_resend-email-handler.js';
 import { resolveCrewMember } from './crew/_shared.js';
+import { getGoogleOAuthClient } from './_google-oauth.js';
 
 const BUCKET = 'client-uploads';
 const SITE = 'https://www.thelostandunfounds.com';
@@ -163,12 +164,8 @@ export function createServiceClient() {
 
 async function getDrive() {
     const { google } = await import('googleapis');
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
-        throw new Error('Google Drive credentials are not configured');
-    }
-    const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
-    auth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+    const auth = await getGoogleOAuthClient();
+    if (!auth) throw new Error('Google Drive credentials are not configured');
     return google.drive({ version: 'v3', auth });
 }
 

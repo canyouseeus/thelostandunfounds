@@ -3,18 +3,14 @@ import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
 import { Readable } from 'stream';
 import ytdl from '@distube/ytdl-core';
+import { getGoogleOAuthClient } from '../../lib/api-handlers/_google-oauth.js';
 
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
 const STREAM_TIMEOUT_MS = 240_000;
 
-function getOAuth2Client() {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-    });
+async function getOAuth2Client() {
+    const oauth2Client = await getGoogleOAuthClient();
+    if (!oauth2Client) throw new Error('Google Drive credentials are not configured');
     return oauth2Client;
 }
 
@@ -137,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const safeTitle = audio.title.replace(/[^a-zA-Z0-9 _-]/g, '_').substring(0, 80);
         const fileName = `${safeTitle}.${audio.extension}`;
 
-        const drive = google.drive({ version: 'v3', auth: getOAuth2Client() });
+        const drive = google.drive({ version: 'v3', auth: await getOAuth2Client() });
         const driveFile = await drive.files.create({
             requestBody: {
                 name: fileName,

@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
 import { verifyAdmin } from '../../lib/api-handlers/_admin-auth.js'
+import { getGoogleOAuthClient } from '../../lib/api-handlers/_google-oauth.js'
 /**
  * Create a private client gallery, Drive folder and all.
  *
@@ -32,12 +33,8 @@ function slugify(input: string): string {
 
 async function getDrive() {
   const { google } = await import('googleapis')
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
-    throw new Error('Google Drive credentials are not configured')
-  }
-  const auth = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-  auth.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN })
+  const auth = await getGoogleOAuthClient()
+  if (!auth) throw new Error('Google Drive credentials are not configured')
   return google.drive({ version: 'v3', auth })
 }
 

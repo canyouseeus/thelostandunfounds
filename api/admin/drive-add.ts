@@ -1,15 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
+import { getGoogleOAuthClient } from '../../lib/api-handlers/_google-oauth.js';
 
-function getOAuth2Client() {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-    });
+async function getOAuth2Client() {
+    const oauth2Client = await getGoogleOAuthClient();
+    if (!oauth2Client) throw new Error('Google Drive credentials are not configured');
     return oauth2Client;
 }
 
@@ -67,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
     }
 
-    const drive = google.drive({ version: 'v3', auth: getOAuth2Client() });
+    const drive = google.drive({ version: 'v3', auth: await getOAuth2Client() });
     const supabase = createClient(
         process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
