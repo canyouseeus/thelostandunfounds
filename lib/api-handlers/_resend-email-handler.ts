@@ -3,8 +3,12 @@
  *
  * Policy: Zoho is the primary transactional provider; Resend is the automatic
  * fallback used when Zoho throws, is unconfigured, or returns a non-2xx. The
- * filename predates the policy (originally Resend-only). Newsletter and batch
- * paths intentionally remain Resend-only — Zoho can't handle the volume.
+ * filename predates the policy (originally Resend-only).
+ *
+ * Every Resend send goes through sendViaResend (./_email-quota.ts), which keeps
+ * today's count against Resend's daily quota. Newsletters stop using Resend
+ * before the last RESEND_TRANSACTIONAL_RESERVE sends of the day so these
+ * transactional fallbacks still have room; see _newsletter-delivery.ts.
  */
 
 import {
@@ -14,6 +18,7 @@ import {
   processEmailContent
 } from '../email-template.js';
 import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
+import { noteZohoSent, resendHasRoom, sendViaResend } from './_email-quota.js';
 
 interface ResendEmailParams {
   to: string | string[];
@@ -36,50 +41,20 @@ interface ResendResponse {
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
 /**
- * Send a single email via Resend
+ * Send a single email via Resend (counted against the daily quota).
  */
 export async function sendEmail(params: ResendEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    return { success: false, error: 'Resend API key not configured' };
-  }
-
-  const fromEmail = params.from || process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com';
-
-  try {
-    const response = await fetch(RESEND_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-        reply_to: params.replyTo,
-        cc: params.cc,
-        bcc: params.bcc,
-      }),
-    });
-
-    const data: ResendResponse = await response.json();
-
-    if (!response.ok) {
-      console.error('Resend API error:', data);
-      return {
-        success: false,
-        error: data.error?.message || `Resend error: ${response.status}`
-      };
-    }
-
-    return { success: true, id: data.id };
-  } catch (error: any) {
-    console.error('Resend send error:', error);
-    return { success: false, error: error.message || 'Failed to send email' };
-  }
+  const result = await sendViaResend({
+    from: params.from || process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com',
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+    replyTo: params.replyTo,
+    cc: params.cc,
+    bcc: params.bcc,
+  });
+  if (!result.success) console.error('Resend API error:', result.status, result.error);
+  return { success: result.success, id: result.id, error: result.error };
 }
 
 /**
@@ -233,11 +208,54 @@ export async function sendTransactionalEmail(params: {
         subject: params.subject,
         htmlContent: html,
       });
-      if (zoho.success) return { success: true, provider: 'zoho' };
+      if (zoho.success) {
+        noteZohoSent();
+        return { success: true, provider: 'zoho' };
+      }
       console.warn('[email-delivery] Zoho returned failure, falling back to Resend:', zoho.error);
     } catch (err: any) {
       console.warn('[email-delivery] Zoho threw, falling back to Resend:', err?.message);
     }
+  }
+
+  // Resend is the last resort here, so it may use the whole day's quota,
+  // including the reserve newsletters leave untouched.
+  const recipientCount =
+    (Array.isArray(params.to) ? params.to.length : 1) + ccList.length;
+  if (!(await resendHasRoom(recipientCount, 0))) {
+    if (!zohoEligible) {
+      // These normally skip Zoho (several To addresses, or a Reply-To that
+      // Zoho's API can't set). With Resend out for the day, sending through
+      // Zoho without the Reply-To beats not sending at all.
+      try {
+        const auth = await getZohoAuthContext();
+        const toList = Array.isArray(params.to) ? params.to : [params.to];
+        const zoho = await sendZohoEmail({
+          auth,
+          to: toList.join(','),
+          cc: ccList.length ? ccList.join(',') : undefined,
+          from: params.from,
+          subject: params.subject,
+          htmlContent: html,
+        });
+        if (zoho.success) {
+          noteZohoSent();
+          if (params.replyTo) {
+            console.warn('[email-delivery] Resend quota used up; sent via Zoho without Reply-To', params.replyTo);
+          }
+          return { success: true, provider: 'zoho' };
+        }
+        console.error('[email-delivery] Resend quota used up and Zoho failed:', zoho.error);
+      } catch (err: any) {
+        console.error('[email-delivery] Resend quota used up and Zoho threw:', err?.message);
+      }
+    }
+    console.error('[email-delivery] No provider could send:', params.subject);
+    return {
+      success: false,
+      error: "Zoho could not send it and Resend's daily limit is used up",
+      provider: 'resend',
+    };
   }
 
   const resend = await sendEmail({

@@ -1,105 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template.js'
-import { delay } from './_zoho-email-utils.js'
-
-interface ZohoTokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-}
-
-interface ZohoEmailResult {
-  success: boolean
-  error?: string
-}
-
-interface ResendEmailResult {
-  success: boolean
-  id?: string
-  error?: string
-}
-
-// Check if Resend is configured
-function isResendConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY
-}
-
-// Send email via Resend API
-async function sendResendEmail(
-  to: string,
-  subject: string,
-  html: string
-): Promise<ResendEmailResult> {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: to,
-        subject: subject,
-        html: html,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error('Resend API error:', data)
-      return {
-        success: false,
-        error: data.message || data.error?.message || `Resend error: ${response.status}`
-      }
-    }
-
-    return { success: true, id: data.id }
-  } catch (error: any) {
-    console.error('Resend send error:', error)
-    return { success: false, error: error.message || 'Failed to send email' }
-  }
-}
-
-const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
-
-function ensureBannerHtml(htmlContent: string): string {
-  const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
-  <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
-    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
-  </a>
-</div>`
-
-  const ensureShell = (html: string) => {
-    if (/<html[\s>]/i.test(html)) return html
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
-  }
-
-  const insertAfterBody = (html: string) => {
-    const match = /<body[^>]*>/i.exec(html)
-    if (!match) return null
-    const idx = (match.index ?? 0) + match[0].length
-    return html.slice(0, idx) + bannerBlock + html.slice(idx)
-  }
-
-  let html = htmlContent || ''
-  if (html.includes(BANNER_URL) || html.includes('nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/')) {
-    return ensureShell(html)
-  }
-
-  const withBodyInsert = insertAfterBody(html)
-  if (withBodyInsert) {
-    return ensureShell(withBodyInsert)
-  }
-
-  return ensureShell(bannerBlock + html)
-}
+import { generateNewsletterEmail } from '../email-template.js'
+import { createNewsletterSender } from './_newsletter-delivery.js'
 
 function extractBodyContent(contentHtml: string): string {
   if (!contentHtml) {
@@ -128,151 +30,29 @@ function extractBodyContent(contentHtml: string): string {
 // and shipped, and none of it reached a single email. Deleted so nobody edits it
 // again believing it renders the newsletter.
 
-/**
- * Get Zoho access token
- */
-async function getZohoAccessToken(): Promise<string> {
-  const clientId = process.env.ZOHO_CLIENT_ID
-  const clientSecret = process.env.ZOHO_CLIENT_SECRET
-  const refreshToken = process.env.ZOHO_REFRESH_TOKEN
+// Stop sending with this much of the function's 300s limit left, so the logs
+// and the campaign record are always written before Vercel cuts the call.
+const TIME_BUDGET_MS = 250_000
 
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('Zoho credentials not configured')
-  }
-
-  const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-    }),
-  })
-
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text()
-    throw new Error(`Failed to refresh Zoho token: ${tokenResponse.status} ${errorText}`)
-  }
-
-  const tokenData: ZohoTokenResponse = await tokenResponse.json()
-  return tokenData.access_token
+type SendLog = {
+  subscriber_email: string
+  status: 'sent' | 'failed' | 'pending'
+  error_message: string | null
+  sent_at: string | null
+  provider: 'resend' | 'zoho' | null
 }
 
-/**
- * Get Zoho account ID and email
- */
-async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): Promise<{ accountId: string; email: string }> {
-  const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
-    method: 'GET',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-    },
-  })
-
-  if (accountInfoResponse.ok) {
-    const accounts = await accountInfoResponse.json()
-    console.log('Zoho accounts response:', JSON.stringify(accounts, null, 2))
-    if (accounts.data && accounts.data.length > 0) {
-      const account = accounts.data[0]
-      // Match the exact format from newsletter-subscribe (which works)
-      const accountId = account.accountId || account.account_id || account.accountId
-      // Try to get the actual email from the account response - ensure it's a string
-      let accountEmail = fallbackEmail
-      if (account.emailAddress && typeof account.emailAddress === 'string') {
-        accountEmail = account.emailAddress
-      } else if (account.email && typeof account.email === 'string') {
-        accountEmail = account.email
-      } else if (account.accountName && typeof account.accountName === 'string') {
-        accountEmail = account.accountName
-      }
-
-      if (accountId) {
-        console.log('Using account ID:', accountId, 'email:', accountEmail)
-        return { accountId, email: accountEmail }
-      }
-    } else {
-      console.warn('No accounts found in Zoho response')
-    }
-  } else {
-    const accountErrorText = await accountInfoResponse.text()
-    console.error('Failed to get Zoho accounts:', {
-      status: accountInfoResponse.status,
-      error: accountErrorText
-    })
-  }
-
-  // Fallback: extract account ID from email (this might not work for all Zoho setups)
-  console.warn('Account ID not found from API, using email prefix as fallback')
-  const emailParts = fallbackEmail.split('@')
-  const fallbackAccountId = emailParts[0]
-  console.log('Using fallback account ID:', fallbackAccountId, 'from email:', fallbackEmail)
-  return { accountId: fallbackAccountId, email: fallbackEmail }
-}
-
-/**
- * Send email via Zoho Mail API
- */
-async function sendZohoEmail(
-  accessToken: string,
-  accountId: string,
-  fromEmail: string,
-  toEmail: string,
-  subject: string,
-  htmlContent: string
-): Promise<ZohoEmailResult> {
-  const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
-
-  const emailResponse = await fetch(mailApiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      fromAddress: fromEmail,
-      toAddress: toEmail,
-      subject: subject,
-      content: htmlContent,
-      mailFormat: 'html',
-    }),
-  })
-
-  if (!emailResponse.ok) {
-    const errorText = await emailResponse.text()
-    console.error('Zoho email API error:', {
-      status: emailResponse.status,
-      statusText: emailResponse.statusText,
-      error: errorText,
-      accountId,
-      fromEmail,
-      toEmail,
-      mailApiUrl
-    })
-    let errorMessage = `Failed to send email: ${emailResponse.status}`
-    try {
-      const errorJson = JSON.parse(errorText)
-      if (errorJson.data?.moreInfo) {
-        errorMessage = `Zoho Error: ${errorJson.data.moreInfo}`
-      } else if (errorJson.status?.description) {
-        errorMessage = `Zoho Error: ${errorJson.status.description}`
-      }
-    } catch {
-      errorMessage = `Failed to send email: ${emailResponse.status}. Details: ${errorText}`
-    }
-    return { success: false, error: errorMessage }
-  }
-
-  return { success: true }
+function isMissingProviderColumn(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false
+  return /provider/i.test(error.message || '') && /(column|schema cache)/i.test(error.message || '')
 }
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  const startedAt = Date.now()
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -372,12 +152,51 @@ export default async function handler(
       })
     }
 
-    // If testEmail is provided, only send to that email
+    // Resume: a campaign that was held part-way through (both providers out of
+    // room, or the call ran out of time) has 'pending' logs. Pick up exactly
+    // those recipients, whoever the campaign was first sent to. The hourly
+    // scheduled-newsletter cron calls this with the campaignId.
+    let resumeEmails: Set<string> | null = null
+    if (campaignId && !testEmail) {
+      const { data: pendingLogs, error: pendingError } = await supabase
+        .from('newsletter_send_logs')
+        .select('subscriber_email')
+        .eq('campaign_id', campaignId)
+        .eq('status', 'pending')
+      if (pendingError) throw pendingError
+
+      if (pendingLogs && pendingLogs.length > 0) {
+        const { data: sentLogs } = await supabase
+          .from('newsletter_send_logs')
+          .select('subscriber_email')
+          .eq('campaign_id', campaignId)
+          .eq('status', 'sent')
+        const alreadySent = new Set((sentLogs || []).map(l => l.subscriber_email))
+        resumeEmails = new Set(
+          pendingLogs.map(l => l.subscriber_email).filter(e => !alreadySent.has(e))
+        )
+        // Pending rows for people who did get it are stale; clear them.
+        const stale = pendingLogs.map(l => l.subscriber_email).filter(e => alreadySent.has(e))
+        if (stale.length > 0) {
+          await supabase
+            .from('newsletter_send_logs')
+            .delete()
+            .eq('campaign_id', campaignId)
+            .eq('status', 'pending')
+            .in('subscriber_email', stale)
+        }
+      }
+    }
+
+    // Who to send to
     let subscribers: { email: string }[]
 
     if (testEmail) {
       // Test mode: only send to the specified email
       subscribers = [{ email: testEmail }]
+    } else if (resumeEmails) {
+      subscribers = Array.from(resumeEmails).map(email => ({ email }))
+      console.log(`[newsletter] Resuming campaign ${campaignId}: ${subscribers.length} held recipients`)
     } else if (recipients && Array.isArray(recipients) && recipients.length > 0) {
       // Target mode: send only to selected recipients
       subscribers = recipients.map((email: string) => ({ email }))
@@ -400,7 +219,6 @@ export default async function handler(
       // This allows resuming a campaign without double-sending
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-      // Get all recent logs for this subject (we join through campaign_id, but simple way is to get recent campaigns with this subject)
       const { data: recentCampaigns } = await supabase
         .from('newsletter_campaigns')
         .select('id')
@@ -423,7 +241,6 @@ export default async function handler(
         }
       }
 
-      // Filter subscribers
       subscribers = subscribersData.filter(sub => !alreadySentEmails.has(sub.email))
 
       console.log(`Found ${subscribersData.length} total subscribers. Skipping ${alreadySentEmails.size} already sent. Sending to ${subscribers.length} new recipients.`)
@@ -443,11 +260,8 @@ export default async function handler(
       }
     }
 
-    // Check sender configuration.
-    // ZOHO_FROM_EMAIL is only required on the Zoho path — sendResendEmail uses RESEND_FROM_EMAIL
-    // and never reads this value, so a Resend-only environment must not be blocked here.
-    const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-    if (!fromEmail && !isResendConfigured()) {
+    const hasZoho = !!(process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL)
+    if (!hasZoho && !process.env.RESEND_API_KEY) {
       return res.status(500).json({
         error: 'No email provider configured. Set RESEND_API_KEY (preferred for bulk) or ZOHO_FROM_EMAIL.'
       })
@@ -456,17 +270,18 @@ export default async function handler(
     // Create or update campaign record
     let campaignRecord
     if (campaignId) {
-      // Update existing campaign
+      const update: Record<string, any> = {
+        subject,
+        content,
+        content_html: normalizedContentHtml,
+        status: 'sending',
+        updated_at: new Date().toISOString(),
+      }
+      // A resumed campaign keeps the audience size it started with.
+      if (!resumeEmails) update.total_subscribers = totalSubscribers
       const { data, error } = await supabase
         .from('newsletter_campaigns')
-        .update({
-          subject,
-          content,
-          content_html: normalizedContentHtml,
-          status: 'sending',
-          total_subscribers: totalSubscribers,
-          updated_at: new Date().toISOString(),
-        })
+        .update(update)
         .eq('id', campaignId)
         .select()
         .single()
@@ -474,7 +289,6 @@ export default async function handler(
       if (error) throw error
       campaignRecord = data
     } else {
-      // Create new campaign
       const { data, error } = await supabase
         .from('newsletter_campaigns')
         .insert({
@@ -482,7 +296,9 @@ export default async function handler(
           content,
           content_html: normalizedContentHtml,
           status: 'sending',
-          total_subscribers: totalSubscribers,
+          total_subscribers: recipients && Array.isArray(recipients) && recipients.length > 0
+            ? subscribers.length
+            : totalSubscribers,
         })
         .select()
         .single()
@@ -491,67 +307,8 @@ export default async function handler(
       campaignRecord = data
     }
 
-    // Determine which email provider to use.
-    // Resend is the correct provider for bulk: Zoho Mail is a mailbox product with per-day send
-    // caps, and pushing a subscriber list through it burns quota and sending reputation on the
-    // same domain that carries transactional mail. Zoho remains a fallback so a missing key does
-    // not block a send outright — but it is a degraded path and must be visible, not silent.
-    const useResend = isResendConfigured()
-    const providerWarning = useResend
-      ? undefined
-      : 'RESEND_API_KEY is not set — this newsletter was sent via Zoho Mail, which is rate-capped and risks the domain sending reputation used by transactional email. Set RESEND_API_KEY for bulk sends.'
-
-    console.log(`Using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
-    if (providerWarning) console.warn(`[newsletter] ${providerWarning}`)
-
-    // Initialize Zoho if needed (only when not using Resend)
-    let accessToken: string = ''
-    let accountId: string = ''
-    let actualFromEmail: string = fromEmail ?? ''
-
-    if (!useResend) {
-      // Unreachable in practice — the guard above returns unless at least one
-      // provider is configured, and !useResend means it wasn't Resend. Kept as
-      // an explicit check so the Zoho path can never send from an empty
-      // address, and so fromEmail narrows to string below.
-      if (!fromEmail) {
-        return res.status(500).json({
-          error: 'Zoho path selected but neither ZOHO_FROM_EMAIL nor ZOHO_EMAIL is set.'
-        })
-      }
-
-      try {
-        accessToken = await getZohoAccessToken()
-        const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-        accountId = accountInfo.accountId
-        actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
-          ? accountInfo.email
-          : fromEmail
-
-        console.log('Zoho account info:', {
-          accountId,
-          configuredEmail: fromEmail,
-          accountInfoEmail: accountInfo.email,
-          actualEmail: actualFromEmail,
-        })
-      } catch (error: any) {
-        await supabase
-          .from('newsletter_campaigns')
-          .update({ status: 'failed' })
-          .eq('id', campaignRecord.id)
-
-        throw new Error(`Failed to authenticate with Zoho: ${error.message}`)
-      }
-    }
-
-    // Send emails to all subscribers
-    let emailsSent = 0
-    let emailsFailed = 0
-    const errors: string[] = []
-
     // Per-recipient HTML: use centralized email template
     const buildRecipientHtml = (rawHtml: string, email: string) => {
-      // Process content with standardized template including branding
       const html = generateNewsletterEmail(rawHtml, email)
 
       // Open-tracking pixel, added per recipient so an open can be attributed.
@@ -579,40 +336,74 @@ export default async function handler(
         : html + pixel
     }
 
-    // Send emails
-    type SendLog = { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }
-    const sendLogs: SendLog[] = []
+    // Resend first, Zoho when Resend is out of room or refuses, held when
+    // neither has room. See _newsletter-delivery.ts.
+    const sender = await createNewsletterSender(supabase, { allowZoho: hasZoho })
+
+    let emailsSent = 0
+    let emailsFailed = 0
+    let emailsHeld = 0
+    let heldForTime = false
+    let holdReason = ''
+    const errors: string[] = []
 
     // Send logs are flushed to the database DURING the loop, not after it.
     //
-    // This matters: the resume filter above skips anyone already logged 'sent' for this subject
-    // within 24h. If logs were only written after the loop finished, a function timeout mid-send
-    // (maxDuration is 300s and the loop costs ~550ms/email) would leave real emails delivered but
-    // nothing recorded — and the retry would send to the whole list a second time.
-    //
-    // Flushing in chunks bounds the worst case to FLUSH_EVERY un-recorded sends instead of all of
-    // them. A logging failure is reported loudly but does not abort the run.
+    // The resume paths skip anyone already logged 'sent'. If logs were only
+    // written after the loop, a function timeout mid-send would leave real
+    // emails delivered but nothing recorded, and the retry would send to the
+    // whole list a second time. Flushing in chunks bounds the worst case to
+    // FLUSH_EVERY un-recorded sends.
     const FLUSH_EVERY = 25
     let pendingLogs: SendLog[] = []
+    let providerColumn = true
 
     const record = (log: SendLog) => {
-      sendLogs.push(log)
       pendingLogs.push(log)
+    }
+
+    const insertLogs = async (rows: SendLog[]) => {
+      const withCampaign = (r: SendLog) => {
+        const row: Record<string, any> = { campaign_id: campaignRecord.id, ...r }
+        if (!providerColumn) delete row.provider
+        return row
+      }
+      let { error } = await supabase.from('newsletter_send_logs').insert(rows.map(withCampaign))
+      if (error && providerColumn && isMissingProviderColumn(error)) {
+        // Migration not applied yet: log without the provider.
+        providerColumn = false
+        ;({ error } = await supabase.from('newsletter_send_logs').insert(rows.map(withCampaign)))
+      }
+      return error
     }
 
     const flushLogs = async () => {
       if (pendingLogs.length === 0) return
       const batch = pendingLogs
       pendingLogs = []
+
+      // A resumed recipient who is held again already has its pending row.
+      const toInsert = batch.filter(l => !(l.status === 'pending' && resumeEmails?.has(l.subscriber_email)))
+      const finished = batch
+        .filter(l => l.status !== 'pending' && resumeEmails?.has(l.subscriber_email))
+        .map(l => l.subscriber_email)
+
       try {
-        const { error: logError } = await supabase
-          .from('newsletter_send_logs')
-          .insert(batch.map(log => ({ campaign_id: campaignRecord.id, ...log })))
+        const logError = toInsert.length > 0 ? await insertLogs(toInsert) : null
         if (logError) {
           console.error(
-            `[newsletter] FAILED to persist ${batch.length} send logs for campaign ${campaignRecord.id}. ` +
+            `[newsletter] FAILED to persist ${toInsert.length} send logs for campaign ${campaignRecord.id}. ` +
             `Those recipients may be re-sent on retry. Error: ${logError.message}`
           )
+          return
+        }
+        if (finished.length > 0) {
+          await supabase
+            .from('newsletter_send_logs')
+            .delete()
+            .eq('campaign_id', campaignRecord.id)
+            .eq('status', 'pending')
+            .in('subscriber_email', finished)
         }
       } catch (err: any) {
         console.error(
@@ -622,86 +413,134 @@ export default async function handler(
       }
     }
 
-    for (const subscriber of subscribers) {
-      try {
-        const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
+    const hold = (email: string, reason: string) => {
+      emailsHeld++
+      record({
+        subscriber_email: email,
+        // A test send has nothing to resume; it simply didn't go.
+        status: testEmail ? 'failed' : 'pending',
+        error_message: reason,
+        sent_at: null,
+        provider: null,
+      })
+    }
 
-        // Use Resend or Zoho based on configuration
-        const result = useResend
-          ? await sendResendEmail(subscriber.email, subject, recipientHtml)
-          : await sendZohoEmail(accessToken, accountId, actualFromEmail, subscriber.email, subject, recipientHtml)
+    for (let i = 0; i < subscribers.length; i++) {
+      const email = subscribers[i].email
 
-        if (result.success) {
-          emailsSent++
-          record({
-            subscriber_email: subscriber.email,
-            status: 'sent',
-            error_message: null,
-            sent_at: new Date().toISOString()
-          })
-        } else {
-          emailsFailed++
-          const errorMsg = result.error || 'Unknown error'
-          errors.push(`${subscriber.email}: ${errorMsg}`)
-          record({
-            subscriber_email: subscriber.email,
-            status: 'failed',
-            error_message: errorMsg,
-            sent_at: new Date().toISOString()
-          })
-        }
-      } catch (error: any) {
-        emailsFailed++
-        const errorMsg = error.message || 'Unknown error'
-        errors.push(`${subscriber.email}: ${errorMsg}`)
-        record({
-          subscriber_email: subscriber.email,
-          status: 'failed',
-          error_message: errorMsg,
-          sent_at: new Date().toISOString()
-        })
+      if (Date.now() - startedAt > TIME_BUDGET_MS) {
+        heldForTime = true
+        holdReason = 'Held: the send ran out of time and resumes automatically'
+        for (const rest of subscribers.slice(i)) hold(rest.email, holdReason)
+        break
       }
 
-      // Persist progress periodically so a timeout can't erase the record of what was sent.
+      let outcome
+      try {
+        outcome = await sender.send(email, subject, buildRecipientHtml(contentHtml, email))
+      } catch (error: any) {
+        outcome = { status: 'failed' as const, error: error?.message || 'Unknown error' }
+      }
+
+      if (outcome.status === 'sent') {
+        emailsSent++
+        record({
+          subscriber_email: email,
+          status: 'sent',
+          error_message: null,
+          sent_at: new Date().toISOString(),
+          provider: outcome.provider,
+        })
+      } else if (outcome.status === 'failed') {
+        emailsFailed++
+        errors.push(`${email}: ${outcome.error}`)
+        record({
+          subscriber_email: email,
+          status: 'failed',
+          error_message: outcome.error,
+          sent_at: new Date().toISOString(),
+          provider: outcome.provider ?? null,
+        })
+      } else {
+        // Neither provider has room: everyone left waits for the same reason.
+        holdReason = outcome.reason
+        for (const rest of subscribers.slice(i)) hold(rest.email, holdReason)
+        break
+      }
+
       if (pendingLogs.length >= FLUSH_EVERY) {
         await flushLogs()
       }
-
-      // Rate limiting delay
-      // Zoho limit: 2 req/sec. Current delay: 750ms between EMAILS (sequential)
-      // Resend limit: 2 req/sec. Current delay: 550ms between EMAILS (sequential)
-      const throttleDelay = useResend ? 550 : 750
-      if (emailsSent + emailsFailed < subscribers.length) {
-        await new Promise(resolve => setTimeout(resolve, throttleDelay))
-      }
     }
 
-    // Persist whatever is left over from the final partial chunk.
     await flushLogs()
 
-    // Update campaign with results
-    const finalStatus = emailsFailed === totalSubscribers ? 'failed' : 'sent'
+    // Totals come from the logs so a campaign sent over several calls adds up.
+    const countLogs = async (status: string) => {
+      const { count } = await supabase
+        .from('newsletter_send_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('campaign_id', campaignRecord.id)
+        .eq('status', status)
+      return count ?? 0
+    }
+    const [totalSent, totalFailed, totalPending] = await Promise.all([
+      countLogs('sent'),
+      countLogs('failed'),
+      countLogs('pending'),
+    ])
+
+    let resumeAt: Date | null = null
+    if (totalPending > 0 && !testEmail) {
+      resumeAt = heldForTime ? new Date(Date.now() + 60_000) : sender.resumeAt()
+      if (!Number.isFinite(resumeAt.getTime())) resumeAt = null
+    }
+
+    const campaignUpdate: Record<string, any> = {
+      emails_sent: totalSent,
+      emails_failed: totalFailed,
+      updated_at: new Date().toISOString(),
+    }
+    if (totalPending > 0 && !testEmail) {
+      // The hourly scheduled-newsletter cron picks this up and resumes it.
+      campaignUpdate.status = resumeAt ? 'scheduled' : 'sending'
+      if (resumeAt) campaignUpdate.scheduled_for = resumeAt.toISOString()
+    } else {
+      campaignUpdate.status = totalSent === 0 && totalFailed > 0 ? 'failed' : 'sent'
+      campaignUpdate.sent_at = new Date().toISOString()
+    }
     await supabase
       .from('newsletter_campaigns')
-      .update({
-        status: finalStatus,
-        sent_at: new Date().toISOString(),
-        emails_sent: emailsSent,
-        emails_failed: emailsFailed,
-      })
+      .update(campaignUpdate)
       .eq('id', campaignRecord.id)
 
+    const parts = [`Sent ${emailsSent}`]
+    if (sender.sentBy.zoho > 0) parts.push(`(${sender.sentBy.resend} by Resend, ${sender.sentBy.zoho} by Zoho)`)
+    if (emailsFailed > 0) parts.push(`${emailsFailed} failed`)
+    if (emailsHeld > 0 && !testEmail) {
+      parts.push(
+        resumeAt
+          ? `${emailsHeld} waiting to send automatically after ${resumeAt.toISOString()}`
+          : `${emailsHeld} waiting: ${holdReason}`
+      )
+    }
+
     return res.status(200).json({
-      success: true,
-      message: `Newsletter sent to ${emailsSent} subscribers`,
+      success: emailsSent > 0 || emailsHeld > 0 || emailsFailed === 0,
+      message: parts.join(', '),
       campaignId: campaignRecord.id,
       stats: {
         totalSubscribers,
         emailsSent,
         emailsFailed,
+        emailsHeld,
+        sentByResend: sender.sentBy.resend,
+        sentByZoho: sender.sentBy.zoho,
       },
-      errors: errors.length > 0 ? errors.slice(0, 10) : undefined, // Return first 10 errors
-      warning: providerWarning,
+      resumeAt: resumeAt ? resumeAt.toISOString() : undefined,
+      holdReason: emailsHeld > 0 ? holdReason : undefined,
+      errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
+      warning: providerColumn ? undefined : 'Provider is not being logged yet (newsletter_send_logs.provider column is missing).',
     })
 
   } catch (error: any) {
