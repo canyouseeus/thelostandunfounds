@@ -105,6 +105,7 @@ import AdminClientUploadsView from '../components/admin/AdminClientUploadsView';
 import AdminSupportView from '../components/admin/AdminSupportView';
 import { AdminProspectsView } from '../components/admin/AdminProspectsView';
 import MoneyLedgerView from '../components/admin/MoneyLedgerView';
+import { BitcoinApp, BitcoinIcon } from '../components/admin/BitcoinStackCard';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
@@ -2064,6 +2065,7 @@ export default function Admin() {
                 { id: 'prospects', icon: ViewfinderCircleIcon, title: 'Prospects', badge: prospectsWaiting },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'money', icon: ScaleIcon, title: 'Money In / Out' },
+                { id: 'bitcoin', icon: BitcoinIcon, title: 'Bitcoin' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
                 { id: 'support', icon: LifebuoyIcon, title: 'Support', badge: supportWaiting },
@@ -2136,6 +2138,7 @@ export default function Admin() {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   clientuploads: { title: 'Content Requests',       icon: <CloudArrowUpIcon className="w-5 h-5 text-white/40" /> },
                   money:       { title: 'Money In / Out',           icon: <ScaleIcon className="w-5 h-5 text-white/40" /> },
+                  bitcoin:     { title: 'Bitcoin',                  icon: <BitcoinIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -2189,6 +2192,11 @@ export default function Admin() {
                 {activePanelSection === 'money' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Money In / Out</div>}>
                     <MoneyLedgerView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'bitcoin' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bitcoin</div>}>
+                    <BitcoinApp />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'blog' && (
