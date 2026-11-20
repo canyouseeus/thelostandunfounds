@@ -9,11 +9,11 @@ export interface CommissionTriggerInput {
    * `register_referral_conversion` RPC, so this union must stay a subset of
    * that column's CHECK constraint:
    *   paypal | fourthwall | local | stripe | photo_order | booking |
-   *   event_ticket | prodigi_order
+   *   event_ticket | prodigi_order | game
    * Listed here are the values callers actually pass; `prodigi_order` was
    * being passed by both webhook handlers while missing from this union.
    */
-  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket' | 'prodigi_order';
+  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket' | 'prodigi_order' | 'game';
   sourceId: string;
   /** What the customer paid. */
   grossAmount: number;
@@ -73,9 +73,13 @@ const money = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
  * whole profit) and Fourthwall until it is retired (its own webhook). Event
  * tickets for events the owner created. Street nights pay 10% of the night
  * through recordFieldSale (no split there).
+ *
+ * Owner decision, 2026-11-12: FR33 D. OHM INC. paid chapters (source 'game') take
+ * the same split as everything else, with no cost (a digital good), so the
+ * profit is the whole price; the 10% comes after the splits like the rest.
  */
 export const OWNER_CUT_RATE = 0.10;
-const OWNER_CUT_SOURCES: ReadonlyArray<string> = ['booking', 'prodigi_order', 'photo_order', 'shop', 'fourthwall', 'event_ticket'];
+const OWNER_CUT_SOURCES: ReadonlyArray<string> = ['booking', 'prodigi_order', 'photo_order', 'shop', 'fourthwall', 'event_ticket', 'game'];
 
 /**
  * Queue the owner's 10% as an `owner_pay` admin job, once per sale (the

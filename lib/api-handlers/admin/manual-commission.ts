@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
  * Body: { affiliateId?, affiliateCode?, amount, status?, source?, profit_generated?, product_cost? }
  */
 const COMMISSION_SOURCES = [
-  'paypal', 'fourthwall', 'local', 'stripe', 'photo_order', 'booking', 'event_ticket', 'prodigi_order',
+  'paypal', 'fourthwall', 'local', 'stripe', 'photo_order', 'booking', 'event_ticket', 'prodigi_order', 'game',
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
