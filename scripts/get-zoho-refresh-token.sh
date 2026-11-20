@@ -27,7 +27,12 @@ if [ -z "$CLIENT_SECRET" ]; then
   exit 1
 fi
 
-AUTH_URL="https://accounts.zoho.com/oauth/v2/auth?scope=ZohoMail.messages.CREATE,ZohoMail.accounts.READ,ZohoMail.organization.READ&client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&access_type=offline&prompt=consent"
+# One consent covers sending (transactional mail) and reading (admin Platform
+# Webmail). Without folders.READ and messages.READ the webmail can't list
+# folders or open messages.
+SCOPES="ZohoMail.messages.CREATE,ZohoMail.messages.READ,ZohoMail.folders.READ,ZohoMail.accounts.READ,ZohoMail.organization.READ"
+
+AUTH_URL="https://accounts.zoho.com/oauth/v2/auth?scope=${SCOPES}&client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&access_type=offline&prompt=consent"
 
 echo ""
 echo "🌐 Opening Zoho in your browser. Click Accept, then come back here."
